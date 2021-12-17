@@ -12,8 +12,6 @@ bl_info = {
 # GA based on: https://www.geeksforgeeks.org/genetic-algorithms/
 
 
-# exclude progress
-
 class data:
     # dependencies
     scipy_loaded = False
