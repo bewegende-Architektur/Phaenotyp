@@ -644,15 +644,7 @@ class OBJECT_PT_CustomPanel(Panel):
 
                         box.operator("wm.genetic_mutation", text="Start")
 
-                    # Progress
-                    box = layout.box()
-                    box.label(text="Progress:")
-                    if data.calculate_update_post:
-                        progress = "Calculating Frame: " + str(bpy.context.scene.frame_current)
-                    else:
-                        progress = ("")
-
-                    box.label(text=progress)
+                    # Visualization
 
                     if data.done:
                         box = layout.box()
