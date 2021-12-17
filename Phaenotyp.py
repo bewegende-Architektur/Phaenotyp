@@ -55,9 +55,9 @@ class data:
     population_size = 20
     elitism = 2
     new_generation_size = population_size - elitism
-    
+
     genes = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
-    
+
     ga_state = "create initial population"
 
     chromosome = {}
@@ -196,12 +196,12 @@ class individual(object):
         # create gnome from available shape keys
         gnome_len = len(data.shape_keys)-1 # to exlude basis
         chromosome = [self.mutated_genes() for _ in range(gnome_len)]
-        
+
         # apply shape keys
         for id, key in enumerate(data.shape_keys):
             if id > 0: # to exlude basis
                 key.value = chromosome[0]*0.1
-                
+
         return chromosome
 
     def mate(self, par2):
@@ -251,16 +251,16 @@ def genetic_mutation():
 
         else:
             data.ga_state = "create new generation"
-        
-            
+
+
     if data.ga_state == "create new generation":
         # sort previous population according to fitness
         data.population = sorted(data.population, key = lambda x:x.fitness)
-        
+
         # print previous population to terminal
         for id, gnome in enumerate(data.population):
             print(gnome.chromosome, "with fitness:", gnome.fitness)
-            
+
         # create empty list of a new generation
         new_generation = []
         print("generation", str(data.generation_id) + ":")
@@ -270,7 +270,7 @@ def genetic_mutation():
             data.new_generation.append(data.population[i])
 
         data.ga_state = "populate new generation"
-        
+
 
     if data.ga_state == "populate new generation":
         if len(data.new_generation) < data.new_generation_size:
@@ -279,10 +279,10 @@ def genetic_mutation():
             parent_2 = random.choice(data.population[:50])
             child = parent_1.mate(parent_2)
             data.new_generation.append(child)
-        
+
             # print child to terminal
             print ("child:", child.chromosome, "fitness", child.fitness)
-        
+
         if len(data.new_generation) == data.new_generation_size:
             data.population = data.new_generation
 
@@ -294,7 +294,7 @@ def genetic_mutation():
 
 
 def create_curves():
-    reset_cleanup()
+    reset_collection_geometry_material()
 
     frame = bpy.context.scene.frame_current
 
@@ -396,8 +396,20 @@ def update_curves():
         curve.splines[0].points[1].co = [vertex_1.co[0], vertex_1.co[1], vertex_1.co[2], 1]
 
 
-def reset_cleanup():
+def reset_data():
+    data.curves = []
+    data.materials = []
+
+    data.shape_keys = []
+    data.population = []
+    data.new_generation = []
+    data.generation_id = 1
+    data.chromosome = {}
+    data.ga_state = "create initial population"
+
+def reset_collection_geometry_material():
     # reset scene
+
     for collection in bpy.data.collections:
         if "<pynite>" in collection.name_full:
             bpy.data.collections.remove(collection)
@@ -490,6 +502,9 @@ class WM_OT_calculate_single_frame(Operator):
     bl_description = "Calulate single frame"
 
     def execute(self, context):
+        reset_data()
+        reset_collection_geometry_material()
+        
         transfer_analyze()
         create_curves()
 
@@ -502,6 +517,9 @@ class WM_OT_calculate_animation(Operator):
     bl_description = "Calulate animation"
 
     def execute(self, context):
+        reset_data()
+        reset_collection_geometry_material()
+
         transfer_analyze()
         create_curves()
 
@@ -522,6 +540,10 @@ class WM_OT_genetic_mutation(Operator):
     bl_description = "start genetic muation over selected shape keys"
 
     def execute(self, context):
+        # reset
+        reset_data()
+        reset_collection_geometry_material()
+
         # shape keys
         shape_key = data.obj.data.shape_keys
         for keyblock in shape_key.key_blocks:
@@ -571,17 +593,13 @@ class WM_OT_reset(Operator):
     bl_idname = "wm.reset"
 
     def execute(self, context):
-        reset_cleanup()
+        reset_collection_geometry_material()
 
         data.obj = None
         data.vertices = None
         data.edges = None
         data.done = None
         data.support_ids = []
-        data.result = {}
-        data.curves = []
-        data.materials = []
-        data.shape_keys = []
 
         return {"FINISHED"}
 
@@ -630,7 +648,7 @@ class OBJECT_PT_CustomPanel(Panel):
                     box.label(text="Analysis:")
                     box.operator("wm.calculate_single_frame", text="Single Frame")
                     box.operator("wm.calculate_animation", text="Animation")
-                    
+
                     shape_key = data.obj.data.shape_keys
                     if shape_key:
                         # Genetic Mutation:
