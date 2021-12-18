@@ -23,27 +23,19 @@ class data:
     pynite_loaded = False
 
     # steel pipe with 60/50 mm as example
-    Do =   60 # mm (Diameter outside)
-    Di =   50 # mm (Diameter inside)
+    Do =   60 # mm (diameter outside)
+    Di =   50 # mm (diameter inside)
     E  =  210 # kN/mm2 modulus of elasticity for steel
     v  = 0.29 # Poisson's ratio of steel
     d  = 7.85 # g/cm3 density of steel
-    
-    # shear modulus, 81.4 GPa
-    G  = E * v
-    
-    # moment of inertia, 329376 mm⁴
-    Iy = math.pi * (Do**4 - Di**4)/64
-    Iz = Iy
-    
-    # torsional constant, 10979 mm³
-    J  = math.pi * (Do**4 - Di**4)/(32*Do)
-    
-    # cross-sectional area, 864 mm2
-    A  = (math.pi * (Do*0.5)**2) - (math.pi * (Di*0.5)**2)
-    
-    # weight of profile, 6.79 kg/m
-    kg =  A*d * 0.001
+
+    # calculated in data.update()
+    G  = None
+    Iy = None
+    Iz = None
+    J  = None
+    A  = None
+    kg = None
 
     # store geoemtry
     obj = None
@@ -52,11 +44,17 @@ class data:
     edges = None
     support_ids = []
 
-    # result for each frame
-    result = {}
+    # results for each frame
+    result_max_axial = {}
+    result_max_moment_y = {}
+    result_max_moment_z = {}
+    force_type_viz = "max_axial"
 
     # visualization
-    scale = 0.15
+    scale_max_axial = 0.15
+    scale_max_moment_y = 0.15
+    scale_max_moment_z = 0.15
+    
     curves = []
     materials = []
 
@@ -81,6 +79,25 @@ class data:
     ga_state = "create initial population"
 
     chromosome = {}
+    
+    @staticmethod
+    def update():
+        # shear modulus, 81.4 GPa
+        data.G  = data.E * data.v
+
+        # moment of inertia, 329376 mm⁴
+        data.Iy = math.pi * (data.Do**4 - data.Di**4)/64
+        data.Iz = data.Iy
+
+        # torsional constant, 10979 mm³
+        data.J  = math.pi * (data.Do**4 - data.Di**4)/(32*data.Do)
+
+        # cross-sectional area, 864 mm²
+        data.A  = (math.pi * (data.Do*0.5)**2) - (math.pi * (data.Di*0.5)**2)
+
+        # weight of profile, 6.79 kg/m
+        data.kg =  data.A*data.d * 0.001
+
 
 # handle dependencies
 try:
@@ -101,7 +118,77 @@ import random
 import bpy
 import gpu
 from gpu_extras.batch import batch_for_shader
-from bpy.types import (Panel, Menu, Operator)
+
+from bpy.props import (IntProperty, FloatProperty, EnumProperty, PointerProperty)
+from bpy.types import (Panel, Menu, Operator, PropertyGroup)
+
+
+class CustomProperties(PropertyGroup):
+    Do: FloatProperty(
+        name = "Do",
+        description = "Diameter of pipe outside",
+        default = 60,
+        min = 5,
+        max = 500
+        )
+
+    Di: FloatProperty(
+        name = "Di",
+        description = "Diameter of pipe inside. Needs to be smaller than Diameter outside",
+        default = 50,
+        min = 5,
+        max = 500
+        )
+
+    E: FloatProperty(
+        name = "E",
+        description = "modulus of elasticity",
+        default = 210,
+        min = 50,
+        max = 500
+        )
+
+    v: FloatProperty(
+        name = "v",
+        description = "Poisson's ratio",
+        default = 0.29,
+        min = 0.01,
+        max = 1
+        )
+
+    d: FloatProperty(
+        name = "d",
+        description = "Density",
+        default = 7.85,
+        min = 0.01,
+        max = 30.0
+        )
+
+    population_size: IntProperty(
+        name = "population_size",
+        description="Size of population for GA",
+        default = 20,
+        min = 10,
+        max = 1000
+        )
+
+    elitism: IntProperty(
+        name = "elitism",
+        description="Size of elitism for GA",
+        default = 2,
+        min = 1,
+        max = 100
+        )
+        
+    forces: EnumProperty(
+        name="forces:",
+        description="Force types",
+        items=[
+                ("max_axial", "Max axial", ""),
+                ("max_moment_y", "Max moment Y", ""),
+                ("max_moment_z", "Max moment Z", "")
+               ]
+        )
 
 
 def update_mesh():
@@ -171,9 +258,9 @@ def transfer_analyze():
 
         dist_vector = vertex_1.co - vertex_0.co
         length = dist_vector.length
-        
+
         kN = data.kg * -0.0098
-        
+
         load = kN * length * 0.5
         truss.add_node_load(node_0, "FZ", load)
         truss.add_node_load(node_1, "FZ", load)
@@ -181,25 +268,27 @@ def transfer_analyze():
     # analyze the model
     truss.analyze(check_statics=False, sparse=False)
 
-    # append results
+    # append result_max_axials
     max_axial = []
+    max_moment_y = []
+    max_moment_z = []
+
     for member in members:
-        value = truss.Members[member].max_axial()
-        max_axial.append(value)
+        max_axial.append(truss.Members[member].max_axial())
+        max_moment_y.append(truss.Members[member].max_moment("My"))
+        max_moment_z.append(truss.Members[member].max_moment("Mz"))
 
         """
-        max_axial()
-        min_axial()
-        min_moment("My")
-        min_moment("Mz")
         deflection("dx", x=0)
         deflection("dy", x=0)
-        deflection("dz", x=0))
+        deflection("dz", x=0)
         """
 
     # save as current frame
     frame = bpy.context.scene.frame_current
-    data.result[frame] = max_axial
+    data.result_max_axial[frame] = max_axial
+    data.result_max_moment_y[frame] = max_moment_y
+    data.result_max_moment_z[frame] = max_moment_z
 
 
 # genetic algorithm
@@ -256,7 +345,22 @@ class individual(object):
     def cal_fitness(self):
         transfer_analyze()
         frame = bpy.context.scene.frame_current
-        fitness = max(data.result[frame])
+
+        # get forcetyp and force
+        if data.force_type_viz == "max_axial":
+            result = data.result_max_axial
+    
+        elif data.force_type_viz == "max_moment_y":
+            result = data.result_max_moment_y
+            
+        elif data.force_type_viz == "max_moment_z":
+            result = data.result_max_moment_z
+            
+        else:
+            pass
+        
+        # get fitness
+        fitness = max(result[frame])
         return fitness
 
 
@@ -321,7 +425,7 @@ def create_curves():
     frame = bpy.context.scene.frame_current
 
     # draw curves
-    for member_id, max_axial in enumerate(data.result[frame]):
+    for member_id, max_axial in enumerate(data.result_max_axial[frame]):
         # set color
         if max_axial > 0:
             r,g,b = 1,0,0
@@ -329,7 +433,7 @@ def create_curves():
             r,g,b = 0,0,1
 
         # map value for geometry
-        curve_radius = max_axial * data.scale
+        curve_radius = max_axial * data.scale_max_axial
 
         vertex_0_id = data.edges[member_id].vertices[0]
         vertex_1_id = data.edges[member_id].vertices[1]
@@ -389,13 +493,30 @@ def update_curves():
     frame = bpy.context.scene.frame_current
 
     for id, obj in enumerate(data.curves):
+        # get forcetyp and force
+        if data.force_type_viz == "max_axial":
+            result = data.result_max_axial
+            scale = data.scale_max_axial
+    
+        elif data.force_type_viz == "max_moment_y":
+            result = data.result_max_moment_y
+            scale = data.scale_max_moment_y
+            
+        elif data.force_type_viz == "max_moment_z":
+            result = data.result_max_moment_z
+            scale = data.scale_max_moment_z
+            
+        else:
+            pass
+
+        force = result[frame][id]
+
         # get curve from curve-obj
         curve_name = obj.data.name
         curve = bpy.data.curves[curve_name]
-        max_axial = data.result[frame][id]
 
         # set color
-        if max_axial > 0:
+        if force > 0:
             r,g,b = 1,0,0
         else:
             r,g,b = 0,0,1
@@ -404,7 +525,7 @@ def update_curves():
         mat.diffuse_color = (r,g,b,1)
 
         # change curve bevel
-        curve_radius = max_axial * data.scale
+        curve_radius = force * scale
         curve.bevel_depth = curve_radius
 
         # change location
@@ -526,7 +647,7 @@ class WM_OT_calculate_single_frame(Operator):
     def execute(self, context):
         reset_data()
         reset_collection_geometry_material()
-        
+
         transfer_analyze()
         create_curves()
 
@@ -593,7 +714,19 @@ class WM_OT_viz_scale_up(Operator):
     bl_idname = "wm.viz_scale_up"
 
     def execute(self, context):
-        data.scale = data.scale * 1.25
+        # get forcetyp and force
+        if data.force_type_viz == "max_axial":
+            data.scale_max_axial = data.scale_max_axial * 1.25
+    
+        elif data.force_type_viz == "max_moment_y":
+            data.scale_max_moment_y = data.scale_max_moment_y * 1.25
+            
+        elif data.force_type_viz == "max_moment_z":
+            data.scale_max_moment_z = data.scale_max_moment_z * 1.25
+            
+        else:
+            pass
+
         update_curves()
 
         return {"FINISHED"}
@@ -604,7 +737,29 @@ class WM_OT_viz_scale_down(Operator):
     bl_idname = "wm.viz_scale_down"
 
     def execute(self, context):
-        data.scale = data.scale * 0.75
+        # get forcetyp and force
+        if data.force_type_viz == "max_axial":
+            data.scale_max_axial = data.scale_max_axial * 0.75
+    
+        elif data.force_type_viz == "max_moment_y":
+            data.scale_max_moment_y = data.scale_max_moment_y * 0.75
+            
+        elif data.force_type_viz == "max_moment_z":
+            data.scale_max_moment_z = data.scale_max_moment_z * 0.75
+            
+        else:
+            pass
+
+        update_curves()
+
+        return {"FINISHED"}
+
+
+class WM_OT_viz_update(Operator):
+    bl_label = "viz_update"
+    bl_idname = "wm.viz_update"
+
+    def execute(self, context):
         update_curves()
 
         return {"FINISHED"}
@@ -640,6 +795,7 @@ class OBJECT_PT_CustomPanel(Panel):
     def draw(self, context):
         layout = self.layout
         scene = context.scene
+        phaenotyp = scene.phaenotyp
 
         # install scipy and PyNite if necessary
         if data.scipy_loaded == False or data.pynite_loaded == False:
@@ -650,6 +806,32 @@ class OBJECT_PT_CustomPanel(Panel):
             box.label(text="Installation can take a few minutes")
 
         else:
+            # define material and geometry
+            box = layout.box()
+            box.label(text="Setup:")
+            
+            box.prop(phaenotyp, "Do", text="Diameter outside")
+            box.prop(phaenotyp, "Di", text="Diameter inside")
+            box.prop(phaenotyp, "E", text="Modulus of elasticity")
+            box.prop(phaenotyp, "v", text="Poisson's ratio")
+            box.prop(phaenotyp, "d", text="Density")
+            
+            data.Do = phaenotyp.Do
+            if phaenotyp.Di < phaenotyp.Do: # apply value only if smaller
+                data.Di = phaenotyp.Di
+            
+            data.E = phaenotyp.E
+            data.v = phaenotyp.v
+            data.d = phaenotyp.d
+
+            data.update() # calculate G, Iy, Iz, J, A, kg
+            box.label(text="G = " + str(round(data.G,2)) + " GPa")
+            box.label(text="Iy = " + str(int(data.Iy)) + " mm⁴")
+            box.label(text="Iz = " + str(int(data.Iz)) + " mm⁴")
+            box.label(text="J = " + str(int(data.J)) + " mm³")
+            box.label(text="A = " + str(int(data.A)) + " mm²")
+            box.label(text="kg = " + str(round(data.kg,2)) + " kg/m")
+        
             # define active object
             box = layout.box()
             box.label(text="Structure:")
@@ -676,6 +858,11 @@ class OBJECT_PT_CustomPanel(Panel):
                         # Genetic Mutation:
                         box = layout.box()
                         box.label(text="Genetic Mutation:")
+                        box.prop(phaenotyp, "population_size", text="Size of population for GA")
+                        box.prop(phaenotyp, "elitism", text="Size of elitism for GA")
+                        box.prop(phaenotyp, "forces", text="Fitness")
+                        data.force_type_viz = phaenotyp.forces
+                        
 
                         for keyblock in shape_key.key_blocks:
                             name = keyblock.name
@@ -685,19 +872,25 @@ class OBJECT_PT_CustomPanel(Panel):
                         box.operator("wm.genetic_mutation", text="Start")
 
                     # Visualization
-
                     if data.done:
                         box = layout.box()
                         box.label(text="Vizualisation:")
+                        box.prop(phaenotyp, "forces", text="Force")
+                        data.force_type_viz = phaenotyp.forces
+                        box.operator("wm.viz_update", text="update")
+                        
                         col = box.column_flow(columns=2, align=False)
                         col.operator("wm.viz_scale_up", text="Up")
                         col.operator("wm.viz_scale_down", text="Down")
+
 
             box = layout.box()
             box.operator("wm.reset", text="Reset")
 
 
 classes = (
+    CustomProperties,
+    
     WM_OT_install_dep,
     WM_OT_set_structure,
     WM_OT_set_support,
@@ -707,6 +900,7 @@ classes = (
 
     WM_OT_viz_scale_up,
     WM_OT_viz_scale_down,
+    WM_OT_viz_update,
 
     WM_OT_reset,
     OBJECT_PT_CustomPanel
@@ -716,12 +910,16 @@ def register():
     from bpy.utils import register_class
     for cls in classes:
         register_class(cls)
+    
+    bpy.types.Scene.phaenotyp = PointerProperty(type=CustomProperties)
 
 
 def unregister():
     from bpy.utils import unregister_class
     for cls in reversed(classes):
         unregister_class(cls)
+    
+    del bpy.types.Scene.phaenotyp
 
 
 def draw():
