@@ -59,9 +59,9 @@ class data:
     force_type_viz = "max_axial"
 
     # visualization
-    scale_max_axial = 1
-    scale_max_moment_y = 1
-    scale_max_moment_z = 1
+    scale_max_axial = 0.00005
+    scale_max_moment_y = 0.00005
+    scale_max_moment_z = 0.00005
 
     curves = []
     materials = []
@@ -93,15 +93,15 @@ class data:
         # shear modulus, 81.4 GPa
         data.G  = data.E * data.v
 
-        # moment of inertia, 329376 mm⁴
-        data.Iy = math.pi * (data.Do**4 - data.Di**4)/64
+        # moment of inertia, 329376 mm⁴ | 32.9376 cm⁴
+        data.Iy = math.pi * (data.Do**4 - data.Di**4)/64 * 0.0001
         data.Iz = data.Iy
 
-        # torsional constant, 10979 mm³
-        data.J  = math.pi * (data.Do**4 - data.Di**4)/(32*data.Do)
+        # torsional constant, 10979 mm³ | 10.979 cm³
+        data.J  = math.pi * (data.Do**4 - data.Di**4)/(32*data.Do) * 0.001
 
-        # cross-sectional area, 864 mm²
-        data.A  = (math.pi * (data.Do*0.5)**2) - (math.pi * (data.Di*0.5)**2)
+        # cross-sectional area, 864 mm² | 8,64 cm²
+        data.A  = (math.pi * (data.Do*0.5)**2) - (math.pi * (data.Di*0.5)**2) * 0.01
 
         # weight of profile, 6.79 kg/m
         data.kg =  data.A*data.d * 0.001
@@ -236,7 +236,7 @@ def transfer_analyze():
 
         # all other nodes are only fixed in loc z-direction
         else:
-            truss.def_support(name, False, False, True, False, False, False)
+            truss.def_support(name, False, True, True, False, False, False)
 
     # create members
     members = []
@@ -249,7 +249,7 @@ def transfer_analyze():
         node_0 = str("node_") + str(vertex_0_id)
         node_1 = str("node_") + str(vertex_1_id)
 
-        truss.add_member(name, node_0, node_1, data.E, data.G, data.Iy, data.Iz, data.J, data.A)
+        truss.add_member(name, node_0, node_1, 100, 100, 100, 100, 100, 100)
         members.append(name)
 
         # add gravity
@@ -262,8 +262,8 @@ def transfer_analyze():
         kN = data.kg * -0.0098
 
         load = kN * length * 0.5
-        truss.add_node_load(node_0, "FZ", load)
-        truss.add_node_load(node_1, "FZ", load)
+        truss.add_node_load(node_0, "FZ", 100)
+        truss.add_node_load(node_1, "FZ", 100)
 
     # analyze the model
     truss.analyze(check_statics=False, sparse=False)
@@ -825,10 +825,10 @@ class OBJECT_PT_CustomPanel(Panel):
 
             data.update() # calculate G, Iy, Iz, J, A, kg
             box.label(text="G = " + str(round(data.G,2)) + " GPa")
-            box.label(text="Iy = " + str(int(data.Iy)) + " mm⁴")
-            box.label(text="Iz = " + str(int(data.Iz)) + " mm⁴")
-            box.label(text="J = " + str(int(data.J)) + " mm³")
-            box.label(text="A = " + str(int(data.A)) + " mm²")
+            box.label(text="Iy = " + str(int(data.Iy)) + " cm⁴")
+            box.label(text="Iz = " + str(int(data.Iz)) + " cm⁴")
+            box.label(text="J = " + str(int(data.J)) + " cm³")
+            box.label(text="A = " + str(int(data.A)) + " cm²")
             box.label(text="kg = " + str(round(data.kg,2)) + " kg/m")
 
             # define active object
