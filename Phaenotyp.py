@@ -817,8 +817,7 @@ class OBJECT_PT_CustomPanel(Panel):
             box.prop(phaenotyp, "d", text="Density")
             
             data.Do = phaenotyp.Do
-            if phaenotyp.Di < phaenotyp.Do: # apply value only if smaller
-                data.Di = phaenotyp.Di
+            data.Di = phaenotyp.Di
             
             data.E = phaenotyp.E
             data.v = phaenotyp.v
