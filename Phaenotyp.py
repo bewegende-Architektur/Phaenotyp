@@ -51,10 +51,10 @@ class data:
     force_type_viz = "max_axial"
 
     # visualization
-    scale_max_axial = 0.15
-    scale_max_moment_y = 0.15
-    scale_max_moment_z = 0.15
-    
+    scale_max_axial = 1
+    scale_max_moment_y = 1
+    scale_max_moment_z = 1
+
     curves = []
     materials = []
 
@@ -79,7 +79,7 @@ class data:
     ga_state = "create initial population"
 
     chromosome = {}
-    
+
     @staticmethod
     def update():
         # shear modulus, 81.4 GPa
@@ -179,7 +179,7 @@ class CustomProperties(PropertyGroup):
         min = 1,
         max = 100
         )
-        
+
     forces: EnumProperty(
         name="forces:",
         description="Force types",
@@ -349,16 +349,16 @@ class individual(object):
         # get forcetyp and force
         if data.force_type_viz == "max_axial":
             result = data.result_max_axial
-    
+
         elif data.force_type_viz == "max_moment_y":
             result = data.result_max_moment_y
-            
+
         elif data.force_type_viz == "max_moment_z":
             result = data.result_max_moment_z
-            
+
         else:
             pass
-        
+
         # get fitness
         fitness = max(result[frame])
         return fitness
@@ -497,15 +497,15 @@ def update_curves():
         if data.force_type_viz == "max_axial":
             result = data.result_max_axial
             scale = data.scale_max_axial
-    
+
         elif data.force_type_viz == "max_moment_y":
             result = data.result_max_moment_y
             scale = data.scale_max_moment_y
-            
+
         elif data.force_type_viz == "max_moment_z":
             result = data.result_max_moment_z
             scale = data.scale_max_moment_z
-            
+
         else:
             pass
 
@@ -717,13 +717,13 @@ class WM_OT_viz_scale_up(Operator):
         # get forcetyp and force
         if data.force_type_viz == "max_axial":
             data.scale_max_axial = data.scale_max_axial * 1.25
-    
+
         elif data.force_type_viz == "max_moment_y":
             data.scale_max_moment_y = data.scale_max_moment_y * 1.25
-            
+
         elif data.force_type_viz == "max_moment_z":
             data.scale_max_moment_z = data.scale_max_moment_z * 1.25
-            
+
         else:
             pass
 
@@ -740,13 +740,13 @@ class WM_OT_viz_scale_down(Operator):
         # get forcetyp and force
         if data.force_type_viz == "max_axial":
             data.scale_max_axial = data.scale_max_axial * 0.75
-    
+
         elif data.force_type_viz == "max_moment_y":
             data.scale_max_moment_y = data.scale_max_moment_y * 0.75
-            
+
         elif data.force_type_viz == "max_moment_z":
             data.scale_max_moment_z = data.scale_max_moment_z * 0.75
-            
+
         else:
             pass
 
@@ -809,16 +809,16 @@ class OBJECT_PT_CustomPanel(Panel):
             # define material and geometry
             box = layout.box()
             box.label(text="Setup:")
-            
+
             box.prop(phaenotyp, "Do", text="Diameter outside")
             box.prop(phaenotyp, "Di", text="Diameter inside")
             box.prop(phaenotyp, "E", text="Modulus of elasticity")
             box.prop(phaenotyp, "v", text="Poisson's ratio")
             box.prop(phaenotyp, "d", text="Density")
-            
+
             data.Do = phaenotyp.Do
             data.Di = phaenotyp.Di
-            
+
             data.E = phaenotyp.E
             data.v = phaenotyp.v
             data.d = phaenotyp.d
@@ -830,7 +830,7 @@ class OBJECT_PT_CustomPanel(Panel):
             box.label(text="J = " + str(int(data.J)) + " mm³")
             box.label(text="A = " + str(int(data.A)) + " mm²")
             box.label(text="kg = " + str(round(data.kg,2)) + " kg/m")
-        
+
             # define active object
             box = layout.box()
             box.label(text="Structure:")
@@ -861,7 +861,7 @@ class OBJECT_PT_CustomPanel(Panel):
                         box.prop(phaenotyp, "elitism", text="Size of elitism for GA")
                         box.prop(phaenotyp, "forces", text="Fitness")
                         data.force_type_viz = phaenotyp.forces
-                        
+
 
                         for keyblock in shape_key.key_blocks:
                             name = keyblock.name
@@ -877,7 +877,7 @@ class OBJECT_PT_CustomPanel(Panel):
                         box.prop(phaenotyp, "forces", text="Force")
                         data.force_type_viz = phaenotyp.forces
                         box.operator("wm.viz_update", text="update")
-                        
+
                         col = box.column_flow(columns=2, align=False)
                         col.operator("wm.viz_scale_up", text="Up")
                         col.operator("wm.viz_scale_down", text="Down")
@@ -889,7 +889,7 @@ class OBJECT_PT_CustomPanel(Panel):
 
 classes = (
     CustomProperties,
-    
+
     WM_OT_install_dep,
     WM_OT_set_structure,
     WM_OT_set_support,
@@ -909,7 +909,7 @@ def register():
     from bpy.utils import register_class
     for cls in classes:
         register_class(cls)
-    
+
     bpy.types.Scene.phaenotyp = PointerProperty(type=CustomProperties)
 
 
@@ -917,7 +917,7 @@ def unregister():
     from bpy.utils import unregister_class
     for cls in reversed(classes):
         unregister_class(cls)
-    
+
     del bpy.types.Scene.phaenotyp
 
 
