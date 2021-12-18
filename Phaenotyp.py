@@ -11,19 +11,39 @@ bl_info = {
 # Analysis with: https://github.com/JWock82/PyNite
 # GA based on: https://www.geeksforgeeks.org/genetic-algorithms/
 
+# Material properties:
+# https://www.johannes-strommer.com/formeln/flaechentraegheitsmoment-widerstandsmoment/
+# https://www.maschinenbau-wissen.de/skript3/mechanik/festigkeitslehre/134-knicken-euler
+
+import math
 
 class data:
     # dependencies
     scipy_loaded = False
     pynite_loaded = False
 
-    # properties
-    E = 21000
-    G = 100
-    Iy = 100
-    Iz = 100
-    J = 100
-    A = 100
+    # steel pipe with 60/50 mm as example
+    Do =   60 # mm (Diameter outside)
+    Di =   50 # mm (Diameter inside)
+    E  =  210 # kN/mm2 modulus of elasticity for steel
+    v  = 0.29 # Poisson's ratio of steel
+    d  = 7.85 # g/cm3 density of steel
+    
+    # shear modulus, 81.4 GPa
+    G  = E * v
+    
+    # moment of inertia, 329376 mm⁴
+    Iy = math.pi * (Do**4 - Di**4)/64
+    Iz = Iy
+    
+    # torsional constant, 10979 mm³
+    J  = math.pi * (Do**4 - Di**4)/(32*Do)
+    
+    # cross-sectional area, 864 mm2
+    A  = (math.pi * (Do*0.5)**2) - (math.pi * (Di*0.5)**2)
+    
+    # weight of profile, 6.79 kg/m
+    kg =  A*d * 0.001
 
     # store geoemtry
     obj = None
@@ -36,7 +56,7 @@ class data:
     result = {}
 
     # visualization
-    scale = 0.0002
+    scale = 0.15
     curves = []
     materials = []
 
@@ -150,9 +170,11 @@ def transfer_analyze():
         vertex_1 = data.vertices[vertex_1_id]
 
         dist_vector = vertex_1.co - vertex_0.co
-        dist = dist_vector.length
-
-        load = 10 * dist * 0.5 * (-1)
+        length = dist_vector.length
+        
+        kN = data.kg * -0.0098
+        
+        load = kN * length * 0.5
         truss.add_node_load(node_0, "FZ", load)
         truss.add_node_load(node_1, "FZ", load)
 
@@ -772,5 +794,10 @@ if __name__ == "__main__":
 
 try:
     from PyNite import FEModel3D
+except:
+    pass
+
+try:
+    import scipy
 except:
     pass
