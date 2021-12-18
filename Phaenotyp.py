@@ -15,6 +15,14 @@ bl_info = {
 # https://www.johannes-strommer.com/formeln/flaechentraegheitsmoment-widerstandsmoment/
 # https://www.maschinenbau-wissen.de/skript3/mechanik/festigkeitslehre/134-knicken-euler
 
+import bpy
+import gpu
+from gpu_extras.batch import batch_for_shader
+
+from bpy.props import (IntProperty, FloatProperty, EnumProperty, PointerProperty)
+from bpy.types import (Panel, Menu, Operator, PropertyGroup)
+from bpy.app.handlers import persistent
+
 import math
 
 class data:
@@ -114,13 +122,6 @@ except:
 
 from threading import Thread
 import random
-
-import bpy
-import gpu
-from gpu_extras.batch import batch_for_shader
-
-from bpy.props import (IntProperty, FloatProperty, EnumProperty, PointerProperty)
-from bpy.types import (Panel, Menu, Operator, PropertyGroup)
 
 
 class CustomProperties(PropertyGroup):
@@ -249,7 +250,6 @@ def transfer_analyze():
         node_1 = str("node_") + str(vertex_1_id)
 
         truss.add_member(name, node_0, node_1, data.E, data.G, data.Iy, data.Iz, data.J, data.A)
-
         members.append(name)
 
         # add gravity
@@ -905,21 +905,6 @@ classes = (
     OBJECT_PT_CustomPanel
 )
 
-def register():
-    from bpy.utils import register_class
-    for cls in classes:
-        register_class(cls)
-
-    bpy.types.Scene.phaenotyp = PointerProperty(type=CustomProperties)
-
-
-def unregister():
-    from bpy.utils import unregister_class
-    for cls in reversed(classes):
-        unregister_class(cls)
-
-    del bpy.types.Scene.phaenotyp
-
 
 def draw():
     for support_id in data.support_ids:
@@ -954,10 +939,7 @@ def draw():
         shader.uniform_float("color", (1, 1, 1, 1))
         batch.draw(shader)
 
-
-draw_handler = bpy.types.SpaceView3D.draw_handler_add(draw, (), "WINDOW", "POST_VIEW")
-
-
+@persistent
 def update_post(scene):
     update_mesh()
     # Analyze
@@ -983,8 +965,22 @@ def update_post(scene):
     update_curves()
 
 
-bpy.app.handlers.frame_change_post.clear()
-bpy.app.handlers.frame_change_post.append(update_post)
+def register():
+    from bpy.utils import register_class
+    for cls in classes:
+        register_class(cls)
+
+    bpy.types.Scene.phaenotyp = PointerProperty(type=CustomProperties)
+    draw_handler = bpy.types.SpaceView3D.draw_handler_add(draw, (), "WINDOW", "POST_VIEW")
+    bpy.app.handlers.frame_change_post.append(update_post)
+
+def unregister():
+    from bpy.utils import unregister_class
+    for cls in reversed(classes):
+        unregister_class(cls)
+
+    del bpy.types.Scene.phaenotyp
+    bpy.app.handlers.frame_change_post.remove(update_post)
 
 if __name__ == "__main__":
     register()
