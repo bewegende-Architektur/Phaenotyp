@@ -4,7 +4,7 @@ by bewegende Architektur e.U. and Karl Deix
 Phänotyp is an Add-On for Blender 3D  
 https://www.blender.org/
 
-It allows to perform genetic optimization of architectural structures. Furthermore it can be used as to analyze moving shapes. This is especially useful when working on kinematic architectural projects. The tool is focusing on early stages of the design process and can be used for free without any warranty. If you want to participate in the project please contact me via:  
+It allows to perform genetic optimization of architectural structures. Furthermore it can be used to analyze moving shapes. This is especially useful when working on kinematic architectural projects. The tool is focusing on early stages of the design process and can be used for free without any warranty. If you want to participate in the project please get in contact via:  
 chris@bewegende-Architektur.com
 
 Analysis is done with pynite:  
