@@ -101,10 +101,10 @@ class data:
         data.J  = math.pi * (data.Do**4 - data.Di**4)/(32*data.Do) * 0.001
 
         # cross-sectional area, 864 mm² | 8,64 cm²
-        data.A  = (math.pi * (data.Do*0.5)**2) - (math.pi * (data.Di*0.5)**2) * 0.01
+        data.A  = ((math.pi * (data.Do*0.5)**2) - (math.pi * (data.Di*0.5)**2)) * 0.01
 
         # weight of profile, 6.79 kg/m
-        data.kg =  data.A*data.d * 0.001
+        data.kg =  data.A*data.d * 0.1
 
 
 # handle dependencies
@@ -824,12 +824,12 @@ class OBJECT_PT_CustomPanel(Panel):
             data.d = phaenotyp.d
 
             data.update() # calculate G, Iy, Iz, J, A, kg
-            box.label(text="G = " + str(round(data.G,2)) + " GPa")
-            box.label(text="Iy = " + str(int(data.Iy)) + " cm⁴")
-            box.label(text="Iz = " + str(int(data.Iz)) + " cm⁴")
-            box.label(text="J = " + str(int(data.J)) + " cm³")
-            box.label(text="A = " + str(int(data.A)) + " cm²")
-            box.label(text="kg = " + str(round(data.kg,2)) + " kg/m")
+            box.label(text="G = " + str(round(data.G, 5)) + " GPa")
+            box.label(text="Iy = " + str(round(data.Iy, 5)) + " cm⁴")
+            box.label(text="Iz = " + str(round(data.Iz, 5)) + " cm⁴")
+            box.label(text="J = " + str(round(data.J, 5)) + " cm³")
+            box.label(text="A = " + str(round(data.A, 5)) + " cm²")
+            box.label(text="kg = " + str(round(data.kg, 5)) + " kg/m")
 
             # define active object
             box = layout.box()
