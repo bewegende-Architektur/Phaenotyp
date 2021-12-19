@@ -22,7 +22,7 @@ https://www.maschinenbau-wissen.de/skript3/mechanik/festigkeitslehre/134-knicken
 * Phänotyp is working as connection to PyNite
 * Right now the focus is on structures with trusses
 * Single frames, animations and genetic mutations with shape-keys can be performed
-* This is a very early stage of development. The tool is intended to be used by more experienced uses of Blender 3D at the moment.
+* This is a very early stage of development. The tool is intended to be used by more experienced users of Blender 3D at the moment.
 
 ## Known issues
 * The installation of scipy and blender can cause problems
