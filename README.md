@@ -38,9 +38,9 @@ https://www.maschinenbau-wissen.de/skript3/mechanik/festigkeitslehre/134-knicken
 
 ## Getting started
 You can find three qick tutorials on Youtube:
-https://youtu.be/shloSw9HjVI
-https://youtu.be/i-5duKyuBiU
-https://youtu.be/F5ilsBDoIkY
+https://youtu.be/shloSw9HjVI  
+https://youtu.be/i-5duKyuBiU  
+https://youtu.be/F5ilsBDoIkY  
 
 ## Current release
 from 2021-12-18 is version 0.0.1 for blender 3.0.0:  
