@@ -1,5 +1,6 @@
 # Phänotyp
-by bewegende Architektur e.U. and Karl Deix  
+by bewegende Architektur e.U.  
+with support of Karl Deix  
 
 Phänotyp is an Add-On for Blender 3D  
 https://www.blender.org/
