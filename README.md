@@ -33,7 +33,7 @@ https://www.maschinenbau-wissen.de/skript3/mechanik/festigkeitslehre/134-knicken
 * Adding more functions of fitness and its combination like created volume, area, light, shape and other
 
 ## Getting started
-You can find three qick tutorials on Youtube:  
+You can find three quick tutorials on Youtube:  
 https://youtu.be/shloSw9HjVI  
 https://youtu.be/i-5duKyuBiU  
 https://youtu.be/F5ilsBDoIkY  
