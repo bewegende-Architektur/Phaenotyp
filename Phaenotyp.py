@@ -1,8 +1,9 @@
+
 bl_info = {
     "name": "Phänotyp",
     "description": "Genetic optimization of architectural structures",
     "author": "bewegende Architektur e.U. and Karl Deix",
-    "version": (0, 0, 1),
+    "version": (0, 0, 2),
     "blender": (3, 0, 0),
     "location": "3D View > Tools",
 }
@@ -24,12 +25,15 @@ from bpy.types import (Panel, Menu, Operator, PropertyGroup)
 from bpy.app.handlers import persistent
 
 import math
+from threading import Thread
+import random
+
+import sys
+import os
+
+from PyNite import FEModel3D
 
 class data:
-    # dependencies
-    scipy_loaded = False
-    pynite_loaded = False
-
     # steel pipe with 60/50 mm as example
     Do =   60 # mm (diameter outside)
     Di =   50 # mm (diameter inside)
@@ -105,23 +109,6 @@ class data:
 
         # weight of profile, 6.79 kg/m
         data.kg =  data.A*data.d * 0.1
-
-
-# handle dependencies
-try:
-    import scipy
-    data.scipy_loaded = True
-except:
-    data.scipy_loaded = False
-
-try:
-    from PyNite import FEModel3D
-    data.pynite_loaded = True
-except:
-    data.pynite_loaded = False
-
-from threading import Thread
-import random
 
 
 class CustomProperties(PropertyGroup):
@@ -550,6 +537,7 @@ def reset_data():
     data.chromosome = {}
     data.ga_state = "create initial population"
 
+
 def reset_collection_geometry_material():
     # reset scene
 
@@ -571,41 +559,6 @@ def reset_collection_geometry_material():
 
     collection = bpy.data.collections.new("<pynite>")
     bpy.context.scene.collection.children.link(collection)
-
-
-class WM_OT_install_dep(Operator):
-    bl_label = "install_dep"
-    bl_idname = "wm.install_dep"
-    bl_description = "Please restart as Admin to install dependencies"
-
-    def execute(self, context):
-        import subprocess
-        import sys
-
-        py_exec = str(sys.executable)
-        subprocess.call([py_exec, "-m", "ensurepip", "--user" ])
-        subprocess.call([py_exec, "-m", "pip", "install", "--upgrade", "pip" ])
-
-        if data.scipy_loaded == False:
-            subprocess.call([py_exec,"-m", "pip", "install", f"--target={py_exec[:-14]}" + "lib", "SciPy"])
-
-        if data.pynite_loaded == False:
-            subprocess.call([py_exec,"-m", "pip", "install", "--upgrade", "PyNiteFEA"])
-
-        # try to load them again
-        try:
-            import scipy
-            data.scipy_loaded = True
-        except:
-            data.scipy_loaded = False
-
-        try:
-            from PyNite import FEModel3D
-            data.pynite_loaded = True
-        except:
-            data.pynite_loaded = False
-
-        return {"FINISHED"}
 
 
 class WM_OT_set_structure(Operator):
@@ -797,90 +750,80 @@ class OBJECT_PT_CustomPanel(Panel):
         scene = context.scene
         phaenotyp = scene.phaenotyp
 
-        # install scipy and PyNite if necessary
-        if data.scipy_loaded == False or data.pynite_loaded == False:
-            # define active object
+        # define material and geometry
+        box = layout.box()
+        box.label(text="Setup:")
+
+        box.prop(phaenotyp, "Do", text="Diameter outside")
+        box.prop(phaenotyp, "Di", text="Diameter inside")
+        box.prop(phaenotyp, "E", text="Modulus of elasticity")
+        box.prop(phaenotyp, "v", text="Poisson's ratio")
+        box.prop(phaenotyp, "d", text="Density")
+
+        data.Do = phaenotyp.Do
+        data.Di = phaenotyp.Di
+
+        data.E = phaenotyp.E
+        data.v = phaenotyp.v
+        data.d = phaenotyp.d
+
+        data.update() # calculate G, Iy, Iz, J, A, kg
+        box.label(text="G = " + str(round(data.G, 5)) + " GPa")
+        box.label(text="Iy = " + str(round(data.Iy, 5)) + " cm⁴")
+        box.label(text="Iz = " + str(round(data.Iz, 5)) + " cm⁴")
+        box.label(text="J = " + str(round(data.J, 5)) + " cm³")
+        box.label(text="A = " + str(round(data.A, 5)) + " cm²")
+        box.label(text="kg = " + str(round(data.kg, 5)) + " kg/m")
+
+        # define active object
+        box = layout.box()
+        box.label(text="Structure:")
+        box.operator("wm.set_structure", text="Set")
+
+        if data.obj:
+            box.label(text = data.obj.name_full + " is defined as structure")
+
+            # define support
             box = layout.box()
-            box.label(text="Installation:")
-            box.operator("wm.install_dep", text="Install")
-            box.label(text="Installation can take a few minutes")
+            box.label(text="Support:")
+            box.operator("wm.set_support", text="Set")
+            if len(data.support_ids) > 0:
+                box.label(text = str(len(data.support_ids)) + " vertices defined as support")
 
-        else:
-            # define material and geometry
-            box = layout.box()
-            box.label(text="Setup:")
-
-            box.prop(phaenotyp, "Do", text="Diameter outside")
-            box.prop(phaenotyp, "Di", text="Diameter inside")
-            box.prop(phaenotyp, "E", text="Modulus of elasticity")
-            box.prop(phaenotyp, "v", text="Poisson's ratio")
-            box.prop(phaenotyp, "d", text="Density")
-
-            data.Do = phaenotyp.Do
-            data.Di = phaenotyp.Di
-
-            data.E = phaenotyp.E
-            data.v = phaenotyp.v
-            data.d = phaenotyp.d
-
-            data.update() # calculate G, Iy, Iz, J, A, kg
-            box.label(text="G = " + str(round(data.G, 5)) + " GPa")
-            box.label(text="Iy = " + str(round(data.Iy, 5)) + " cm⁴")
-            box.label(text="Iz = " + str(round(data.Iz, 5)) + " cm⁴")
-            box.label(text="J = " + str(round(data.J, 5)) + " cm³")
-            box.label(text="A = " + str(round(data.A, 5)) + " cm²")
-            box.label(text="kg = " + str(round(data.kg, 5)) + " kg/m")
-
-            # define active object
-            box = layout.box()
-            box.label(text="Structure:")
-            box.operator("wm.set_structure", text="Set")
-
-            if data.obj:
-                box.label(text = data.obj.name_full + " is defined as structure")
-
-                # define support
+                # Analysis
                 box = layout.box()
-                box.label(text="Support:")
-                box.operator("wm.set_support", text="Set")
-                if len(data.support_ids) > 0:
-                    box.label(text = str(len(data.support_ids)) + " vertices defined as support")
+                box.label(text="Analysis:")
+                box.operator("wm.calculate_single_frame", text="Single Frame")
+                box.operator("wm.calculate_animation", text="Animation")
 
-                    # Analysis
+                shape_key = data.obj.data.shape_keys
+                if shape_key:
+                    # Genetic Mutation:
                     box = layout.box()
-                    box.label(text="Analysis:")
-                    box.operator("wm.calculate_single_frame", text="Single Frame")
-                    box.operator("wm.calculate_animation", text="Animation")
+                    box.label(text="Genetic Mutation:")
+                    box.prop(phaenotyp, "population_size", text="Size of population for GA")
+                    box.prop(phaenotyp, "elitism", text="Size of elitism for GA")
+                    box.prop(phaenotyp, "forces", text="Fitness")
+                    data.force_type_viz = phaenotyp.forces
 
-                    shape_key = data.obj.data.shape_keys
-                    if shape_key:
-                        # Genetic Mutation:
-                        box = layout.box()
-                        box.label(text="Genetic Mutation:")
-                        box.prop(phaenotyp, "population_size", text="Size of population for GA")
-                        box.prop(phaenotyp, "elitism", text="Size of elitism for GA")
-                        box.prop(phaenotyp, "forces", text="Fitness")
-                        data.force_type_viz = phaenotyp.forces
+                    for keyblock in shape_key.key_blocks:
+                        name = keyblock.name
+                        box.label(text=name)
+
+                    box.operator("wm.genetic_mutation", text="Start")
 
 
-                        for keyblock in shape_key.key_blocks:
-                            name = keyblock.name
-                            box.label(text=name)
+                # Visualization
+                if data.done:
+                    box = layout.box()
+                    box.label(text="Vizualisation:")
+                    box.prop(phaenotyp, "forces", text="Force")
+                    data.force_type_viz = phaenotyp.forces
+                    box.operator("wm.viz_update", text="update")
 
-
-                        box.operator("wm.genetic_mutation", text="Start")
-
-                    # Visualization
-                    if data.done:
-                        box = layout.box()
-                        box.label(text="Vizualisation:")
-                        box.prop(phaenotyp, "forces", text="Force")
-                        data.force_type_viz = phaenotyp.forces
-                        box.operator("wm.viz_update", text="update")
-
-                        col = box.column_flow(columns=2, align=False)
-                        col.operator("wm.viz_scale_up", text="Up")
-                        col.operator("wm.viz_scale_down", text="Down")
+                    col = box.column_flow(columns=2, align=False)
+                    col.operator("wm.viz_scale_up", text="Up")
+                    col.operator("wm.viz_scale_down", text="Down")
 
 
             box = layout.box()
@@ -890,7 +833,6 @@ class OBJECT_PT_CustomPanel(Panel):
 classes = (
     CustomProperties,
 
-    WM_OT_install_dep,
     WM_OT_set_structure,
     WM_OT_set_support,
     WM_OT_calculate_single_frame,
@@ -939,6 +881,7 @@ def draw():
         shader.uniform_float("color", (1, 1, 1, 1))
         batch.draw(shader)
 
+
 @persistent
 def update_post(scene):
     update_mesh()
@@ -974,6 +917,7 @@ def register():
     draw_handler = bpy.types.SpaceView3D.draw_handler_add(draw, (), "WINDOW", "POST_VIEW")
     bpy.app.handlers.frame_change_post.append(update_post)
 
+
 def unregister():
     from bpy.utils import unregister_class
     for cls in reversed(classes):
@@ -982,15 +926,6 @@ def unregister():
     del bpy.types.Scene.phaenotyp
     bpy.app.handlers.frame_change_post.remove(update_post)
 
+
 if __name__ == "__main__":
     register()
-
-try:
-    from PyNite import FEModel3D
-except:
-    pass
-
-try:
-    import scipy
-except:
-    pass
