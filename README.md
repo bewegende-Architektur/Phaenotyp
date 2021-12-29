@@ -24,10 +24,6 @@ https://www.maschinenbau-wissen.de/skript3/mechanik/festigkeitslehre/134-knicken
 * Single frames, animations and genetic mutations with shape-keys can be performed
 * This is a very early stage of development. The tool is intended to be used by more experienced users of Blender 3D at the moment.
 
-## Known issues
-* The installation of scipy and blender can cause problems
-* Be sure to run Phänotyp as administrator for the first time 
-
 ## Roadmap
 * Better implementation for different types of supports and loads
 * Small material library and common sections
