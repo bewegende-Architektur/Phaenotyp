@@ -3,7 +3,7 @@ bl_info = {
     "name": "Phänotyp",
     "description": "Genetic optimization of architectural structures",
     "author": "bewegende Architektur e.U. and Karl Deix",
-    "version": (0, 0, 2),
+    "version": (0, 0, 3),
     "blender": (3, 0, 0),
     "location": "3D View > Tools",
 }
@@ -33,16 +33,20 @@ import os
 
 from PyNite import FEModel3D
 
+# wird vielleicht doch nicht gebraucht?
+from numpy import array
+from numpy import empty
+from numpy import append
+
 class data:
     # steel pipe with 60/50 mm as example
-    Do =   60 # mm (diameter outside)
-    Di =   50 # mm (diameter inside)
-    E  =  210 # kN/mm2 modulus of elasticity for steel
-    v  = 0.29 # Poisson's ratio of steel
-    d  = 7.85 # g/cm3 density of steel
+    Do =     60 # mm (diameter outside)
+    Di =     50 # mm (diameter inside)
+    E  =  21000 # kN/cm² modulus of elasticity for steel
+    G  =   8100 # kN/cm² shear modulus
+    d  =   7.85 # g/cm³ density of steel
 
     # calculated in data.update()
-    G  = None
     Iy = None
     Iz = None
     J  = None
@@ -57,18 +61,26 @@ class data:
     support_ids = []
 
     # results for each frame
-    result_max_axial = {}
-    result_max_moment_y = {}
-    result_max_moment_z = {}
-    force_type_viz = "max_axial"
+    result_axial = {}
+    result_moment_y = {}
+    result_moment_z = {}
+    result_shear_y = {}
+    result_shear_z = {}
+    result_torque = {}
+    result_sigma = {}
+    result_deflection = {}
+
+    force_type_viz = "sigma"
 
     # visualization
-    scale_max_axial = 0.00005
-    scale_max_moment_y = 0.00005
-    scale_max_moment_z = 0.00005
+    scale_sigma = 0.0001
+    scale_axial = 0.0001
+    scale_moment_y = 0.0001
+    scale_moment_z = 0.0001
 
     curves = []
     materials = []
+    texts = []
 
     # triggers
     calculate_update_post = False
@@ -94,59 +106,70 @@ class data:
 
     @staticmethod
     def update():
-        # shear modulus, 81.4 GPa
-        data.G  = data.E * data.v
-
-        # moment of inertia, 329376 mm⁴ | 32.9376 cm⁴
+        # moment of inertia, 32.9376 cm⁴
         data.Iy = math.pi * (data.Do**4 - data.Di**4)/64 * 0.0001
         data.Iz = data.Iy
 
-        # torsional constant, 10979 mm³ | 10.979 cm³
-        data.J  = math.pi * (data.Do**4 - data.Di**4)/(32*data.Do) * 0.001
+        # torsional constant, 65.875 cm⁴
+        data.J  = math.pi * (data.Do**4 - data.Di**4)/(32) * 0.0001
 
-        # cross-sectional area, 864 mm² | 8,64 cm²
+        # cross-sectional area, 8,64 cm²
         data.A  = ((math.pi * (data.Do*0.5)**2) - (math.pi * (data.Di*0.5)**2)) * 0.01
 
         # weight of profile, 6.79 kg/m
         data.kg =  data.A*data.d * 0.1
 
 
+# function to return the smallest_minus or biggest_plus in a list
+def return_max_diff_to_zero(list):
+    list_copy = list.copy()
+    list_copy.sort()
+
+    smallest_minus = list_copy[0]
+    biggest_plus = list_copy[len(list_copy)-1]
+
+    if abs(smallest_minus) > abs(biggest_plus):
+        return smallest_minus
+    else:
+        return biggest_plus
+
+
 class CustomProperties(PropertyGroup):
     Do: FloatProperty(
         name = "Do",
-        description = "Diameter of pipe outside",
-        default = 60,
-        min = 5,
-        max = 500
+        description = "Diameter of pipe outside in mm",
+        default = 60.0,
+        min = 1.0,
+        max = 1000.0
         )
 
     Di: FloatProperty(
         name = "Di",
-        description = "Diameter of pipe inside. Needs to be smaller than Diameter outside",
-        default = 50,
-        min = 5,
-        max = 500
+        description = "Diameter of pipe inside in mm. Needs to be smaller than Diameter outside",
+        default = 50.0,
+        min = 1.0,
+        max = 1000.
         )
 
     E: FloatProperty(
         name = "E",
-        description = "modulus of elasticity",
-        default = 210,
-        min = 50,
-        max = 500
+        description = "Elasticity modulus in kN/cm²",
+        default = 21000,
+        min = 15000,
+        max = 50000
         )
 
-    v: FloatProperty(
-        name = "v",
-        description = "Poisson's ratio",
-        default = 0.29,
-        min = 0.01,
-        max = 1
+    G: FloatProperty(
+        name = "G",
+        description = "Shear modulus kN/cm²",
+        default = 8100,
+        min = 10000,
+        max = 30000
         )
 
     d: FloatProperty(
         name = "d",
-        description = "Density",
+        description = "Density in g/cm3",
         default = 7.85,
         min = 0.01,
         max = 30.0
@@ -172,9 +195,10 @@ class CustomProperties(PropertyGroup):
         name="forces:",
         description="Force types",
         items=[
-                ("max_axial", "Max axial", ""),
-                ("max_moment_y", "Max moment Y", ""),
-                ("max_moment_z", "Max moment Z", "")
+                ("sigma", "Sigma", ""),
+                ("axial", "Axial", ""),
+                ("moment_y", "Moment Y", ""),
+                ("moment_z", "Moment Z", "")
                ]
         )
 
@@ -207,9 +231,9 @@ def transfer_analyze():
     # add nodes from vertices
     for vertex_id, vertex in enumerate(data.vertices):
         name = "node_" + str(vertex_id)
-        x = vertex.co[0]
-        y = vertex.co[1]
-        z = vertex.co[2]
+        x = vertex.co[0] * 100 # convert to cm for calculation
+        y = vertex.co[1] * 100 # convert to cm for calculation
+        z = vertex.co[2] * 100 # convert to cm for calculation
 
         truss.add_node(name, x,y,z)
 
@@ -219,11 +243,11 @@ def transfer_analyze():
 
         # first node is fixed
         if data.support_ids.index(support_id) == 0:
-            truss.def_support(name, True, True, True, False, False, False)
+            truss.def_support(name, True, True, True, True, True, True)
 
         # all other nodes are only fixed in loc z-direction
         else:
-            truss.def_support(name, False, True, True, False, False, False)
+            truss.def_support(name, False, False, True, False, False, False)
 
     # create members
     members = []
@@ -236,46 +260,215 @@ def transfer_analyze():
         node_0 = str("node_") + str(vertex_0_id)
         node_1 = str("node_") + str(vertex_1_id)
 
-        truss.add_member(name, node_0, node_1, 100, 100, 100, 100, 100, 100)
+        truss.add_member(name, node_0, node_1, data.E, data.G, data.Iy, data.Iz, data.J, data.A)
         members.append(name)
 
         # add gravity
-        vertex_0 = data.vertices[vertex_0_id]
-        vertex_1 = data.vertices[vertex_1_id]
+        kN = data.kg * -0.00981
 
-        dist_vector = vertex_1.co - vertex_0.co
-        length = dist_vector.length
-
-        kN = data.kg * -0.0098
-
-        load = kN * length * 0.5
-        truss.add_node_load(node_0, "FZ", 100)
-        truss.add_node_load(node_1, "FZ", 100)
+        # add distributed load
+        truss.add_member_dist_load(name, "FZ", kN, kN)
 
     # analyze the model
     truss.analyze(check_statics=False, sparse=False)
 
     # append result_max_axials
-    max_axial = []
-    max_moment_y = []
-    max_moment_z = []
+    result_axial = []
+    result_moment_y = []
+    result_moment_z = []
+    result_shear_y = []
+    result_shear_z = []
+    result_torque = []
+    result_sigma = []
 
+    result_deflection = []
+
+    # get forces
     for member in members:
-        max_axial.append(truss.Members[member].max_axial())
-        max_moment_y.append(truss.Members[member].max_moment("My"))
-        max_moment_z.append(truss.Members[member].max_moment("Mz"))
+        L = truss.Members[member].L() # Member length
+        T = truss.Members[member].T() # Member local transformation matrix
 
-        """
-        deflection("dx", x=0)
-        deflection("dy", x=0)
-        deflection("dz", x=0)
-        """
+        axial_member = []
+        for i in range(10): # get the forces at 9 positions and
+            axial_member_pos = truss.Members[member].axial(x=L/9*i)
+            axial_member.append(axial_member_pos)
+
+        moment_y_member = []
+        for i in range(10): # get the forces at 9 positions and
+            moment_y_member_pos = truss.Members[member].moment("My", x=L/9*i)
+            moment_y_member.append(moment_y_member_pos)
+
+        moment_z_member = []
+        for i in range(10): # get the forces at 9 positions and
+            moment_z_member_pos = truss.Members[member].moment("Mz", x=L/9*i)
+            moment_z_member.append(moment_z_member_pos)
+
+        shear_y_member = []
+        for i in range(10): # get the forces at 9 positions and
+            shear_y_member_pos = truss.Members[member].shear("Fy", x=L/9*i)
+            shear_y_member.append(shear_y_member_pos)
+
+        shear_z_member = []
+        for i in range(10): # get the forces at 9 positions and
+            shear_z_member_pos = truss.Members[member].shear("Fz", x=L/9*i)
+            shear_z_member.append(shear_z_member_pos)
+
+        torque_member = []
+        for i in range(10): # get the forces at 9 positions and
+            torque_member_pos = truss.Members[member].torque(x=L/9*i)
+            torque_member.append(torque_member_pos)
+
+        result_axial.append(axial_member)
+        result_moment_y.append(moment_y_member)
+        result_moment_z.append(moment_z_member)
+        result_shear_y.append(shear_y_member)
+        result_shear_z.append(shear_z_member)
+        result_torque.append(torque_member)
+
+        # modulus from the moments of area
+        #(Wy and Wz are the same within a pipe)
+        data.Wy = data.Iy/(data.Do/2)
+
+        # polar modulus of torsion
+        data.WJ = data.J/(data.Do/2)
+
+        # calculation of the longitudinal stresses
+        longitudinal_stress_member = []
+        for i in range(10): # get the stresses at 9 positions and
+            moment_h = math.sqrt(moment_y_member[i]**2+moment_z_member[i]**2)
+            if axial_member[i] > 0:
+                s = axial_member[i]/data.A + moment_h/data.Wy
+            else:
+                s = axial_member[i]/data.A - moment_h/data.Wy
+            longitudinal_stress_member.append(s)
+
+        # get max stress of the beam
+        # (can be positive or negative)
+        longitudinal_stress = return_max_diff_to_zero(longitudinal_stress_member) #  -> is working as fitness
+
+        # calculation of the shear stresses from shear force
+        # (always positive)
+        tau_shear_member = []
+        for i in range(10): # get the stresses at 9 positions and
+            shear_h = math.sqrt(shear_y_member[i]**2+shear_z_member[i]**2)
+            tau = 1.333 * shear_h/data.A # for pipes
+            tau_shear_member.append(tau)
+
+        # get max shear stress of shear force of the beam
+        # shear stress is mostly small compared to longitudinal
+        # in common architectural usage and only importand with short beam lenght
+        tau_shear = max(tau_shear_member)
+
+        # Calculation of the torsion stresses
+        # (always positiv)
+        tau_torsion_member = []
+        for i in range(10): # get the stresses at 9 positions and
+            tau = abs(torque_member[i]/data.WJ)
+            tau_torsion_member.append(tau)
+
+        # get max torsion stress of the beam
+        tau_torsion = max(tau_torsion_member)
+        # torsion stress is mostly small compared to longitudinal
+        # in common architectural usage
+
+        # calculation of the shear stresses form shear force and torsion
+        # (always positiv)
+        sum_tau_member = []
+        for i in range(10): # get the stresses at 9 positions and
+            tau = tau_shear_member[0] + tau_torsion_member[0]
+            sum_tau_member.append(tau)
+
+        sum_tau = max(sum_tau_member)
+
+        # combine shear and torque
+        sigmav_member = []
+        for i in range(10): # get the stresses at 9 positions and
+            sv = math.sqrt(longitudinal_stress_member[0]**2 + 3*sum_tau_member[0]**2)
+            sigmav_member.append(sv)
+
+        sigmav = max(sigmav_member)
+        # check out: http://www.bs-wiki.de/mediawiki/index.php?title=Festigkeitsberechnung
+
+        # for the definition of the fitness criteria prepared
+        # max longitudinal stress for steel St360 in kN/cm²
+        # tensile strength: 36 kN/cm², yield point 23.5 kN/cm²
+        # sigma_max = 14.0
+        # tau_shear_max = 9.5
+        # tau_torsion_max = 10.5
+        # simgav_max = 23.5
+
+        result_sigma.append(longitudinal_stress_member)
+
+        # deflection
+        deflection = []
+
+        # --> taken from pyNite VisDeformedMember: https://github.com/JWock82/PyNite
+        scale_factor = 0.1
+
+        cos_x = array([T[0,0:3]]) # Direction cosines of local x-axis
+        cos_y = array([T[1,0:3]]) # Direction cosines of local y-axis
+        cos_z = array([T[2,0:3]]) # Direction cosines of local z-axis
+
+        DY_plot = empty((0, 3))
+        for i in range(10):
+            # Calculate the local y-direction displacement
+            dy_tot = truss.Members[member].deflection('dy', L/9*i)
+
+            # Calculate the scaled displacement in global coordinates
+            DY_plot = append(DY_plot, dy_tot*cos_y*scale_factor, axis=0)
+
+        # Calculate the local z-axis displacements at 20 points along the member's length
+        DZ_plot = empty((0, 3))
+        for i in range(10):
+
+            # Calculate the local z-direction displacement
+            dz_tot = truss.Members[member].deflection('dz', L/9*i)
+
+            # Calculate the scaled displacement in global coordinates
+            DZ_plot = append(DZ_plot, dz_tot*cos_z*scale_factor, axis=0)
+
+        # Calculate the local x-axis displacements at 20 points along the member's length
+        DX_plot = empty((0, 3))
+
+        Xi = truss.Members[member].i_node.X
+        Yi = truss.Members[member].i_node.Y
+        Zi = truss.Members[member].i_node.Z
+
+        for i in range(10):
+            # Displacements in local coordinates
+            dx_tot = [[Xi, Yi, Zi]] + (L/9*i + truss.Members[member].deflection('dx', L/9*i)*scale_factor)*cos_x
+
+            # Magnified displacements in global coordinates
+            DX_plot = append(DX_plot, dx_tot, axis=0)
+
+        # Sum the component displacements to obtain overall displacement
+        D_plot = DY_plot + DZ_plot + DX_plot
+
+        # <-- taken from pyNite VisDeformedMember: https://github.com/JWock82/PyNite
+
+        # add to results
+        for i in range(10):
+            x = D_plot[i, 0] * 0.01
+            y = D_plot[i, 1] * 0.01
+            z = D_plot[i, 2] * 0.01
+
+            deflection.append([x,y,z])
+
+        result_deflection.append(deflection)
+
 
     # save as current frame
     frame = bpy.context.scene.frame_current
-    data.result_max_axial[frame] = max_axial
-    data.result_max_moment_y[frame] = max_moment_y
-    data.result_max_moment_z[frame] = max_moment_z
+
+    data.result_axial[frame] = result_axial
+    data.result_moment_y[frame] = result_moment_y
+    data.result_moment_z[frame] = result_moment_z
+    data.result_shear_y[frame] = result_shear_y
+    data.result_shear_z[frame] = result_shear_z
+    data.result_torque[frame] = result_torque
+    data.result_sigma[frame] = result_sigma
+
+    data.result_deflection[frame] = result_deflection
 
 
 # genetic algorithm
@@ -334,20 +527,30 @@ class individual(object):
         frame = bpy.context.scene.frame_current
 
         # get forcetyp and force
-        if data.force_type_viz == "max_axial":
-            result = data.result_max_axial
+        if data.force_type_viz == "sigma":
+            result = data.result_axial
 
-        elif data.force_type_viz == "max_moment_y":
-            result = data.result_max_moment_y
+        if data.force_type_viz == "axial":
+            result = data.result_axial
 
-        elif data.force_type_viz == "max_moment_z":
-            result = data.result_max_moment_z
+        elif data.force_type_viz == "moment_y":
+            result = data.result_moment_y
+
+        elif data.force_type_viz == "moment_z":
+            result = data.result_moment_z
 
         else:
             pass
 
         # get fitness
-        fitness = max(result[frame])
+        forces = []
+        for member in result[frame]:
+            for i in range(10): # get the fitness at 9 positions and
+                force = member[i]
+                forces.append(force)
+
+        fitness = return_max_diff_to_zero(forces)
+        fitness = abs(fitness)
         return fitness
 
 
@@ -412,23 +615,16 @@ def create_curves():
     frame = bpy.context.scene.frame_current
 
     # draw curves
-    for member_id, max_axial in enumerate(data.result_max_axial[frame]):
+    for member_id, deflection in enumerate(data.result_deflection[frame]):
+        sigma = return_max_diff_to_zero(data.result_sigma[frame][member_id])
         # set color
-        if max_axial > 0:
+        if sigma > 0:
             r,g,b = 1,0,0
         else:
             r,g,b = 0,0,1
 
-        # map value for geometry
-        curve_radius = max_axial * data.scale_max_axial
-
-        vertex_0_id = data.edges[member_id].vertices[0]
-        vertex_1_id = data.edges[member_id].vertices[1]
-
-        vertex_0 = data.vertices[vertex_0_id]
-        vertex_1 = data.vertices[vertex_1_id]
-
-        name = "<pynite>member_" + str(member_id)
+        # create name
+        name = "<Phaenotyp>member_" + str(member_id)
 
         # create the Curve Datablock
         curve = bpy.data.curves.new(name, type="CURVE")
@@ -437,29 +633,33 @@ def create_curves():
 
         # add points
         polyline = curve.splines.new("POLY")
-        polyline.points.add(1)
 
-        # first point
-        x = vertex_0.co[0]
-        y = vertex_0.co[1]
-        z = vertex_0.co[2]
-        polyline.points[0].co = (x,y,z, 1)
+        vertex_0_id = data.edges[member_id].vertices[0]
+        vertex_1_id = data.edges[member_id].vertices[1]
 
-        # second point
-        x = vertex_1.co[0]
-        y = vertex_1.co[1]
-        z = vertex_1.co[2]
-        polyline.points[1].co = (x,y,z, 1)
+        vertex_0_co = data.vertices[vertex_0_id].co
+        vertex_1_co = data.vertices[vertex_1_id].co
+
+        polyline.points.add(9)
+
+        for point_id, position in enumerate(deflection):
+            x = position[0]
+            y = position[1]
+            z = position[2]
+            polyline.points[point_id].co = (x,y,z, 1)
+
+            radius = data.result_sigma[frame][member_id][point_id]
+            polyline.points[point_id].radius = abs(radius)
 
         # create Object
         obj = bpy.data.objects.new(name, curve)
-        curve.bevel_depth = curve_radius
+        curve.bevel_depth = data.scale_sigma
 
         # link object to collection
-        bpy.data.collections["<pynite>"].objects.link(obj)
+        bpy.data.collections["<Phaenotyp>"].objects.link(obj)
 
         # new material
-        name = "<pynite>member_" + str(member_id)
+        name = "<Phaenotyp>member_" + str(member_id)
         mat = bpy.data.materials.new(name)
         mat.diffuse_color = (r,g,b,1)
         obj.data.materials.append(mat)
@@ -476,31 +676,44 @@ def create_curves():
     data.done = True
 
 
+    # deselect, because last curve would be selected
+    bpy.ops.object.select_all(action="DESELECT")
+
+    data.done = True
+
+
 def update_curves():
     frame = bpy.context.scene.frame_current
 
     for id, obj in enumerate(data.curves):
         # get forcetyp and force
-        if data.force_type_viz == "max_axial":
-            result = data.result_max_axial
-            scale = data.scale_max_axial
+        if data.force_type_viz == "sigma":
+            result = data.result_sigma
+            scale = data.scale_sigma
 
-        elif data.force_type_viz == "max_moment_y":
-            result = data.result_max_moment_y
-            scale = data.scale_max_moment_y
+        if data.force_type_viz == "axial":
+            result = data.result_axial
+            scale = data.scale_axial
 
-        elif data.force_type_viz == "max_moment_z":
-            result = data.result_max_moment_z
-            scale = data.scale_max_moment_z
+        elif data.force_type_viz == "moment_y":
+            result = data.result_moment_y
+            scale = data.scale_moment_y
+
+        elif data.force_type_viz == "moment_z":
+            result = data.result_moment_z
+            scale = data.scale_moment_z
 
         else:
             pass
 
-        force = result[frame][id]
 
         # get curve from curve-obj
         curve_name = obj.data.name
         curve = bpy.data.curves[curve_name]
+        curve.bevel_depth = scale
+
+        # get highest force of this forcetype
+        force = return_max_diff_to_zero(result[frame][id])
 
         # set color
         if force > 0:
@@ -511,24 +724,79 @@ def update_curves():
         mat = data.materials[id]
         mat.diffuse_color = (r,g,b,1)
 
-        # change curve bevel
-        curve_radius = force * scale
-        curve.bevel_depth = curve_radius
+        # change position and radius
+        for point_id, position in enumerate(data.result_deflection[frame][id]):
+            x = position[0]
+            y = position[1]
+            z = position[2]
+            curve.splines[0].points[point_id].co = (x,y,z, 1)
 
-        # change location
-        vertex_0_id = data.edges[id].vertices[0]
-        vertex_1_id = data.edges[id].vertices[1]
+            radius = result[frame][id][point_id]
+            curve.splines[0].points[point_id].radius = abs(radius)
+
+
+def create_texts():
+    delete_texts()
+
+    frame = bpy.context.scene.frame_current
+
+    # draw curves
+    for member_id, edge in enumerate(data.edges):
+        vertex_0_id = data.edges[member_id].vertices[0]
+        vertex_1_id = data.edges[member_id].vertices[1]
 
         vertex_0 = data.vertices[vertex_0_id]
         vertex_1 = data.vertices[vertex_1_id]
 
-        curve.splines[0].points[0].co = [vertex_0.co[0], vertex_0.co[1], vertex_0.co[2], 1]
-        curve.splines[0].points[1].co = [vertex_1.co[0], vertex_1.co[1], vertex_1.co[2], 1]
+        mid = (vertex_0.co + vertex_1.co)*0.5
 
+        name = "<Phaenotyp>text_" + str(member_id)
+
+        text = "member: " + str(member_id) + "\n"
+        text = text + "\n"
+
+        text = text + "axial: " + str(data.result_axial[frame][member_id]) + "\n"
+        text = text + "\n"
+
+        text = text + "moment_y: " + str(data.result_moment_y[frame][member_id]) + "\n"
+        text = text + "moment_z: " + str(data.result_moment_z[frame][member_id]) + "\n"
+        text = text + "\n"
+
+        text = text + "shear_y: " + str(data.result_shear_y[frame][member_id]) + "\n"
+        text = text + "shear_z: " + str(data.result_shear_z[frame][member_id]) + "\n"
+        text = text + "\n"
+
+        text = text + "torque: " + str(data.result_torque[frame][member_id]) + "\n"
+        text = text + "sigma: " + str(data.result_sigma[frame][member_id]) + "\n"
+
+        # create the Font Datablock
+        curve = bpy.data.curves.new(type="FONT", name=name)
+        curve.body = text
+        obj = bpy.data.objects.new(name=name, object_data=curve)
+
+        # set position
+        obj.location = mid
+
+        # set size
+        obj.scale = [0.05, 0.05, 0.05]
+
+        # link object to collection
+        bpy.data.collections["<Phaenotyp>"].objects.link(obj)
+
+        # save to data
+        data.texts.append(obj)
+
+
+def delete_texts():
+    if len(data.texts) > 0:
+        for text in bpy.data.texts:
+            if "<Phaenotyp>" in obj.name_full:
+                bpy.data.text.remove(text)
 
 def reset_data():
     data.curves = []
     data.materials = []
+    data.texts = []
 
     data.shape_keys = []
     data.population = []
@@ -542,22 +810,26 @@ def reset_collection_geometry_material():
     # reset scene
 
     for collection in bpy.data.collections:
-        if "<pynite>" in collection.name_full:
+        if "<Phaenotyp>" in collection.name_full:
             bpy.data.collections.remove(collection)
 
     for material in bpy.data.materials:
-        if "<pynite>" in material.name_full:
+        if "<Phaenotyp>" in material.name_full:
             bpy.data.materials.remove(material)
 
     for obj in bpy.data.objects:
-        if "<pynite>" in obj.name_full:
+        if "<Phaenotyp>" in obj.name_full:
             bpy.data.objects.remove(obj)
 
     for curve in bpy.data.curves:
-        if "<pynite>" in obj.name_full:
+        if "<Phaenotyp>" in obj.name_full:
             bpy.data.curves.remove(curve)
 
-    collection = bpy.data.collections.new("<pynite>")
+    for text in bpy.data.texts:
+        if "<Phaenotyp>" in obj.name_full:
+            bpy.data.text.remove(text)
+
+    collection = bpy.data.collections.new("<Phaenotyp>")
     bpy.context.scene.collection.children.link(collection)
 
 
@@ -668,14 +940,17 @@ class WM_OT_viz_scale_up(Operator):
 
     def execute(self, context):
         # get forcetyp and force
-        if data.force_type_viz == "max_axial":
-            data.scale_max_axial = data.scale_max_axial * 1.25
+        if data.force_type_viz == "sigma":
+            data.scale_sigma = data.scale_sigma * 1.25
 
-        elif data.force_type_viz == "max_moment_y":
-            data.scale_max_moment_y = data.scale_max_moment_y * 1.25
+        if data.force_type_viz == "axial":
+            data.scale_axial = data.scale_axial * 1.25
 
-        elif data.force_type_viz == "max_moment_z":
-            data.scale_max_moment_z = data.scale_max_moment_z * 1.25
+        elif data.force_type_viz == "moment_y":
+            data.scale_moment_y = data.scale_moment_y * 1.25
+
+        elif data.force_type_viz == "moment_z":
+            data.scale_moment_z = data.scale_moment_z * 1.25
 
         else:
             pass
@@ -691,14 +966,17 @@ class WM_OT_viz_scale_down(Operator):
 
     def execute(self, context):
         # get forcetyp and force
-        if data.force_type_viz == "max_axial":
-            data.scale_max_axial = data.scale_max_axial * 0.75
+        if data.force_type_viz == "sigma":
+            data.scale_sigma = data.scale_sigma * 0.75
 
-        elif data.force_type_viz == "max_moment_y":
-            data.scale_max_moment_y = data.scale_max_moment_y * 0.75
+        if data.force_type_viz == "axial":
+            data.scale_axial = data.scale_axial * 0.75
 
-        elif data.force_type_viz == "max_moment_z":
-            data.scale_max_moment_z = data.scale_max_moment_z * 0.75
+        elif data.force_type_viz == "moment_y":
+            data.scale_moment_y = data.scale_moment_y * 0.75
+
+        elif data.force_type_viz == "moment_z":
+            data.scale_moment_z = data.scale_moment_z * 0.75
 
         else:
             pass
@@ -714,6 +992,17 @@ class WM_OT_viz_update(Operator):
 
     def execute(self, context):
         update_curves()
+
+        return {"FINISHED"}
+
+
+class WM_OT_text(Operator):
+    bl_label = "text"
+    bl_idname = "wm.text"
+
+    def execute(self, context):
+        delete_texts()
+        create_texts()
 
         return {"FINISHED"}
 
@@ -735,7 +1024,7 @@ class WM_OT_reset(Operator):
 
 
 class OBJECT_PT_CustomPanel(Panel):
-    bl_label = "Phänotyp"
+    bl_label = "Phänotyp 0.0.3(test mit Karl)"
     bl_idname = "OBJECT_PT_custom_panel"
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
@@ -757,23 +1046,22 @@ class OBJECT_PT_CustomPanel(Panel):
         box.prop(phaenotyp, "Do", text="Diameter outside")
         box.prop(phaenotyp, "Di", text="Diameter inside")
         box.prop(phaenotyp, "E", text="Modulus of elasticity")
-        box.prop(phaenotyp, "v", text="Poisson's ratio")
+        box.prop(phaenotyp, "G", text="Shear modulus")
         box.prop(phaenotyp, "d", text="Density")
 
         data.Do = phaenotyp.Do
         data.Di = phaenotyp.Di
 
         data.E = phaenotyp.E
-        data.v = phaenotyp.v
+        data.G = phaenotyp.G
         data.d = phaenotyp.d
 
-        data.update() # calculate G, Iy, Iz, J, A, kg
-        box.label(text="G = " + str(round(data.G, 5)) + " GPa")
-        box.label(text="Iy = " + str(round(data.Iy, 5)) + " cm⁴")
-        box.label(text="Iz = " + str(round(data.Iz, 5)) + " cm⁴")
-        box.label(text="J = " + str(round(data.J, 5)) + " cm³")
-        box.label(text="A = " + str(round(data.A, 5)) + " cm²")
-        box.label(text="kg = " + str(round(data.kg, 5)) + " kg/m")
+        data.update() # calculate Iy, Iz, J, A, kg
+        box.label(text="Iy = " + str(round(data.Iy, 2)) + " cm⁴")
+        box.label(text="Iz = " + str(round(data.Iz, 2)) + " cm⁴")
+        box.label(text="J = " + str(round(data.J, 2)) + " cm⁴")
+        box.label(text="A = " + str(round(data.A, 2)) + " cm²")
+        box.label(text="kg = " + str(round(data.kg, 2)) + " kg/m")
 
         # define active object
         box = layout.box()
@@ -825,9 +1113,13 @@ class OBJECT_PT_CustomPanel(Panel):
                     col.operator("wm.viz_scale_up", text="Up")
                     col.operator("wm.viz_scale_down", text="Down")
 
+                    # Text
+                    box = layout.box()
+                    box.label(text="Text:")
+                    box.operator("wm.text", text="generate")
 
-            box = layout.box()
-            box.operator("wm.reset", text="Reset")
+        box = layout.box()
+        box.operator("wm.reset", text="Reset")
 
 
 classes = (
@@ -842,6 +1134,8 @@ classes = (
     WM_OT_viz_scale_up,
     WM_OT_viz_scale_down,
     WM_OT_viz_update,
+
+    WM_OT_text,
 
     WM_OT_reset,
     OBJECT_PT_CustomPanel
@@ -884,6 +1178,7 @@ def draw():
 
 @persistent
 def update_post(scene):
+    delete_texts()
     update_mesh()
     # Analyze
     if data.calculate_update_post:
