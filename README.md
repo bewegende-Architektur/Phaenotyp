@@ -39,5 +39,5 @@ https://youtu.be/i-5duKyuBiU
 https://youtu.be/F5ilsBDoIkY  
 
 ## Current release
-2021-12-29 | version 0.0.3 for blender 3.0.0:  
+2022-01-22 | version 0.0.3 for blender 3.0.0:  
 <a href="https://github.com/bewegende-Architektur/Phaenotyp/releases/tag/Phaenotyp_version_0.0.3" target="_blank">Phaenotyp 0.0.3</a>
