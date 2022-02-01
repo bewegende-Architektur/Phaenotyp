@@ -3,8 +3,8 @@ bl_info = {
     "name": "Phänotyp",
     "description": "Genetic optimization of architectural structures",
     "author": "bewegende Architektur e.U. and Karl Deix",
-    "version": (0, 0, 3),
-    "blender": (3, 0, 0),
+    "version": (0, 0, 4),
+    "blender": (3, 0, 1),
     "location": "3D View > Tools",
 }
 
@@ -20,7 +20,7 @@ import bpy
 import gpu
 from gpu_extras.batch import batch_for_shader
 
-from bpy.props import (IntProperty, FloatProperty, EnumProperty, PointerProperty)
+from bpy.props import (IntProperty, FloatProperty, BoolProperty, EnumProperty, PointerProperty)
 from bpy.types import (Panel, Menu, Operator, PropertyGroup)
 from bpy.app.handlers import persistent
 
@@ -33,10 +33,13 @@ import os
 
 from PyNite import FEModel3D
 
-# wird vielleicht doch nicht gebraucht?
 from numpy import array
 from numpy import empty
 from numpy import append
+
+from mathutils import Color
+c = Color()
+
 
 class data:
     # steel pipe with 60/50 mm as example
@@ -53,34 +56,29 @@ class data:
     A  = None
     kg = None
 
+    # pass support types
+    loc_x = None
+    loc_y = None
+    loc_z = None
+    rot_x = None
+    rot_y = None
+    rot_z = None
+
     # store geoemtry
     obj = None
     mesh = None
     vertices = None
     edges = None
-    support_ids = []
-
-    # results for each frame
-    result_axial = {}
-    result_moment_y = {}
-    result_moment_z = {}
-    result_shear_y = {}
-    result_shear_z = {}
-    result_torque = {}
-    result_sigma = {}
-    result_deflection = {}
-
-    force_type_viz = "sigma"
+    texts = []
 
     # visualization
-    scale_sigma = 0.0001
-    scale_axial = 0.0001
-    scale_moment_y = 0.0001
-    scale_moment_z = 0.0001
+    force_type_viz = "sigma"
 
-    curves = []
-    materials = []
-    texts = []
+    scale_sigma = 0.5
+    scale_axial = 0.5
+    scale_moment_y = 0.5
+    scale_moment_z = 0.5
+    scale_deflection = 0.5
 
     # triggers
     calculate_update_post = False
@@ -120,6 +118,397 @@ class data:
         data.kg =  data.A*data.d * 0.1
 
 
+class supports:
+    instances = []
+
+    definend_vertex_ids = []
+
+    def __init__(self, id, vertex):
+        self.id = id # equals id of vertex
+        supports.definend_vertex_ids.append(id)
+
+        self.vertex = vertex
+        self.x = vertex.co[0]
+        self.y = vertex.co[1]
+        self.z = vertex.co[2]
+
+        self.sign = None
+
+        supports.instances.append(self)
+
+    def __del__(self):
+        pass
+
+    def update_settings(self):
+        self.loc_x = data.loc_x
+        self.loc_y = data.loc_y
+        self.loc_z = data.loc_z
+        self.rot_x = data.rot_x
+        self.rot_y = data.rot_y
+        self.rot_z = data.rot_z
+
+    def create_sign(self):
+        mesh = bpy.data.meshes.new("<Phaenotyp>support>")
+        obj = bpy.data.objects.new(mesh.name, mesh)
+        col = bpy.data.collections.get("<Phaenotyp>")
+        col.objects.link(obj)
+        bpy.context.view_layer.objects.active = obj
+
+        name = "<Phaenotyp>support_" + str(self.id)
+        curve = bpy.data.curves.new(name, type="CURVE")
+        curve.dimensions = "3D"
+        curve.resolution_u = 2
+
+        # pyramide
+        polyline = curve.splines.new("POLY")
+        polyline.points.add(4)
+        polyline.points[0].co = -1, 1,-1, 1
+        polyline.points[1].co =  1, 1,-1, 1
+        polyline.points[2].co =  1,-1,-1, 1
+        polyline.points[3].co = -1,-1,-1, 1
+        polyline.points[4].co = -1, 1,-1, 1
+
+        polyline = curve.splines.new("POLY")
+        polyline.points.add(1)
+        polyline.points[0].co = -1, 1, -1, 1
+        polyline.points[1].co =  0, 0, 0, 1
+
+        polyline = curve.splines.new("POLY")
+        polyline.points.add(1)
+        polyline.points[0].co =  1, 1,-1, 1
+        polyline.points[1].co =  0, 0, 0, 1
+
+        polyline = curve.splines.new("POLY")
+        polyline.points.add(1)
+        polyline.points[0].co =  1,-1,-1, 1
+        polyline.points[1].co =  0, 0, 0, 1
+
+        polyline = curve.splines.new("POLY")
+        polyline.points.add(1)
+        polyline.points[0].co = -1,-1,-1, 1
+        polyline.points[1].co =  0, 0, 0, 1
+
+        lx = 1 if self.loc_x == True else 0
+        polyline = curve.splines.new("POLY")
+        polyline.points.add(1)
+        polyline.points[0].co =  0*lx, 0,-2*lx, 1
+        polyline.points[1].co =  2*lx, 0,-2*lx, 1
+
+        ly = 1 if self.loc_y == True else 0
+        polyline = curve.splines.new("POLY")
+        polyline.points.add(1)
+        polyline.points[0].co =  0, 0*ly,-2*ly, 1
+        polyline.points[1].co =  0, 2*ly,-2*ly, 1
+
+        lz = 1 if self.loc_z == True else 0
+        polyline = curve.splines.new("POLY")
+        polyline.points.add(1)
+        polyline.points[0].co =  0, 0,-2*lz, 1
+        polyline.points[1].co =  0, 0,-4*lz, 1
+
+        rx = 1 if self.rot_x == True else 0
+        polyline = curve.splines.new("POLY")
+        polyline.points.add(4)
+        polyline.points[0].co =  2.0*rx, 0.2*rx,-2.2*rx, 1
+        polyline.points[1].co =  2.0*rx,-0.2*rx,-2.2*rx, 1
+        polyline.points[2].co =  2.0*rx,-0.2*rx,-1.8*rx, 1
+        polyline.points[3].co =  2.0*rx, 0.2*rx,-1.8*rx, 1
+        polyline.points[4].co =  2.0*rx, 0.2*rx,-2.2*rx, 1
+
+        ry = 1 if self.rot_y == True else 0
+        polyline = curve.splines.new("POLY")
+        polyline.points.add(4)
+        polyline.points[0].co =  0.2*ry, 2.0*ry,-2.2*ry, 1
+        polyline.points[1].co = -0.2*ry, 2.0*ry,-2.2*ry, 1
+        polyline.points[2].co = -0.2*ry, 2.0*ry,-1.8*ry, 1
+        polyline.points[3].co =  0.2*ry, 2.0*ry,-1.8*ry, 1
+        polyline.points[4].co =  0.2*ry, 2.0*ry,-2.2*ry, 1
+
+        rz = 1 if self.rot_z == True else 0
+        polyline = curve.splines.new("POLY")
+        polyline.points.add(4)
+        polyline.points[0].co =  0.2*rz, 0.2*rz,-4.0*rz, 1
+        polyline.points[1].co = -0.2*rz, 0.2*rz,-4.0*rz, 1
+        polyline.points[2].co = -0.2*rz,-0.2*rz,-4.0*rz, 1
+        polyline.points[3].co =  0.2*rz,-0.2*rz,-4.0*rz, 1
+        polyline.points[4].co =  0.2*rz, 0.2*rz,-4.0*rz, 1
+
+        # create Object
+        obj = bpy.data.objects.new(name, curve)
+        obj.location = self.x, self.y, self.z
+        obj.scale = 0.25, 0.25, 0.25
+
+        self.sign = obj
+
+        # link object to collection
+        bpy.data.collections["<Phaenotyp>"].objects.link(obj)
+
+    def update_sign(self):
+        curve = bpy.data.curves[self.sign.name_full]
+
+        lx = 1 if self.loc_x == True else 0
+        polyline = curve.splines[5]
+        polyline.points[0].co =  0*lx, 0,-2*lx, 1
+        polyline.points[1].co =  2*lx, 0,-2*lx, 1
+
+        ly = 1 if self.loc_y == True else 0
+        polyline = curve.splines[6]
+        polyline.points[0].co =  0, 0*ly,-2*ly, 1
+        polyline.points[1].co =  0, 2*ly,-2*ly, 1
+
+        lz = 1 if self.loc_z == True else 0
+        polyline = curve.splines[7]
+        polyline.points[0].co =  0, 0,-2*lz, 1
+        polyline.points[1].co =  0, 0,-4*lz, 1
+
+        rx = 1 if self.rot_x == True else 0
+        polyline = curve.splines[8]
+        polyline.points[0].co =  2.0*rx, 0.2*rx,-2.2*rx, 1
+        polyline.points[1].co =  2.0*rx,-0.2*rx,-2.2*rx, 1
+        polyline.points[2].co =  2.0*rx,-0.2*rx,-1.8*rx, 1
+        polyline.points[3].co =  2.0*rx, 0.2*rx,-1.8*rx, 1
+        polyline.points[4].co =  2.0*rx, 0.2*rx,-2.2*rx, 1
+
+        ry = 1 if self.rot_y == True else 0
+        polyline = curve.splines[9]
+        polyline.points[0].co =  0.2*ry, 2.0*ry,-2.2*ry, 1
+        polyline.points[1].co = -0.2*ry, 2.0*ry,-2.2*ry, 1
+        polyline.points[2].co = -0.2*ry, 2.0*ry,-1.8*ry, 1
+        polyline.points[3].co =  0.2*ry, 2.0*ry,-1.8*ry, 1
+        polyline.points[4].co =  0.2*ry, 2.0*ry,-2.2*ry, 1
+
+        rz = 1 if self.rot_z == True else 0
+        polyline = curve.splines[10]
+        polyline.points[0].co =  0.2*rz, 0.2*rz,-4.0*rz, 1
+        polyline.points[1].co = -0.2*rz, 0.2*rz,-4.0*rz, 1
+        polyline.points[2].co = -0.2*rz,-0.2*rz,-4.0*rz, 1
+        polyline.points[3].co =  0.2*rz,-0.2*rz,-4.0*rz, 1
+        polyline.points[4].co =  0.2*rz, 0.2*rz,-4.0*rz, 1
+
+    @staticmethod
+    def get_by_id(id):
+        for support in supports.instances:
+            if support.id == id:
+                return support
+
+
+class members:
+    instances = []
+
+    # to keep track of allready definend edges
+    definend_edge_ids = []
+    all_edges_definend = False
+
+    def __init__(self, id, vertex_0, vertex_1):
+        self.id = id # equals id of edge
+        self.name = "member_" + str(id)
+        members.definend_edge_ids.append(id)
+
+        self.vertex_0 = vertex_0
+        self.vertex_1 = vertex_1
+
+        # geometry
+        self.curve = None
+        self.mat = None
+        self.initial_positions = {}
+        self.create_curve(id, vertex_0, vertex_1)
+
+        members.instances.append(self)
+
+    def __del__(self):
+        pass
+
+    def update_settings(self):
+        self.Do = data.Do * 0.001
+        self.Di = data.Di * 0.001
+        self.E  = data.E
+        self.G  = data.G
+        self.d  = data.d
+        self.Iy = data.Iy
+        self.Iz = data.Iz
+        self.J  = data.J
+        self.A  = data.A
+        self.kg = data.kg
+
+        # results
+        self.axial = {}
+        self.moment_y = {}
+        self.moment_z = {}
+        self.shear_y = {}
+        self.shear_z = {}
+        self.torque = {}
+        self.sigma = {}
+
+        self.Wy = None
+        self.WJ = None
+
+        self.longitudinal_stress = {}
+        self.tau_shear = {}
+        self.tau_torsion = {}
+        self.sum_tau = {}
+        self.sigmav = {}
+        self.sigma = {}
+
+        self.max_longitudinal_stress = {}
+        self.max_tau_shear = {}
+        self.max_tau_torsion = {}
+        self.max_sum_tau = {}
+        self.max_sigmav = {}
+        self.max_sigma = {}
+
+        self.deflection = {}
+
+        self.overstress = {}
+
+        self.curve.bevel_depth = self.Do
+
+    def create_curve(self, id, vertex_0, vertex_1):
+        name = "<Phaenotyp>member_" + str(id)
+        vertex_0_co = vertex_0.co
+        vertex_1_co = vertex_1.co
+
+        # create the Curve Datablock
+        curve = bpy.data.curves.new(name, type="CURVE")
+        curve.dimensions = "3D"
+        curve.resolution_u = 2
+
+        # add points
+        polyline = curve.splines.new("POLY")
+        polyline.points.add(10)
+
+        for i in range(11):
+            position = (vertex_0_co*(i) + vertex_1_co*(10-i))*0.1
+            x = position[0]
+            y = position[1]
+            z = position[2]
+            polyline.points[i].co = (x,y,z, 1)
+
+        # create Object
+        obj = bpy.data.objects.new(name, curve)
+
+        # link object to collection
+        bpy.data.collections["<Phaenotyp>"].objects.link(obj)
+
+        # create material
+        name = "<Phaenotyp>member_" + str(id)
+        mat = bpy.data.materials.new(name)
+        obj.data.materials.append(mat)
+        obj.active_material_index = len(obj.data.materials) - 1
+
+        mat.use_nodes = True
+        nodetree = mat.node_tree
+
+        # add Color Ramp and link to Base Color
+        nodetree.nodes.new(type="ShaderNodeValToRGB")
+        input = mat.node_tree.nodes['Principled BSDF'].inputs['Base Color']
+        output = mat.node_tree.nodes['ColorRamp'].outputs['Color']
+        nodetree.links.new(input, output)
+
+        # add xyz and link to Color Ramp
+        nodetree.nodes.new(type="ShaderNodeSeparateXYZ")
+        input = mat.node_tree.nodes['ColorRamp'].inputs['Fac']
+        output = mat.node_tree.nodes['Separate XYZ'].outputs['X']
+        nodetree.links.new(input, output)
+
+        # add coordinate and link to xyz
+        nodetree.nodes.new(type="ShaderNodeTexCoord")
+        input = mat.node_tree.nodes['Separate XYZ'].inputs['Vector']
+        output =  mat.node_tree.nodes['Texture Coordinate'].outputs['UV']
+        nodetree.links.new(input, output)
+
+        # add a new ramp in the middle, position = 0.5
+        color_ramp = mat.node_tree.nodes['ColorRamp'].color_ramp
+
+        # add nine further positons (two existing)
+        for i in range(1, 10):
+            position = i*0.1
+            color_ramp.elements.new(position = position)
+
+        # change color for eleven points
+        from mathutils import Color
+        c = Color()
+
+        for i in range(11):
+            h = 0
+            s = 0
+            v = 1
+            c.hsv = h,s,v
+            color_ramp.elements[i].color = c.r, c.g, c.b, 1.0
+
+        self.curve = curve
+        self.mat = mat
+
+
+    def update_curve(self):
+        frame = bpy.context.scene.frame_current
+
+        # apply deflection
+        polyline = self.curve.splines[0]
+        for i in range(11):
+            position = self.deflection[frame][i]
+            f = data.scale_deflection
+            x = position[0]*(1-f) + self.initial_positions[frame][10-i][0]*f
+            y = position[1]*(1-f) + self.initial_positions[frame][10-i][1]*f
+            z = position[2]*(1-f) + self.initial_positions[frame][10-i][2]*f
+            polyline.points[i].co = (x,y,z, 1)
+
+        # change color for eleven points
+        self.mat.use_nodes = True
+        nodetree = self.mat.node_tree
+
+        # get forcetyp and force
+        if data.force_type_viz == "sigma":
+            result = self.sigma
+            scale = data.scale_sigma
+
+        if data.force_type_viz == "axial":
+            result = self.axial
+            scale = data.scale_axial
+
+        if data.force_type_viz == "moment_y":
+            result = self.moment_y
+            scale = data.scale_moment_y
+
+        if data.force_type_viz == "moment_z":
+            result = self.moment_z
+            scale = data.scale_moment_z
+
+        color_ramp = self.mat.node_tree.nodes['ColorRamp'].color_ramp
+
+        for i in range(11):
+            # define h
+            if result[frame][i] > 0:
+                h = 0.025
+                s = result[frame][i] * scale
+            else:
+                h = 0.550
+                s = result[frame][i] * scale * (-1)
+
+            # to be activated if overstress is working
+            '''
+            # define v
+            if self.overstress[frame] == True:
+                v = 0.0
+            else:
+                v = 1.0
+            '''
+            v = 1.0
+
+            c.hsv = h,s,v
+            color_ramp.elements[i].color = c.r, c.g, c.b, 1.0
+
+    @staticmethod
+    def get_by_id(id):
+        for member in members.instances:
+            if member.id == id:
+                return member
+
+    @staticmethod
+    def update_curves():
+        for member in members.instances:
+            member.update_curve()
+
+
 # function to return the smallest_minus or biggest_plus in a list
 def return_max_diff_to_zero(list):
     list_copy = list.copy()
@@ -134,7 +523,7 @@ def return_max_diff_to_zero(list):
         return biggest_plus
 
 
-class CustomProperties(PropertyGroup):
+class phaenotyp_properties(PropertyGroup):
     Do: FloatProperty(
         name = "Do",
         description = "Diameter of pipe outside in mm",
@@ -174,6 +563,36 @@ class CustomProperties(PropertyGroup):
         min = 0.01,
         max = 30.0
         )
+
+    loc_x: BoolProperty(
+        name='loc_x',
+        default=True
+    )
+
+    loc_y: BoolProperty(
+        name='loc_y',
+        default=True
+    )
+
+    loc_z: BoolProperty(
+        name='loc_z',
+        default=True
+    )
+
+    rot_x: BoolProperty(
+        name='rot_x',
+        default=False
+    )
+
+    rot_y: BoolProperty(
+        name='rot_y',
+        default=False
+    )
+
+    rot_z: BoolProperty(
+        name='rot_z',
+        default=False
+    )
 
     population_size: IntProperty(
         name = "population_size",
@@ -220,10 +639,13 @@ def update_mesh():
 
     data.mesh = obj.to_mesh(preserve_all_data_layers=True, depsgraph=dg)
     data.vertices = data.mesh.vertices
-    data.edges =data.mesh.edges
+    data.edges = data.mesh.edges
 
 
 def transfer_analyze():
+    # get current frame
+    frame = bpy.context.scene.frame_current
+
     truss = FEModel3D()
 
     update_mesh()
@@ -238,33 +660,33 @@ def transfer_analyze():
         truss.add_node(name, x,y,z)
 
     # define support
-    for support_id in data.support_ids:
-        name = "node_" + str(support_id)
-
-        # first node is fixed
-        if data.support_ids.index(support_id) == 0:
-            truss.def_support(name, True, True, True, True, True, True)
-
-        # all other nodes are only fixed in loc z-direction
-        else:
-            truss.def_support(name, False, False, True, False, False, False)
+    for support in supports.instances:
+        name = "node_" + str(support.id)
+        truss.def_support(name, support.loc_x, support.loc_y, support.loc_z, support.rot_x, support.rot_y, support.rot_z)
 
     # create members
-    members = []
+    for member in members.instances:
+        name = member.name
+        vertex_0_id = member.vertex_0.index
+        vertex_1_id = member.vertex_1.index
 
-    for edge_id, edge in enumerate(data.edges):
-        name = "edge_" + str(edge_id)
-        vertex_0_id = edge.vertices[0]
-        vertex_1_id = edge.vertices[1]
+        # save initial_positions to mix with deflection
+        initial_positions = []
+        for i in range(11):
+            position = (data.vertices[vertex_0_id].co*(i) + data.vertices[vertex_1_id].co*(10-i))*0.1
+            x = position[0]
+            y = position[1]
+            z = position[2]
+            initial_positions.append([x,y,z])
+        member.initial_positions[frame] = initial_positions
 
         node_0 = str("node_") + str(vertex_0_id)
         node_1 = str("node_") + str(vertex_1_id)
 
-        truss.add_member(name, node_0, node_1, data.E, data.G, data.Iy, data.Iz, data.J, data.A)
-        members.append(name)
+        truss.add_member(name, node_0, node_1, member.E, member.G, member.Iy, member.Iz, member.J, member.A)
 
         # add gravity
-        kN = data.kg * -0.00981
+        kN = member.kg * -0.00981
 
         # add distributed load
         truss.add_member_dist_load(name, "FZ", kN, kN)
@@ -272,133 +694,141 @@ def transfer_analyze():
     # analyze the model
     truss.analyze(check_statics=False, sparse=False)
 
-    # append result_max_axials
-    result_axial = []
-    result_moment_y = []
-    result_moment_z = []
-    result_shear_y = []
-    result_shear_z = []
-    result_torque = []
-    result_sigma = []
-
-    result_deflection = []
-
     # get forces
-    for member in members:
-        L = truss.Members[member].L() # Member length
-        T = truss.Members[member].T() # Member local transformation matrix
+    for member in members.instances:
+        name = member.name
+        L = truss.Members[name].L() # Member length
+        T = truss.Members[name].T() # Member local transformation matrix
 
-        axial_member = []
-        for i in range(10): # get the forces at 9 positions and
-            axial_member_pos = truss.Members[member].axial(x=L/9*i)
-            axial_member.append(axial_member_pos)
+        axial = []
+        for i in range(11): # get the forces at 11 positions and
+            axial_pos = truss.Members[name].axial(x=L/10*i)
+            axial.append(axial_pos)
+        member.axial[frame] = axial
 
-        moment_y_member = []
-        for i in range(10): # get the forces at 9 positions and
-            moment_y_member_pos = truss.Members[member].moment("My", x=L/9*i)
-            moment_y_member.append(moment_y_member_pos)
+        moment_y = []
+        for i in range(11): # get the forces at 11 positions and
+            moment_y_pos = truss.Members[name].moment("My", x=L/10*i)
+            moment_y.append(moment_y_pos)
+        member.moment_y[frame] = moment_y
 
-        moment_z_member = []
-        for i in range(10): # get the forces at 9 positions and
-            moment_z_member_pos = truss.Members[member].moment("Mz", x=L/9*i)
-            moment_z_member.append(moment_z_member_pos)
+        moment_z = []
+        for i in range(11): # get the forces at 11 positions and
+            moment_z_pos = truss.Members[name].moment("Mz", x=L/10*i)
+            moment_z.append(moment_z_pos)
+        member.moment_z[frame] = moment_z
 
-        shear_y_member = []
-        for i in range(10): # get the forces at 9 positions and
-            shear_y_member_pos = truss.Members[member].shear("Fy", x=L/9*i)
-            shear_y_member.append(shear_y_member_pos)
+        shear_y = []
+        for i in range(11): # get the forces at 11 positions and
+            shear_y_pos = truss.Members[name].shear("Fy", x=L/10*i)
+            shear_y.append(shear_y_pos)
+        member.shear_y[frame] = shear_y
 
-        shear_z_member = []
-        for i in range(10): # get the forces at 9 positions and
-            shear_z_member_pos = truss.Members[member].shear("Fz", x=L/9*i)
-            shear_z_member.append(shear_z_member_pos)
+        shear_z = []
+        for i in range(11): # get the forces at 11 positions and
+            shear_z_pos = truss.Members[name].shear("Fz", x=L/10*i)
+            shear_z.append(shear_z_pos)
+        member.shear_z[frame] = shear_z
 
-        torque_member = []
-        for i in range(10): # get the forces at 9 positions and
-            torque_member_pos = truss.Members[member].torque(x=L/9*i)
-            torque_member.append(torque_member_pos)
+        torque = []
+        for i in range(11): # get the forces at 11 positions and
+            torque_pos = truss.Members[name].torque(x=L/10*i)
+            torque.append(torque_pos)
+        member.torque[frame] = torque
 
-        result_axial.append(axial_member)
-        result_moment_y.append(moment_y_member)
-        result_moment_z.append(moment_z_member)
-        result_shear_y.append(shear_y_member)
-        result_shear_z.append(shear_z_member)
-        result_torque.append(torque_member)
 
         # modulus from the moments of area
         #(Wy and Wz are the same within a pipe)
-        data.Wy = data.Iy/(data.Do/2)
+        member.Wy = member.Iy/(member.Do/2)
 
         # polar modulus of torsion
-        data.WJ = data.J/(data.Do/2)
+        member.WJ = member.J/(member.Do/2)
 
         # calculation of the longitudinal stresses
-        longitudinal_stress_member = []
-        for i in range(10): # get the stresses at 9 positions and
-            moment_h = math.sqrt(moment_y_member[i]**2+moment_z_member[i]**2)
-            if axial_member[i] > 0:
-                s = axial_member[i]/data.A + moment_h/data.Wy
+        longitudinal_stress = []
+        for i in range(11): # get the stresses at 11 positions and
+            moment_h = math.sqrt(moment_y[i]**2+moment_z[i]**2)
+            if axial[i] > 0:
+                s = axial[i]/member.A + moment_h/member.Wy
             else:
-                s = axial_member[i]/data.A - moment_h/data.Wy
-            longitudinal_stress_member.append(s)
+                s = axial[i]/member.A - moment_h/member.Wy
+            longitudinal_stress.append(s)
 
         # get max stress of the beam
         # (can be positive or negative)
-        longitudinal_stress = return_max_diff_to_zero(longitudinal_stress_member) #  -> is working as fitness
+        member.longitudinal_stress[frame] = longitudinal_stress
+        member.max_longitudinal_stress[frame] = return_max_diff_to_zero(longitudinal_stress) #  -> is working as fitness
 
         # calculation of the shear stresses from shear force
         # (always positive)
-        tau_shear_member = []
-        for i in range(10): # get the stresses at 9 positions and
-            shear_h = math.sqrt(shear_y_member[i]**2+shear_z_member[i]**2)
-            tau = 1.333 * shear_h/data.A # for pipes
-            tau_shear_member.append(tau)
+        tau_shear = []
+        for i in range(11): # get the stresses at 11 positions and
+            shear_h = math.sqrt(shear_y[i]**2+shear_z[i]**2)
+            tau = 1.333 * shear_h/member.A # for pipes
+            tau_shear.append(tau)
 
         # get max shear stress of shear force of the beam
         # shear stress is mostly small compared to longitudinal
         # in common architectural usage and only importand with short beam lenght
-        tau_shear = max(tau_shear_member)
+        member.tau_shear[frame] = max(tau_shear)
+        member.max_tau_shear[frame] = max(tau_shear)
 
         # Calculation of the torsion stresses
         # (always positiv)
-        tau_torsion_member = []
-        for i in range(10): # get the stresses at 9 positions and
-            tau = abs(torque_member[i]/data.WJ)
-            tau_torsion_member.append(tau)
+        tau_torsion = []
+        for i in range(11): # get the stresses at 11 positions and
+            tau = abs(torque[i]/member.WJ)
+            tau_torsion.append(tau)
 
         # get max torsion stress of the beam
-        tau_torsion = max(tau_torsion_member)
+        member.tau_torsion[frame] = tau_torsion
+        member.max_tau_torsion[frame] = max(tau_torsion)
+
         # torsion stress is mostly small compared to longitudinal
         # in common architectural usage
 
         # calculation of the shear stresses form shear force and torsion
         # (always positiv)
-        sum_tau_member = []
-        for i in range(10): # get the stresses at 9 positions and
-            tau = tau_shear_member[0] + tau_torsion_member[0]
-            sum_tau_member.append(tau)
+        sum_tau = []
+        for i in range(11): # get the stresses at 11 positions and
+            tau = tau_shear[0] + tau_torsion[0]
+            sum_tau.append(tau)
 
-        sum_tau = max(sum_tau_member)
+        member.sum_tau[frame] = sum_tau
+        member.max_sum_tau[frame] = max(sum_tau)
 
         # combine shear and torque
-        sigmav_member = []
-        for i in range(10): # get the stresses at 9 positions and
-            sv = math.sqrt(longitudinal_stress_member[0]**2 + 3*sum_tau_member[0]**2)
-            sigmav_member.append(sv)
+        sigmav = []
+        for i in range(11): # get the stresses at 11 positions and
+            sv = math.sqrt(longitudinal_stress[0]**2 + 3*sum_tau[0]**2)
+            sigmav.append(sv)
 
-        sigmav = max(sigmav_member)
+        member.sigmav[frame] = sigmav
+        member.max_sigmav[frame] = max(sigmav)
         # check out: http://www.bs-wiki.de/mediawiki/index.php?title=Festigkeitsberechnung
+
+        member.sigma = member.longitudinal_stress
+        member.max_sigma = member.max_longitudinal_stress
 
         # for the definition of the fitness criteria prepared
         # max longitudinal stress for steel St360 in kN/cm²
         # tensile strength: 36 kN/cm², yield point 23.5 kN/cm²
-        # sigma_max = 14.0
-        # tau_shear_max = 9.5
-        # tau_torsion_max = 10.5
-        # simgav_max = 23.5
+        # to be checked and activated in update_curve
+        '''
+        member.overstress[frame] = False
 
-        result_sigma.append(longitudinal_stress_member)
+        if member.max_sigma[frame] > 14.0:
+            member.overstress[frame] = True
 
+        if member.max_tau_shear[frame] > 9.5:
+            member.overstress[frame] = True
+
+        if member.max_tau_torsion[frame] > 10.5:
+            member.overstress[frame] = True
+
+        if member.max_sigmav[frame] > 23.5:
+            member.overstress[frame] = True
+        '''
         # deflection
         deflection = []
 
@@ -410,19 +840,18 @@ def transfer_analyze():
         cos_z = array([T[2,0:3]]) # Direction cosines of local z-axis
 
         DY_plot = empty((0, 3))
-        for i in range(10):
+        for i in range(11):
             # Calculate the local y-direction displacement
-            dy_tot = truss.Members[member].deflection('dy', L/9*i)
+            dy_tot = truss.Members[name].deflection('dy', L/10*i)
 
             # Calculate the scaled displacement in global coordinates
             DY_plot = append(DY_plot, dy_tot*cos_y*scale_factor, axis=0)
 
         # Calculate the local z-axis displacements at 20 points along the member's length
         DZ_plot = empty((0, 3))
-        for i in range(10):
-
+        for i in range(11):
             # Calculate the local z-direction displacement
-            dz_tot = truss.Members[member].deflection('dz', L/9*i)
+            dz_tot = truss.Members[name].deflection('dz', L/10*i)
 
             # Calculate the scaled displacement in global coordinates
             DZ_plot = append(DZ_plot, dz_tot*cos_z*scale_factor, axis=0)
@@ -430,13 +859,13 @@ def transfer_analyze():
         # Calculate the local x-axis displacements at 20 points along the member's length
         DX_plot = empty((0, 3))
 
-        Xi = truss.Members[member].i_node.X
-        Yi = truss.Members[member].i_node.Y
-        Zi = truss.Members[member].i_node.Z
+        Xi = truss.Members[name].i_node.X
+        Yi = truss.Members[name].i_node.Y
+        Zi = truss.Members[name].i_node.Z
 
-        for i in range(10):
+        for i in range(11):
             # Displacements in local coordinates
-            dx_tot = [[Xi, Yi, Zi]] + (L/9*i + truss.Members[member].deflection('dx', L/9*i)*scale_factor)*cos_x
+            dx_tot = [[Xi, Yi, Zi]] + (L/10*i + truss.Members[name].deflection('dx', L/10*i)*scale_factor)*cos_x
 
             # Magnified displacements in global coordinates
             DX_plot = append(DX_plot, dx_tot, axis=0)
@@ -447,35 +876,32 @@ def transfer_analyze():
         # <-- taken from pyNite VisDeformedMember: https://github.com/JWock82/PyNite
 
         # add to results
-        for i in range(10):
+        for i in range(11):
             x = D_plot[i, 0] * 0.01
             y = D_plot[i, 1] * 0.01
             z = D_plot[i, 2] * 0.01
 
             deflection.append([x,y,z])
 
-        result_deflection.append(deflection)
 
+        member.deflection[frame] = deflection
 
-    # save as current frame
-    frame = bpy.context.scene.frame_current
-
-    data.result_axial[frame] = result_axial
-    data.result_moment_y[frame] = result_moment_y
-    data.result_moment_z[frame] = result_moment_z
-    data.result_shear_y[frame] = result_shear_y
-    data.result_shear_z[frame] = result_shear_z
-    data.result_torque[frame] = result_torque
-    data.result_sigma[frame] = result_sigma
-
-    data.result_deflection[frame] = result_deflection
+    # change viewport to material
+    bpy.context.space_data.shading.type = 'MATERIAL'
+    data.done = True
 
 
 # genetic algorithm
-class individual(object):
+class individuals(object):
+    instances = []
+    best = None
+
     def __init__(self, chromosome):
         self.chromosome = chromosome
         self.fitness = self.cal_fitness()
+        self.frame = bpy.context.scene.frame_current
+
+        individuals.instances.append(self)
 
     @classmethod
     def mutated_genes(self):
@@ -487,11 +913,6 @@ class individual(object):
         # create gnome from available shape keys
         gnome_len = len(data.shape_keys)-1 # to exlude basis
         chromosome = [self.mutated_genes() for _ in range(gnome_len)]
-
-        # apply shape keys
-        for id, key in enumerate(data.shape_keys):
-            if id > 0: # to exlude basis
-                key.value = chromosome[0]*0.1
 
         return chromosome
 
@@ -514,43 +935,49 @@ class individual(object):
             # otherwise insert random gene(mutate) to maintain diversity
             else:
                 child_chromosome.append(self.mutated_genes())
+        '''
+        child_chromosome = []
+        for gene_id, gene in enumerate(self.chromosome):
+            method = random.choice([0,1,2])
+            if method == 0:
+                mixed_gene = (gene + par2.chromosome[gene_id]) * 0.5
+                child_chromosome.append(mixed_gene)
 
+            if method == 1:
+                child_chromosome.append(gene)
+
+            if method == 2:
+                child_chromosome.append(par2.chromosome[gene_id])
+                '''
+
+        frame = bpy.context.scene.frame_current
+        return individuals(child_chromosome)
+
+    def cal_fitness(self):
         # apply shape keys
         for id, key in enumerate(data.shape_keys):
             if id > 0: # to exlude basis
-                key.value = child_chromosome[0]*0.1
+                key.value = self.chromosome[id-1]*0.1
 
-        return individual(child_chromosome)
-
-    def cal_fitness(self):
         transfer_analyze()
         frame = bpy.context.scene.frame_current
 
-        # get forcetyp and force
-        if data.force_type_viz == "sigma":
-            result = data.result_axial
-
-        if data.force_type_viz == "axial":
-            result = data.result_axial
-
-        elif data.force_type_viz == "moment_y":
-            result = data.result_moment_y
-
-        elif data.force_type_viz == "moment_z":
-            result = data.result_moment_z
-
-        else:
-            pass
-
         # get fitness
         forces = []
-        for member in result[frame]:
-            for i in range(10): # get the fitness at 9 positions and
-                force = member[i]
-                forces.append(force)
+        for member in members.instances:
+            force = member.max_sigma[frame]
+            forces.append(force)
 
-        fitness = return_max_diff_to_zero(forces)
-        fitness = abs(fitness)
+        #fitness = return_max_diff_to_zero(forces)
+        #fitness = abs(fitness)
+
+        # average
+        sum_forces = 0
+        for force in forces:
+            sum_forces = sum_forces + abs(force)
+
+        fitness = sum_forces / len(forces)
+
         return fitness
 
 
@@ -560,8 +987,8 @@ def genetic_mutation():
     if data.ga_state == "create initial population":
         if len(data.population) < data.population_size:
             # create chromosome with set of shapekeys
-            chromosome = individual.create_gnome()
-            data.population.append(individual(chromosome))
+            chromosome = individuals.create_gnome()
+            data.population.append(individuals(chromosome))
             data.chromosome[frame] = chromosome
             print("initial population append:", chromosome)
 
@@ -574,8 +1001,24 @@ def genetic_mutation():
         data.population = sorted(data.population, key = lambda x:x.fitness)
 
         # print previous population to terminal
+        print("sorted:")
         for id, gnome in enumerate(data.population):
-            print(gnome.chromosome, "with fitness:", gnome.fitness)
+            print(gnome.chromosome, "with fitness", gnome.fitness)
+        print("")
+
+        # for first run only
+        if individuals.best == None:
+            individuals.best = data.population[0]
+
+        # replace overall best of all generations
+        best = data.population[0]
+        for individual in individuals.instances:
+            if individual.fitness > best.fitness:
+                individuals.best = best
+
+        print("overall best individuals:")
+        print(individuals.best.chromosome, "with fitness", individuals.best.fitness, "at frame", individuals.best.frame)
+        print("")
 
         # create empty list of a new generation
         new_generation = []
@@ -608,190 +1051,6 @@ def genetic_mutation():
             # start new generation
             data.ga_state = "create new generation"
 
-
-def create_curves():
-    reset_collection_geometry_material()
-
-    frame = bpy.context.scene.frame_current
-
-    # draw curves
-    for member_id, deflection in enumerate(data.result_deflection[frame]):
-        sigma = return_max_diff_to_zero(data.result_sigma[frame][member_id])
-        # set color
-        if sigma > 0:
-            r,g,b = 1,0,0
-        else:
-            r,g,b = 0,0,1
-
-        # create name
-        name = "<Phaenotyp>member_" + str(member_id)
-
-        # create the Curve Datablock
-        curve = bpy.data.curves.new(name, type="CURVE")
-        curve.dimensions = "3D"
-        curve.resolution_u = 2
-
-        # add points
-        polyline = curve.splines.new("POLY")
-
-        vertex_0_id = data.edges[member_id].vertices[0]
-        vertex_1_id = data.edges[member_id].vertices[1]
-
-        vertex_0_co = data.vertices[vertex_0_id].co
-        vertex_1_co = data.vertices[vertex_1_id].co
-
-        polyline.points.add(9)
-
-        for point_id, position in enumerate(deflection):
-            x = position[0]
-            y = position[1]
-            z = position[2]
-            polyline.points[point_id].co = (x,y,z, 1)
-
-            radius = data.result_sigma[frame][member_id][point_id]
-            polyline.points[point_id].radius = abs(radius)
-
-        # create Object
-        obj = bpy.data.objects.new(name, curve)
-        curve.bevel_depth = data.scale_sigma
-
-        # link object to collection
-        bpy.data.collections["<Phaenotyp>"].objects.link(obj)
-
-        # new material
-        name = "<Phaenotyp>member_" + str(member_id)
-        mat = bpy.data.materials.new(name)
-        mat.diffuse_color = (r,g,b,1)
-        obj.data.materials.append(mat)
-        obj.active_material_index = len(obj.data.materials) - 1
-
-        # save to data
-        data.curves.append(obj)
-        data.materials.append(mat)
-
-
-    # deselect, because last curve would be selected
-    bpy.ops.object.select_all(action="DESELECT")
-
-    data.done = True
-
-
-    # deselect, because last curve would be selected
-    bpy.ops.object.select_all(action="DESELECT")
-
-    data.done = True
-
-
-def update_curves():
-    frame = bpy.context.scene.frame_current
-
-    for id, obj in enumerate(data.curves):
-        # get forcetyp and force
-        if data.force_type_viz == "sigma":
-            result = data.result_sigma
-            scale = data.scale_sigma
-
-        if data.force_type_viz == "axial":
-            result = data.result_axial
-            scale = data.scale_axial
-
-        elif data.force_type_viz == "moment_y":
-            result = data.result_moment_y
-            scale = data.scale_moment_y
-
-        elif data.force_type_viz == "moment_z":
-            result = data.result_moment_z
-            scale = data.scale_moment_z
-
-        else:
-            pass
-
-
-        # get curve from curve-obj
-        curve_name = obj.data.name
-        curve = bpy.data.curves[curve_name]
-        curve.bevel_depth = scale
-
-        # get highest force of this forcetype
-        force = return_max_diff_to_zero(result[frame][id])
-
-        # set color
-        if force > 0:
-            r,g,b = 1,0,0
-        else:
-            r,g,b = 0,0,1
-
-        mat = data.materials[id]
-        mat.diffuse_color = (r,g,b,1)
-
-        # change position and radius
-        for point_id, position in enumerate(data.result_deflection[frame][id]):
-            x = position[0]
-            y = position[1]
-            z = position[2]
-            curve.splines[0].points[point_id].co = (x,y,z, 1)
-
-            radius = result[frame][id][point_id]
-            curve.splines[0].points[point_id].radius = abs(radius)
-
-
-def create_texts():
-    delete_texts()
-
-    frame = bpy.context.scene.frame_current
-
-    # draw curves
-    for member_id, edge in enumerate(data.edges):
-        vertex_0_id = data.edges[member_id].vertices[0]
-        vertex_1_id = data.edges[member_id].vertices[1]
-
-        vertex_0 = data.vertices[vertex_0_id]
-        vertex_1 = data.vertices[vertex_1_id]
-
-        mid = (vertex_0.co + vertex_1.co)*0.5
-
-        name = "<Phaenotyp>text_" + str(member_id)
-
-        text = "member: " + str(member_id) + "\n"
-        text = text + "\n"
-
-        text = text + "axial: " + str(data.result_axial[frame][member_id]) + "\n"
-        text = text + "\n"
-
-        text = text + "moment_y: " + str(data.result_moment_y[frame][member_id]) + "\n"
-        text = text + "moment_z: " + str(data.result_moment_z[frame][member_id]) + "\n"
-        text = text + "\n"
-
-        text = text + "shear_y: " + str(data.result_shear_y[frame][member_id]) + "\n"
-        text = text + "shear_z: " + str(data.result_shear_z[frame][member_id]) + "\n"
-        text = text + "\n"
-
-        text = text + "torque: " + str(data.result_torque[frame][member_id]) + "\n"
-        text = text + "sigma: " + str(data.result_sigma[frame][member_id]) + "\n"
-
-        # create the Font Datablock
-        curve = bpy.data.curves.new(type="FONT", name=name)
-        curve.body = text
-        obj = bpy.data.objects.new(name=name, object_data=curve)
-
-        # set position
-        obj.location = mid
-
-        # set size
-        obj.scale = [0.05, 0.05, 0.05]
-
-        # link object to collection
-        bpy.data.collections["<Phaenotyp>"].objects.link(obj)
-
-        # save to data
-        data.texts.append(obj)
-
-
-def delete_texts():
-    if len(data.texts) > 0:
-        for text in bpy.data.texts:
-            if "<Phaenotyp>" in obj.name_full:
-                bpy.data.text.remove(text)
 
 def reset_data():
     data.curves = []
@@ -832,19 +1091,28 @@ def reset_collection_geometry_material():
     collection = bpy.data.collections.new("<Phaenotyp>")
     bpy.context.scene.collection.children.link(collection)
 
-
 class WM_OT_set_structure(Operator):
-    bl_label = "set_obj"
+    bl_label = "set_structure"
     bl_idname = "wm.set_structure"
-    bl_description = "Please select a mesh in Object Mode and press set, to define a structure"
+    bl_description = "Please select an object in Object-Mode and press set"
 
     def execute(self, context):
-        data.obj = bpy.context.active_object
-        data.mesh = bpy.data.meshes[data.obj.data.name]
-        data.vertices = data.obj.data.vertices
-        data.edges =data.mesh.edges
+        # create collection if it does not exist
+        not_existing = True
+        for collection in bpy.data.collections:
+            if collection.name_full == "<Phaenotyp>":
+                not_existing = False
 
+        if not_existing:
+            collection = bpy.data.collections.new("<Phaenotyp>")
+            bpy.context.scene.collection.children.link(collection)
+
+        data.obj = bpy.context.active_object
         bpy.ops.object.mode_set(mode="EDIT")
+
+        # if user is changing the setup, the visualization is disabled
+        data.done = False
+
         return {"FINISHED"}
 
 
@@ -858,9 +1126,69 @@ class WM_OT_set_support(Operator):
             # get selected vertices
             bpy.ops.object.mode_set(mode="OBJECT")
             bpy.ops.object.mode_set(mode="EDIT")
-            data.support_ids = [i.index for i in bpy.context.active_object.data.vertices if i.select]
-            bpy.ops.object.mode_set(mode="OBJECT")
 
+            for id, vertex in enumerate(data.obj.data.vertices):
+                if vertex.select:
+                    # vertex is existing as support?
+                    if id in supports.definend_vertex_ids:
+                        # update parameters
+                        support = supports.get_by_id(id)
+
+                        # delete and create new sign
+                        support.update_settings()
+                        support.update_sign()
+
+                    else:
+                        # create new member and sign
+                        new_support = supports(id, vertex)
+                        new_support.update_settings()
+                        new_support.create_sign()
+
+        bpy.ops.object.mode_set(mode="OBJECT")
+        bpy.ops.object.mode_set(mode="EDIT")
+
+        # if user is changing the setup, the visualization is disabled
+        data.done = False
+
+        return {"FINISHED"}
+
+
+class WM_OT_set_profile(Operator):
+    bl_label = "set_profile"
+    bl_idname = "wm.set_profile"
+    bl_description = "Please select edges in Edit-Mode and press set, to define profiles"
+
+    def execute(self, context):
+        bpy.ops.object.mode_set(mode="OBJECT")
+
+        # create new member
+        for id, edge in enumerate(data.obj.data.edges):
+            vertex_0_id = edge.vertices[0]
+            vertex_1_id = edge.vertices[1]
+
+            vertex_0 = data.obj.data.vertices[vertex_0_id]
+            vertex_1 = data.obj.data.vertices[vertex_1_id]
+
+            if edge.select:
+                # edge is existing as member?
+                if id in members.definend_edge_ids:
+                    # update parameters
+                    member = members.get_by_id(id)
+                    member.update_settings()
+
+                else:
+                    # create new member
+                    new_member = members(id, vertex_0, vertex_1)
+                    new_member.update_settings()
+
+        # check if all members done
+        if len(members.instances) == len(data.obj.data.edges):
+            members.all_edges_definend = True
+
+        # if user is changing the setup, the visualization is disabled
+        data.done = False
+
+        bpy.ops.object.mode_set(mode="EDIT")
         return {"FINISHED"}
 
 
@@ -870,11 +1198,8 @@ class WM_OT_calculate_single_frame(Operator):
     bl_description = "Calulate single frame"
 
     def execute(self, context):
-        reset_data()
-        reset_collection_geometry_material()
-
         transfer_analyze()
-        create_curves()
+        members.update_curves()
 
         return {"FINISHED"}
 
@@ -885,11 +1210,8 @@ class WM_OT_calculate_animation(Operator):
     bl_description = "Calulate animation"
 
     def execute(self, context):
-        reset_data()
-        reset_collection_geometry_material()
-
         transfer_analyze()
-        create_curves()
+        members.update_curves()
 
         # activate calculation in update_post
         data.calculate_update_post = True
@@ -905,20 +1227,16 @@ class WM_OT_calculate_animation(Operator):
 class WM_OT_genetic_mutation(Operator):
     bl_label = "genetic_mutation"
     bl_idname = "wm.genetic_mutation"
-    bl_description = "start genetic muation over selected shape keys"
+    bl_description = "Start genetic muation over selected shape keys"
 
     def execute(self, context):
-        # reset
-        reset_data()
-        reset_collection_geometry_material()
-
         # shape keys
         shape_key = data.obj.data.shape_keys
         for keyblock in shape_key.key_blocks:
             data.shape_keys.append(keyblock)
 
         transfer_analyze()
-        create_curves()
+        members.update_curves()
 
         # activate calculation in update_post
         data.genetetic_mutation_update_post = True
@@ -934,9 +1252,10 @@ class WM_OT_genetic_mutation(Operator):
         return {"FINISHED"}
 
 
-class WM_OT_viz_scale_up(Operator):
-    bl_label = "viz_scale_up"
-    bl_idname = "wm.viz_scale_up"
+class WM_OT_viz_scale_force_up(Operator):
+    bl_label = "viz_scale_force_up"
+    bl_idname = "wm.viz_scale_force_up"
+    bl_description = "Scale force"
 
     def execute(self, context):
         # get forcetyp and force
@@ -955,14 +1274,15 @@ class WM_OT_viz_scale_up(Operator):
         else:
             pass
 
-        update_curves()
+        members.update_curves()
 
         return {"FINISHED"}
 
 
-class WM_OT_viz_scale_down(Operator):
-    bl_label = "viz_scale_down"
-    bl_idname = "wm.viz_scale_down"
+class WM_OT_viz_scale_force_down(Operator):
+    bl_label = "viz_scale_force_down"
+    bl_idname = "wm.viz_scale_force_down"
+    bl_description = "Scale force"
 
     def execute(self, context):
         # get forcetyp and force
@@ -981,17 +1301,48 @@ class WM_OT_viz_scale_down(Operator):
         else:
             pass
 
-        update_curves()
+        members.update_curves()
+
+        return {"FINISHED"}
+
+class WM_OT_viz_scale_deflection_up(Operator):
+    bl_label = "viz_scale_deflection_up"
+    bl_idname = "wm.viz_scale_deflection_up"
+    bl_description = "Scale deflection"
+
+    def execute(self, context):
+        data.scale_deflection = data.scale_deflection + 0.1
+        if data.scale_deflection > 1:
+            data.scale_deflection = 1 # not bigger than one
+
+        members.update_curves()
 
         return {"FINISHED"}
 
 
+class WM_OT_viz_scale_deflection_down(Operator):
+    bl_label = "viz_scale_deflection_down"
+    bl_idname = "wm.viz_scale_deflection_down"
+    bl_description = "Scale deflection"
+
+    def execute(self, context):
+        data.scale_deflection = data.scale_deflection - 0.1
+        if data.scale_deflection < 0:
+            data.scale_deflection = 0 # not smaller than zero
+
+        members.update_curves()
+
+        members.update_curves()
+
+        return {"FINISHED"}
+
 class WM_OT_viz_update(Operator):
     bl_label = "viz_update"
     bl_idname = "wm.viz_update"
+    bl_description = "Update the force type"
 
     def execute(self, context):
-        update_curves()
+        members.update_curves()
 
         return {"FINISHED"}
 
@@ -999,10 +1350,70 @@ class WM_OT_viz_update(Operator):
 class WM_OT_text(Operator):
     bl_label = "text"
     bl_idname = "wm.text"
+    bl_description = "Generate output at the selcted point"
 
     def execute(self, context):
-        delete_texts()
-        create_texts()
+        #try:
+        data.texts = []
+        selected_points = []
+        curve = bpy.context.selected_objects[0]
+        for point_id, point in enumerate(curve.data.splines[0].points):
+            if point.select == True:
+                selected_points.append(point_id)
+
+        if len(selected_points) > 1:
+            data.texts.append("Please select one point only")
+
+        else:
+            # get member id
+            name = curve.name_full
+            name_splited = name.split("_")
+            member_id = int(name_splited[1])
+            member = members.get_by_id(member_id)
+
+            text = "Member: " + str(member.id)
+            data.texts.append(text)
+
+            # get Position
+            position = selected_points[0]
+            text = "Position: " + str(position)
+            data.texts.append(text)
+
+            # get frame
+            frame = bpy.context.scene.frame_current
+
+            # results
+            text = "axial: " + str(member.axial[frame][position])
+            data.texts.append(text)
+            text = "moment_y: " + str(member.moment_y[frame][position])
+            data.texts.append(text)
+            text = "moment_z: " + str(member.moment_z[frame][position])
+            data.texts.append(text)
+            text = "shear_y: " + str(member.shear_y[frame][position])
+            data.texts.append(text)
+            text = "shear_z: " + str(member.shear_z[frame][position])
+            data.texts.append(text)
+            text = "torque: " + str(member.torque[frame][position])
+            data.texts.append(text)
+
+            text = "longitudinal_stress: " + str(member.longitudinal_stress[frame][position])
+            data.texts.append(text)
+            text = "tau_shear: " + str(member.tau_shear[frame])
+            data.texts.append(text)
+            text = "tau_torsion: " + str(member.tau_torsion[frame])
+            data.texts.append(text)
+            text = "sum_tau: " + str(member.sum_tau[frame])
+            data.texts.append(text)
+            text = "sigmav: " + str(member.sigmav[frame][position])
+            data.texts.append(text)
+            text = "sigma: " + str(member.sigma[frame][position])
+            data.texts.append(text)
+
+            text = "overstress: " + str(member.overstress[frame])
+            data.texts.append(text)
+
+        #except:
+        #    data.texts.append("Please select one point within the profile")
 
         return {"FINISHED"}
 
@@ -1010,6 +1421,7 @@ class WM_OT_text(Operator):
 class WM_OT_reset(Operator):
     bl_label = "reset"
     bl_idname = "wm.reset"
+    bl_description = "Reset Phaenotyp"
 
     def execute(self, context):
         reset_collection_geometry_material()
@@ -1018,13 +1430,27 @@ class WM_OT_reset(Operator):
         data.vertices = None
         data.edges = None
         data.done = None
-        data.support_ids = []
+
+        # reset members
+        for member in members.instances:
+            del member
+
+        members.instances = []
+        members.definend_edge_ids = []
+        members.all_edges_definend = False
+
+        # reset supports
+        for support in supports.instances:
+            del support
+
+        supports.instances = []
+        supports.definend_vertex_ids = []
 
         return {"FINISHED"}
 
 
-class OBJECT_PT_CustomPanel(Panel):
-    bl_label = "Phänotyp 0.0.3(test mit Karl)"
+class OBJECT_PT_Phaenotyp(Panel):
+    bl_label = "Phänotyp 0.0.4"
     bl_idname = "OBJECT_PT_custom_panel"
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
@@ -1039,31 +1465,6 @@ class OBJECT_PT_CustomPanel(Panel):
         scene = context.scene
         phaenotyp = scene.phaenotyp
 
-        # define material and geometry
-        box = layout.box()
-        box.label(text="Setup:")
-
-        box.prop(phaenotyp, "Do", text="Diameter outside")
-        box.prop(phaenotyp, "Di", text="Diameter inside")
-        box.prop(phaenotyp, "E", text="Modulus of elasticity")
-        box.prop(phaenotyp, "G", text="Shear modulus")
-        box.prop(phaenotyp, "d", text="Density")
-
-        data.Do = phaenotyp.Do
-        data.Di = phaenotyp.Di
-
-        data.E = phaenotyp.E
-        data.G = phaenotyp.G
-        data.d = phaenotyp.d
-
-        data.update() # calculate Iy, Iz, J, A, kg
-        box.label(text="Iy = " + str(round(data.Iy, 2)) + " cm⁴")
-        box.label(text="Iz = " + str(round(data.Iz, 2)) + " cm⁴")
-        box.label(text="J = " + str(round(data.J, 2)) + " cm⁴")
-        box.label(text="A = " + str(round(data.A, 2)) + " cm²")
-        box.label(text="kg = " + str(round(data.kg, 2)) + " kg/m")
-
-        # define active object
         box = layout.box()
         box.label(text="Structure:")
         box.operator("wm.set_structure", text="Set")
@@ -1074,111 +1475,135 @@ class OBJECT_PT_CustomPanel(Panel):
             # define support
             box = layout.box()
             box.label(text="Support:")
+
+            col = box.column()
+            split = col.split()
+            split.prop(phaenotyp, "loc_x", text="loc x")
+            split.prop(phaenotyp, "rot_x", text="rot x")
+
+            col = box.column()
+            split = col.split()
+            split.prop(phaenotyp, "loc_y", text="loc y")
+            split.prop(phaenotyp, "rot_y", text="rot y")
+
+            col = box.column()
+            split = col.split()
+            split.prop(phaenotyp, "loc_z", text="loc z")
+            split.prop(phaenotyp, "rot_z", text="rot z")
+
             box.operator("wm.set_support", text="Set")
-            if len(data.support_ids) > 0:
-                box.label(text = str(len(data.support_ids)) + " vertices defined as support")
 
-                # Analysis
+            data.loc_x = phaenotyp.loc_x
+            data.loc_y = phaenotyp.loc_y
+            data.loc_z = phaenotyp.loc_z
+            data.rot_x = phaenotyp.rot_x
+            data.rot_y = phaenotyp.rot_y
+            data.rot_z = phaenotyp.rot_z
+
+            if len(supports.instances) > 0:
+                box.label(text = str(len(supports.instances)) + " vertices defined as support")
+
+                # define material and geometry
                 box = layout.box()
-                box.label(text="Analysis:")
-                box.operator("wm.calculate_single_frame", text="Single Frame")
-                box.operator("wm.calculate_animation", text="Animation")
+                box.label(text="Profile:")
 
-                shape_key = data.obj.data.shape_keys
-                if shape_key:
-                    # Genetic Mutation:
+                box.prop(phaenotyp, "Do", text="Diameter outside")
+                box.prop(phaenotyp, "Di", text="Diameter inside")
+                box.prop(phaenotyp, "E", text="Modulus of elasticity")
+                box.prop(phaenotyp, "G", text="Shear modulus")
+                box.prop(phaenotyp, "d", text="Density")
+
+                data.Do = phaenotyp.Do
+                data.Di = phaenotyp.Di
+
+                data.E = phaenotyp.E
+                data.G = phaenotyp.G
+                data.d = phaenotyp.d
+
+                data.update() # calculate Iy, Iz, J, A, kg
+                box.label(text="Iy = " + str(round(data.Iy, 2)) + " cm⁴")
+                box.label(text="Iz = " + str(round(data.Iz, 2)) + " cm⁴")
+                box.label(text="J = " + str(round(data.J, 2)) + " cm⁴")
+                box.label(text="A = " + str(round(data.A, 2)) + " cm²")
+                box.label(text="kg = " + str(round(data.kg, 2)) + " kg/m")
+
+                box.operator("wm.set_profile", text="Set")
+
+                if members.all_edges_definend:
+                    # Analysis
                     box = layout.box()
-                    box.label(text="Genetic Mutation:")
-                    box.prop(phaenotyp, "population_size", text="Size of population for GA")
-                    box.prop(phaenotyp, "elitism", text="Size of elitism for GA")
-                    box.prop(phaenotyp, "forces", text="Fitness")
-                    data.force_type_viz = phaenotyp.forces
+                    box.label(text="Analysis:")
+                    box.operator("wm.calculate_single_frame", text="Single Frame")
+                    box.operator("wm.calculate_animation", text="Animation")
 
-                    for keyblock in shape_key.key_blocks:
-                        name = keyblock.name
-                        box.label(text=name)
+                    shape_key = data.obj.data.shape_keys
+                    if shape_key:
+                        # Genetic Mutation:
+                        box = layout.box()
+                        box.label(text="Genetic Mutation:")
+                        box.prop(phaenotyp, "population_size", text="Size of population for GA")
+                        box.prop(phaenotyp, "elitism", text="Size of elitism for GA")
 
-                    box.operator("wm.genetic_mutation", text="Start")
+                        for keyblock in shape_key.key_blocks:
+                            name = keyblock.name
+                            box.label(text=name)
 
+                        box.operator("wm.genetic_mutation", text="Start")
 
-                # Visualization
-                if data.done:
-                    box = layout.box()
-                    box.label(text="Vizualisation:")
-                    box.prop(phaenotyp, "forces", text="Force")
-                    data.force_type_viz = phaenotyp.forces
-                    box.operator("wm.viz_update", text="update")
+                    # Visualization
+                    if data.done:
+                        box = layout.box()
+                        box.label(text="Vizualisation:")
+                        box.prop(phaenotyp, "forces", text="Force")
+                        data.force_type_viz = phaenotyp.forces
+                        box.operator("wm.viz_update", text="update")
 
-                    col = box.column_flow(columns=2, align=False)
-                    col.operator("wm.viz_scale_up", text="Up")
-                    col.operator("wm.viz_scale_down", text="Down")
+                        col = box.column_flow(columns=2, align=False)
+                        col.operator("wm.viz_scale_force_up", text="Up")
+                        col.operator("wm.viz_scale_force_down", text="Down")
 
-                    # Text
-                    box = layout.box()
-                    box.label(text="Text:")
-                    box.operator("wm.text", text="generate")
+                        box.label(text="Deflection:")
+                        col = box.column_flow(columns=2, align=False)
+                        col.operator("wm.viz_scale_deflection_up", text="Up")
+                        col.operator("wm.viz_scale_deflection_down", text="Down")
+
+                        # Text
+                        box = layout.box()
+                        box.label(text="Result:")
+                        box.operator("wm.text", text="generate")
+
+                        if len(data.texts) > 0:
+                            for text in data.texts:
+                                box.label(text=text)
 
         box = layout.box()
         box.operator("wm.reset", text="Reset")
 
 
 classes = (
-    CustomProperties,
-
+    phaenotyp_properties,
     WM_OT_set_structure,
+    WM_OT_set_profile,
     WM_OT_set_support,
     WM_OT_calculate_single_frame,
     WM_OT_calculate_animation,
     WM_OT_genetic_mutation,
 
-    WM_OT_viz_scale_up,
-    WM_OT_viz_scale_down,
+    WM_OT_viz_scale_force_up,
+    WM_OT_viz_scale_force_down,
+    WM_OT_viz_scale_deflection_up,
+    WM_OT_viz_scale_deflection_down,
     WM_OT_viz_update,
 
     WM_OT_text,
 
     WM_OT_reset,
-    OBJECT_PT_CustomPanel
+    OBJECT_PT_Phaenotyp
 )
-
-
-def draw():
-    for support_id in data.support_ids:
-        vertices = data.vertices
-
-        x = vertices[support_id].co[0]
-        y = vertices[support_id].co[1]
-        z = vertices[support_id].co[2]
-        scale = 0.1
-
-        coords = [
-                    [ 1,  1, -2], [ 0,  0,  0],
-                    [ 1, -1, -2], [ 0,  0,  0],
-                    [-1, -1, -2], [ 0,  0,  0],
-                    [-1,  1, -2], [ 0,  0,  0],
-
-                    [ 1,  1, -2], [ 1, -1, -2],
-                    [ 1, -1, -2], [-1, -1, -2],
-                    [-1, -1, -2], [-1,  1, -2],
-                    [-1,  1, -2], [ 1,  1, -2]
-                    ]
-
-        for pos in coords:
-            pos[0] = pos[0]*scale + x
-            pos[1] = pos[1]*scale + y
-            pos[2] = pos[2]*scale + z
-
-        shader = gpu.shader.from_builtin("3D_UNIFORM_COLOR")
-        batch = batch_for_shader(shader, "LINES", {"pos": coords})
-
-        shader.bind()
-        shader.uniform_float("color", (1, 1, 1, 1))
-        batch.draw(shader)
 
 
 @persistent
 def update_post(scene):
-    delete_texts()
     update_mesh()
     # Analyze
     if data.calculate_update_post:
@@ -1200,7 +1625,7 @@ def update_post(scene):
             data.genetetic_mutation_update_post = False
             print("done")
 
-    update_curves()
+    members.update_curves()
 
 
 def register():
@@ -1208,8 +1633,7 @@ def register():
     for cls in classes:
         register_class(cls)
 
-    bpy.types.Scene.phaenotyp = PointerProperty(type=CustomProperties)
-    draw_handler = bpy.types.SpaceView3D.draw_handler_add(draw, (), "WINDOW", "POST_VIEW")
+    bpy.types.Scene.phaenotyp = PointerProperty(type=phaenotyp_properties)
     bpy.app.handlers.frame_change_post.append(update_post)
 
 
