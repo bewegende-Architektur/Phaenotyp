@@ -4,7 +4,7 @@ bl_info = {
     "description": "Genetic optimization of architectural structures",
     "author": "bewegende Architektur e.U. and Karl Deix",
     "version": (0, 0, 4),
-    "blender": (3, 0, 1),
+    "blender": (3, 0, 0),
     "location": "3D View > Tools",
 }
 
@@ -319,8 +319,8 @@ class members:
         pass
 
     def update_settings(self):
-        self.Do = data.Do * 0.001
-        self.Di = data.Di * 0.001
+        self.Do = data.Do * 0.1
+        self.Di = data.Di * 0.1
         self.E  = data.E
         self.G  = data.G
         self.d  = data.d
@@ -360,7 +360,7 @@ class members:
 
         self.overstress = {}
 
-        self.curve.bevel_depth = self.Do
+        self.curve.bevel_depth = self.Do*0.01
 
     def create_curve(self, id, vertex_0, vertex_1):
         name = "<Phaenotyp>member_" + str(id)
@@ -478,21 +478,18 @@ class members:
         for i in range(11):
             # define h
             if result[frame][i] > 0:
-                h = 0.025
-                s = result[frame][i] * scale
+                h = 0
             else:
-                h = 0.550
-                s = result[frame][i] * scale * (-1)
+                h = 0.666
 
-            # to be activated if overstress is working
-            '''
+            # define s
+            s = 1 * scale
+
             # define v
             if self.overstress[frame] == True:
-                v = 0.0
+                v = 0.2
             else:
                 v = 1.0
-            '''
-            v = 1.0
 
             c.hsv = h,s,v
             color_ramp.elements[i].color = c.r, c.g, c.b, 1.0
@@ -686,7 +683,7 @@ def transfer_analyze():
         truss.add_member(name, node_0, node_1, member.E, member.G, member.Iy, member.Iz, member.J, member.A)
 
         # add gravity
-        kN = member.kg * -0.00981
+        kN = member.kg * -0.0000981
 
         # add distributed load
         truss.add_member_dist_load(name, "FZ", kN, kN)
@@ -813,8 +810,6 @@ def transfer_analyze():
         # for the definition of the fitness criteria prepared
         # max longitudinal stress for steel St360 in kN/cm²
         # tensile strength: 36 kN/cm², yield point 23.5 kN/cm²
-        # to be checked and activated in update_curve
-        '''
         member.overstress[frame] = False
 
         if member.max_sigma[frame] > 14.0:
@@ -828,7 +823,7 @@ def transfer_analyze():
 
         if member.max_sigmav[frame] > 23.5:
             member.overstress[frame] = True
-        '''
+
         # deflection
         deflection = []
 
