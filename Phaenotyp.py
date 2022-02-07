@@ -828,7 +828,7 @@ def transfer_analyze():
         deflection = []
 
         # --> taken from pyNite VisDeformedMember: https://github.com/JWock82/PyNite
-        scale_factor = 0.1
+        scale_factor = 10.0
 
         cos_x = array([T[0,0:3]]) # Direction cosines of local x-axis
         cos_y = array([T[1,0:3]]) # Direction cosines of local y-axis
