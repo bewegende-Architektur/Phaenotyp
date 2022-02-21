@@ -64,10 +64,10 @@ class data:
     G  =   8100 # kN/cm² shear modulus
     d  =   7.85 # g/cm³ density of steel
 
-    acceptable_sigma = 10
-    acceptable_shear = 7
+    acceptable_sigma = 16.0
+    acceptable_shear = 9.5
     acceptable_torsion = 10.5
-    acceptable_sigmav = 220
+    acceptable_sigmav = 23.5
 
     # calculated in data.update()
     Iy = None
