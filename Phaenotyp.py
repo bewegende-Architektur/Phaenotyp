@@ -3,8 +3,8 @@ bl_info = {
     "name": "Phänotyp",
     "description": "Genetic optimization of architectural structures",
     "author": "bewegende Architektur e.U. and Karl Deix",
-    "version": (0, 0, 4),
-    "blender": (3, 0, 0),
+    "version": (0, 0, 5),
+    "blender": (3, 0, 1),
     "location": "3D View > Tools",
 }
 
@@ -45,9 +45,29 @@ class data:
     # steel pipe with 60/50 mm as example
     Do =     60 # mm (diameter outside)
     Di =     50 # mm (diameter inside)
+
+    material_library = [
+        # name, name in dropdown, E, G, d, acceptable_sigma, acceptable_shear, acceptable_torsion, acceptable_sigmav
+        ["steel_S235", "steel S235", 21000, 8100, 7.85, 16.0, 9.5, 10.5, 23.5],
+        ["steel_S275", "steel S275", 21000, 8100, 7.85, 19.5, 11, 12.5, 27.5],
+        ["steel_S355", "steel S355", 21000, 8100, 7.85, 23, 13, 15, 35.5],
+        ["alu_EN_AC_Al_CU4Ti", "alu EN-AC Al Cu4Ti", 8000, 3000, 2.70, 10, 7, 10.5, 22.0],
+        ["custom", "Custom", 21000, 8100, 7.85, 16.0, 9.5, 10.5, 23.5]
+        ]
+
+    materials_dropdown = []
+    for material in material_library:
+        dropdown_entry = (material[0], material[1], "")
+        materials_dropdown.append(dropdown_entry)
+
     E  =  21000 # kN/cm² modulus of elasticity for steel
     G  =   8100 # kN/cm² shear modulus
     d  =   7.85 # g/cm³ density of steel
+
+    acceptable_sigma = 10
+    acceptable_shear = 7
+    acceptable_torsion = 10.5
+    acceptable_sigmav = 220
 
     # calculated in data.update()
     Iy = None
@@ -519,7 +539,6 @@ def return_max_diff_to_zero(list):
     else:
         return biggest_plus
 
-
 class phaenotyp_properties(PropertyGroup):
     Do: FloatProperty(
         name = "Do",
@@ -535,6 +554,12 @@ class phaenotyp_properties(PropertyGroup):
         default = 50.0,
         min = 1.0,
         max = 1000.
+        )
+
+    material: EnumProperty(
+        name="material:",
+        description="Predefined materials",
+        items=data.materials_dropdown
         )
 
     E: FloatProperty(
@@ -558,6 +583,38 @@ class phaenotyp_properties(PropertyGroup):
         description = "Density in g/cm3",
         default = 7.85,
         min = 0.01,
+        max = 30.0
+        )
+
+    acceptable_sigma: FloatProperty(
+        name = "acceptable_sigma",
+        description = "Acceptable sigma",
+        default = 16.0,
+        min = 0.01,
+        max = 30.0
+        )
+
+    acceptable_shear: FloatProperty(
+        name = "acceptable_shear",
+        description = "Acceptable shear",
+        default = 9.5,
+        min = 0.01,
+        max = 30.0
+        )
+
+    acceptable_torsion: FloatProperty(
+        name = "acceptable_torsion",
+        description = "Acceptable torsion",
+        default = 10.5,
+        min = 0.01,
+        max = 30.0
+        )
+
+    acceptable_sigmav: FloatProperty(
+        name = "acceptable_sigmav",
+        description = "Acceptable sigmav",
+        default = 10.5,
+        min = 23.5,
         max = 30.0
         )
 
@@ -828,7 +885,7 @@ def transfer_analyze():
         deflection = []
 
         # --> taken from pyNite VisDeformedMember: https://github.com/JWock82/PyNite
-        scale_factor = 10.0
+        scale_factor = 0.1
 
         cos_x = array([T[0,0:3]]) # Direction cosines of local x-axis
         cos_y = array([T[1,0:3]]) # Direction cosines of local y-axis
@@ -1504,16 +1561,52 @@ class OBJECT_PT_Phaenotyp(Panel):
 
                 box.prop(phaenotyp, "Do", text="Diameter outside")
                 box.prop(phaenotyp, "Di", text="Diameter inside")
-                box.prop(phaenotyp, "E", text="Modulus of elasticity")
-                box.prop(phaenotyp, "G", text="Shear modulus")
-                box.prop(phaenotyp, "d", text="Density")
-
                 data.Do = phaenotyp.Do
                 data.Di = phaenotyp.Di
 
-                data.E = phaenotyp.E
-                data.G = phaenotyp.G
-                data.d = phaenotyp.d
+                box.label(text="Material:")
+                box.prop(phaenotyp, "material", text="Type")
+                if phaenotyp.material == "custom":
+                    box.prop(phaenotyp, "E", text="Modulus of elasticity")
+                    box.prop(phaenotyp, "G", text="Shear modulus")
+                    box.prop(phaenotyp, "d", text="Density")
+
+                    box.prop(phaenotyp, "acceptable_sigma", text="acceptable_sigma")
+                    box.prop(phaenotyp, "acceptable_shear", text="acceptable_shear")
+                    box.prop(phaenotyp, "acceptable_torsion", text="acceptable_torsion")
+                    box.prop(phaenotyp, "acceptable_sigmav", text="acceptable_sigmav")
+
+                    # pass user input to data
+                    data.E = phaenotyp.E
+                    data.G = phaenotyp.G
+                    data.d = phaenotyp.d
+
+                    data.acceptable_sigma = phaenotyp.acceptable_sigma
+                    data.acceptable_shear = phaenotyp.acceptable_shear
+                    data.acceptable_torsion = phaenotyp.acceptable_torsion
+                    data.acceptable_sigmav = phaenotyp.acceptable_sigmav
+
+                else:
+                    # pass input form library to data
+                    for material in data.material_library:
+                        if phaenotyp.material == material[0]:
+                            data.E = material[2]
+                            data.G = material[3]
+                            data.d = material[4]
+
+                            data.acceptable_sigma = material[5]
+                            data.acceptable_shear = material[6]
+                            data.acceptable_torsion = material[7]
+                            data.acceptable_sigmav = material[8]
+
+                    box.label(text="E = " + str(data.E) + " kN/cm²")
+                    box.label(text="G = " + str(data.G) + " kN/cm²")
+                    box.label(text="d = " + str(data.d) + " g/cm3")
+
+                    box.label(text="Acceptable sigma = " + str(data.acceptable_sigma))
+                    box.label(text="Acceptable shear = " + str(data.acceptable_shear))
+                    box.label(text="Acceptable torsion = " + str(data.acceptable_torsion))
+                    box.label(text="Acceptable sigmav = " + str(data.acceptable_sigmav))
 
                 data.update() # calculate Iy, Iz, J, A, kg
                 box.label(text="Iy = " + str(round(data.Iy, 2)) + " cm⁴")
