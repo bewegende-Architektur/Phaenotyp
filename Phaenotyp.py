@@ -1571,10 +1571,10 @@ class OBJECT_PT_Phaenotyp(Panel):
                     box.prop(phaenotyp, "G", text="Shear modulus")
                     box.prop(phaenotyp, "d", text="Density")
 
-                    box.prop(phaenotyp, "acceptable_sigma", text="acceptable_sigma")
-                    box.prop(phaenotyp, "acceptable_shear", text="acceptable_shear")
-                    box.prop(phaenotyp, "acceptable_torsion", text="acceptable_torsion")
-                    box.prop(phaenotyp, "acceptable_sigmav", text="acceptable_sigmav")
+                    box.prop(phaenotyp, "acceptable_sigma", text="Acceptable sigma")
+                    box.prop(phaenotyp, "acceptable_shear", text="Acceptable shear")
+                    box.prop(phaenotyp, "acceptable_torsion", text="Acceptable torsion")
+                    box.prop(phaenotyp, "acceptable_sigmav", text="Acceptable sigmav")
 
                     # pass user input to data
                     data.E = phaenotyp.E
