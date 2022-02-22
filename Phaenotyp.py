@@ -664,6 +664,17 @@ class phaenotyp_properties(PropertyGroup):
         max = 100
         )
 
+    fitness_function: EnumProperty(
+        name = "fitness_function",
+        description = "Fitness function",
+        items=[
+                ("average_sigma", "Average sigma", ""),
+                ("member_sigma", "Member sigma", ""),
+                ("weight", "Weight", ""),
+                ("lever_arm", "Lever arm", "")
+               ]
+        )
+
     forces: EnumProperty(
         name="forces:",
         description="Force types",
@@ -824,7 +835,7 @@ def transfer_analyze():
         # get max shear stress of shear force of the beam
         # shear stress is mostly small compared to longitudinal
         # in common architectural usage and only importand with short beam lenght
-        member.tau_shear[frame] = max(tau_shear)
+        member.tau_shear[frame] = tau_shear
         member.max_tau_shear[frame] = max(tau_shear)
 
         # Calculation of the torsion stresses
@@ -1015,20 +1026,35 @@ class individuals(object):
         frame = bpy.context.scene.frame_current
 
         # get fitness
-        forces = []
-        for member in members.instances:
-            force = member.max_sigma[frame]
-            forces.append(force)
+        if phaenotyp.fitness_function == "average_sigma":
+            forces = []
+            for member in members.instances:
+                force = member.max_sigma[frame]
+                forces.append(force)
 
-        #fitness = return_max_diff_to_zero(forces)
-        #fitness = abs(fitness)
+            # average
+            sum_forces = 0
+            for force in forces:
+                sum_forces = sum_forces + abs(force)
 
-        # average
-        sum_forces = 0
-        for force in forces:
-            sum_forces = sum_forces + abs(force)
+            fitness = sum_forces / len(forces)
 
-        fitness = sum_forces / len(forces)
+        if phaenotyp.fitness_function == "member_sigma":
+            forces = []
+            for member in members.instances:
+                force = member.max_sigma[frame]
+                forces.append(force)
+
+            fitness = return_max_diff_to_zero(forces)
+            fitness = abs(fitness)
+
+        if phaenotyp.fitness_function == "weight":
+            fitness = 1 #!!!
+            pass
+
+        if phaenotyp.fitness_function == "lever_arm":
+            fitness = 1 #!!!
+            pass
 
         return fitness
 
@@ -1275,6 +1301,74 @@ class WM_OT_calculate_animation(Operator):
 
         return {"FINISHED"}
 
+# <------------------------------------------------------------------------ für Karl
+class WM_OT_optimize_1(Operator):
+    bl_label = "optimize_1"
+    bl_idname = "wm.optimize_1"
+    bl_description = "Optimizaion 1 - Karl Deix - sectional performance"
+
+    def execute(self, context):
+        print("ok")
+        transfer_analyze() # führt einfach Analyse aus
+        members.update_curves() # update für VIZ
+
+        # Hier ist die Optimierung
+
+        return {"FINISHED"}
+
+class WM_OT_optimize_2(Operator):
+    bl_label = "optimize_2"
+    bl_idname = "wm.optimize_2"
+    bl_description = "Optimizaion 2 - Karl Deix - empty"
+
+    def execute(self, context):
+        transfer_analyze() # führt einfach Analyse aus
+        members.update_curves() # update für VIZ
+
+        # Hier ist die Optimierung
+
+        return {"FINISHED"}
+
+class WM_OT_optimize_3(Operator):
+    bl_label = "optimize_3"
+    bl_idname = "wm.optimize_3"
+    bl_description = "Optimizaion 3 - Karl Deix - empty"
+
+    def execute(self, context):
+        transfer_analyze() # führt einfach Analyse aus
+        members.update_curves() # update für VIZ
+
+        # Hier ist die Optimierung
+
+        return {"FINISHED"}
+
+class WM_OT_optimize_4(Operator):
+    bl_label = "optimize_4"
+    bl_idname = "wm.optimize_4"
+    bl_description = "Optimizaion 4 - Karl Deix - empty"
+
+    def execute(self, context):
+        transfer_analyze() # führt einfach Analyse aus
+        members.update_curves() # update für VIZ
+
+        # Hier ist die Optimierung
+
+        return {"FINISHED"}
+
+
+class WM_OT_optimize_5(Operator):
+    bl_label = "optimize_5"
+    bl_idname = "wm.optimize_5"
+    bl_description = "Optimizaion 5 - Karl Deix - empty"
+
+    def execute(self, context):
+        transfer_analyze() # führt einfach Analyse aus
+        members.update_curves() # update für VIZ
+
+        # Hier ist die Optimierung
+
+        return {"FINISHED"}
+
 
 class WM_OT_genetic_mutation(Operator):
     bl_label = "genetic_mutation"
@@ -1435,33 +1529,33 @@ class WM_OT_text(Operator):
             frame = bpy.context.scene.frame_current
 
             # results
-            text = "axial: " + str(member.axial[frame][position])
+            text = "axial: " + str(round(member.axial[frame][position], 3))
             data.texts.append(text)
-            text = "moment_y: " + str(member.moment_y[frame][position])
+            text = "moment_y: " + str(round(member.moment_y[frame][position], 3))
             data.texts.append(text)
-            text = "moment_z: " + str(member.moment_z[frame][position])
+            text = "moment_z: " + str(round(member.moment_z[frame][position], 3))
             data.texts.append(text)
-            text = "shear_y: " + str(member.shear_y[frame][position])
+            text = "shear_y: " + str(round(member.shear_y[frame][position], 3))
             data.texts.append(text)
-            text = "shear_z: " + str(member.shear_z[frame][position])
+            text = "shear_z: " + str(round(member.shear_z[frame][position], 3))
             data.texts.append(text)
-            text = "torque: " + str(member.torque[frame][position])
-            data.texts.append(text)
-
-            text = "longitudinal_stress: " + str(member.longitudinal_stress[frame][position])
-            data.texts.append(text)
-            text = "tau_shear: " + str(member.tau_shear[frame])
-            data.texts.append(text)
-            text = "tau_torsion: " + str(member.tau_torsion[frame])
-            data.texts.append(text)
-            text = "sum_tau: " + str(member.sum_tau[frame])
-            data.texts.append(text)
-            text = "sigmav: " + str(member.sigmav[frame][position])
-            data.texts.append(text)
-            text = "sigma: " + str(member.sigma[frame][position])
+            text = "torque: " + str(round(member.torque[frame][position], 3))
             data.texts.append(text)
 
-            text = "overstress: " + str(member.overstress[frame])
+            text = "longitudinal_stress: " + str(round(member.longitudinal_stress[frame][position], 3))
+            data.texts.append(text)
+            text = "tau_shear: " + str(round(member.tau_shear[frame][position], 3))
+            data.texts.append(text)
+            text = "tau_torsion: " + str(round(member.tau_torsion[frame][position], 3))
+            data.texts.append(text)
+            text = "sum_tau: " + str(round(member.sum_tau[frame][position], 3))
+            data.texts.append(text)
+            text = "sigmav: " + str(round(member.sigmav[frame][position], 3))
+            data.texts.append(text)
+            text = "sigma: " + str(round(member.sigma[frame][position], 3))
+            data.texts.append(text)
+
+            text = "overstress: " + str(round(member.overstress[frame], 3))
             data.texts.append(text)
 
         #except:
@@ -1502,7 +1596,7 @@ class WM_OT_reset(Operator):
 
 
 class OBJECT_PT_Phaenotyp(Panel):
-    bl_label = "Phänotyp 0.0.4"
+    bl_label = "Phänotyp 0.0.5 - Karl"
     bl_idname = "OBJECT_PT_custom_panel"
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
@@ -1624,6 +1718,15 @@ class OBJECT_PT_Phaenotyp(Panel):
                     box.operator("wm.calculate_single_frame", text="Single Frame")
                     box.operator("wm.calculate_animation", text="Animation")
 
+                    # Optimization
+                    box = layout.box()
+                    box.label(text="Optimization:")
+                    box.operator("wm.optimize_1", text="Karl Deix - sectional performance")
+                    box.operator("wm.optimize_2", text="Karl Deix - empty")
+                    box.operator("wm.optimize_3", text="Karl Deix - empty")
+                    box.operator("wm.optimize_4", text="Karl Deix - empty")
+                    box.operator("wm.optimize_5", text="Karl Deix - empty")
+
                     shape_key = data.obj.data.shape_keys
                     if shape_key:
                         # Genetic Mutation:
@@ -1631,6 +1734,7 @@ class OBJECT_PT_Phaenotyp(Panel):
                         box.label(text="Genetic Mutation:")
                         box.prop(phaenotyp, "population_size", text="Size of population for GA")
                         box.prop(phaenotyp, "elitism", text="Size of elitism for GA")
+                        box.prop(phaenotyp, "fitness_function", text="Fitness function")
 
                         for keyblock in shape_key.key_blocks:
                             name = keyblock.name
@@ -1675,6 +1779,13 @@ classes = (
     WM_OT_set_support,
     WM_OT_calculate_single_frame,
     WM_OT_calculate_animation,
+
+    WM_OT_optimize_1,
+    WM_OT_optimize_2,
+    WM_OT_optimize_3,
+    WM_OT_optimize_4,
+    WM_OT_optimize_5,
+
     WM_OT_genetic_mutation,
 
     WM_OT_viz_scale_force_up,
