@@ -43,8 +43,8 @@ c = Color()
 
 class data:
     # steel pipe with 60/50 mm as example
-    Do =     60 # mm (diameter outside)
-    Di =     50 # mm (diameter inside)
+    Do =     None # mm (diameter outside)
+    Di =     None # mm (diameter inside)
 
     material_library = [
         # name, name in dropdown, E, G, d, acceptable_sigma, acceptable_shear, acceptable_torsion, acceptable_sigmav
@@ -60,14 +60,14 @@ class data:
         dropdown_entry = (material[0], material[1], "")
         materials_dropdown.append(dropdown_entry)
 
-    E  =  21000 # kN/cm² modulus of elasticity for steel
-    G  =   8100 # kN/cm² shear modulus
-    d  =   7.85 # g/cm³ density of steel
+    E  = None # kN/cm² modulus of elasticity for steel
+    G  = None # kN/cm² shear modulus
+    d  = None # g/cm³ density of steel
 
-    acceptable_sigma = 16.0
-    acceptable_shear = 9.5
-    acceptable_torsion = 10.5
-    acceptable_sigmav = 23.5
+    acceptable_sigma = None
+    acceptable_shear = None
+    acceptable_torsion = None
+    acceptable_sigmav = None
 
     # calculated in data.update()
     Iy = None
@@ -125,14 +125,14 @@ class data:
     @staticmethod
     def update():
         # moment of inertia, 32.9376 cm⁴
-        data.Iy = math.pi * (data.Do**4 - data.Di**4)/64 * 0.0001
+        data.Iy = math.pi * (data.Do**4 - data.Di**4)/64
         data.Iz = data.Iy
 
         # torsional constant, 65.875 cm⁴
-        data.J  = math.pi * (data.Do**4 - data.Di**4)/(32) * 0.0001
+        data.J  = math.pi * (data.Do**4 - data.Di**4)/(32)
 
         # cross-sectional area, 8,64 cm²
-        data.A  = ((math.pi * (data.Do*0.5)**2) - (math.pi * (data.Di*0.5)**2)) * 0.01
+        data.A  = ((math.pi * (data.Do*0.5)**2) - (math.pi * (data.Di*0.5)**2))
 
         # weight of profile, 6.79 kg/m
         data.kg =  data.A*data.d * 0.1
@@ -159,7 +159,7 @@ class supports:
     def __del__(self):
         pass
 
-    def update_settings(self):
+    def set_settings(self):
         self.loc_x = data.loc_x
         self.loc_y = data.loc_y
         self.loc_z = data.loc_z
@@ -338,17 +338,31 @@ class members:
     def __del__(self):
         pass
 
-    def update_settings(self):
-        self.Do = data.Do * 0.1
-        self.Di = data.Di * 0.1
+    def set_settings(self):
+        self.Do = data.Do
+        self.Di = data.Di
         self.E  = data.E
         self.G  = data.G
         self.d  = data.d
+        '''
         self.Iy = data.Iy
         self.Iz = data.Iz
         self.J  = data.J
         self.A  = data.A
         self.kg = data.kg
+        '''
+        # moment of inertia, 32.9376 cm⁴
+        self.Iy = math.pi * (self.Do**4 - self.Di**4)/64
+        self.Iz = self.Iy
+
+        # torsional constant, 65.875 cm⁴
+        self.J  = math.pi * (self.Do**4 - self.Di**4)/(32)
+
+        # cross-sectional area, 8,64 cm²
+        self.A  = ((math.pi * (self.Do*0.5)**2) - (math.pi * (self.Di*0.5)**2))
+
+        # weight of profile, 6.79 kg/m
+        self.kg =  self.A*self.d * 0.1
 
         # results
         self.axial = {}
@@ -380,7 +394,25 @@ class members:
 
         self.overstress = {}
 
-        self.curve.bevel_depth = self.Do*0.01
+        # update diameter
+        self.curve.bevel_depth = self.Do * 0.01
+
+    def update_settings(self):
+        # moment of inertia, 32.9376 cm⁴
+        self.Iy = math.pi * (self.Do**4 - self.Di**4)/64
+        self.Iz = self.Iy
+
+        # torsional constant, 65.875 cm⁴
+        self.J  = math.pi * (self.Do**4 - self.Di**4)/(32)
+
+        # cross-sectional area, 8,64 cm²
+        self.A  = ((math.pi * (self.Do*0.5)**2) - (math.pi * (self.Di*0.5)**2))
+
+        # weight of profile, 6.79 kg/m
+        self.kg =  self.A*self.d * 0.1
+
+        # update diameter
+        self.curve.bevel_depth = self.Do * 0.01
 
     def create_curve(self, id, vertex_0, vertex_1):
         name = "<Phaenotyp>member_" + str(id)
@@ -461,6 +493,9 @@ class members:
 
     def update_curve(self):
         frame = bpy.context.scene.frame_current
+
+        # update diameter
+        #self.curve.bevel_depth = self.Do * 0.01
 
         # apply deflection
         polyline = self.curve.splines[0]
@@ -752,6 +787,9 @@ def transfer_analyze():
 
         # add gravity
         kN = member.kg * -0.0000981
+
+        # Verkehrslast Test
+        kN = kN - 0.08
 
         # add distributed load
         truss.add_member_dist_load(name, "FZ", kN, kN)
@@ -1213,13 +1251,13 @@ class WM_OT_set_support(Operator):
                         support = supports.get_by_id(id)
 
                         # delete and create new sign
-                        support.update_settings()
+                        support.set_settings()
                         support.update_sign()
 
                     else:
                         # create new member and sign
                         new_support = supports(id, vertex)
-                        new_support.update_settings()
+                        new_support.set_settings()
                         new_support.create_sign()
 
         bpy.ops.object.mode_set(mode="OBJECT")
@@ -1252,12 +1290,12 @@ class WM_OT_set_profile(Operator):
                 if id in members.definend_edge_ids:
                     # update parameters
                     member = members.get_by_id(id)
-                    member.update_settings()
+                    member.set_settings()
 
                 else:
                     # create new member
                     new_member = members(id, vertex_0, vertex_1)
-                    new_member.update_settings()
+                    new_member.set_settings()
 
         # check if all members done
         if len(members.instances) == len(data.obj.data.edges):
@@ -1305,27 +1343,100 @@ class WM_OT_calculate_animation(Operator):
 class WM_OT_optimize_1(Operator):
     bl_label = "optimize_1"
     bl_idname = "wm.optimize_1"
-    bl_description = "Optimizaion 1 - Karl Deix - sectional performance"
+    bl_description = "Optimizaion 1 -Karl simple - sectional performance"
 
     def execute(self, context):
         print("ok")
         transfer_analyze() # führt einfach Analyse aus
         members.update_curves() # update für VIZ
 
-        # Hier ist die Optimierung
+        frame = bpy.context.scene.frame_current
+
+        for member in members.instances:
+            if abs(member.max_longitudinal_stress[frame]/data.acceptable_sigma) > 1:
+                member.Do = member.Do * 1.2
+                member.Di = member.Di * 1.2
+
+            else:
+                member.Do = member.Do * 0.8
+                member.Di = member.Di * 0.8
+
+            member.update_settings()
+
+            if member.id == 194:
+                print("")
+                print("Member: ", member.id)
+                print("Memerb max stress: ", member.max_longitudinal_stress[frame])
+                print("zul Spannung: ", data.acceptable_sigma)
+                print("Do: ", member.Do)
+                print("Di: ", member.Di)
+
 
         return {"FINISHED"}
 
 class WM_OT_optimize_2(Operator):
     bl_label = "optimize_2"
     bl_idname = "wm.optimize_2"
-    bl_description = "Optimizaion 2 - Karl Deix - empty"
+    bl_description = "Optimizaion 2 - Karl Deix - sectional performance"
 
     def execute(self, context):
+        print("ok")
         transfer_analyze() # führt einfach Analyse aus
         members.update_curves() # update für VIZ
+        # Querschnittsoptimierung, iterativ
+        # bezug ist zul_sigma
+        # faktor_a  Aenderungsfakor für neuen Querschnitt
 
-        # Hier ist die Optimierung
+        frame = bpy.context.scene.frame_current
+
+        for member in members.instances:
+            # member = members.get_by_id(member_id)
+            # print (member.axial[frame][position])
+            #for i in range (0,11):
+                #text = "m_y: " + str(round(member.moment_y[frame][i], 3))
+                #print (text)
+                #text = "axial: " + str(round(member.axial[frame][i], 3))
+                #print(text)
+
+            #if sigma = abs(thresh)
+
+            #treshhold bei Prüfung!
+            if abs(member.max_longitudinal_stress[frame]/data.acceptable_sigma) > 1:
+                faktor_a = 1+(abs(member.max_longitudinal_stress[frame])/data.acceptable_sigma-1)*0.36
+
+            else:
+                faktor_a = 0.5 + 0.6*(math.tanh((abs(member.max_longitudinal_stress[frame])/data.acceptable_sigma -0.5)*2.4))
+
+            faktor_d = math.sqrt(faktor_a)
+            member.A = member.A*faktor_a
+            #print ("faktor d: ", faktor_d)
+            member.Do = member.Do*faktor_d
+            member.Di = member.Di*faktor_d
+            # print ("neu Member-A: ", member.A)
+            #print ("Durchmesser außen/innen: ", member.Do, member.Di)
+
+            # Calculate new iy ... for next iteration
+            member.update_settings()
+
+            if member.id == 194:
+                print("")
+                print("Member: ", member.id)
+                print("Memerb max stress: ", member.max_longitudinal_stress[frame])
+                print("zul Spannung: ", data.acceptable_sigma)
+                print("Do: ", member.Do)
+                print("Di: ", member.Di)
+                print ("faktor d: ", faktor_d)
+                print ("neu Member-A: ", member.A)
+
+        #transfer_analyze() # führt einfach Analyse aus
+        #members.update_curves() # update für VIZ
+
+        # for member in members.instances:
+                # frame = bpy.context.scene.frame_current
+                # print("Member: " , member.id)
+                # print("Memerb max stress: ", member.max_longitudinal_stress[frame])
+                # print("Member - Fläche: ", member.A)
+
 
         return {"FINISHED"}
 
@@ -1496,7 +1607,7 @@ class WM_OT_viz_update(Operator):
 class WM_OT_text(Operator):
     bl_label = "text"
     bl_idname = "wm.text"
-    bl_description = "Generate output at the selcted point"
+    bl_description = "Generate output at the selected point"
 
     def execute(self, context):
         #try:
@@ -1655,8 +1766,8 @@ class OBJECT_PT_Phaenotyp(Panel):
 
                 box.prop(phaenotyp, "Do", text="Diameter outside")
                 box.prop(phaenotyp, "Di", text="Diameter inside")
-                data.Do = phaenotyp.Do
-                data.Di = phaenotyp.Di
+                data.Do = phaenotyp.Do * 0.1
+                data.Di = phaenotyp.Di * 0.1
 
                 box.label(text="Material:")
                 box.prop(phaenotyp, "material", text="Type")
@@ -1703,11 +1814,11 @@ class OBJECT_PT_Phaenotyp(Panel):
                     box.label(text="Acceptable sigmav = " + str(data.acceptable_sigmav))
 
                 data.update() # calculate Iy, Iz, J, A, kg
-                box.label(text="Iy = " + str(round(data.Iy, 2)) + " cm⁴")
-                box.label(text="Iz = " + str(round(data.Iz, 2)) + " cm⁴")
-                box.label(text="J = " + str(round(data.J, 2)) + " cm⁴")
-                box.label(text="A = " + str(round(data.A, 2)) + " cm²")
-                box.label(text="kg = " + str(round(data.kg, 2)) + " kg/m")
+                box.label(text="Iy = " + str(round(data.Iy, 4)) + " cm⁴")
+                box.label(text="Iz = " + str(round(data.Iz, 4)) + " cm⁴")
+                box.label(text="J = " + str(round(data.J, 4)) + " cm⁴")
+                box.label(text="A = " + str(round(data.A, 4)) + " cm²")
+                box.label(text="kg = " + str(round(data.kg, 4)) + " kg/m")
 
                 box.operator("wm.set_profile", text="Set")
 
@@ -1721,8 +1832,8 @@ class OBJECT_PT_Phaenotyp(Panel):
                     # Optimization
                     box = layout.box()
                     box.label(text="Optimization:")
-                    box.operator("wm.optimize_1", text="Karl Deix - sectional performance")
-                    box.operator("wm.optimize_2", text="Karl Deix - empty")
+                    box.operator("wm.optimize_1", text="Optimization 1 - simple - sectional performance")
+                    box.operator("wm.optimize_2", text="Optimization 2 - complex - sectional performance")
                     box.operator("wm.optimize_3", text="Karl Deix - empty")
                     box.operator("wm.optimize_4", text="Karl Deix - empty")
                     box.operator("wm.optimize_5", text="Karl Deix - empty")
