@@ -94,10 +94,10 @@ class data:
 
     # store geoemtry
     obj = None
-    mesh = None
-    vertices = None
-    edges = None
-    texts = []
+    mesh = None # to save mesh of with applied transformations (when using animation or GA)
+    vertices = None # vertices after transformation
+    edges = None # edges after transformation
+    texts = [] # still used?
 
     # visualization
     force_type_viz = "sigma"
@@ -365,6 +365,8 @@ class loads:
 
         if self.type == "faces":
             self.face = geometry
+            self.load_normal = data.load_normal
+            self.load_projected = data.load_projected
 
             self.x = self.face.center[0] # text pos x
             self.y = self.face.center[1] # text pos y
@@ -377,25 +379,32 @@ class loads:
         pass
 
     def set_settings(self):
-        self.load_x = data.load_x
-        self.load_y = data.load_y
-        self.load_z = data.load_z
-        self.load_normal = data.load_normal
-        self.load_projected = data.load_projected
+        if self.type == "faces":
+            self.edge_keys = self.face.edge_keys
+
+            # the area and the load is calulated in transfer_analyze
+            # because the are is chaning with animation or GA
+
+        else: # for vertices and edges only
+            self.load_x = data.load_x
+            self.load_y = data.load_y
+            self.load_z = data.load_z
 
     def create_sign(self):
         name = "<Phaenotyp>support_" + str(self.id)
         font_curve = bpy.data.curves.new(type="FONT", name="<Phaenotyp>load_text")
 
         text = "" + "\n"
-        text = text + "type: " + self.type + "\n"
-        text = text + "x: " + str(self.load_x) + "\n"
-        text = text + "y: " + str(self.load_y) + "\n"
-        text = text + "z: " + str(self.load_z) + "\n"
 
         if self.type == "faces":
             text = text + "n: " + str(self.load_normal) + "\n"
             text = text + "p: " + str(self.load_projected) + "\n"
+
+        else:
+            text = text + "type: " + self.type + "\n"
+            text = text + "x: " + str(self.load_x) + "\n"
+            text = text + "y: " + str(self.load_y) + "\n"
+            text = text + "z: " + str(self.load_z) + "\n"
 
         font_curve.body = text
         obj = bpy.data.objects.new(name="Phaenotyp>load", object_data=font_curve)
@@ -412,14 +421,16 @@ class loads:
 
     def update_sign(self):
         text = "" + "\n"
-        text = text + "type: " + self.type + "\n"
-        text = text + "x: " + str(self.load_x) + "\n"
-        text = text + "y: " + str(self.load_y) + "\n"
-        text = text + "z: " + str(self.load_z) + "\n"
 
         if self.type == "faces":
             text = text + "n: " + str(self.load_normal) + "\n"
             text = text + "p: " + str(self.load_projected) + "\n"
+
+        else:
+            text = text + "type: " + self.type + "\n"
+            text = text + "x: " + str(self.load_x) + "\n"
+            text = text + "y: " + str(self.load_y) + "\n"
+            text = text + "z: " + str(self.load_z) + "\n"
 
         self.font_curve.body = text
 
@@ -964,19 +975,100 @@ def transfer_analyze():
 
         truss.add_member(name, node_0, node_1, member.E, member.G, member.Iy, member.Iz, member.J, member.A)
 
-        # add gravity
+        # add self weight
         kN = member.kg * -0.0000981
 
-        # Verkehrslast Test
-        kN = kN - 0.08
+        # Verkehrslast Test - sonst wird gegen Null optimiert
+        #kN = kN - 0.08
 
-        # add distributed load
+        # add self weight
         truss.add_member_dist_load(name, "FZ", kN, kN)
 
     # add loads
-        #truss.add_node_load('A', 'FX', 10)
-        #truss.add_node_load('A', 'FY', 60)
-        #truss.add_node_load('A', 'FZ', 20)
+    for load in loads.instances_vertex:
+        name = "node_" + str(load.id)
+        truss.add_node_load(name, 'FX', load.load_x)
+        truss.add_node_load(name, 'FY', load.load_y)
+        truss.add_node_load(name, 'FZ', load.load_z)
+
+    for load in loads.instances_edge:
+        name = "member_" + str(load.id)
+        truss.add_member_dist_load(name, 'FX', load.load_x, load.load_x)
+        truss.add_member_dist_load(name, 'FY', load.load_y, load.load_y)
+        truss.add_member_dist_load(name, 'FZ', load.load_z, load.load_z)
+
+    for load in loads.instances_face:
+        normal = load.face.normal
+        area = load.face.area
+
+        # get projected area
+        # based on: https://stackoverflow.com/questions/24467972/calculate-area-of-polygon-given-x-y-coordinates
+        vertex_ids = load.face.vertices
+        vertices = []
+        for vertex_id in vertex_ids:
+            vertex = data.vertices[vertex_id]
+            vertices.append(vertex)
+
+        n = len(vertices)
+        a = 0.0
+        for i in range(n):
+            j = (i + 1) % n
+            a += abs(vertices[i].co[0] * vertices[j].co[1]-vertices[j].co[0] * vertices[i].co[1])
+        area_projected = a / 2.0
+
+        # get distances and perimeter
+        distances = []
+        for edge_key in load.edge_keys:
+            vertex_0_id = edge_key[0]
+            vertex_1_id = edge_key[1]
+
+            vertex_0_co = data.vertices[vertex_0_id].co
+            vertex_1_co = data.vertices[vertex_1_id].co
+
+            dist_vector = vertex_0_co - vertex_1_co
+            dist = dist_vector.length
+            distances.append(dist)
+
+        perimeter = sum(distances)
+
+        # define loads for each edge
+        edge_load_normal = []
+        edge_load_projected = []
+
+        for edge_id, dist in enumerate(distances):
+            ratio = 1 / perimeter * dist
+
+            # load_normal
+            area_load = load.load_normal * area
+            edge_load = area_load * ratio
+            edge_load_normal.append(edge_load)
+
+            # load projected
+            area_load = load.load_projected * area_projected
+            edge_load = area_load * ratio
+            edge_load_projected.append(edge_load)
+
+        # i is the id within the class (0, 1, 3 and maybe more)
+        # edge_id is the id of the edge in the mesh -> the member
+        for edge_key in load.edge_keys:
+            # get name <---------------------------------------- maybe better method?
+            for edge in data.edges:
+                if edge.vertices[0] in edge_key:
+                    if edge.vertices[1] in edge_key:
+                        name = "member_" + str(edge.index)
+
+            # edge_load_normal <--------------------------------- to be tested / checked
+            x = edge_load_normal[i] * normal[0]
+            y = edge_load_normal[i] * normal[1]
+            z = edge_load_normal[i] * normal[2]
+
+            truss.add_member_dist_load(name, 'FX', x, x)
+            truss.add_member_dist_load(name, 'FY', y, y)
+            truss.add_member_dist_load(name, 'FZ', z, z)
+
+            # edge_load_projected
+            z = edge_load_projected[i]
+            truss.add_member_dist_load(name, 'FZ', z, z)
 
     # analyze the model
     truss.analyze(check_statics=False, sparse=False)
@@ -1968,6 +2060,20 @@ class WM_OT_reset(Operator):
         supports.instances = []
         supports.definend_vertex_ids = []
 
+        # reset loads
+        for load in loads.instances_vertex:
+            del load
+
+        for load in loads.instances_edge:
+            del load
+
+        for load in loads.instances_face:
+            del load
+
+        loads.definend_vertex_ids = []
+        loads.definend_edge_ids = []
+        loads.definend_face_ids = []
+
         return {"FINISHED"}
 
 
@@ -2093,13 +2199,14 @@ class OBJECT_PT_Phaenotyp(Panel):
                     box.label(text="Loads:")
                     box.prop(phaenotyp, "load_type", text="Type")
 
-                    box.prop(phaenotyp, "load_x", text="x")
-                    box.prop(phaenotyp, "load_y", text="y")
-                    box.prop(phaenotyp, "load_z", text="z")
-
-                    if phaenotyp.load_type == "faces":
-                        box.prop(phaenotyp, "load_normal", text="normal (wind)")
+                    if phaenotyp.load_type == "faces": # if faces
+                        box.prop(phaenotyp, "load_normal", text="normal (wind or live)")
                         box.prop(phaenotyp, "load_projected", text="projected (snow)")
+
+                    else: # if vertices or edges
+                        box.prop(phaenotyp, "load_x", text="x")
+                        box.prop(phaenotyp, "load_y", text="y")
+                        box.prop(phaenotyp, "load_z", text="z")
 
                     # pass user input to data
                     data.load_type = phaenotyp.load_type
