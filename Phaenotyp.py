@@ -84,6 +84,14 @@ class data:
     rot_y = None
     rot_z = None
 
+    # pass load types
+    load_type = None
+    load_x = None
+    load_y = None
+    load_z = None
+    load_normal = None
+    load_projected = None
+
     # store geoemtry
     obj = None
     mesh = None
@@ -168,7 +176,7 @@ class supports:
         self.rot_z = data.rot_z
 
     def create_sign(self):
-        mesh = bpy.data.meshes.new("<Phaenotyp>support>")
+        mesh = bpy.data.meshes.new("<Phaenotyp>support")
         obj = bpy.data.objects.new(mesh.name, mesh)
         col = bpy.data.collections.get("<Phaenotyp>")
         col.objects.link(obj)
@@ -256,7 +264,7 @@ class supports:
         # create Object
         obj = bpy.data.objects.new(name, curve)
         obj.location = self.x, self.y, self.z
-        obj.scale = 0.25, 0.25, 0.25
+        obj.scale = 0.1, 0.1, 0.1
 
         self.sign = obj
 
@@ -311,6 +319,126 @@ class supports:
             if support.id == id:
                 return support
 
+class loads:
+    instances_vertex = []
+    instances_edge = []
+    instances_face = []
+
+    definend_vertex_ids = []
+    definend_edge_ids = []
+    definend_face_ids = []
+
+    def __init__(self, id, geometry):
+        self.id = id # id of type vertex, edge, or face
+        self.type = data.load_type # passed from user
+
+        self.sign = None
+        self.font_curve = None
+
+        if self.type == "vertices":
+            self.vertex = geometry
+
+            self.x = self.vertex.co[0] # text pos x
+            self.y = self.vertex.co[1] # text pos y
+            self.z = self.vertex.co[2] # text pos z
+
+            loads.instances_vertex.append(self)
+            loads.definend_vertex_ids.append(id)
+
+        if self.type == "edges":
+            self.edge = geometry
+
+            vertex_0_id = self.edge.vertices[0]
+            vertex_1_id = self.edge.vertices[1]
+
+            vertex_0 = data.obj.data.vertices[vertex_0_id]
+            vertex_1 = data.obj.data.vertices[vertex_1_id]
+
+            self.mid = (vertex_0.co + vertex_1.co) / 2
+
+            self.x = self.mid[0] # text pos x
+            self.y = self.mid[1] # text pos y
+            self.z = self.mid[2] # text pos z
+
+            loads.instances_edge.append(self)
+            loads.definend_edge_ids.append(id)
+
+        if self.type == "faces":
+            self.face = geometry
+
+            self.x = self.face.center[0] # text pos x
+            self.y = self.face.center[1] # text pos y
+            self.z = self.face.center[2] # text pos z
+
+            loads.instances_face.append(self)
+            loads.definend_face_ids.append(id)
+
+    def __del__(self):
+        pass
+
+    def set_settings(self):
+        self.load_x = data.load_x
+        self.load_y = data.load_y
+        self.load_z = data.load_z
+        self.load_normal = data.load_normal
+        self.load_projected = data.load_projected
+
+    def create_sign(self):
+        name = "<Phaenotyp>support_" + str(self.id)
+        font_curve = bpy.data.curves.new(type="FONT", name="<Phaenotyp>load_text")
+
+        text = "" + "\n"
+        text = text + "type: " + self.type + "\n"
+        text = text + "x: " + str(self.load_x) + "\n"
+        text = text + "y: " + str(self.load_y) + "\n"
+        text = text + "z: " + str(self.load_z) + "\n"
+
+        if self.type == "faces":
+            text = text + "n: " + str(self.load_normal) + "\n"
+            text = text + "p: " + str(self.load_projected) + "\n"
+
+        font_curve.body = text
+        obj = bpy.data.objects.new(name="Phaenotyp>load", object_data=font_curve)
+
+        # set scale and position
+        obj.location = self.x, self.y, self.z
+        obj.scale = 0.1, 0.1, 0.1
+
+        self.sign = obj
+        self.font_curve = font_curve
+
+        # link object to collection
+        bpy.data.collections["<Phaenotyp>"].objects.link(obj)
+
+    def update_sign(self):
+        text = "" + "\n"
+        text = text + "type: " + self.type + "\n"
+        text = text + "x: " + str(self.load_x) + "\n"
+        text = text + "y: " + str(self.load_y) + "\n"
+        text = text + "z: " + str(self.load_z) + "\n"
+
+        if self.type == "faces":
+            text = text + "n: " + str(self.load_normal) + "\n"
+            text = text + "p: " + str(self.load_projected) + "\n"
+
+        self.font_curve.body = text
+
+    @staticmethod
+    def get_by_id(id, type):
+        if type == "vertices":
+            for load in loads.instances_vertex:
+                if load.id == id:
+                    return load
+
+        if type == "edges":
+            for load in loads.instances_edge:
+                if load.id == id:
+                    return load
+
+        if type == "faces":
+            for load in loads.instances_face:
+                if load.id == id:
+                    return load
 
 class members:
     instances = []
@@ -683,6 +811,56 @@ class phaenotyp_properties(PropertyGroup):
         default=False
     )
 
+    load_type: EnumProperty(
+        name="load_type:",
+        description="Load types",
+        items=[
+                ("vertices", "Vertices", ""),
+                ("edges", "Edges", ""),
+                ("faces", "Faces", "")
+               ]
+        )
+
+    load_x: FloatProperty(
+        name = "load_x",
+        description = "Load in x-Direction in kN",
+        default = 0.0,
+        min = -1000,
+        max = 1000.0
+        )
+
+    load_y: FloatProperty(
+        name = "load_y",
+        description = "Load in y-Direction in kN",
+        default = 0.0,
+        min = -1000,
+        max = 1000.0
+        )
+
+    load_z: FloatProperty(
+        name = "load_z",
+        description = "Load in z-Direction in kN",
+        default = 0.0,
+        min = -1000,
+        max = 1000.0
+        )
+
+    load_normal: FloatProperty(
+        name = "load_normal",
+        description = "Load in normal-Direction in kN",
+        default = 0.0,
+        min = -1000,
+        max = 1000.0
+        )
+
+    load_projected: FloatProperty(
+        name = "load_projected",
+        description = "Load projected on floor in kN",
+        default = 0.0,
+        min = -1000,
+        max = 1000.0
+        )
+
     population_size: IntProperty(
         name = "population_size",
         description="Size of population for GA",
@@ -751,7 +929,8 @@ def transfer_analyze():
     update_mesh()
 
     # add nodes from vertices
-    for vertex_id, vertex in enumerate(data.vertices):
+    for vertex in data.vertices:
+        vertex_id = vertex.index
         name = "node_" + str(vertex_id)
         x = vertex.co[0] * 100 # convert to cm for calculation
         y = vertex.co[1] * 100 # convert to cm for calculation
@@ -793,6 +972,11 @@ def transfer_analyze():
 
         # add distributed load
         truss.add_member_dist_load(name, "FZ", kN, kN)
+
+    # add loads
+        #truss.add_node_load('A', 'FX', 10)
+        #truss.add_node_load('A', 'FY', 60)
+        #truss.add_node_load('A', 'FZ', 20)
 
     # analyze the model
     truss.analyze(check_statics=False, sparse=False)
@@ -1243,8 +1427,9 @@ class WM_OT_set_support(Operator):
             bpy.ops.object.mode_set(mode="OBJECT")
             bpy.ops.object.mode_set(mode="EDIT")
 
-            for id, vertex in enumerate(data.obj.data.vertices):
+            for vertex in data.obj.data.vertices:
                 if vertex.select:
+                    id = vertex.index
                     # vertex is existing as support?
                     if id in supports.definend_vertex_ids:
                         # update parameters
@@ -1278,7 +1463,7 @@ class WM_OT_set_profile(Operator):
         bpy.ops.object.mode_set(mode="OBJECT")
 
         # create new member
-        for id, edge in enumerate(data.obj.data.edges):
+        for edge in data.obj.data.edges:
             vertex_0_id = edge.vertices[0]
             vertex_1_id = edge.vertices[1]
 
@@ -1286,6 +1471,7 @@ class WM_OT_set_profile(Operator):
             vertex_1 = data.obj.data.vertices[vertex_1_id]
 
             if edge.select:
+                id = edge.index
                 # edge is existing as member?
                 if id in members.definend_edge_ids:
                     # update parameters
@@ -1300,6 +1486,85 @@ class WM_OT_set_profile(Operator):
         # check if all members done
         if len(members.instances) == len(data.obj.data.edges):
             members.all_edges_definend = True
+
+        # if user is changing the setup, the visualization is disabled
+        data.done = False
+
+        bpy.ops.object.mode_set(mode="EDIT")
+        return {"FINISHED"}
+
+
+class WM_OT_set_load(Operator):
+    bl_label = "set_load"
+    bl_idname = "wm.set_load"
+    bl_description = "Add load to selected vertices, edges, or faces"
+
+    def execute(self, context):
+        bpy.ops.object.mode_set(mode="OBJECT")
+
+        # create load
+        if data.load_type == "vertices":
+            print("add load to vertices:")
+            for vertex in data.obj.data.vertices:
+                if vertex.select:
+                    id = vertex.index
+                    print("vertex", id, vertex)
+                    # vertex is existing as load?
+                    if id in loads.definend_vertex_ids:
+                        # update parameters
+                        load = loads.get_by_id(id, data.load_type)
+                        load.set_settings()
+                        load.update_sign()
+
+                    else:
+                        # create new load
+                        new_load = loads(id, vertex)
+                        new_load.set_settings()
+                        new_load.create_sign()
+
+        if data.load_type == "edges":
+            print("add load to edges:")
+            for edge in data.obj.data.edges:
+                vertex_0_id = edge.vertices[0]
+                vertex_1_id = edge.vertices[1]
+
+                vertex_0 = data.obj.data.vertices[vertex_0_id]
+                vertex_1 = data.obj.data.vertices[vertex_1_id]
+
+                if edge.select:
+                    id = edge.index
+                    print("edge", id, edge)
+                    # edge is existing as load?
+                    if id in loads.definend_edge_ids:
+                        # update parameters
+                        load = loads.get_by_id(id, data.load_type)
+                        load.set_settings()
+                        load.update_sign()
+
+                    else:
+                        # create new load
+                        new_load = loads(id, edge)
+                        new_load.set_settings()
+                        new_load.create_sign()
+
+        if data.load_type == "faces":
+            print("add load to faces:")
+            for polygon in data.obj.data.polygons:
+                if polygon.select:
+                    id = polygon.index
+                    print("face", id, polygon)
+                    # face is existing as load?
+                    if id in loads.definend_face_ids:
+                        # update parameters
+                        load = loads.get_by_id(id, data.load_type)
+                        load.set_settings()
+                        load.update_sign()
+
+                    else:
+                        # create new load
+                        new_load = loads(id, polygon)
+                        new_load.set_settings()
+                        new_load.create_sign()
 
         # if user is changing the setup, the visualization is disabled
         data.done = False
@@ -1707,7 +1972,7 @@ class WM_OT_reset(Operator):
 
 
 class OBJECT_PT_Phaenotyp(Panel):
-    bl_label = "Phänotyp 0.0.5 - Karl"
+    bl_label = "Phänotyp 0.0.5 - Christoph"
     bl_idname = "OBJECT_PT_custom_panel"
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
@@ -1823,6 +2088,29 @@ class OBJECT_PT_Phaenotyp(Panel):
                 box.operator("wm.set_profile", text="Set")
 
                 if members.all_edges_definend:
+                    # Define loads
+                    box = layout.box()
+                    box.label(text="Loads:")
+                    box.prop(phaenotyp, "load_type", text="Type")
+
+                    box.prop(phaenotyp, "load_x", text="x")
+                    box.prop(phaenotyp, "load_y", text="y")
+                    box.prop(phaenotyp, "load_z", text="z")
+
+                    if phaenotyp.load_type == "faces":
+                        box.prop(phaenotyp, "load_normal", text="normal (wind)")
+                        box.prop(phaenotyp, "load_projected", text="projected (snow)")
+
+                    # pass user input to data
+                    data.load_type = phaenotyp.load_type
+                    data.load_x = phaenotyp.load_x
+                    data.load_y = phaenotyp.load_y
+                    data.load_z = phaenotyp.load_z
+                    data.load_normal = phaenotyp.load_normal
+                    data.load_projected = phaenotyp.load_projected
+
+                    box.operator("wm.set_load", text="Set")
+
                     # Analysis
                     box = layout.box()
                     box.label(text="Analysis:")
@@ -1886,8 +2174,9 @@ class OBJECT_PT_Phaenotyp(Panel):
 classes = (
     phaenotyp_properties,
     WM_OT_set_structure,
-    WM_OT_set_profile,
     WM_OT_set_support,
+    WM_OT_set_profile,
+    WM_OT_set_load,
     WM_OT_calculate_single_frame,
     WM_OT_calculate_animation,
 
