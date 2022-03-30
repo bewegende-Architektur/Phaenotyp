@@ -465,6 +465,10 @@ class members:
 
         self.vertex_0 = vertex_0
         self.vertex_1 = vertex_1
+        self.vertex_0_id = vertex_0.index
+        self.vertex_1_id = vertex_1.index
+
+        print(vertex_0.index, vertex_1.index)
 
         # geometry
         self.curve = None
@@ -930,16 +934,20 @@ def update_mesh():
     data.vertices = data.mesh.vertices
     data.edges = data.mesh.edges
 
-
 def transfer_analyze():
-    #bpy.ops.object.mode_set(mode="OBJECT")
-
     # get current frame
     frame = bpy.context.scene.frame_current
 
     truss = FEModel3D()
 
     update_mesh()
+    #bpy.ops.object.mode_set(mode="EDIT") # <---- to avoid "out-of-range-error" on windows
+    #bpy.ops.object.mode_set(mode="OBJECT") # <---- to avoid "out-of-range-error" on windows
+    #data.vertices = data.obj.data.vertices
+    #print(data.obj.data.vertices)
+
+    #bpy.ops.object.mode_set(mode="EDIT") # <---- to avoid "out-of-range-error" on windows
+    #bpy.ops.object.mode_set(mode="OBJECT") # <---- to avoid "out-of-range-error" on windows
 
     # add nodes from vertices
     for vertex in data.vertices:
@@ -957,10 +965,17 @@ def transfer_analyze():
         truss.def_support(name, support.loc_x, support.loc_y, support.loc_z, support.rot_x, support.rot_y, support.rot_z)
 
     # create members
+    print("in transfer_analyze")
+    print(data.vertices)
+    for v in data.vertices:
+        print("vertex", v.index)
+
     for member in members.instances:
         name = member.name
-        vertex_0_id = member.vertex_0.index
-        vertex_1_id = member.vertex_1.index
+        vertex_0_id = member.vertex_0_id
+        vertex_1_id = member.vertex_1_id
+
+        print("member:", name, vertex_0_id, vertex_1_id)
 
         # save initial_positions to mix with deflection
         initial_positions = []
@@ -1594,15 +1609,17 @@ class WM_OT_set_load(Operator):
     bl_description = "Add load to selected vertices, edges, or faces"
 
     def execute(self, context):
-        bpy.ops.object.mode_set(mode="EDIT") # <---- to avoid "out-of-range-error" on windows
-
         # create load
+        #bpy.ops.object.mode_set(mode="OBJECT") # <---- to avoid "out-of-range-error" on windows
+        bpy.ops.object.mode_set(mode="EDIT") # <---- to avoid "out-of-range-error" on windows
+        bpy.ops.object.mode_set(mode="OBJECT") # <---- to avoid "out-of-range-error" on windows
+
         if data.load_type == "vertices":
             print("add load to vertices:")
             for vertex in data.obj.data.vertices:
                 if vertex.select:
                     id = vertex.index
-                    print("vertex", id, vertex)
+                    print("add load vertex", id, vertex)
                     # vertex is existing as load?
                     if id in loads.definend_vertex_ids:
                         # update parameters
