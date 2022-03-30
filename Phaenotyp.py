@@ -932,6 +932,8 @@ def update_mesh():
 
 
 def transfer_analyze():
+    #bpy.ops.object.mode_set(mode="OBJECT")
+
     # get current frame
     frame = bpy.context.scene.frame_current
 
@@ -1592,7 +1594,7 @@ class WM_OT_set_load(Operator):
     bl_description = "Add load to selected vertices, edges, or faces"
 
     def execute(self, context):
-        bpy.ops.object.mode_set(mode="OBJECT")
+        bpy.ops.object.mode_set(mode="EDIT") # <---- to avoid "out-of-range-error" on windows
 
         # create load
         if data.load_type == "vertices":
