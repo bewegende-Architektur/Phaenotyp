@@ -4,9 +4,10 @@ bl_info = {
     "description": "Genetic optimization of architectural structures",
     "author": "bewegende Architektur e.U. and Karl Deix",
     "version": (0, 0, 5),
-    "blender": (3, 0, 1),
+    "blender": (3, 1, 0),
     "location": "3D View > Tools",
 }
+
 
 # With Support from Karl Deix
 # Analysis with: https://github.com/JWock82/PyNite
@@ -16,31 +17,30 @@ bl_info = {
 # https://www.johannes-strommer.com/formeln/flaechentraegheitsmoment-widerstandsmoment/
 # https://www.maschinenbau-wissen.de/skript3/mechanik/festigkeitslehre/134-knicken-euler
 
-import bpy
-import gpu
-from gpu_extras.batch import batch_for_shader
 
+def print_terminal(text):
+    print("phaenotyp |", text)
+
+
+print_terminal("loading libraries ...")
+import bpy
 from bpy.props import (IntProperty, FloatProperty, BoolProperty, EnumProperty, PointerProperty)
 from bpy.types import (Panel, Menu, Operator, PropertyGroup)
 from bpy.app.handlers import persistent
-
 import math
 from threading import Thread
 import random
-
 import sys
 import os
-
 from PyNite import FEModel3D
-
 from numpy import array
 from numpy import empty
 from numpy import append
-
 from mathutils import Color
 c = Color()
 
 
+print_terminal("setup basic data ...")
 class data:
     # steel pipe with 60/50 mm as example
     Do =     None # mm (diameter outside)
@@ -124,6 +124,8 @@ class data:
     elitism = 2
     new_generation_size = population_size - elitism
 
+    fitness_function = None
+
     genes = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
 
     ga_state = "create initial population"
@@ -164,8 +166,12 @@ class supports:
 
         supports.instances.append(self)
 
+        text = "support created on vertex " + str(vertex.index)
+        print_terminal(text)
+
     def __del__(self):
-        pass
+        text = "delete support " + str(self.id)
+        print_terminal(text)
 
     def set_settings(self):
         self.loc_x = data.loc_x
@@ -345,6 +351,9 @@ class loads:
             loads.instances_vertex.append(self)
             loads.definend_vertex_ids.append(id)
 
+            text = "create load on vetex " + str(self.vertex.index)
+            print_terminal(text)
+
         if self.type == "edges":
             self.edge = geometry
 
@@ -363,6 +372,9 @@ class loads:
             loads.instances_edge.append(self)
             loads.definend_edge_ids.append(id)
 
+            text = "create load on edge " + str(self.edge.index)
+            print_terminal(text)
+
         if self.type == "faces":
             self.face = geometry
             self.load_normal = data.load_normal
@@ -375,8 +387,12 @@ class loads:
             loads.instances_face.append(self)
             loads.definend_face_ids.append(id)
 
+            text = "create load on face " + str(self.face.index)
+            print_terminal(text)
+
     def __del__(self):
-        pass
+        text = "delete load " + str(self.id)
+        print_terminal(text)
 
     def set_settings(self):
         if self.type == "faces":
@@ -468,8 +484,6 @@ class members:
         self.vertex_0_id = vertex_0.index
         self.vertex_1_id = vertex_1.index
 
-        print(vertex_0.index, vertex_1.index)
-
         # geometry
         self.curve = None
         self.mat = None
@@ -478,8 +492,12 @@ class members:
 
         members.instances.append(self)
 
+        text = "member created with id " + str(id)
+        print_terminal(text)
+
     def __del__(self):
-        pass
+        text = "delete member " + str(self.id)
+        print_terminal(text)
 
     def set_settings(self):
         self.Do = data.Do
@@ -487,13 +505,7 @@ class members:
         self.E  = data.E
         self.G  = data.G
         self.d  = data.d
-        '''
-        self.Iy = data.Iy
-        self.Iz = data.Iz
-        self.J  = data.J
-        self.A  = data.A
-        self.kg = data.kg
-        '''
+
         # moment of inertia, 32.9376 cm⁴
         self.Iy = math.pi * (self.Do**4 - self.Di**4)/64
         self.Iz = self.Iy
@@ -636,9 +648,6 @@ class members:
 
     def update_curve(self):
         frame = bpy.context.scene.frame_current
-
-        # update diameter
-        #self.curve.bevel_depth = self.Do * 0.01
 
         # apply deflection
         polyline = self.curve.splines[0]
@@ -897,9 +906,7 @@ class phaenotyp_properties(PropertyGroup):
         description = "Fitness function",
         items=[
                 ("average_sigma", "Average sigma", ""),
-                ("member_sigma", "Member sigma", ""),
-                ("weight", "Weight", ""),
-                ("lever_arm", "Lever arm", "")
+                ("member_sigma", "Member sigma", "")
                ]
         )
 
@@ -941,13 +948,6 @@ def transfer_analyze():
     truss = FEModel3D()
 
     update_mesh()
-    #bpy.ops.object.mode_set(mode="EDIT") # <---- to avoid "out-of-range-error" on windows
-    #bpy.ops.object.mode_set(mode="OBJECT") # <---- to avoid "out-of-range-error" on windows
-    #data.vertices = data.obj.data.vertices
-    #print(data.obj.data.vertices)
-
-    #bpy.ops.object.mode_set(mode="EDIT") # <---- to avoid "out-of-range-error" on windows
-    #bpy.ops.object.mode_set(mode="OBJECT") # <---- to avoid "out-of-range-error" on windows
 
     # add nodes from vertices
     for vertex in data.vertices:
@@ -965,17 +965,10 @@ def transfer_analyze():
         truss.def_support(name, support.loc_x, support.loc_y, support.loc_z, support.rot_x, support.rot_y, support.rot_z)
 
     # create members
-    print("in transfer_analyze")
-    print(data.vertices)
-    for v in data.vertices:
-        print("vertex", v.index)
-
     for member in members.instances:
         name = member.name
         vertex_0_id = member.vertex_0_id
         vertex_1_id = member.vertex_1_id
-
-        print("member:", name, vertex_0_id, vertex_1_id)
 
         # save initial_positions to mix with deflection
         initial_positions = []
@@ -994,9 +987,6 @@ def transfer_analyze():
 
         # add self weight
         kN = member.kg * -0.0000981
-
-        # Verkehrslast Test - sonst wird gegen Null optimiert
-        #kN = kN - 0.08
 
         # add self weight
         truss.add_member_dist_load(name, "FZ", kN, kN)
@@ -1018,9 +1008,6 @@ def transfer_analyze():
         normal = load.face.normal
         area = load.face.area
 
-        print("normal", normal)
-        print("area", area)
-
         # get projected area
         # based on: https://stackoverflow.com/questions/24467972/calculate-area-of-polygon-given-x-y-coordinates
         vertex_ids = load.face.vertices
@@ -1037,7 +1024,6 @@ def transfer_analyze():
             a -= vertices[j].co[0] * vertices[i].co[1]
 
         area_projected = abs(a) / 2.0
-        print("area_projected", area_projected)
 
         # get distances and perimeter
         distances = []
@@ -1053,7 +1039,6 @@ def transfer_analyze():
             distances.append(dist)
 
         perimeter = sum(distances)
-        print("perimeter", perimeter)
 
         # define loads for each edge
         edge_load_normal = []
@@ -1288,7 +1273,11 @@ def transfer_analyze():
         member.deflection[frame] = deflection
 
     # change viewport to material
-    bpy.context.space_data.shading.type = 'MATERIAL'
+    try:
+        bpy.context.space_data.shading.type = 'MATERIAL'
+    except:
+        pass
+
     data.done = True
 
 
@@ -1336,20 +1325,6 @@ class individuals(object):
             # otherwise insert random gene(mutate) to maintain diversity
             else:
                 child_chromosome.append(self.mutated_genes())
-        '''
-        child_chromosome = []
-        for gene_id, gene in enumerate(self.chromosome):
-            method = random.choice([0,1,2])
-            if method == 0:
-                mixed_gene = (gene + par2.chromosome[gene_id]) * 0.5
-                child_chromosome.append(mixed_gene)
-
-            if method == 1:
-                child_chromosome.append(gene)
-
-            if method == 2:
-                child_chromosome.append(par2.chromosome[gene_id])
-                '''
 
         frame = bpy.context.scene.frame_current
         return individuals(child_chromosome)
@@ -1364,7 +1339,7 @@ class individuals(object):
         frame = bpy.context.scene.frame_current
 
         # get fitness
-        if phaenotyp.fitness_function == "average_sigma":
+        if data.fitness_function == "average_sigma":
             forces = []
             for member in members.instances:
                 force = member.max_sigma[frame]
@@ -1377,7 +1352,7 @@ class individuals(object):
 
             fitness = sum_forces / len(forces)
 
-        if phaenotyp.fitness_function == "member_sigma":
+        if data.fitness_function == "member_sigma":
             forces = []
             for member in members.instances:
                 force = member.max_sigma[frame]
@@ -1386,12 +1361,12 @@ class individuals(object):
             fitness = return_max_diff_to_zero(forces)
             fitness = abs(fitness)
 
-        if phaenotyp.fitness_function == "weight":
-            fitness = 1 #!!!
+        if data.fitness_function == "weight":
+            fitness = 1 # placeholder
             pass
 
-        if phaenotyp.fitness_function == "lever_arm":
-            fitness = 1 #!!!
+        if data.fitness_function == "lever_arm":
+            fitness = 1 # placeholder
             pass
 
         return fitness
@@ -1406,7 +1381,9 @@ def genetic_mutation():
             chromosome = individuals.create_gnome()
             data.population.append(individuals(chromosome))
             data.chromosome[frame] = chromosome
-            print("initial population append:", chromosome)
+
+            text = "initial population append:" + str(chromosome)
+            print_terminal(text)
 
         else:
             data.ga_state = "create new generation"
@@ -1417,10 +1394,12 @@ def genetic_mutation():
         data.population = sorted(data.population, key = lambda x:x.fitness)
 
         # print previous population to terminal
-        print("sorted:")
+        print_terminal("")
+        print_terminal("sorted population")
+
         for id, gnome in enumerate(data.population):
-            print(gnome.chromosome, "with fitness", gnome.fitness)
-        print("")
+            text = str(gnome.chromosome) + " with fitness " + str(gnome.fitness)
+        print_terminal("")
 
         # for first run only
         if individuals.best == None:
@@ -1432,13 +1411,15 @@ def genetic_mutation():
             if individual.fitness > best.fitness:
                 individuals.best = best
 
-        print("overall best individuals:")
-        print(individuals.best.chromosome, "with fitness", individuals.best.fitness, "at frame", individuals.best.frame)
-        print("")
+        print_terminal("overall best individuals:")
+        text = str(individuals.best.chromosome) + " with fitness "  + str(individuals.best.fitness) + " at frame " + str(individuals.best.frame)
+        print_terminal(text)
+        print_terminal("")
 
         # create empty list of a new generation
         new_generation = []
-        print("generation", str(data.generation_id) + ":")
+        text = "generation " + str(data.generation_id) + ":"
+        print_terminal(text)
 
         # copy fittest ten percent
         for i in range(data.elitism):
@@ -1456,7 +1437,8 @@ def genetic_mutation():
             data.new_generation.append(child)
 
             # print child to terminal
-            print ("child:", child.chromosome, "fitness", child.fitness)
+            text = "child: " + str(child.chromosome) + " fitness " + str(child.fitness)
+            print_terminal(text)
 
         if len(data.new_generation) == data.new_generation_size:
             data.population = data.new_generation
@@ -1622,11 +1604,9 @@ class WM_OT_set_load(Operator):
         bpy.ops.object.mode_set(mode="OBJECT") # <---- to avoid "out-of-range-error" on windows
 
         if data.load_type == "vertices":
-            print("add load to vertices:")
             for vertex in data.obj.data.vertices:
                 if vertex.select:
                     id = vertex.index
-                    print("add load vertex", id, vertex)
                     # vertex is existing as load?
                     if id in loads.definend_vertex_ids:
                         # update parameters
@@ -1641,7 +1621,6 @@ class WM_OT_set_load(Operator):
                         new_load.create_sign()
 
         if data.load_type == "edges":
-            print("add load to edges:")
             for edge in data.obj.data.edges:
                 vertex_0_id = edge.vertices[0]
                 vertex_1_id = edge.vertices[1]
@@ -1651,7 +1630,6 @@ class WM_OT_set_load(Operator):
 
                 if edge.select:
                     id = edge.index
-                    print("edge", id, edge)
                     # edge is existing as load?
                     if id in loads.definend_edge_ids:
                         # update parameters
@@ -1666,11 +1644,9 @@ class WM_OT_set_load(Operator):
                         new_load.create_sign()
 
         if data.load_type == "faces":
-            print("add load to faces:")
             for polygon in data.obj.data.polygons:
                 if polygon.select:
                     id = polygon.index
-                    print("face", id, polygon)
                     # face is existing as load?
                     if id in loads.definend_face_ids:
                         # update parameters
@@ -1726,10 +1702,11 @@ class WM_OT_calculate_animation(Operator):
 class WM_OT_optimize_1(Operator):
     bl_label = "optimize_1"
     bl_idname = "wm.optimize_1"
-    bl_description = "Optimizaion 1 -Karl simple - sectional performance"
+    bl_description = "Simple sectional performance"
 
     def execute(self, context):
-        print("ok")
+        print_terminal("optimization 1 - simple sectional performance")
+
         transfer_analyze() # führt einfach Analyse aus
         members.update_curves() # update für VIZ
 
@@ -1746,24 +1723,15 @@ class WM_OT_optimize_1(Operator):
 
             member.update_settings()
 
-            if member.id == 194:
-                print("")
-                print("Member: ", member.id)
-                print("Memerb max stress: ", member.max_longitudinal_stress[frame])
-                print("zul Spannung: ", data.acceptable_sigma)
-                print("Do: ", member.Do)
-                print("Di: ", member.Di)
-
-
         return {"FINISHED"}
 
 class WM_OT_optimize_2(Operator):
     bl_label = "optimize_2"
     bl_idname = "wm.optimize_2"
-    bl_description = "Optimizaion 2 - Karl Deix - sectional performance"
+    bl_description = "Complex sectional performance"
 
     def execute(self, context):
-        print("ok")
+        print_terminal("optimization 1 - complex sectional performance")
         transfer_analyze() # führt einfach Analyse aus
         members.update_curves() # update für VIZ
         # Querschnittsoptimierung, iterativ
@@ -1773,16 +1741,6 @@ class WM_OT_optimize_2(Operator):
         frame = bpy.context.scene.frame_current
 
         for member in members.instances:
-            # member = members.get_by_id(member_id)
-            # print (member.axial[frame][position])
-            #for i in range (0,11):
-                #text = "m_y: " + str(round(member.moment_y[frame][i], 3))
-                #print (text)
-                #text = "axial: " + str(round(member.axial[frame][i], 3))
-                #print(text)
-
-            #if sigma = abs(thresh)
-
             #treshhold bei Prüfung!
             if abs(member.max_longitudinal_stress[frame]/data.acceptable_sigma) > 1:
                 faktor_a = 1+(abs(member.max_longitudinal_stress[frame])/data.acceptable_sigma-1)*0.36
@@ -1801,34 +1759,15 @@ class WM_OT_optimize_2(Operator):
             # Calculate new iy ... for next iteration
             member.update_settings()
 
-            if member.id == 194:
-                print("")
-                print("Member: ", member.id)
-                print("Memerb max stress: ", member.max_longitudinal_stress[frame])
-                print("zul Spannung: ", data.acceptable_sigma)
-                print("Do: ", member.Do)
-                print("Di: ", member.Di)
-                print ("faktor d: ", faktor_d)
-                print ("neu Member-A: ", member.A)
-
-        #transfer_analyze() # führt einfach Analyse aus
-        #members.update_curves() # update für VIZ
-
-        # for member in members.instances:
-                # frame = bpy.context.scene.frame_current
-                # print("Member: " , member.id)
-                # print("Memerb max stress: ", member.max_longitudinal_stress[frame])
-                # print("Member - Fläche: ", member.A)
-
-
         return {"FINISHED"}
 
 class WM_OT_optimize_3(Operator):
     bl_label = "optimize_3"
     bl_idname = "wm.optimize_3"
-    bl_description = "Optimizaion 3 - Karl Deix - empty"
+    bl_description = "empty"
 
     def execute(self, context):
+        print_terminal("optimization 3 - empty")
         transfer_analyze() # führt einfach Analyse aus
         members.update_curves() # update für VIZ
 
@@ -1839,9 +1778,10 @@ class WM_OT_optimize_3(Operator):
 class WM_OT_optimize_4(Operator):
     bl_label = "optimize_4"
     bl_idname = "wm.optimize_4"
-    bl_description = "Optimizaion 4 - Karl Deix - empty"
+    bl_description = "empty"
 
     def execute(self, context):
+        print_terminal("optimization 4 - empty")
         transfer_analyze() # führt einfach Analyse aus
         members.update_curves() # update für VIZ
 
@@ -1853,9 +1793,10 @@ class WM_OT_optimize_4(Operator):
 class WM_OT_optimize_5(Operator):
     bl_label = "optimize_5"
     bl_idname = "wm.optimize_5"
-    bl_description = "Optimizaion 5 - Karl Deix - empty"
+    bl_description = "empty"
 
     def execute(self, context):
+        print_terminal("optimization 5 - empty")
         transfer_analyze() # führt einfach Analyse aus
         members.update_curves() # update für VIZ
 
@@ -1867,9 +1808,10 @@ class WM_OT_optimize_5(Operator):
 class WM_OT_genetic_mutation(Operator):
     bl_label = "genetic_mutation"
     bl_idname = "wm.genetic_mutation"
-    bl_description = "Start genetic muation over selected shape keys"
+    bl_description = "Start genetic muataion over selected shape keys"
 
     def execute(self, context):
+        print_terminal("start genetic muataion over selected shape keys")
         # shape keys
         shape_key = data.obj.data.shape_keys
         for keyblock in shape_key.key_blocks:
@@ -1900,16 +1842,20 @@ class WM_OT_viz_scale_force_up(Operator):
     def execute(self, context):
         # get forcetyp and force
         if data.force_type_viz == "sigma":
-            data.scale_sigma = data.scale_sigma * 1.25
+            if data.scale_sigma < 5:
+                data.scale_sigma = data.scale_sigma * 1.25
 
         if data.force_type_viz == "axial":
-            data.scale_axial = data.scale_axial * 1.25
+            if data.scale_axial < 5:
+                data.scale_axial = data.scale_axial * 1.25
 
         elif data.force_type_viz == "moment_y":
-            data.scale_moment_y = data.scale_moment_y * 1.25
+            if data.scale_moment_y < 5:
+                data.scale_moment_y = data.scale_moment_y * 1.25
 
         elif data.force_type_viz == "moment_z":
-            data.scale_moment_z = data.scale_moment_z * 1.25
+            if data.scale_moment_z < 5:
+                data.scale_moment_z = data.scale_moment_z * 1.25
 
         else:
             pass
@@ -1927,16 +1873,20 @@ class WM_OT_viz_scale_force_down(Operator):
     def execute(self, context):
         # get forcetyp and force
         if data.force_type_viz == "sigma":
-            data.scale_sigma = data.scale_sigma * 0.75
+            if data.scale_sigma > 0.1:
+                data.scale_sigma = data.scale_sigma * 0.75
 
         if data.force_type_viz == "axial":
-            data.scale_axial = data.scale_axial * 0.75
+            if data.scale_axial > 0.1:
+                data.scale_axial = data.scale_axial * 0.75
 
         elif data.force_type_viz == "moment_y":
-            data.scale_moment_y = data.scale_moment_y * 0.75
+            if data.scale_moment_y > 0.1:
+                data.scale_moment_y = data.scale_moment_y * 0.75
 
         elif data.force_type_viz == "moment_z":
-            data.scale_moment_z = data.scale_moment_z * 0.75
+            if data.scale_moment_z > 0.1:
+                data.scale_moment_z = data.scale_moment_z * 0.75
 
         else:
             pass
@@ -1972,8 +1922,6 @@ class WM_OT_viz_scale_deflection_down(Operator):
 
         members.update_curves()
 
-        members.update_curves()
-
         return {"FINISHED"}
 
 class WM_OT_viz_update(Operator):
@@ -1982,6 +1930,7 @@ class WM_OT_viz_update(Operator):
     bl_description = "Update the force type"
 
     def execute(self, context):
+        print_terminal("update curves")
         members.update_curves()
 
         return {"FINISHED"}
@@ -1993,6 +1942,7 @@ class WM_OT_text(Operator):
     bl_description = "Generate output at the selected point"
 
     def execute(self, context):
+        print_terminal("generate output at the selected point")
         #try:
         data.texts = []
         selected_points = []
@@ -2064,6 +2014,7 @@ class WM_OT_reset(Operator):
     bl_description = "Reset Phaenotyp"
 
     def execute(self, context):
+        print_terminal("reset phaenotyp")
         reset_collection_geometry_material()
 
         data.obj = None
@@ -2253,11 +2204,11 @@ class OBJECT_PT_Phaenotyp(Panel):
                     # Optimization
                     box = layout.box()
                     box.label(text="Optimization:")
-                    box.operator("wm.optimize_1", text="Optimization 1 - simple - sectional performance")
-                    box.operator("wm.optimize_2", text="Optimization 2 - complex - sectional performance")
-                    box.operator("wm.optimize_3", text="Karl Deix - empty")
-                    box.operator("wm.optimize_4", text="Karl Deix - empty")
-                    box.operator("wm.optimize_5", text="Karl Deix - empty")
+                    box.operator("wm.optimize_1", text="Simple - sectional performance")
+                    box.operator("wm.optimize_2", text="Complex - sectional performance")
+                    #box.operator("wm.optimize_3", text="empty")
+                    #box.operator("wm.optimize_4", text="empty")
+                    #box.operator("wm.optimize_5", text="empty")
 
                     shape_key = data.obj.data.shape_keys
                     if shape_key:
@@ -2267,6 +2218,11 @@ class OBJECT_PT_Phaenotyp(Panel):
                         box.prop(phaenotyp, "population_size", text="Size of population for GA")
                         box.prop(phaenotyp, "elitism", text="Size of elitism for GA")
                         box.prop(phaenotyp, "fitness_function", text="Fitness function")
+
+                        data.population_size = phaenotyp.population_size
+                        data.elitism = phaenotyp.elitism
+                        data.new_generation_size = data.population_size - phaenotyp.elitism
+                        data.fitness_function = phaenotyp.fitness_function
 
                         for keyblock in shape_key.key_blocks:
                             name = keyblock.name
@@ -2336,7 +2292,6 @@ classes = (
 
 @persistent
 def update_post(scene):
-    update_mesh()
     # Analyze
     if data.calculate_update_post:
         transfer_analyze()
@@ -2345,7 +2300,7 @@ def update_post(scene):
         if bpy.context.scene.frame_end == bpy.context.scene.frame_current:
             bpy.ops.screen.animation_cancel()
             data.calculate_update_post = False
-            print("done")
+            print_terminal("calculation - done")
 
     # Genetic Mutation (Analys in fitness function)
     if data.genetetic_mutation_update_post:
@@ -2355,7 +2310,7 @@ def update_post(scene):
         if bpy.context.scene.frame_end == bpy.context.scene.frame_current:
             bpy.ops.screen.animation_cancel()
             data.genetetic_mutation_update_post = False
-            print("done")
+            print_terminal("calculation - done")
 
     members.update_curves()
 
