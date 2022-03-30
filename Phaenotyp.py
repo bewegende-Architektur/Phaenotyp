@@ -24,7 +24,7 @@ def print_terminal(text):
 
 print_terminal("loading libraries ...")
 import bpy
-from bpy.props import (IntProperty, FloatProperty, BoolProperty, EnumProperty, PointerProperty)
+from bpy.props import (IntProperty, FloatProperty, BoolProperty, StringProperty, EnumProperty, PointerProperty)
 from bpy.types import (Panel, Menu, Operator, PropertyGroup)
 from bpy.app.handlers import persistent
 import math
@@ -36,6 +36,8 @@ from PyNite import FEModel3D
 from numpy import array
 from numpy import empty
 from numpy import append
+from numpy import poly1d
+from numpy import polyfit
 from mathutils import Color
 c = Color()
 
@@ -46,14 +48,32 @@ class data:
     Do =     None # mm (diameter outside)
     Di =     None # mm (diameter inside)
 
+    # Knicklinien nach ÖNORM B 4600
+    kn_lamda = [10,20,30,40,50,60,70,80,90,100,110,120,130,140,150,160,170,180,190,200,210,220,230,240,250]
+
+    kn235 = [16.5,15.8,15.3,14.8,14.2,13.5,12.7,11.8,10.7,9.5,8.2,6.9,5.9,5.1,4.4,3.9,3.4,3.1,2.7,2.5,2.2,2,1.9,1.7,1.6]
+    kn275 = [20.5,19.4,18.8,18.0,17.1,16.0,14.8,13.3,11.7,9.9,8.2,6.9,5.9,5.1,4.4,3.9,3.4,3.1,2.7,2.5,2.2,2,1.9,1.7,1.6]
+    kn355 = [24.5,23.2,22.3,21.2,20.0,18.5,16.7,14.7,12.2,9.9,8.2,6.9,5.9,5.1,4.4,3.9,3.4,3.1,2.7,2.5,2.2,2,1.9,1.7,1.6]
+    knalu = [9.58,9.6,9.3,9,8.6,8.2,7.7,7.2,6.5,5.8,5.0,4.2,3.6,3.1,2.7,2.4,2.1,1.9,1.6,1.5,1.3,1.2,1.2,1.0,1.0]
+    custom = [16.5,15.8,15.3,14.8,14.2,13.5,12.7,11.8,10.7,9.5,8.2,6.9,5.9,5.1,4.4,3.9,3.4,3.1,2.7,2.5,2.2,2,1.9,1.7,1.6]
+
+    knick_model235 = poly1d(polyfit(kn_lamda, kn235, 6))
+    knick_model275 = poly1d(polyfit(kn_lamda, kn275, 6))
+    knick_model355 = poly1d(polyfit(kn_lamda, kn355, 6))
+    knick_modelalu = poly1d(polyfit(kn_lamda, knalu, 6))
+    knick_modelcustom = poly1d(polyfit(kn_lamda, custom, 6))
+
     material_library = [
-        # name, name in dropdown, E, G, d, acceptable_sigma, acceptable_shear, acceptable_torsion, acceptable_sigmav
-        ["steel_S235", "steel S235", 21000, 8100, 7.85, 16.0, 9.5, 10.5, 23.5],
-        ["steel_S275", "steel S275", 21000, 8100, 7.85, 19.5, 11, 12.5, 27.5],
-        ["steel_S355", "steel S355", 21000, 8100, 7.85, 23, 13, 15, 35.5],
-        ["alu_EN_AC_Al_CU4Ti", "alu EN-AC Al Cu4Ti", 8000, 3000, 2.70, 10, 7, 10.5, 22.0],
-        ["custom", "Custom", 21000, 8100, 7.85, 16.0, 9.5, 10.5, 23.5]
+        # name, name in dropdown, E, G, d, acceptable_sigma, acceptable_shear, acceptable_torsion, acceptable_sigmav, knick_model
+        # diese gelten nach ÖNORM B 4600 für den Erhöhungsfall und entsprechen 100 % beim Knicken (lamda<20)
+        ["steel_S235", "steel S235", 21000, 8100, 7.85, 16.5, 9.5, 10.5, 23.5, knick_model235],
+        ["steel_S275", "steel S275", 21000, 8100, 7.85, 20.5, 11, 12.5, 27.5, knick_model275],
+        ["steel_S355", "steel S355", 21000, 8100, 7.85, 24.5, 13, 15, 35.5, knick_model355],
+        ["alu_EN_AC_Al_CU4Ti", "alu EN-AC Al Cu4Ti", 8000, 3000, 2.70, 10, 7, 10.5, 22.0, knick_modelalu],
+        ["custom", "Custom", 21000, 8100, 7.85, 16.0, 9.5, 10.5, 23.5, knick_modelcustom] # <------------------- wie in GUI einfügen?
         ]
+
+    material = None # to pass choosen material to member
 
     materials_dropdown = []
     for material in material_library:
@@ -75,6 +95,13 @@ class data:
     J  = None
     A  = None
     kg = None
+
+    # buckling - Knicken
+    # Berücksichtigung von Knicken:
+    # Stäbe mit Druckkraft (negative Axialkraft) erhalten eine geringere zulässige Spannung
+    # diese hängt von der Schlankheit ab = Lamda = Knicklänge/Trägheitsradius
+    # neuer Kennwert: Trägheitsradius:  ir
+    ir = None
 
     # pass support types
     loc_x = None
@@ -146,6 +173,8 @@ class data:
 
         # weight of profile, 6.79 kg/m
         data.kg =  data.A*data.d * 0.1
+
+        data.ir = math.sqrt(data.Iy/data.A)
 
 
 class supports:
@@ -474,9 +503,11 @@ class members:
     definend_edge_ids = []
     all_edges_definend = False
 
-    def __init__(self, id, vertex_0, vertex_1):
+    def __init__(self, id, vertex_0, vertex_1, material):
         self.id = id # equals id of edge
         self.name = "member_" + str(id)
+        self.ir = data.ir # ir from data
+        self.material = material
         members.definend_edge_ids.append(id)
 
         self.vertex_0 = vertex_0
@@ -518,6 +549,9 @@ class members:
 
         # weight of profile, 6.79 kg/m
         self.kg =  self.A*self.d * 0.1
+
+        # buckling
+        self.ir= math.sqrt(self.Iy/self.A)
 
         # results
         self.axial = {}
@@ -803,6 +837,12 @@ class phaenotyp_properties(PropertyGroup):
         default = 10.5,
         min = 23.5,
         max = 30.0
+        )
+
+    ir: StringProperty(
+        name = "ir",
+        description = "Ir of custom material",
+        default = "16.5, 15.8, 15.3, 14.8, 14.2, 13.5, 12.7, 11.8, 10.7, 9.5, 8.2, 6.9, 5.9, 5.1, 4.4, 3.9, 3.4, 3.1, 2.7, 2.5, 2.2, 2.0, 1.9, 1.7, 1.6"
         )
 
     loc_x: BoolProperty(
@@ -1094,6 +1134,9 @@ def transfer_analyze():
             axial.append(axial_pos)
         member.axial[frame] = axial
 
+        # buckling
+        member.ir = math.sqrt(member.J/member.A) # für runde Querschnitte in  cm
+
         moment_y = []
         for i in range(11): # get the forces at 11 positions and
             moment_y_pos = truss.Members[name].moment("My", x=L/10*i)
@@ -1203,17 +1246,27 @@ def transfer_analyze():
         # tensile strength: 36 kN/cm², yield point 23.5 kN/cm²
         member.overstress[frame] = False
 
-        if member.max_sigma[frame] > 14.0:
+        # for example ["steel_S235", "steel S235", 21000, 8100, 7.85, 16.0, 9.5, 10.5, 23.5, knick_model235],
+        if member.max_sigma[frame] > member.material[5]:
             member.overstress[frame] = True
 
-        if member.max_tau_shear[frame] > 9.5:
+        if member.max_tau_shear[frame] > member.material[6]:
             member.overstress[frame] = True
 
-        if member.max_tau_torsion[frame] > 10.5:
+        if member.max_tau_torsion[frame] > member.material[7]:
             member.overstress[frame] = True
 
-        if member.max_sigmav[frame] > 23.5:
+        if member.max_sigmav[frame] > member.material[8]:
             member.overstress[frame] = True
+
+        # buckling
+        if member.axial[frame][0] < 0: # nur für Druckstäbe - axial ist überall im Stab gleich?
+            member.lamda = L*0.5/member.ir # für eingespannte Stäbe ist die Knicklänge 0.5 der Stablänge L, Stablänge muss in cm sein !
+            if member.lamda > 20: # für lamda < 20 (kurze Träger) gelten die default-Werte)
+                function_to_run = member.material[9] # get function
+                data.acceptable_sigma = function_to_run(member.lamda) # run function
+                if member.lamda > 250:
+                    member.overstress[frame] = True
 
         # deflection
         deflection = []
@@ -1578,7 +1631,7 @@ class WM_OT_set_profile(Operator):
 
                 else:
                     # create new member
-                    new_member = members(id, vertex_0, vertex_1)
+                    new_member = members(id, vertex_0, vertex_1, data.material)
                     new_member.set_settings()
 
         # check if all members done
@@ -2128,6 +2181,7 @@ class OBJECT_PT_Phaenotyp(Panel):
                     box.prop(phaenotyp, "acceptable_shear", text="Acceptable shear")
                     box.prop(phaenotyp, "acceptable_torsion", text="Acceptable torsion")
                     box.prop(phaenotyp, "acceptable_sigmav", text="Acceptable sigmav")
+                    box.prop(phaenotyp, "ir", text="Ir")
 
                     # pass user input to data
                     data.E = phaenotyp.E
@@ -2138,11 +2192,12 @@ class OBJECT_PT_Phaenotyp(Panel):
                     data.acceptable_shear = phaenotyp.acceptable_shear
                     data.acceptable_torsion = phaenotyp.acceptable_torsion
                     data.acceptable_sigmav = phaenotyp.acceptable_sigmav
+                    data.ir = list(phaenotyp.ir.split(","))
 
                 else:
                     # pass input form library to data
                     for material in data.material_library:
-                        if phaenotyp.material == material[0]:
+                        if phaenotyp.material == material[0]: # select correct material
                             data.E = material[2]
                             data.G = material[3]
                             data.d = material[4]
@@ -2151,6 +2206,8 @@ class OBJECT_PT_Phaenotyp(Panel):
                             data.acceptable_shear = material[6]
                             data.acceptable_torsion = material[7]
                             data.acceptable_sigmav = material[8]
+
+                            data.material = material
 
                     box.label(text="E = " + str(data.E) + " kN/cm²")
                     box.label(text="G = " + str(data.G) + " kN/cm²")
