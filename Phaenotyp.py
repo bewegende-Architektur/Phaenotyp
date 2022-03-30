@@ -1018,6 +1018,9 @@ def transfer_analyze():
         normal = load.face.normal
         area = load.face.area
 
+        print("normal", normal)
+        print("area", area)
+
         # get projected area
         # based on: https://stackoverflow.com/questions/24467972/calculate-area-of-polygon-given-x-y-coordinates
         vertex_ids = load.face.vertices
@@ -1030,8 +1033,11 @@ def transfer_analyze():
         a = 0.0
         for i in range(n):
             j = (i + 1) % n
-            a += abs(vertices[i].co[0] * vertices[j].co[1]-vertices[j].co[0] * vertices[i].co[1])
-        area_projected = a / 2.0
+            a += vertices[i].co[0] * vertices[j].co[1]
+            a -= vertices[j].co[0] * vertices[i].co[1]
+
+        area_projected = abs(a) / 2.0
+        print("area_projected", area_projected)
 
         # get distances and perimeter
         distances = []
@@ -1047,6 +1053,7 @@ def transfer_analyze():
             distances.append(dist)
 
         perimeter = sum(distances)
+        print("perimeter", perimeter)
 
         # define loads for each edge
         edge_load_normal = []
