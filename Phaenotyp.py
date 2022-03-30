@@ -118,6 +118,7 @@ class data:
     load_z = None
     load_normal = None
     load_projected = None
+    load_area_z = None
 
     # store geoemtry
     obj = None
@@ -408,6 +409,7 @@ class loads:
             self.face = geometry
             self.load_normal = data.load_normal
             self.load_projected = data.load_projected
+            self.load_area_z = data.load_area_z
 
             self.x = self.face.center[0] # text pos x
             self.y = self.face.center[1] # text pos y
@@ -444,6 +446,7 @@ class loads:
         if self.type == "faces":
             text = text + "n: " + str(self.load_normal) + "\n"
             text = text + "p: " + str(self.load_projected) + "\n"
+            text = text + "z: " + str(self.load_area_z) + "\n"
 
         else:
             text = text + "type: " + self.type + "\n"
@@ -470,6 +473,7 @@ class loads:
         if self.type == "faces":
             text = text + "n: " + str(self.load_normal) + "\n"
             text = text + "p: " + str(self.load_projected) + "\n"
+            text = text + "z: " + str(self.load_area_z) + "\n"
 
         else:
             text = text + "type: " + self.type + "\n"
@@ -925,6 +929,14 @@ class phaenotyp_properties(PropertyGroup):
         max = 1000.0
         )
 
+    load_area_z: FloatProperty(
+        name = "load_area_z",
+        description = "Load of full area in z-direction",
+        default = 0.0,
+        min = -1000,
+        max = 1000.0
+        )
+
     population_size: IntProperty(
         name = "population_size",
         description="Size of population for GA",
@@ -1083,6 +1095,7 @@ def transfer_analyze():
         # define loads for each edge
         edge_load_normal = []
         edge_load_projected = []
+        edge_load_area_z= []
 
         for edge_id, dist in enumerate(distances):
             ratio = 1 / perimeter * dist
@@ -1096,6 +1109,11 @@ def transfer_analyze():
             area_load = load.load_projected * area_projected
             edge_load = area_load * ratio
             edge_load_projected.append(edge_load)
+
+            # load projected
+            area_load = load.load_area_z * area
+            edge_load = area_load * ratio
+            edge_load_area_z.append(edge_load)
 
         # i is the id within the class (0, 1, 3 and maybe more)
         # edge_id is the id of the edge in the mesh -> the member
@@ -1117,6 +1135,10 @@ def transfer_analyze():
 
             # edge_load_projected
             z = edge_load_projected[i]
+            truss.add_member_dist_load(name, 'FZ', z, z)
+
+            # edge_load_area_z
+            z = edge_load_area_z[i]
             truss.add_member_dist_load(name, 'FZ', z, z)
 
     # analyze the model
@@ -2234,8 +2256,9 @@ class OBJECT_PT_Phaenotyp(Panel):
                     box.prop(phaenotyp, "load_type", text="Type")
 
                     if phaenotyp.load_type == "faces": # if faces
-                        box.prop(phaenotyp, "load_normal", text="normal (wind or live)")
-                        box.prop(phaenotyp, "load_projected", text="projected (snow)")
+                        box.prop(phaenotyp, "load_normal", text="normal (like wind)")
+                        box.prop(phaenotyp, "load_projected", text="projected (like snow)")
+                        box.prop(phaenotyp, "load_area_z", text="area z (like weight of facade)")
 
                     else: # if vertices or edges
                         box.prop(phaenotyp, "load_x", text="x")
@@ -2249,6 +2272,7 @@ class OBJECT_PT_Phaenotyp(Panel):
                     data.load_z = phaenotyp.load_z
                     data.load_normal = phaenotyp.load_normal
                     data.load_projected = phaenotyp.load_projected
+                    data.load_area_z = phaenotyp.load_area_z
 
                     box.operator("wm.set_load", text="Set")
 
