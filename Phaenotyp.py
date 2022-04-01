@@ -1,4 +1,3 @@
-
 bl_info = {
     "name": "Phänotyp",
     "description": "Genetic optimization of architectural structures",
@@ -1565,42 +1564,103 @@ def reset_collection_geometry_material():
     bpy.context.scene.collection.children.link(collection)
 
 
-def report_start(report):
-    report.write("<!DOCTYPE html>\n")
-    report.write("<html>\n")
-    report.write("<head>\n")
-    report.write("<meta charset=utf-8 />\n")
-    report.write("<title>Phaenotyp | 2022</title>\n")
-    report.write("</head>\n")
-    report.write("<body>\n")
-    report.write("<canvas id='report' width='1200' height='600'></canvas>\n")
-    report.write("<script>\n")
-    report.write("var canvas = document.getElementById('report');\n")
-    report.write("if (canvas.getContext)\n")
-    report.write("{\n")
-    report.write("var context = canvas.getContext('2d');\n")
+class report:
+    def __init__(self):
+        pass
 
+    @staticmethod
+    def start(directory, name, width, height):
+        filename = directory + "/report/" + name
+        file = open(filename, "w")
 
-def report_line(report, x1, y1, x2, y2, width, color):
-    report.write("context.beginPath();\n")
-    report.write("context.moveTo(" + str(x1) + "," + str(y1) +");\n")
-    report.write("context.lineTo(" + str(x2) + "," + str(y2) +");\n")
-    report.write("context.lineWidth =" + str(width) + ";\n")
-    report.write("context.strokeStyle ='" + color + "';\n")
-    report.write("context.stroke();\n")
+        file.write("<html>\n")
+        file.write("<head>\n")
+        file.write("<title>Phaenotyp | Report</title>\n")
+        file.write("Phaenotyp | Report <br>\n")
+        file.write("<br>\n")
+        file.write("<a href='axial.html'>axial</a> |\n")
+        file.write("<a href='moment_y.html'>moment_y</a> |\n")
+        file.write("<a href='moment_z.html'>moment_z</a> |\n")
+        file.write("<a href='shear_y.html'>shear_y</a> |\n")
+        file.write("<a href='shear_z.html'>shear_z</a> |\n")
+        file.write("<a href='torque.html'>torque</a>\n")
+        file.write("<br>\n")
+        #file.write("<a href='Wy.html'>Wy</a> |\n")
+        #file.write("<a href='WJ.html'>WJ</a> |\n")
+        #file.write("<a href='longitudinal_stress.html'>longitudinal_stress</a> |\n")
+        #file.write("<a href='tau_shear.html'>tau_shear</a> |\n")
+        #file.write("<a href='tau_torsion.html'>tau_torsion</a> |\n")
+        #file.write("<a href='sum_tau.html'>sum_tau</a> |\n")
+        #file.write("<a href='sigmav.html'>sigmav</a> |\n")
+        #file.write("<a href='sigma.html'>sigma</a> |\n")
+        #file.write("<br>\n")
+        file.write("<a href='max_longitudinal_stress.html'>max_longitudinal_stress</a> |\n")
+        file.write("<a href='max_tau_shear.html'>max_tau_shear</a> |\n")
+        file.write("<a href='max_tau_torsion.html'>max_tau_torsion</a> |\n")
+        file.write("<a href='max_sum_tau.html'>max_sum_tau</a> |\n")
+        file.write("<a href='max_sigmav.html'>max_sigmav</a> |\n")
+        file.write("<a href='max_sigma.html'>max_sigma</a>\n")
+        file.write("<br>\n")
+        #file.write("<a href='deflection.html'>deflection</a> |\n")
+        #file.write("<a href='overstress.html'>overstress</a>\n")
+        file.write("<br>\n")
+        file.write("<br>\n")
+        file.write("</head>\n")
+        file.write("\n")
+        file.write("<style>\n")
+        file.write("* {font-family: sans-serif;}\n")
+        file.write("a:link {color: rgb(0, 0, 0); background-color: transparent; text-decoration: none;}\n")
+        file.write("a:visited {color: rgb(0,0,0); background-color: transparent; text-decoration: none;}\n")
+        file.write("a:hover {color: rgb(0,0,0); background-color: transparent; text-decoration: underline;}\n")
+        file.write("a:active {color: rgb(0,0,0); background-color: transparent; text-decoration: underline;}\n")
+        file.write("</style>\n")
+        file.write("\n")
+        file.write("<body style='margin : 0px; overflow: scroll;'>\n")
+        file.write("<svg ")
+        file.write("width='" + str(width) + "'")
+        file.write("height='" + str(height) + "'>\n")
+        file.write("\n")
 
+        return file
 
-def report_text(report, x, y, text):
-    report.write("context.textAlign = 'start';\n") # end, left, center, right
-    report.write("context.fillText('" + text + "'," + str(x) + ", " + str(y) + ");\n")
+    @staticmethod
+    def line(file, x1, y1, x2, y2, width, color):
+        file.write("<line ")
+        file.write("x1='" + str(x1) + "' ")
+        file.write("y1='" + str(y1) + "' ")
+        file.write("x2='" + str(x2) + "' ")
+        file.write("y2='" + str(y2) + "' ")
+        file.write("style='stroke:rgb(" + color + "); ")
+        file.write("stroke-width:" + str(width))
+        file.write("'/>\n")
 
+    @staticmethod
+    def text(file, x, y, text, anchor):
+        file.write("<text text-anchor=")
+        file.write("'" + anchor + "' ")
+        file.write("x='" + str(x) + "' ")
+        file.write("y='" + str(y) + "'>")
+        file.write(str(text))
+        file.write("</text>\n")
 
-def report_end(report):
-    report.write("}\n")
-    report.write("</script>\n")
-    report.write("Phaenotyp | 2022\n")
-    report.write("</body>\n")
-    report.write("</html>\n")
+    @staticmethod
+    def text_link(file, x, y, text):
+        file.write("<a xlink:href=")
+        file.write("'" + str(text) + "' ")
+        file.write("target='_self'>")
+        file.write("<text ")
+        file.write("x='" + str(x) + "' ")
+        file.write("y='" + str(y) + "'>")
+        file.write(str(text) +  "</text>")
+        file.write("</a>\n")
+
+    @staticmethod
+    def end(file):
+        file.write("</svg>\n")
+        file.write("</body>\n")
+        file.write("</html>\n")
+        file.close()
+
 
 ### GUI
 class WM_OT_set_structure(Operator):
@@ -2133,36 +2193,164 @@ class WM_OT_report(Operator):
         # get frame
         frame = bpy.context.scene.frame_current
 
+        # create folder
         filepath = bpy.data.filepath
         directory = os.path.dirname(filepath)
 
-        report_path = directory + "/report.html"
-        report = open(report_path, "w")
+        try:
+            os.mkdir(os.path.join(directory, "report"))
+        except:
+            pass
 
-        report_start(report)
-
-        y = 20
+        ### members
         for member in members.instances:
-            text = "member "
-            text = text + str(member.id)
-            text = text + " - axial: " + str(round(member.axial[frame][0], 3))
-            report_text(report, 10, y, text)
-            value = member.axial[frame][0]
-            print(value)
-            if value > 0:
-                color = "#FF0000"
+            file = report.start(directory, member.name, 1920, 800)
+
+            report.text(file, 0,  20, "name: " + str(member.name), 'start')
+            report.text(file, 0,  60, "vertex_1_id: " + str(member.vertex_1_id), 'start')
+            report.text(file, 0,  40, "vertex_0_id: " + str(member.vertex_0_id), 'start')
+            report.text(file, 0,  80, "material: " + str(member.material[0]), 'start')
+            report.text(file, 0, 100, "ir: " + str(member.ir), 'start')
+            report.text(file, 0, 120, "Do: " + str(member.Do), 'start')
+            report.text(file, 0, 140, "Di: " + str(member.Di), 'start')
+            report.text(file, 0, 160, "E: " + str(member.E), 'start')
+            report.text(file, 0, 180, "G: " + str(member.G), 'start')
+            report.text(file, 0, 200, "d: " + str(member.d), 'start')
+            report.text(file, 0, 220, "Iy: " + str(member.Iy), 'start')
+            report.text(file, 0, 240, "Iz: " + str(member.Iz), 'start')
+            report.text(file, 0, 260, "J: " + str(member.J), 'start')
+            report.text(file, 0, 280, "A: " + str(member.A), 'start')
+            report.text(file, 0, 300, "kg: " + str(member.kg), 'start')
+
+            report.text(file, 0, 320, "axial: " + str(member.axial), 'start')
+            report.text(file, 0, 340, "moment_y: " + str(member.moment_y), 'start')
+            report.text(file, 0, 360, "moment_z: " + str(member.moment_z), 'start')
+            report.text(file, 0, 380, "shear_y: " + str(member.shear_y), 'start')
+            report.text(file, 0, 400, "shear_z: " + str(member.shear_z), 'start')
+            report.text(file, 0, 420, "torque: " + str(member.torque), 'start')
+            report.text(file, 0, 440, "sigma: " + str(member.sigma), 'start')
+            report.text(file, 0, 460, "Wy: " + str(member.Wy), 'start')
+            report.text(file, 0, 480, "WJ: " + str(member.WJ), 'start')
+            report.text(file, 0, 500, "longitudinal_stress: " + str(member.longitudinal_stress), 'start')
+            report.text(file, 0, 520, "tau_shear: " + str(member.tau_shear), 'start')
+            report.text(file, 0, 540, "tau_torsion: " + str(member.tau_torsion), 'start')
+            report.text(file, 0, 560, "sum_tau: " + str(member.sum_tau), 'start')
+            report.text(file, 0, 580, "sigmav: " + str(member.sigmav), 'start')
+            report.text(file, 0, 600, "sigma: " + str(member.sigma), 'start')
+            report.text(file, 0, 620, "max_longitudinal_stress: " + str(member.max_longitudinal_stress), 'start')
+            report.text(file, 0, 640, "max_tau_shear: " + str(member.max_tau_shear), 'start')
+            report.text(file, 0, 660, "max_tau_torsion: " + str(member.max_tau_torsion), 'start')
+            report.text(file, 0, 680, "max_sum_tau: " + str(member.max_sum_tau), 'start')
+            report.text(file, 0, 700, "max_sigmav: " + str(member.max_sigmav), 'start')
+            report.text(file, 0, 720, "max_sigma: " + str(member.max_sigma), 'start')
+            report.text(file, 0, 740, "deflection: " + str(member.deflection), 'start')
+            report.text(file, 0, 760, "overstress: " + str(member.overstress), 'start')
+
+        report.end(file)
+
+        # lists with 1 vale per member per frame
+        results = ["max_longitudinal_stress", "max_tau_shear", "max_tau_torsion", "max_sum_tau", "max_sigmav", "max_sigma"]
+        for result in results:
+            html = result + ".html"
+            file = report.start(directory, html, 1920, 800)
+
+            y = 20
+            member_result = "member." + result + "[bpy.context.scene.frame_current]"
+            sorted_list = sorted(members.instances, key=lambda member: eval(member_result))
+
+            # calculate factor for scaling
+            result_bottom = "abs(sorted_list[0]." + result + "[bpy.context.scene.frame_current])"
+            result_top = "abs(sorted_list[len(sorted_list)-1]." + result + "[bpy.context.scene.frame_current])"
+            bottom = eval(result_bottom)
+            top = eval(result_top)
+
+            if bottom > top:
+                factor = 1/bottom
+
+            elif top > bottom:
+                factor = 1/top
+
+            elif top == bottom:
+                if top != 0:
+                    factor = 1/top
+                else:
+                    factor = 0
+
             else:
-                color = "#0000FF"
-            report_line(report, 150, y, 150+abs(value*500), y, 5, color)
+                factor = 0
 
-            y = y + 20
+            # draw results of members
+            for member in sorted_list:
+                report.text_link(file, 0, y, member.name) # 'start' 'middle' 'end'
 
-        report_end(report)
+                value = eval(member_result)
+                if value > 0:
+                    color = "255,0,0"
+                else:
+                    color = "0,0,255"
 
-        report.close()
+                report.line(file, 150, y-4, 150+abs(value*500)*factor, y-4, 5, color)
 
-        file = directory + "/report.html"
-        webbrowser.open(file)
+                text = str(round(value, 3)) + " xx"
+                report.text(file, 150+abs(value*500)*factor+5, y, text, 'start') # 'start' 'middle' 'end'
+
+                y = y + 20
+
+            report.end(file)
+
+        # lists with 10 values per member per frame
+        results = ["axial", "moment_y", "moment_z", "shear_y", "shear_z", "torque"]
+        for result in results:
+            html = result + ".html"
+            file = report.start(directory, html, 1920, 800)
+
+            y = 20
+            member_result = "member." + result + "[bpy.context.scene.frame_current]"
+            sorted_max_diff_to_zero = sorted(members.instances, key=lambda member: return_max_diff_to_zero(eval(member_result))) # highest in member
+
+            # calculate factor for scaling
+            result_bottom = "abs(return_max_diff_to_zero(sorted_max_diff_to_zero[0]." + result + "[bpy.context.scene.frame_current]))"
+            result_top = "abs(return_max_diff_to_zero(sorted_list[len(sorted_max_diff_to_zero)-1]." + result + "[bpy.context.scene.frame_current]))"
+            bottom = eval(result_bottom)
+            top = eval(result_top)
+
+            if bottom > top:
+                factor = 1/bottom
+
+            elif top > bottom:
+                factor = 1/top
+
+            elif top == bottom:
+                if top != 0:
+                    factor = 1/top
+                else:
+                    factor = 0
+
+            else:
+                factor = 0
+
+            # draw results of members
+            for member in sorted_max_diff_to_zero:
+                report.text_link(file, 0, y, member.name) # 'start' 'middle' 'end'
+
+                value = return_max_diff_to_zero(eval(member_result))
+                if value > 0:
+                    color = "255,0,0"
+                else:
+                    color = "0,0,255"
+
+                report.line(file, 150, y-4, 150+abs(value*500)*factor, y-4, 5, color)
+
+                text = str(round(value, 3)) + " xx"
+                report.text(file, 150+abs(value*500)*factor+5, y, text, 'start') # 'start' 'middle' 'end'
+
+                y = y + 20
+
+            report.end(file)
+
+        # open file
+        file_to_open = directory + "/report/axial.html"
+        webbrowser.open(file_to_open)
 
         return {"FINISHED"}
 
