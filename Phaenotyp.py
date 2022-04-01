@@ -40,7 +40,7 @@ from numpy import poly1d
 from numpy import polyfit
 from mathutils import Color
 c = Color()
-
+import webbrowser
 
 print_terminal("setup basic data ...")
 class data:
@@ -1564,6 +1564,45 @@ def reset_collection_geometry_material():
     collection = bpy.data.collections.new("<Phaenotyp>")
     bpy.context.scene.collection.children.link(collection)
 
+
+def report_start(report):
+    report.write("<!DOCTYPE html>\n")
+    report.write("<html>\n")
+    report.write("<head>\n")
+    report.write("<meta charset=utf-8 />\n")
+    report.write("<title>Phaenotyp | 2022</title>\n")
+    report.write("</head>\n")
+    report.write("<body>\n")
+    report.write("<canvas id='report' width='1200' height='600'></canvas>\n")
+    report.write("<script>\n")
+    report.write("var canvas = document.getElementById('report');\n")
+    report.write("if (canvas.getContext)\n")
+    report.write("{\n")
+    report.write("var context = canvas.getContext('2d');\n")
+
+
+def report_line(report, x1, y1, x2, y2, width, color):
+    report.write("context.beginPath();\n")
+    report.write("context.moveTo(" + str(x1) + "," + str(y1) +");\n")
+    report.write("context.lineTo(" + str(x2) + "," + str(y2) +");\n")
+    report.write("context.lineWidth =" + str(width) + ";\n")
+    report.write("context.strokeStyle ='" + color + "';\n")
+    report.write("context.stroke();\n")
+
+
+def report_text(report, x, y, text):
+    report.write("context.textAlign = 'start';\n") # end, left, center, right
+    report.write("context.fillText('" + text + "'," + str(x) + ", " + str(y) + ");\n")
+
+
+def report_end(report):
+    report.write("}\n")
+    report.write("</script>\n")
+    report.write("Phaenotyp | 2022\n")
+    report.write("</body>\n")
+    report.write("</html>\n")
+
+### GUI
 class WM_OT_set_structure(Operator):
     bl_label = "set_structure"
     bl_idname = "wm.set_structure"
@@ -2083,6 +2122,50 @@ class WM_OT_text(Operator):
         return {"FINISHED"}
 
 
+class WM_OT_report(Operator):
+    bl_label = "report"
+    bl_idname = "wm.report"
+    bl_description = "Generate report as html-format"
+
+    def execute(self, context):
+        print_terminal("generate report as html-format")
+
+        # get frame
+        frame = bpy.context.scene.frame_current
+
+        filepath = bpy.data.filepath
+        directory = os.path.dirname(filepath)
+
+        report_path = directory + "/report.html"
+        report = open(report_path, "w")
+
+        report_start(report)
+
+        y = 20
+        for member in members.instances:
+            text = "member "
+            text = text + str(member.id)
+            text = text + " - axial: " + str(round(member.axial[frame][0], 3))
+            report_text(report, 10, y, text)
+            value = member.axial[frame][0]
+            print(value)
+            if value > 0:
+                color = "#FF0000"
+            else:
+                color = "#0000FF"
+            report_line(report, 150, y, 150+abs(value*500), y, 5, color)
+
+            y = y + 20
+
+        report_end(report)
+
+        report.close()
+
+        file = directory + "/report.html"
+        webbrowser.open(file)
+
+        return {"FINISHED"}
+
 class WM_OT_reset(Operator):
     bl_label = "reset"
     bl_idname = "wm.reset"
@@ -2337,6 +2420,12 @@ class OBJECT_PT_Phaenotyp(Panel):
                             for text in data.texts:
                                 box.label(text=text)
 
+                        # Report
+                        box = layout.box()
+                        box.label(text="Report:")
+                        box.operator("wm.report", text="generate")
+
+
         box = layout.box()
         box.operator("wm.reset", text="Reset")
 
@@ -2365,6 +2454,7 @@ classes = (
     WM_OT_viz_update,
 
     WM_OT_text,
+    WM_OT_report,
 
     WM_OT_reset,
     OBJECT_PT_Phaenotyp
