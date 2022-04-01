@@ -2204,7 +2204,8 @@ class WM_OT_report(Operator):
 
         ### members
         for member in members.instances:
-            file = report.start(directory, member.name, 1920, 800)
+
+            file = report.start(directory, member.name, 1920, 20*len(members.instances)+20)
 
             report.text(file, 0,  20, "name: " + str(member.name), 'start')
             report.text(file, 0,  60, "vertex_1_id: " + str(member.vertex_1_id), 'start')
@@ -2252,7 +2253,7 @@ class WM_OT_report(Operator):
         results = ["max_longitudinal_stress", "max_tau_shear", "max_tau_torsion", "max_sum_tau", "max_sigmav", "max_sigma"]
         for result in results:
             html = result + ".html"
-            file = report.start(directory, html, 1920, 800)
+            file = report.start(directory, html, 1920, 20*len(members.instances)+20)
 
             y = 20
             member_result = "member." + result + "[bpy.context.scene.frame_current]"
@@ -2302,7 +2303,7 @@ class WM_OT_report(Operator):
         results = ["axial", "moment_y", "moment_z", "shear_y", "shear_z", "torque"]
         for result in results:
             html = result + ".html"
-            file = report.start(directory, html, 1920, 800)
+            file = report.start(directory, html, 1920, 20*len(members.instances)+20)
 
             y = 20
             member_result = "member." + result + "[bpy.context.scene.frame_current]"
