@@ -2599,7 +2599,10 @@ class OBJECT_PT_Phaenotyp(Panel):
                         # Report
                         box = layout.box()
                         box.label(text="Report:")
-                        box.operator("wm.report", text="generate")
+                        if bpy.data.is_saved:
+                            box.operator("wm.report", text="generate")
+                        else:
+                            box.label(text="Please save Blender-File first")
 
 
         box = layout.box()
