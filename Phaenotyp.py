@@ -2207,7 +2207,7 @@ class WM_OT_report(Operator):
             file = report.start(directory, member.name, 1920, 800)
 
             # list elements with one entry
-            results = ["name", "vertex_1_id", "vertex_0_id", "material[0]", "ir", "Do", "Di", "E", "G", "d", "Iy", "Iz", "J", "A", "kg"]
+            results = ["name", "vertex_1_id", "vertex_0_id", "material[0]", "ir", "Do", "Di", "E", "G", "d", "Iy", "Iz", "J", "A", "kg","Wy", "WJ", "overstress"]
             y = 20
             for result in results:
                 value = "member." + result
@@ -2215,16 +2215,16 @@ class WM_OT_report(Operator):
                 y = y + 20
 
             # positions within memebers
-            y = 360
+            y = 420
             for pos in range(10):
                 report.text(file, 0, y, "pos: " + str(pos), 'start')
                 y = y + 20
 
             # write forces
-            results = ["axial", "moment_y", "moment_z", "shear_y", "shear_z", "torque", "sigma"]
-            x = 200
+            results = ["axial", "moment_y", "moment_z", "shear_y", "shear_z", "torque", "sigma", "longitudinal_stress", "tau_shear", "tau_torsion", "sum_tau"]
+            x = 150
             for result in results:
-                y = 360
+                y = 420
                 report.text(file, x, y-20, result + ":", 'end')
                 for pos in range(10):
                     value = "member." + result + "[bpy.context.scene.frame_current]" + "[" + str(pos) + "]"
@@ -2232,26 +2232,7 @@ class WM_OT_report(Operator):
                     report.text(file, x, y, str(value), 'end')
                     y = y + 20
 
-                x = x + 150
-
-            '''
-            report.text(file, 0, 460, "Wy: " + str(member.Wy), 'start')
-            report.text(file, 0, 480, "WJ: " + str(member.WJ), 'start')
-            report.text(file, 0, 500, "longitudinal_stress: " + str(member.longitudinal_stress), 'start')
-            report.text(file, 0, 520, "tau_shear: " + str(member.tau_shear), 'start')
-            report.text(file, 0, 540, "tau_torsion: " + str(member.tau_torsion), 'start')
-            report.text(file, 0, 560, "sum_tau: " + str(member.sum_tau), 'start')
-            report.text(file, 0, 580, "sigmav: " + str(member.sigmav), 'start')
-            report.text(file, 0, 600, "sigma: " + str(member.sigma), 'start')
-            report.text(file, 0, 620, "max_longitudinal_stress: " + str(member.max_longitudinal_stress), 'start')
-            report.text(file, 0, 640, "max_tau_shear: " + str(member.max_tau_shear), 'start')
-            report.text(file, 0, 660, "max_tau_torsion: " + str(member.max_tau_torsion), 'start')
-            report.text(file, 0, 680, "max_sum_tau: " + str(member.max_sum_tau), 'start')
-            report.text(file, 0, 700, "max_sigmav: " + str(member.max_sigmav), 'start')
-            report.text(file, 0, 720, "max_sigma: " + str(member.max_sigma), 'start')
-            report.text(file, 0, 740, "deflection: " + str(member.deflection), 'start')
-            report.text(file, 0, 760, "overstress: " + str(member.overstress), 'start')
-            '''
+                x = x + 160
 
         report.end(file)
 
