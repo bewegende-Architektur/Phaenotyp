@@ -568,14 +568,14 @@ class members:
         self.Wy = None
         self.WJ = None
 
-        self.longitudinal_stress = {}
+        self.long_stress = {}
         self.tau_shear = {}
         self.tau_torsion = {}
         self.sum_tau = {}
         self.sigmav = {}
         self.sigma = {}
 
-        self.max_longitudinal_stress = {}
+        self.max_long_stress = {}
         self.max_tau_shear = {}
         self.max_tau_torsion = {}
         self.max_sum_tau = {}
@@ -1197,19 +1197,19 @@ def transfer_analyze():
         member.WJ = member.J/(member.Do/2)
 
         # calculation of the longitudinal stresses
-        longitudinal_stress = []
+        long_stress = []
         for i in range(11): # get the stresses at 11 positions and
             moment_h = math.sqrt(moment_y[i]**2+moment_z[i]**2)
             if axial[i] > 0:
                 s = axial[i]/member.A + moment_h/member.Wy
             else:
                 s = axial[i]/member.A - moment_h/member.Wy
-            longitudinal_stress.append(s)
+            long_stress.append(s)
 
         # get max stress of the beam
         # (can be positive or negative)
-        member.longitudinal_stress[frame] = longitudinal_stress
-        member.max_longitudinal_stress[frame] = return_max_diff_to_zero(longitudinal_stress) #  -> is working as fitness
+        member.long_stress[frame] = long_stress
+        member.max_long_stress[frame] = return_max_diff_to_zero(long_stress) #  -> is working as fitness
 
         # calculation of the shear stresses from shear force
         # (always positive)
@@ -1252,15 +1252,15 @@ def transfer_analyze():
         # combine shear and torque
         sigmav = []
         for i in range(11): # get the stresses at 11 positions and
-            sv = math.sqrt(longitudinal_stress[0]**2 + 3*sum_tau[0]**2)
+            sv = math.sqrt(long_stress[0]**2 + 3*sum_tau[0]**2)
             sigmav.append(sv)
 
         member.sigmav[frame] = sigmav
         member.max_sigmav[frame] = max(sigmav)
         # check out: http://www.bs-wiki.de/mediawiki/index.php?title=Festigkeitsberechnung
 
-        member.sigma = member.longitudinal_stress
-        member.max_sigma = member.max_longitudinal_stress
+        member.sigma = member.long_stress
+        member.max_sigma = member.max_long_stress
 
         # for the definition of the fitness criteria prepared
         # max longitudinal stress for steel St360 in kN/cm²
@@ -1587,14 +1587,14 @@ class report:
         file.write("<br>\n")
         #file.write("<a href='Wy.html'>Wy</a> |\n")
         #file.write("<a href='WJ.html'>WJ</a> |\n")
-        #file.write("<a href='longitudinal_stress.html'>longitudinal_stress</a> |\n")
+        #file.write("<a href='long_stress.html'>long_stress</a> |\n")
         #file.write("<a href='tau_shear.html'>tau_shear</a> |\n")
         #file.write("<a href='tau_torsion.html'>tau_torsion</a> |\n")
         #file.write("<a href='sum_tau.html'>sum_tau</a> |\n")
         #file.write("<a href='sigmav.html'>sigmav</a> |\n")
         #file.write("<a href='sigma.html'>sigma</a> |\n")
         #file.write("<br>\n")
-        file.write("<a href='max_longitudinal_stress.html'>max_longitudinal_stress</a> |\n")
+        file.write("<a href='max_long_stress.html'>max_long_stress</a> |\n")
         file.write("<a href='max_tau_shear.html'>max_tau_shear</a> |\n")
         file.write("<a href='max_tau_torsion.html'>max_tau_torsion</a> |\n")
         file.write("<a href='max_sum_tau.html'>max_sum_tau</a> |\n")
@@ -1887,7 +1887,7 @@ class WM_OT_optimize_1(Operator):
         frame = bpy.context.scene.frame_current
 
         for member in members.instances:
-            if abs(member.max_longitudinal_stress[frame]/data.acceptable_sigma) > 1:
+            if abs(member.max_long_stress[frame]/data.acceptable_sigma) > 1:
                 member.Do = member.Do * 1.2
                 member.Di = member.Di * 1.2
 
@@ -1916,11 +1916,11 @@ class WM_OT_optimize_2(Operator):
 
         for member in members.instances:
             #treshhold bei Prüfung!
-            if abs(member.max_longitudinal_stress[frame]/data.acceptable_sigma) > 1:
-                faktor_a = 1+(abs(member.max_longitudinal_stress[frame])/data.acceptable_sigma-1)*0.36
+            if abs(member.max_long_stress[frame]/data.acceptable_sigma) > 1:
+                faktor_a = 1+(abs(member.max_long_stress[frame])/data.acceptable_sigma-1)*0.36
 
             else:
-                faktor_a = 0.5 + 0.6*(math.tanh((abs(member.max_longitudinal_stress[frame])/data.acceptable_sigma -0.5)*2.4))
+                faktor_a = 0.5 + 0.6*(math.tanh((abs(member.max_long_stress[frame])/data.acceptable_sigma -0.5)*2.4))
 
             faktor_d = math.sqrt(faktor_a)
             member.A = member.A*faktor_a
@@ -2160,7 +2160,7 @@ class WM_OT_text(Operator):
             text = "torque: " + str(round(member.torque[frame][position], 3))
             data.texts.append(text)
 
-            text = "longitudinal_stress: " + str(round(member.longitudinal_stress[frame][position], 3))
+            text = "long_stress: " + str(round(member.long_stress[frame][position], 3))
             data.texts.append(text)
             text = "tau_shear: " + str(round(member.tau_shear[frame][position], 3))
             data.texts.append(text)
@@ -2221,7 +2221,7 @@ class WM_OT_report(Operator):
                 y = y + 20
 
             # write forces
-            results = ["axial", "moment_y", "moment_z", "shear_y", "shear_z", "torque", "sigma", "longitudinal_stress", "tau_shear", "tau_torsion", "sum_tau"]
+            results = ["axial", "moment_y", "moment_z", "shear_y", "shear_z", "torque", "sigma", "long_stress", "tau_shear", "tau_torsion", "sum_tau"]
             x = 150
             for result in results:
                 y = 420
@@ -2237,7 +2237,7 @@ class WM_OT_report(Operator):
         report.end(file)
 
         # lists with 1 vale per member per frame
-        results = ["max_longitudinal_stress", "max_tau_shear", "max_tau_torsion", "max_sum_tau", "max_sigmav", "max_sigma"]
+        results = ["max_long_stress", "max_tau_shear", "max_tau_torsion", "max_sum_tau", "max_sigmav", "max_sigma"]
         for result in results:
             html = result + ".html"
             file = report.start(directory, html, 1920, 20*len(members.instances)+20)
@@ -2576,6 +2576,7 @@ class OBJECT_PT_Phaenotyp(Panel):
                         box.label(text="Vizualisation:")
                         box.prop(phaenotyp, "forces", text="Force")
                         data.force_type_viz = phaenotyp.forces
+
                         box.operator("wm.viz_update", text="update")
 
                         col = box.column_flow(columns=2, align=False)
@@ -2590,7 +2591,27 @@ class OBJECT_PT_Phaenotyp(Panel):
                         # Text
                         box = layout.box()
                         box.label(text="Result:")
-                        box.operator("wm.text", text="generate")
+                        if bpy.context.active_object.mode == "EDIT":
+                            if len(bpy.context.selected_objects) == 1:
+                                obj =  bpy.context.selected_objects[0]
+                                type = getattr(obj, 'type', '')
+                                if type == "CURVE":
+                                    selected = 0
+                                    points = bpy.context.selected_objects[0].data.splines[0].points
+                                    for point in points:
+                                        if point.select:
+                                            selected = selected + 1
+
+                                    if selected == 1: # if one point of one curve is selected
+                                        box.operator("wm.text", text="generate")
+                                    else:
+                                        box.label(text="Select on Point of one Member-Curve")
+                                else:
+                                    box.label(text="Select on Point of one Member-Curve")
+                            else:
+                                box.label(text="Select on Point of one Member-Curve")
+                        else:
+                            box.label(text="Select on Point of one Member-Curve")
 
                         if len(data.texts) > 0:
                             for text in data.texts:
