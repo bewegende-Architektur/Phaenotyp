@@ -2204,32 +2204,37 @@ class WM_OT_report(Operator):
 
         ### members
         for member in members.instances:
+            file = report.start(directory, member.name, 1920, 800)
 
-            file = report.start(directory, member.name, 1920, 20*len(members.instances)+20)
+            # list elements with one entry
+            results = ["name", "vertex_1_id", "vertex_0_id", "material[0]", "ir", "Do", "Di", "E", "G", "d", "Iy", "Iz", "J", "A", "kg"]
+            y = 20
+            for result in results:
+                value = "member." + result
+                report.text(file, 0, y, result + ": " + str(eval(value)), 'start')
+                y = y + 20
 
-            report.text(file, 0,  20, "name: " + str(member.name), 'start')
-            report.text(file, 0,  60, "vertex_1_id: " + str(member.vertex_1_id), 'start')
-            report.text(file, 0,  40, "vertex_0_id: " + str(member.vertex_0_id), 'start')
-            report.text(file, 0,  80, "material: " + str(member.material[0]), 'start')
-            report.text(file, 0, 100, "ir: " + str(member.ir), 'start')
-            report.text(file, 0, 120, "Do: " + str(member.Do), 'start')
-            report.text(file, 0, 140, "Di: " + str(member.Di), 'start')
-            report.text(file, 0, 160, "E: " + str(member.E), 'start')
-            report.text(file, 0, 180, "G: " + str(member.G), 'start')
-            report.text(file, 0, 200, "d: " + str(member.d), 'start')
-            report.text(file, 0, 220, "Iy: " + str(member.Iy), 'start')
-            report.text(file, 0, 240, "Iz: " + str(member.Iz), 'start')
-            report.text(file, 0, 260, "J: " + str(member.J), 'start')
-            report.text(file, 0, 280, "A: " + str(member.A), 'start')
-            report.text(file, 0, 300, "kg: " + str(member.kg), 'start')
+            # positions within memebers
+            y = 360
+            for pos in range(10):
+                report.text(file, 0, y, "pos: " + str(pos), 'start')
+                y = y + 20
 
-            report.text(file, 0, 320, "axial: " + str(member.axial), 'start')
-            report.text(file, 0, 340, "moment_y: " + str(member.moment_y), 'start')
-            report.text(file, 0, 360, "moment_z: " + str(member.moment_z), 'start')
-            report.text(file, 0, 380, "shear_y: " + str(member.shear_y), 'start')
-            report.text(file, 0, 400, "shear_z: " + str(member.shear_z), 'start')
-            report.text(file, 0, 420, "torque: " + str(member.torque), 'start')
-            report.text(file, 0, 440, "sigma: " + str(member.sigma), 'start')
+            # write forces
+            results = ["axial", "moment_y", "moment_z", "shear_y", "shear_z", "torque", "sigma"]
+            x = 200
+            for result in results:
+                y = 360
+                report.text(file, x, y-20, result + ":", 'end')
+                for pos in range(10):
+                    value = "member." + result + "[bpy.context.scene.frame_current]" + "[" + str(pos) + "]"
+                    value = round(eval(value), 3)
+                    report.text(file, x, y, str(value), 'end')
+                    y = y + 20
+
+                x = x + 150
+
+            '''
             report.text(file, 0, 460, "Wy: " + str(member.Wy), 'start')
             report.text(file, 0, 480, "WJ: " + str(member.WJ), 'start')
             report.text(file, 0, 500, "longitudinal_stress: " + str(member.longitudinal_stress), 'start')
@@ -2246,6 +2251,7 @@ class WM_OT_report(Operator):
             report.text(file, 0, 720, "max_sigma: " + str(member.max_sigma), 'start')
             report.text(file, 0, 740, "deflection: " + str(member.deflection), 'start')
             report.text(file, 0, 760, "overstress: " + str(member.overstress), 'start')
+            '''
 
         report.end(file)
 
