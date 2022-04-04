@@ -27,6 +27,7 @@ from bpy.props import (IntProperty, FloatProperty, BoolProperty, StringProperty,
 from bpy.types import (Panel, Menu, Operator, PropertyGroup)
 from bpy.app.handlers import persistent
 import math
+import bmesh
 from threading import Thread
 import random
 import sys
@@ -957,7 +958,8 @@ class phaenotyp_properties(PropertyGroup):
         description = "Fitness function",
         items=[
                 ("average_sigma", "Average sigma", ""),
-                ("member_sigma", "Member sigma", "")
+                ("member_sigma", "Member sigma", ""),
+                ("volume", "Volume", "")
                ]
         )
 
@@ -1434,6 +1436,14 @@ class individuals(object):
 
             fitness = return_max_diff_to_zero(forces)
             fitness = abs(fitness)
+
+        if data.fitness_function == "volume":
+            bm = bmesh.new()
+            bm.from_mesh(data.mesh)
+
+            volume = bm.calc_volume()
+            negative_volume = volume * (-1) # in order to make the highest volume the best fitness
+            fitness = negative_volume
 
         if data.fitness_function == "weight":
             fitness = 1 # placeholder
@@ -2421,7 +2431,7 @@ class OBJECT_PT_Phaenotyp(Panel):
             if data.obj.scale[0] != 1 or data.obj.scale[1] != 1 or data.obj.scale[2] != 1:
                 text = text + "Scale "
 
-            if text != "Press Strg+A to apply ":
+            if text != "Press Strg+A and apply ":
                 text = text + "to avoid weird behaviour"
                 box.label(text = text)
 
