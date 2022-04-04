@@ -2411,6 +2411,20 @@ class OBJECT_PT_Phaenotyp(Panel):
         if data.obj:
             box.label(text = data.obj.name_full + " is defined as structure")
 
+            text = "Press Strg+A and apply "
+            if data.obj.location[0] != 0 or data.obj.location[1] != 0 or data.obj.location[2] != 0:
+                text = text + "Location "
+
+            if data.obj.rotation_euler[0] != 0 or data.obj.rotation_euler[1] != 0 or data.obj.rotation_euler[2] != 0:
+                text = text + "Rotation "
+
+            if data.obj.scale[0] != 1 or data.obj.scale[1] != 1 or data.obj.scale[2] != 1:
+                text = text + "Scale "
+
+            if text != "Press Strg+A to apply ":
+                text = text + "to avoid weird behaviour"
+                box.label(text = text)
+
             # define support
             box = layout.box()
             box.label(text="Support:")
