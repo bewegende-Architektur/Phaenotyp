@@ -22,7 +22,7 @@ https://www.maschinenbau-wissen.de/skript3/mechanik/festigkeitslehre/134-knicken
 * Phänotyp is working as connection to PyNite
 * Right now the focus is on structures with trusses
 * Single frames, animations and genetic mutations with shape-keys can be performed
-* different types of supports and loads
+* Different types of supports and loads
 * Small material library with metall
 * Check of critical forces
 
