@@ -3,7 +3,7 @@ bl_info = {
     "description": "Genetic optimization of architectural structures",
     "author": "bewegende Architektur e.U. and Karl Deix",
     "version": (0, 0, 5),
-    "blender": (3, 1, 0),
+    "blender": (3, 1, 1),
     "location": "3D View > Tools",
 }
 
@@ -2399,7 +2399,7 @@ class WM_OT_reset(Operator):
 
 
 class OBJECT_PT_Phaenotyp(Panel):
-    bl_label = "Phänotyp 0.0.5 - Christoph"
+    bl_label = "Phänotyp 0.0.5"
     bl_idname = "OBJECT_PT_custom_panel"
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
