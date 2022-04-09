@@ -22,12 +22,11 @@ https://www.maschinenbau-wissen.de/skript3/mechanik/festigkeitslehre/134-knicken
 * Phänotyp is working as connection to PyNite
 * Right now the focus is on structures with trusses
 * Single frames, animations and genetic mutations with shape-keys can be performed
-* This is a very early stage of development. The tool is intended to be used by more experienced users of Blender 3D at the moment.
+* different types of supports and loads
+* Small material library with metall
+* Check of critical forces
 
 ## Roadmap
-* Better implementation for different types of supports and loads
-* Small material library and common sections
-* Implementation of critical force and others
 * Improvement of genetic algorithm
 * Adding more inputs to the GA for example modifiers
 * Adding more functions of fitness and its combination like created volume, area, light, shape and other
@@ -39,5 +38,5 @@ https://youtu.be/i-5duKyuBiU
 https://youtu.be/F5ilsBDoIkY  
 
 ## Current release
-2022-01-23 | version 0.0.4 for blender 3.0.1: 
-<a href="https://github.com/bewegende-Architektur/Phaenotyp/releases/tag/Phaenotyp_version_0.0.4" target="_blank">Phaenotyp 0.0.4</a>
+2022-04-09 | version 0.0.5 for blender 3.1.2: 
+<a href="https://github.com/bewegende-Architektur/Phaenotyp/releases/tag/Phaenotyp_version_0.0.5" target="_blank">Phaenotyp 0.0.4</a>
