@@ -2,8 +2,8 @@ bl_info = {
     "name": "Phänotyp",
     "description": "Genetic optimization of architectural structures",
     "author": "bewegende Architektur e.U. and Karl Deix",
-    "version": (0, 0, 5),
-    "blender": (3, 1, 1),
+    "version": (0, 0, 6),
+    "blender": (3, 1, 2),
     "location": "3D View > Tools",
 }
 
@@ -1951,11 +1951,65 @@ class WM_OT_optimize_3(Operator):
     bl_description = "empty"
 
     def execute(self, context):
-        print_terminal("optimization 3 - empty")
+        print_terminal("optimization 3 - Decimate topological performance")
         transfer_analyze() # führt einfach Analyse aus
         members.update_curves() # update für VIZ
 
-        # Hier ist die Optimierung
+        frame = bpy.context.scene.frame_current
+
+        bpy.ops.object.mode_set(mode="OBJECT")
+
+        # delete vertex-group if existing
+        try:
+            data.obj.vertex_groups.remove(data.obj.vertex_groups["<Phaenotyp>decimate"])
+        except:
+            pass
+
+        # create vertex-group
+        data.obj.vertex_groups.new(name="<Phaenotyp>decimate")
+
+        # create factor-list
+        weights = []
+        for vertex in data.vertices:
+            weights.append([])
+
+        # create factors for nodes from members
+        for member in members.instances:
+            factor = abs(member.max_long_stress[frame]/data.acceptable_sigma)
+            # first node
+            id = member.vertex_0_id
+            weights[id].append(factor)
+
+            # second node
+            id = member.vertex_1_id
+            weights[id].append(factor)
+
+        # sum up forces of each node and get highest value
+        sums = []
+        highest_sum = 0
+        for id, weights_per_node in enumerate(weights):
+            sum = 0
+            if len(weights_per_node) > 0:
+                for weight in weights_per_node:
+                    sum = sum + weight
+                    if sum > highest_sum:
+                        highest_sum = sum
+
+        for id, sums in enumerate(sums):
+            weight = 1 / highest_sum * sums[id]
+            data.obj.vertex_groups["<Phaenotyp>decimate"].add([id], weight, 'REPLACE')
+
+
+        # delete modifiere if existing
+        try:
+            bpy.ops.object.modifier_remove(modifier="<Phaenotyp>decimate")
+        except:
+            pass
+
+        # create decimate modifiere
+        mod = data.obj.modifiers.new("<Phaenotyp>decimate", "DECIMATE")
+        mod.ratio = 0.1
+        mod.vertex_group = "<Phaenotyp>decimate"
 
         return {"FINISHED"}
 
@@ -2570,7 +2624,7 @@ class OBJECT_PT_Phaenotyp(Panel):
                     box.label(text="Optimization:")
                     box.operator("wm.optimize_1", text="Simple - sectional performance")
                     box.operator("wm.optimize_2", text="Complex - sectional performance")
-                    #box.operator("wm.optimize_3", text="empty")
+                    box.operator("wm.optimize_3", text="Decimate - topological performance")
                     #box.operator("wm.optimize_4", text="empty")
                     #box.operator("wm.optimize_5", text="empty")
 
