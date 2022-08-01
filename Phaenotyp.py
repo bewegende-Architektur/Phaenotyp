@@ -767,6 +767,12 @@ def return_max_diff_to_zero(list):
     else:
         return biggest_plus
 
+
+# viz
+def viz_update(self, context):
+    members.update_curves()
+
+
 class phaenotyp_properties(PropertyGroup):
     Do: FloatProperty(
         name = "Do",
@@ -975,9 +981,29 @@ class phaenotyp_properties(PropertyGroup):
                 ("axial", "Axial", ""),
                 ("moment_y", "Moment Y", ""),
                 ("moment_z", "Moment Z", "")
-               ]
+               ],
+        update=viz_update
         )
 
+    viz_scale: IntProperty(
+        name = "viz_scale",
+        description = "scale",
+        update = viz_update,
+        subtype = "PERCENTAGE",
+        default = 50,
+        min = 1,
+        max = 100
+        )
+
+    viz_deflection: IntProperty(
+        name = "viz_scale",
+        description = "deflection",
+        update = viz_update,
+        subtype = "PERCENTAGE",
+        default = 50,
+        min = 1,
+        max = 100
+        )
 
 def update_mesh():
     frame = bpy.context.scene.frame_current
@@ -2097,108 +2123,6 @@ class WM_OT_genetic_mutation(Operator):
         return {"FINISHED"}
 
 
-class WM_OT_viz_scale_force_up(Operator):
-    bl_label = "viz_scale_force_up"
-    bl_idname = "wm.viz_scale_force_up"
-    bl_description = "Scale force"
-
-    def execute(self, context):
-        # get forcetyp and force
-        if data.force_type_viz == "sigma":
-            if data.scale_sigma < 5:
-                data.scale_sigma = data.scale_sigma * 1.25
-
-        if data.force_type_viz == "axial":
-            if data.scale_axial < 5:
-                data.scale_axial = data.scale_axial * 1.25
-
-        elif data.force_type_viz == "moment_y":
-            if data.scale_moment_y < 5:
-                data.scale_moment_y = data.scale_moment_y * 1.25
-
-        elif data.force_type_viz == "moment_z":
-            if data.scale_moment_z < 5:
-                data.scale_moment_z = data.scale_moment_z * 1.25
-
-        else:
-            pass
-
-        members.update_curves()
-
-        return {"FINISHED"}
-
-
-class WM_OT_viz_scale_force_down(Operator):
-    bl_label = "viz_scale_force_down"
-    bl_idname = "wm.viz_scale_force_down"
-    bl_description = "Scale force"
-
-    def execute(self, context):
-        # get forcetyp and force
-        if data.force_type_viz == "sigma":
-            if data.scale_sigma > 0.1:
-                data.scale_sigma = data.scale_sigma * 0.75
-
-        if data.force_type_viz == "axial":
-            if data.scale_axial > 0.1:
-                data.scale_axial = data.scale_axial * 0.75
-
-        elif data.force_type_viz == "moment_y":
-            if data.scale_moment_y > 0.1:
-                data.scale_moment_y = data.scale_moment_y * 0.75
-
-        elif data.force_type_viz == "moment_z":
-            if data.scale_moment_z > 0.1:
-                data.scale_moment_z = data.scale_moment_z * 0.75
-
-        else:
-            pass
-
-        members.update_curves()
-
-        return {"FINISHED"}
-
-class WM_OT_viz_scale_deflection_up(Operator):
-    bl_label = "viz_scale_deflection_up"
-    bl_idname = "wm.viz_scale_deflection_up"
-    bl_description = "Scale deflection"
-
-    def execute(self, context):
-        data.scale_deflection = data.scale_deflection + 0.1
-        if data.scale_deflection > 1:
-            data.scale_deflection = 1 # not bigger than one
-
-        members.update_curves()
-
-        return {"FINISHED"}
-
-
-class WM_OT_viz_scale_deflection_down(Operator):
-    bl_label = "viz_scale_deflection_down"
-    bl_idname = "wm.viz_scale_deflection_down"
-    bl_description = "Scale deflection"
-
-    def execute(self, context):
-        data.scale_deflection = data.scale_deflection - 0.1
-        if data.scale_deflection < 0:
-            data.scale_deflection = 0 # not smaller than zero
-
-        members.update_curves()
-
-        return {"FINISHED"}
-
-class WM_OT_viz_update(Operator):
-    bl_label = "viz_update"
-    bl_idname = "wm.viz_update"
-    bl_description = "Update the force type"
-
-    def execute(self, context):
-        print_terminal("update curves")
-        members.update_curves()
-
-        return {"FINISHED"}
-
-
 class WM_OT_text(Operator):
     bl_label = "text"
     bl_idname = "wm.text"
@@ -2691,16 +2615,14 @@ class OBJECT_PT_Phaenotyp(Panel):
                         box.prop(phaenotyp, "forces", text="Force")
                         data.force_type_viz = phaenotyp.forces
 
-                        box.operator("wm.viz_update", text="update")
+                        box.prop(phaenotyp, "viz_scale", text="scale", slider=True)
+                        data.scale_sigma = phaenotyp.viz_scale * 0.01
+                        data.scale_axial = phaenotyp.viz_scale * 0.01
+                        data.scale_moment_y = phaenotyp.viz_scale * 0.01
+                        data.scale_moment_z = phaenotyp.viz_scale * 0.01
 
-                        col = box.column_flow(columns=2, align=False)
-                        col.operator("wm.viz_scale_force_up", text="Up")
-                        col.operator("wm.viz_scale_force_down", text="Down")
-
-                        box.label(text="Deflection:")
-                        col = box.column_flow(columns=2, align=False)
-                        col.operator("wm.viz_scale_deflection_up", text="Up")
-                        col.operator("wm.viz_scale_deflection_down", text="Down")
+                        box.prop(phaenotyp, "viz_deflection", text="deflection", slider=True)
+                        data.scale_deflection = 1 - phaenotyp.viz_deflection * 0.01
 
                         # Text
                         box = layout.box()
@@ -2760,12 +2682,6 @@ classes = (
     WM_OT_optimize_5,
 
     WM_OT_genetic_mutation,
-
-    WM_OT_viz_scale_force_up,
-    WM_OT_viz_scale_force_down,
-    WM_OT_viz_scale_deflection_up,
-    WM_OT_viz_scale_deflection_down,
-    WM_OT_viz_update,
 
     WM_OT_text,
     WM_OT_report,
