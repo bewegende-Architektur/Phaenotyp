@@ -2235,6 +2235,12 @@ class WM_OT_text(Operator):
             # get frame
             frame = bpy.context.scene.frame_current
 
+            # get Do and Di
+            text = "Do: " + str(round(member.Do, 3))
+            data.texts.append(text)
+            text = "Di: " + str(round(member.Di, 3))
+            data.texts.append(text)
+
             # results
             text = "axial: " + str(round(member.axial[frame][position], 3))
             data.texts.append(text)
@@ -2262,6 +2268,11 @@ class WM_OT_text(Operator):
             text = "sigma: " + str(round(member.sigma[frame][position], 3))
             data.texts.append(text)
 
+            # leverarm
+            text = "leverarm: " + str(round(member.lever_arm[frame][position], 3))
+            data.texts.append(text)
+
+            # overstress
             text = "overstress: " + str(round(member.overstress[frame], 3))
             data.texts.append(text)
 
@@ -2296,7 +2307,7 @@ class WM_OT_report(Operator):
             file = report.start(directory, member.name, 1920, 800)
 
             # list elements with one entry
-            results = ["name", "vertex_1_id", "vertex_0_id", "material[0]", "ir", "Do", "Di", "E", "G", "d", "Iy", "Iz", "J", "A", "kg","Wy", "WJ", "overstress"]
+            results = ["name", "vertex_1_id", "vertex_0_id", "material[0]", "ir", "Do", "Di", "E", "G", "d", "Iy", "Iz", "J", "A", "kg","Wy", "WJ"]
             y = 20
             for result in results:
                 value = "member." + result
@@ -2325,7 +2336,7 @@ class WM_OT_report(Operator):
 
         report.end(file)
 
-        # lists with 1 vale per member per frame
+        # lists with 1 value per member per frame
         results = ["max_long_stress", "max_tau_shear", "max_tau_torsion", "max_sum_tau", "max_sigmav", "max_sigma", "max_lever_arm"]
         for result in results:
             html = result + ".html"
@@ -2376,7 +2387,7 @@ class WM_OT_report(Operator):
             report.end(file)
 
         # lists with 10 values per member per frame
-        results = ["axial", "moment_y", "moment_z", "shear_y", "shear_z", "torque"]
+        results = ["axial", "moment_y", "moment_z", "shear_y", "shear_z", "torque", "lever_arm"]
         for result in results:
             html = result + ".html"
             file = report.start(directory, html, 1920, 20*len(members.instances)+20)
