@@ -583,6 +583,9 @@ class members:
         self.max_sigmav = {}
         self.max_sigma = {}
 
+        self.lever_arm = {} # lever_arm at eleven points of each member
+        self.max_lever_arm = {} # max value of lever_arm
+
         self.deflection = {}
 
         self.overstress = {}
@@ -959,7 +962,8 @@ class phaenotyp_properties(PropertyGroup):
         items=[
                 ("average_sigma", "Average sigma", ""),
                 ("member_sigma", "Member sigma", ""),
-                ("volume", "Volume", "")
+                ("volume", "Volume", ""),
+                ("lever_arm", "Lever arm", "")
                ]
         )
 
@@ -1291,6 +1295,18 @@ def transfer_analyze():
                 if member.lamda > 250:
                     member.overstress[frame] = True
 
+        # lever_arm
+        lever_arm = []
+        for i in range(11):
+            moment_h = math.sqrt(moment_y[i]**2+moment_z[i]**2)
+
+            lv = moment_h / member.axial[frame][i]
+            lv = abs(lv) # absolute highest value within member
+            lever_arm.append(lv)
+
+        member.lever_arm[frame] = lever_arm
+        member.max_lever_arm[frame] = max(lever_arm)
+
         # deflection
         deflection = []
 
@@ -1446,12 +1462,21 @@ class individuals(object):
             fitness = negative_volume
 
         if data.fitness_function == "weight":
-            fitness = 1 # placeholder
-            pass
+            for member in members.instances:
+                force = member.max_sigma[frame]
+                forces.append(force)
 
         if data.fitness_function == "lever_arm":
-            fitness = 1 # placeholder
-            pass
+            forces = []
+            for member in members.instances:
+                force = member.max_lever_arm[frame]
+                forces.append(force)
+
+            sum_forces = 0
+            for force in forces:
+                sum_forces = sum_forces + abs(force)
+
+            fitness = sum_forces
 
         return fitness
 
@@ -2285,7 +2310,7 @@ class WM_OT_report(Operator):
                 y = y + 20
 
             # write forces
-            results = ["axial", "moment_y", "moment_z", "shear_y", "shear_z", "torque", "sigma", "long_stress", "tau_shear", "tau_torsion", "sum_tau"]
+            results = ["axial", "moment_y", "moment_z", "shear_y", "shear_z", "torque", "sigma", "long_stress", "tau_shear", "tau_torsion", "sum_tau", "lever_arm"]
             x = 150
             for result in results:
                 y = 420
@@ -2301,7 +2326,7 @@ class WM_OT_report(Operator):
         report.end(file)
 
         # lists with 1 vale per member per frame
-        results = ["max_long_stress", "max_tau_shear", "max_tau_torsion", "max_sum_tau", "max_sigmav", "max_sigma"]
+        results = ["max_long_stress", "max_tau_shear", "max_tau_torsion", "max_sum_tau", "max_sigmav", "max_sigma", "max_lever_arm"]
         for result in results:
             html = result + ".html"
             file = report.start(directory, html, 1920, 20*len(members.instances)+20)
@@ -2453,7 +2478,7 @@ class WM_OT_reset(Operator):
 
 
 class OBJECT_PT_Phaenotyp(Panel):
-    bl_label = "Phänotyp 0.0.5"
+    bl_label = "Phänotyp 0.0.6"
     bl_idname = "OBJECT_PT_custom_panel"
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
