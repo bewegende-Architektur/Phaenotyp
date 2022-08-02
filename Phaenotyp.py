@@ -730,7 +730,7 @@ class members:
 
             # define v
             if self.overstress[frame] == True:
-                v = 0.2
+                v = 0.1
             else:
                 v = 1.0
 
@@ -1301,16 +1301,16 @@ def transfer_analyze():
         member.overstress[frame] = False
 
         # for example ["steel_S235", "steel S235", 21000, 8100, 7.85, 16.0, 9.5, 10.5, 23.5, knick_model235],
-        if member.max_sigma[frame] > member.material[5]:
+        if abs(member.max_sigma[frame]) > member.material[5]:
             member.overstress[frame] = True
 
-        if member.max_tau_shear[frame] > member.material[6]:
+        if abs(member.max_tau_shear[frame]) > member.material[6]:
             member.overstress[frame] = True
 
-        if member.max_tau_torsion[frame] > member.material[7]:
+        if abs(member.max_tau_torsion[frame]) > member.material[7]:
             member.overstress[frame] = True
 
-        if member.max_sigmav[frame] > member.material[8]:
+        if abs(member.max_sigmav[frame]) > member.material[8]:
             member.overstress[frame] = True
 
         # buckling
@@ -1318,7 +1318,7 @@ def transfer_analyze():
             member.lamda = L*0.5/member.ir # für eingespannte Stäbe ist die Knicklänge 0.5 der Stablänge L, Stablänge muss in cm sein !
             if member.lamda > 20: # für lamda < 20 (kurze Träger) gelten die default-Werte)
                 function_to_run = member.material[9] # get function
-                member.acceptable_sigma[frame] = function_to_run(member.lamda) # run function
+                member.acceptable_sigma[frame] = abs(function_to_run(member.lamda)) # run function
                 if member.lamda > 250: # Schlankheit zu schlank
                     member.overstress[frame] = True
                 if abs(member.acceptable_sigma[frame]) > abs(member.max_sigma[frame]): # Sigma
