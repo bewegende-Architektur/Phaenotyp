@@ -579,6 +579,8 @@ class members:
         self.max_sigmav = {}
         self.max_sigma = {}
 
+        self.acceptable_sigma = {}
+
         self.lever_arm = {} # lever_arm at eleven points of each member
         self.max_lever_arm = {} # max value of lever_arm
 
@@ -1316,9 +1318,18 @@ def transfer_analyze():
             member.lamda = L*0.5/member.ir # für eingespannte Stäbe ist die Knicklänge 0.5 der Stablänge L, Stablänge muss in cm sein !
             if member.lamda > 20: # für lamda < 20 (kurze Träger) gelten die default-Werte)
                 function_to_run = member.material[9] # get function
-                data.acceptable_sigma = function_to_run(member.lamda) # run function
-                if member.lamda > 250:
+                member.acceptable_sigma[frame] = function_to_run(member.lamda) # run function
+                if member.lamda > 250: # Schlankheit zu schlank
                     member.overstress[frame] = True
+                if abs(member.acceptable_sigma[frame]) > abs(member.max_sigma[frame]): # Sigma
+                    member.overstress[frame] = True
+
+            else:
+                member.acceptable_sigma[frame] = member.material[5]
+
+        # without buckling
+        else:
+            member.acceptable_sigma[frame] = member.material[5]
 
         # lever_arm
         lever_arm = []
@@ -1970,7 +1981,7 @@ class WM_OT_optimize_2(Operator):
     bl_description = "Complex sectional performance"
 
     def execute(self, context):
-        print_terminal("optimization 1 - complex sectional performance")
+        print_terminal("optimization 2 - complex sectional performance")
         transfer_analyze() # führt einfach Analyse aus
         members.update_curves() # update für VIZ
         # Querschnittsoptimierung, iterativ
@@ -1981,11 +1992,15 @@ class WM_OT_optimize_2(Operator):
 
         for member in members.instances:
             #treshhold bei Prüfung!
-            if abs(member.max_long_stress[frame]/data.acceptable_sigma) > 1:
-                faktor_a = 1+(abs(member.max_long_stress[frame])/data.acceptable_sigma-1)*0.36
+            # without buckling (Zugstab)
+            print(member.max_long_stress)
+            print(member.acceptable_sigma)
+
+            if abs(member.max_long_stress[frame]/member.acceptable_sigma[frame]) > 1:
+                faktor_a = 1+(abs(member.max_long_stress[frame])/member.acceptable_sigma[frame]-1)*0.36
 
             else:
-                faktor_a = 0.5 + 0.6*(math.tanh((abs(member.max_long_stress[frame])/data.acceptable_sigma -0.5)*2.4))
+                faktor_a = 0.5 + 0.6*(math.tanh((abs(member.max_long_stress[frame])/member.acceptable_sigma[frame] -0.5)*2.4))
 
             faktor_d = math.sqrt(abs(faktor_a))
             member.A = member.A*faktor_a
