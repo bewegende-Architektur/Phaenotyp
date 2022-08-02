@@ -770,6 +770,10 @@ def return_max_diff_to_zero(list):
 
 # viz
 def viz_update(self, context):
+    scene = context.scene
+    phaenotyp = scene.phaenotyp
+    data.force_type_viz = phaenotyp.forces
+
     members.update_curves()
 
 
@@ -1184,6 +1188,7 @@ def transfer_analyze():
         axial = []
         for i in range(11): # get the forces at 11 positions and
             axial_pos = truss.Members[name].axial(x=L/10*i)
+            axial_pos = axial_pos * (-1) # Druckkraft gleich minus
             axial.append(axial_pos)
         member.axial[frame] = axial
 
@@ -1326,7 +1331,12 @@ def transfer_analyze():
         for i in range(11):
             moment_h = math.sqrt(moment_y[i]**2+moment_z[i]**2)
 
-            lv = moment_h / member.axial[frame][i]
+            # to avoid division by zero
+            if member.axial[frame][i] < 0.1:
+                lv = moment_h / 0.1
+            else:
+                lv = moment_h / member.axial[frame][i]
+
             lv = abs(lv) # absolute highest value within member
             lever_arm.append(lv)
 
@@ -2613,7 +2623,6 @@ class OBJECT_PT_Phaenotyp(Panel):
                         box = layout.box()
                         box.label(text="Vizualisation:")
                         box.prop(phaenotyp, "forces", text="Force")
-                        data.force_type_viz = phaenotyp.forces
 
                         box.prop(phaenotyp, "viz_scale", text="scale", slider=True)
                         data.scale_sigma = phaenotyp.viz_scale * 0.01
