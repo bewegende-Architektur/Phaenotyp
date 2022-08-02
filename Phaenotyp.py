@@ -723,7 +723,8 @@ class members:
                 h = 0.666
 
             # define s
-            s = 1 * data.scale_forces
+            #s = 1 * data.scale_forces
+            s = 1 * abs(result[frame][i]) * data.scale_forces
 
             # define v
             if self.overstress[frame] == True:
@@ -765,7 +766,7 @@ def viz_update(self, context):
     scene = context.scene
     phaenotyp = scene.phaenotyp
     data.force_type_viz = phaenotyp.forces
-    data.scale_forces = phaenotyp.viz_scale * 0.01
+    data.scale_forces = phaenotyp.viz_scale * 0.001
     data.scale_deflection = 1 - phaenotyp.viz_deflection * 0.01
     members.update_curves()
 
@@ -1986,9 +1987,8 @@ class WM_OT_optimize_2(Operator):
             else:
                 faktor_a = 0.5 + 0.6*(math.tanh((abs(member.max_long_stress[frame])/data.acceptable_sigma -0.5)*2.4))
 
-            faktor_d = math.sqrt(faktor_a)
+            faktor_d = math.sqrt(abs(faktor_a))
             member.A = member.A*faktor_a
-            #print ("faktor d: ", faktor_d)
             member.Do = member.Do*faktor_d
             member.Di = member.Di*faktor_d
             # print ("neu Member-A: ", member.A)
