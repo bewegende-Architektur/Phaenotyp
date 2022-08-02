@@ -129,11 +129,7 @@ class data:
 
     # visualization
     force_type_viz = "sigma"
-
-    scale_sigma = 0.5
-    scale_axial = 0.5
-    scale_moment_y = 0.5
-    scale_moment_z = 0.5
+    scale_forces = 0.5
     scale_deflection = 0.5
 
     # triggers
@@ -707,19 +703,15 @@ class members:
         # get forcetyp and force
         if data.force_type_viz == "sigma":
             result = self.sigma
-            scale = data.scale_sigma
 
         if data.force_type_viz == "axial":
             result = self.axial
-            scale = data.scale_axial
 
         if data.force_type_viz == "moment_y":
             result = self.moment_y
-            scale = data.scale_moment_y
 
         if data.force_type_viz == "moment_z":
             result = self.moment_z
-            scale = data.scale_moment_z
 
         color_ramp = self.mat.node_tree.nodes['ColorRamp'].color_ramp
 
@@ -731,7 +723,7 @@ class members:
                 h = 0.666
 
             # define s
-            s = 1 * scale
+            s = 1 * data.scale_forces
 
             # define v
             if self.overstress[frame] == True:
@@ -773,7 +765,8 @@ def viz_update(self, context):
     scene = context.scene
     phaenotyp = scene.phaenotyp
     data.force_type_viz = phaenotyp.forces
-
+    data.scale_forces = phaenotyp.viz_scale * 0.01
+    data.scale_deflection = 1 - phaenotyp.viz_deflection * 0.01
     members.update_curves()
 
 
@@ -2624,14 +2617,9 @@ class OBJECT_PT_Phaenotyp(Panel):
                         box.label(text="Vizualisation:")
                         box.prop(phaenotyp, "forces", text="Force")
 
+                        # sliders to scale forces and deflection
                         box.prop(phaenotyp, "viz_scale", text="scale", slider=True)
-                        data.scale_sigma = phaenotyp.viz_scale * 0.01
-                        data.scale_axial = phaenotyp.viz_scale * 0.01
-                        data.scale_moment_y = phaenotyp.viz_scale * 0.01
-                        data.scale_moment_z = phaenotyp.viz_scale * 0.01
-
                         box.prop(phaenotyp, "viz_deflection", text="deflection", slider=True)
-                        data.scale_deflection = 1 - phaenotyp.viz_deflection * 0.01
 
                         # Text
                         box = layout.box()
