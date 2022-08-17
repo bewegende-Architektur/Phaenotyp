@@ -18,25 +18,8 @@ Material properties based on formulas from:
 https://www.johannes-strommer.com/formeln/flaechentraegheitsmoment-widerstandsmoment/  
 https://www.maschinenbau-wissen.de/skript3/mechanik/festigkeitslehre/134-knicken-euler
 
-## Current state
-* Phänotyp is working as connection to PyNite
-* Right now the focus is on structures with trusses
-* Single frames, animations and genetic mutations with shape-keys can be performed
-* Different types of supports and loads
-* Small material library with metall
-* Check of critical forces
-
-## Roadmap
-* Improvement of genetic algorithm
-* Adding more inputs to the GA for example modifiers
-* Adding more functions of fitness and its combination like created volume, area, light, shape and other
-
 ## Getting started
 You can find three quick tutorials on Youtube:  
 https://youtu.be/shloSw9HjVI  
 https://youtu.be/i-5duKyuBiU  
-https://youtu.be/F5ilsBDoIkY  
-
-## Current release
-2022-04-09 | version 0.0.5 for blender 3.1.2: 
-<a href="https://github.com/bewegende-Architektur/Phaenotyp/releases/tag/Phaenotyp_version_0.0.5" target="_blank">Phaenotyp 0.0.4</a>
+https://youtu.be/F5ilsBDoIkY
