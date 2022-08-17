@@ -2,7 +2,7 @@ bl_info = {
     "name": "Phänotyp",
     "description": "Genetic optimization of architectural structures",
     "author": "bewegende Architektur e.U. and Karl Deix",
-    "version": (0, 0, 6),
+    "version": (0, 0, 7),
     "blender": (3, 1, 2),
     "location": "3D View > Tools",
 }
@@ -1005,6 +1005,18 @@ class phaenotyp_properties(PropertyGroup):
         max = 100
         )
 
+    pre_modeling_type: EnumProperty(
+        name = "pre_modeling_type",
+        description = "Pre modeling type",
+        items=[
+                ("columns_from_curve", "Columns from curve", ""),
+                ("columns_from_hull", "Columns from hull", ""),
+                ("layers_from_hull", "Layers from hull", ""),
+                ("structure_from_hull", "Structure from hull", ""),
+                ("structure_from_tree", "Structure from tree", "")
+               ]
+        )
+
 def update_mesh():
     frame = bpy.context.scene.frame_current
 
@@ -1738,7 +1750,215 @@ class report:
         file.close()
 
 
+class pre_modeling:
+    def columns_from_curve():
+        # get current object
+        object = bpy.context.selected_objects[0]
+
+        # get parameters of hull
+        pos = object.location
+        dim = object.dimensions
+        max_dim = max(dim)
+
+        # create plane for layers
+        # adapted from https://blenderartists.org/t/adding-a-plane-without-using-bpy-ops/1248056/4
+        x = 0.3
+        y = 0.3
+        vert = [(-x, -y, 0.0), (x, -y, 0.0), (-x, y, 0.0), (x, y, 0.0)]
+        fac = [(0, 1, 3, 2)]
+        plane = bpy.data.meshes.new("<Phaenotyp>layers")
+        plane.from_pydata(vert, [], fac)
+        layers = bpy.data.objects.new("<Phaenotyp>layers", plane)
+        bpy.context.scene.collection.objects.link(layers)
+
+        # add solidify
+        modifier_solidify = layers.modifiers.new(name="<Phaenotyp>", type='SOLIDIFY')
+        modifier_solidify.thickness = 6
+
+        # add array
+        modifier_array_x = layers.modifiers.new(name="<Phaenotyp>", type='ARRAY')
+        modifier_array_x.use_relative_offset = False
+        modifier_array_x.use_constant_offset = True
+        modifier_array_x.constant_offset_displace[0] = 8
+        modifier_array_x.constant_offset_displace[1] = 0
+        modifier_array_x.constant_offset_displace[2] = 0
+        modifier_array_x.fit_type = 'FIT_CURVE'
+        modifier_array_x.curve = object
+
+        modifier_array_y = layers.modifiers.new(name="<Phaenotyp>", type='ARRAY')
+        modifier_array_y.use_relative_offset = False
+        modifier_array_y.use_constant_offset = True
+        modifier_array_y.constant_offset_displace[0] = 0
+        modifier_array_y.constant_offset_displace[1] = 8
+        modifier_array_y.constant_offset_displace[2] = 0
+        modifier_array_y.count = 3
+
+        layers.location = pos
+        layers.location[2] = layers.location[2] + 6
+
+        # move to the middle or offset?
+        layers.location[1] = layers.location[1] - 8
+
+        # bending
+        layers_curve = layers.modifiers.new(name="<Phaenotyp>", type='CURVE')
+        layers_curve.object = object
+
+
+    def columns_from_hull():
+        # get current object
+        object = bpy.context.selected_objects[0]
+
+        # get parameters of hull
+        pos = object.location
+        dim = object.dimensions
+        max_dim = max(dim)
+
+        # create plane for layers
+        # adapted from https://blenderartists.org/t/adding-a-plane-without-using-bpy-ops/1248056/4
+        x = 0.3
+        y = 0.3
+        vert = [(-x, -y, 0.0), (x, -y, 0.0), (-x, y, 0.0), (x, y, 0.0)]
+        fac = [(0, 1, 3, 2)]
+        plane = bpy.data.meshes.new("<Phaenotyp>layers")
+        plane.from_pydata(vert, [], fac)
+        layers = bpy.data.objects.new("<Phaenotyp>layers", plane)
+        bpy.context.scene.collection.objects.link(layers)
+
+        # add solidify
+        modifier_solidify = layers.modifiers.new(name="<Phaenotyp>", type='SOLIDIFY')
+        modifier_solidify.thickness = 50
+
+        # add array
+        modifier_array_x = layers.modifiers.new(name="<Phaenotyp>", type='ARRAY')
+        modifier_array_x.use_relative_offset = False
+        modifier_array_x.use_constant_offset = True
+        modifier_array_x.constant_offset_displace[0] = 8
+        modifier_array_x.constant_offset_displace[1] = 0
+        modifier_array_x.constant_offset_displace[2] = 0
+        modifier_array_x.count = 15
+
+        modifier_array_y = layers.modifiers.new(name="<Phaenotyp>", type='ARRAY')
+        modifier_array_y.use_relative_offset = False
+        modifier_array_y.use_constant_offset = True
+        modifier_array_y.constant_offset_displace[0] = 0
+        modifier_array_y.constant_offset_displace[1] = 8
+        modifier_array_y.constant_offset_displace[2] = 0
+        modifier_array_y.count = 15
+
+        layers.location = pos
+        layers.location[2] = layers.location[2] + 25
+
+        layers.location[0] = layers.location[0] - max_dim*0.5
+        layers.location[1] = layers.location[1] - max_dim*0.5
+
+        # add bool
+        modifier_boolean = layers.modifiers.new(name="<Phaenotyp>", type='BOOLEAN')
+        modifier_boolean.object = object
+        modifier_boolean.operation = 'INTERSECT'
+
+
+    def layers_from_hull():
+        # get current object
+        object = bpy.context.selected_objects[0]
+
+        # get parameters of hull
+        pos = object.location
+        dim = object.dimensions
+        max_dim = max(dim)
+
+        # create plane for layers
+        # adapted from https://blenderartists.org/t/adding-a-plane-without-using-bpy-ops/1248056/4
+        x = max_dim
+        y = max_dim
+        vert = [(-x, -y, 0.0), (x, -y, 0.0), (-x, y, 0.0), (x, y, 0.0)]
+        fac = [(0, 1, 3, 2)]
+        plane = bpy.data.meshes.new("<Phaenotyp>layers")
+        plane.from_pydata(vert, [], fac)
+        layers = bpy.data.objects.new("<Phaenotyp>layers", plane)
+        bpy.context.scene.collection.objects.link(layers)
+
+        layers.location = pos
+
+        # add array
+        modifier_array = layers.modifiers.new(name="<Phaenotyp>", type='ARRAY')
+        modifier_array.use_relative_offset = False
+        modifier_array.use_constant_offset = True
+        modifier_array.constant_offset_displace[0] = 0
+        modifier_array.constant_offset_displace[2] = 3
+        modifier_array.count = 12
+
+        layers.location[2] = layers.location[2] - 5*3
+
+        # add thickness
+        modifier_solidify = layers.modifiers.new(name="<Phaenotyp>", type='SOLIDIFY')
+        modifier_solidify.thickness = 0.3
+
+        # add bool
+        modifier_boolean = layers.modifiers.new(name="<Phaenotyp>", type='BOOLEAN')
+        modifier_boolean.object = object
+        modifier_boolean.operation = 'INTERSECT'
+
+
+    def structure_from_hull():
+        # get current object
+        object = bpy.context.selected_objects[0]
+
+        # decimate modifiere to create structure
+        modifier_decimate = object.modifiers.new(name="<Phaenotyp>", type='DECIMATE')
+        modifier_decimate.ratio = 0.06
+
+        # add wireframe to visualize structre
+        modifier_wireframe = object.modifiers.new(name="<Phaenotyp>", type='WIREFRAME')
+        modifier_wireframe.thickness = 0.1
+
+
+    def structure_from_tree():
+        # get current object
+        object = bpy.context.selected_objects[0]
+
+        # subdivice the curves to increase columns
+        modifier_subsurf = object.modifiers.new(name="<Phaenotyp>", type='SUBSURF')
+        modifier_subsurf.render_levels = 1
+
+        # add skin to create structure
+        modifier_skin = object.modifiers.new(name="<Phaenotyp>", type='SKIN')
+
+        # add wireframe to visualize structre
+        modifier_wireframe = object.modifiers.new(name="<Phaenotyp>", type='WIREFRAME')
+        modifier_wireframe.thickness = 0.02
+
+
 ### GUI
+class WM_OT_pre_modeling_generate(Operator):
+    bl_label = "pre_modeling_generate"
+    bl_idname = "wm.pre_modeling_generate"
+    bl_description = "Generate the selected pre modeling"
+
+    def execute(self, context):
+        # get selected type
+        scene = context.scene
+        phaenotyp = scene.phaenotyp
+        type = phaenotyp.pre_modeling_type
+
+        if type == "columns_from_curve":
+            pre_modeling.columns_from_curve()
+
+        if type == "columns_from_hull":
+            pre_modeling.columns_from_hull()
+
+        if type == "layers_from_hull":
+            pre_modeling.layers_from_hull()
+
+        if type == "structure_from_hull":
+            pre_modeling.structure_from_hull()
+
+        if type == "structure_from_tree":
+            pre_modeling.structure_from_tree()
+
+
+        return {"FINISHED"}
+
+
 class WM_OT_set_structure(Operator):
     bl_label = "set_structure"
     bl_idname = "wm.set_structure"
@@ -2431,7 +2651,7 @@ class WM_OT_reset(Operator):
 
 
 class OBJECT_PT_Phaenotyp(Panel):
-    bl_label = "Phänotyp 0.0.6"
+    bl_label = "Phänotyp 0.0.7 - premodelling"
     bl_idname = "OBJECT_PT_custom_panel"
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
@@ -2446,6 +2666,13 @@ class OBJECT_PT_Phaenotyp(Panel):
         scene = context.scene
         phaenotyp = scene.phaenotyp
 
+        # pre modeling
+        box = layout.box()
+        box.label(text="Pre modeling:")
+        box.prop(phaenotyp, "pre_modeling_type", text="Pre modeling type")
+        box.operator("wm.pre_modeling_generate", text="Generate")
+
+        # start with defining a structure
         box = layout.box()
         box.label(text="Structure:")
         box.operator("wm.set_structure", text="Set")
@@ -2680,6 +2907,8 @@ class OBJECT_PT_Phaenotyp(Panel):
 
 classes = (
     phaenotyp_properties,
+
+    WM_OT_pre_modeling_generate,
     WM_OT_set_structure,
     WM_OT_set_support,
     WM_OT_set_profile,
