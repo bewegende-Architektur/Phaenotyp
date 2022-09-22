@@ -969,7 +969,8 @@ class phaenotyp_properties(PropertyGroup):
                 ("average_sigma", "Average sigma", ""),
                 ("member_sigma", "Member sigma", ""),
                 ("volume", "Volume", ""),
-                ("lever_arm", "Lever arm", "")
+                ("lever_arm_truss", "Lever arm for normal forces", ""),
+                ("lever_arm_bending", "Lever arm for moment forces", "")
                ]
         )
 
@@ -1519,7 +1520,19 @@ class individuals(object):
                 force = member.max_sigma[frame]
                 forces.append(force)
 
-        if data.fitness_function == "lever_arm":
+        if data.fitness_function == "lever_arm_truss":
+            forces = []
+            for member in members.instances:
+                force = member.max_lever_arm[frame]
+                forces.append(force)
+
+            sum_forces = 0
+            for force in forces:
+                sum_forces = sum_forces + abs(force)
+
+            fitness = sum_forces *(-1)
+
+        if data.fitness_function == "lever_arm_bending":
             forces = []
             for member in members.instances:
                 force = member.max_lever_arm[frame]
@@ -1530,7 +1543,6 @@ class individuals(object):
                 sum_forces = sum_forces + abs(force)
 
             fitness = sum_forces
-
         return fitness
 
 
