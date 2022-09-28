@@ -3,7 +3,7 @@ bl_info = {
     "description": "Genetic optimization of architectural structures",
     "author": "bewegende Architektur e.U. and Karl Deix",
     "version": (0, 0, 7),
-    "blender": (3, 1, 2),
+    "blender": (3, 3, 0),
     "location": "3D View > Tools",
 }
 
@@ -110,6 +110,9 @@ class data:
     rot_x = None
     rot_y = None
     rot_z = None
+
+    # release moments to make truss
+    released = False
 
     # pass load types
     load_type = None
@@ -858,6 +861,16 @@ class phaenotyp_properties(PropertyGroup):
         default = "16.5, 15.8, 15.3, 14.8, 14.2, 13.5, 12.7, 11.8, 10.7, 9.5, 8.2, 6.9, 5.9, 5.1, 4.4, 3.9, 3.4, 3.1, 2.7, 2.5, 2.2, 2.0, 1.9, 1.7, 1.6"
         )
 
+    type_of_joints: EnumProperty(
+        name="type_of_joints:",
+        description="Released Moments",
+        items=[
+                ("-", "-", ""),
+                ("release_moments", "Release moments", ""),
+                ("fixed_joints", "Fixed joints", "")
+               ]
+        )
+
     loc_x: BoolProperty(
         name='loc_x',
         default=True
@@ -1086,6 +1099,13 @@ def transfer_analyze():
 
         # add self weight
         truss.add_member_dist_load(name, "FZ", kN, kN)
+
+        # release Moments
+        if data.type_of_joints == "release_moments":
+            truss.def_releases(name,
+                False, False, False, False, True, True,
+                False, False, False, False, True, True)
+
 
     # add loads
     for load in loads.instances_vertex:
@@ -2737,180 +2757,187 @@ class OBJECT_PT_Phaenotyp(Panel):
             if len(supports.instances) > 0:
                 box.label(text = str(len(supports.instances)) + " vertices defined as support")
 
-                # define material and geometry
+                # release moments
                 box = layout.box()
-                box.label(text="Profile:")
+                box.label(text="Type of joints:")
+                box.prop(phaenotyp, "type_of_joints", text="Released Moments")
+                data.type_of_joints = phaenotyp.type_of_joints
 
-                box.prop(phaenotyp, "Do", text="Diameter outside")
-                box.prop(phaenotyp, "Di", text="Diameter inside")
-                data.Do = phaenotyp.Do * 0.1
-                data.Di = phaenotyp.Di * 0.1
-
-                box.label(text="Material:")
-                box.prop(phaenotyp, "material", text="Type")
-                if phaenotyp.material == "custom":
-                    box.prop(phaenotyp, "E", text="Modulus of elasticity")
-                    box.prop(phaenotyp, "G", text="Shear modulus")
-                    box.prop(phaenotyp, "d", text="Density")
-
-                    box.prop(phaenotyp, "acceptable_sigma", text="Acceptable sigma")
-                    box.prop(phaenotyp, "acceptable_shear", text="Acceptable shear")
-                    box.prop(phaenotyp, "acceptable_torsion", text="Acceptable torsion")
-                    box.prop(phaenotyp, "acceptable_sigmav", text="Acceptable sigmav")
-                    box.prop(phaenotyp, "ir", text="Ir")
-
-                    # pass user input to data
-                    data.E = phaenotyp.E
-                    data.G = phaenotyp.G
-                    data.d = phaenotyp.d
-
-                    data.acceptable_sigma = phaenotyp.acceptable_sigma
-                    data.acceptable_shear = phaenotyp.acceptable_shear
-                    data.acceptable_torsion = phaenotyp.acceptable_torsion
-                    data.acceptable_sigmav = phaenotyp.acceptable_sigmav
-                    data.ir = list(phaenotyp.ir.split(","))
-
-                else:
-                    # pass input form library to data
-                    for material in data.material_library:
-                        if phaenotyp.material == material[0]: # select correct material
-                            data.E = material[2]
-                            data.G = material[3]
-                            data.d = material[4]
-
-                            data.acceptable_sigma = material[5]
-                            data.acceptable_shear = material[6]
-                            data.acceptable_torsion = material[7]
-                            data.acceptable_sigmav = material[8]
-
-                            data.material = material
-
-                    box.label(text="E = " + str(data.E) + " kN/cm²")
-                    box.label(text="G = " + str(data.G) + " kN/cm²")
-                    box.label(text="d = " + str(data.d) + " g/cm3")
-
-                    box.label(text="Acceptable sigma = " + str(data.acceptable_sigma))
-                    box.label(text="Acceptable shear = " + str(data.acceptable_shear))
-                    box.label(text="Acceptable torsion = " + str(data.acceptable_torsion))
-                    box.label(text="Acceptable sigmav = " + str(data.acceptable_sigmav))
-
-                data.update() # calculate Iy, Iz, J, A, kg
-                box.label(text="Iy = " + str(round(data.Iy, 4)) + " cm⁴")
-                box.label(text="Iz = " + str(round(data.Iz, 4)) + " cm⁴")
-                box.label(text="J = " + str(round(data.J, 4)) + " cm⁴")
-                box.label(text="A = " + str(round(data.A, 4)) + " cm²")
-                box.label(text="kg = " + str(round(data.kg, 4)) + " kg/m")
-
-                box.operator("wm.set_profile", text="Set")
-
-                if members.all_edges_definend:
-                    # Define loads
+                if data.type_of_joints != "-":
+                    # define material and geometry
                     box = layout.box()
-                    box.label(text="Loads:")
-                    box.prop(phaenotyp, "load_type", text="Type")
+                    box.label(text="Profile:")
 
-                    if phaenotyp.load_type == "faces": # if faces
-                        box.prop(phaenotyp, "load_normal", text="normal (like wind)")
-                        box.prop(phaenotyp, "load_projected", text="projected (like snow)")
-                        box.prop(phaenotyp, "load_area_z", text="area z (like weight of facade)")
+                    box.prop(phaenotyp, "Do", text="Diameter outside")
+                    box.prop(phaenotyp, "Di", text="Diameter inside")
+                    data.Do = phaenotyp.Do * 0.1
+                    data.Di = phaenotyp.Di * 0.1
 
-                    else: # if vertices or edges
-                        box.prop(phaenotyp, "load_x", text="x")
-                        box.prop(phaenotyp, "load_y", text="y")
-                        box.prop(phaenotyp, "load_z", text="z")
+                    box.label(text="Material:")
+                    box.prop(phaenotyp, "material", text="Type")
+                    if phaenotyp.material == "custom":
+                        box.prop(phaenotyp, "E", text="Modulus of elasticity")
+                        box.prop(phaenotyp, "G", text="Shear modulus")
+                        box.prop(phaenotyp, "d", text="Density")
 
-                    # pass user input to data
-                    data.load_type = phaenotyp.load_type
-                    data.load_x = phaenotyp.load_x
-                    data.load_y = phaenotyp.load_y
-                    data.load_z = phaenotyp.load_z
-                    data.load_normal = phaenotyp.load_normal
-                    data.load_projected = phaenotyp.load_projected
-                    data.load_area_z = phaenotyp.load_area_z
+                        box.prop(phaenotyp, "acceptable_sigma", text="Acceptable sigma")
+                        box.prop(phaenotyp, "acceptable_shear", text="Acceptable shear")
+                        box.prop(phaenotyp, "acceptable_torsion", text="Acceptable torsion")
+                        box.prop(phaenotyp, "acceptable_sigmav", text="Acceptable sigmav")
+                        box.prop(phaenotyp, "ir", text="Ir")
 
-                    box.operator("wm.set_load", text="Set")
+                        # pass user input to data
+                        data.E = phaenotyp.E
+                        data.G = phaenotyp.G
+                        data.d = phaenotyp.d
 
-                    # Analysis
-                    box = layout.box()
-                    box.label(text="Analysis:")
-                    box.operator("wm.calculate_single_frame", text="Single Frame")
-                    box.operator("wm.calculate_animation", text="Animation")
+                        data.acceptable_sigma = phaenotyp.acceptable_sigma
+                        data.acceptable_shear = phaenotyp.acceptable_shear
+                        data.acceptable_torsion = phaenotyp.acceptable_torsion
+                        data.acceptable_sigmav = phaenotyp.acceptable_sigmav
+                        data.ir = list(phaenotyp.ir.split(","))
 
-                    # Optimization
-                    box = layout.box()
-                    box.label(text="Optimization:")
-                    box.operator("wm.optimize_1", text="Simple - sectional performance")
-                    box.operator("wm.optimize_2", text="Complex - sectional performance")
-                    box.operator("wm.optimize_3", text="Decimate - topological performance")
-                    #box.operator("wm.optimize_4", text="empty")
-                    #box.operator("wm.optimize_5", text="empty")
+                    else:
+                        # pass input form library to data
+                        for material in data.material_library:
+                            if phaenotyp.material == material[0]: # select correct material
+                                data.E = material[2]
+                                data.G = material[3]
+                                data.d = material[4]
 
-                    shape_key = data.obj.data.shape_keys
-                    if shape_key:
-                        # Genetic Mutation:
+                                data.acceptable_sigma = material[5]
+                                data.acceptable_shear = material[6]
+                                data.acceptable_torsion = material[7]
+                                data.acceptable_sigmav = material[8]
+
+                                data.material = material
+
+                        box.label(text="E = " + str(data.E) + " kN/cm²")
+                        box.label(text="G = " + str(data.G) + " kN/cm²")
+                        box.label(text="d = " + str(data.d) + " g/cm3")
+
+                        box.label(text="Acceptable sigma = " + str(data.acceptable_sigma))
+                        box.label(text="Acceptable shear = " + str(data.acceptable_shear))
+                        box.label(text="Acceptable torsion = " + str(data.acceptable_torsion))
+                        box.label(text="Acceptable sigmav = " + str(data.acceptable_sigmav))
+
+                    data.update() # calculate Iy, Iz, J, A, kg
+                    box.label(text="Iy = " + str(round(data.Iy, 4)) + " cm⁴")
+                    box.label(text="Iz = " + str(round(data.Iz, 4)) + " cm⁴")
+                    box.label(text="J = " + str(round(data.J, 4)) + " cm⁴")
+                    box.label(text="A = " + str(round(data.A, 4)) + " cm²")
+                    box.label(text="kg = " + str(round(data.kg, 4)) + " kg/m")
+
+                    box.operator("wm.set_profile", text="Set")
+
+                    if members.all_edges_definend:
+                        # Define loads
                         box = layout.box()
-                        box.label(text="Genetic Mutation:")
-                        box.prop(phaenotyp, "population_size", text="Size of population for GA")
-                        box.prop(phaenotyp, "elitism", text="Size of elitism for GA")
-                        box.prop(phaenotyp, "fitness_function", text="Fitness function")
+                        box.label(text="Loads:")
+                        box.prop(phaenotyp, "load_type", text="Type")
 
-                        data.population_size = phaenotyp.population_size
-                        data.elitism = phaenotyp.elitism
-                        data.new_generation_size = data.population_size - phaenotyp.elitism
-                        data.fitness_function = phaenotyp.fitness_function
+                        if phaenotyp.load_type == "faces": # if faces
+                            box.prop(phaenotyp, "load_normal", text="normal (like wind)")
+                            box.prop(phaenotyp, "load_projected", text="projected (like snow)")
+                            box.prop(phaenotyp, "load_area_z", text="area z (like weight of facade)")
 
-                        for keyblock in shape_key.key_blocks:
-                            name = keyblock.name
-                            box.label(text=name)
+                        else: # if vertices or edges
+                            box.prop(phaenotyp, "load_x", text="x")
+                            box.prop(phaenotyp, "load_y", text="y")
+                            box.prop(phaenotyp, "load_z", text="z")
 
-                        box.operator("wm.genetic_mutation", text="Start")
+                        # pass user input to data
+                        data.load_type = phaenotyp.load_type
+                        data.load_x = phaenotyp.load_x
+                        data.load_y = phaenotyp.load_y
+                        data.load_z = phaenotyp.load_z
+                        data.load_normal = phaenotyp.load_normal
+                        data.load_projected = phaenotyp.load_projected
+                        data.load_area_z = phaenotyp.load_area_z
 
-                    # Visualization
-                    if data.done:
+                        box.operator("wm.set_load", text="Set")
+
+                        # Analysis
                         box = layout.box()
-                        box.label(text="Vizualisation:")
-                        box.prop(phaenotyp, "forces", text="Force")
+                        box.label(text="Analysis:")
+                        box.operator("wm.calculate_single_frame", text="Single Frame")
+                        box.operator("wm.calculate_animation", text="Animation")
 
-                        # sliders to scale forces and deflection
-                        box.prop(phaenotyp, "viz_scale", text="scale", slider=True)
-                        box.prop(phaenotyp, "viz_deflection", text="deflection", slider=True)
-
-                        # Text
+                        # Optimization
                         box = layout.box()
-                        box.label(text="Result:")
-                        if bpy.context.active_object.mode == "EDIT":
-                            if len(bpy.context.selected_objects) == 1:
-                                obj =  bpy.context.selected_objects[0]
-                                type = getattr(obj, 'type', '')
-                                if type == "CURVE":
-                                    selected = 0
-                                    points = bpy.context.selected_objects[0].data.splines[0].points
-                                    for point in points:
-                                        if point.select:
-                                            selected = selected + 1
+                        box.label(text="Optimization:")
+                        box.operator("wm.optimize_1", text="Simple - sectional performance")
+                        box.operator("wm.optimize_2", text="Complex - sectional performance")
+                        box.operator("wm.optimize_3", text="Decimate - topological performance")
+                        #box.operator("wm.optimize_4", text="empty")
+                        #box.operator("wm.optimize_5", text="empty")
 
-                                    if selected == 1: # if one point of one curve is selected
-                                        box.operator("wm.text", text="generate")
+                        shape_key = data.obj.data.shape_keys
+                        if shape_key:
+                            # Genetic Mutation:
+                            box = layout.box()
+                            box.label(text="Genetic Mutation:")
+                            box.prop(phaenotyp, "population_size", text="Size of population for GA")
+                            box.prop(phaenotyp, "elitism", text="Size of elitism for GA")
+                            box.prop(phaenotyp, "fitness_function", text="Fitness function")
+
+                            data.population_size = phaenotyp.population_size
+                            data.elitism = phaenotyp.elitism
+                            data.new_generation_size = data.population_size - phaenotyp.elitism
+                            data.fitness_function = phaenotyp.fitness_function
+
+                            for keyblock in shape_key.key_blocks:
+                                name = keyblock.name
+                                box.label(text=name)
+
+                            box.operator("wm.genetic_mutation", text="Start")
+
+                        # Visualization
+                        if data.done:
+                            box = layout.box()
+                            box.label(text="Vizualisation:")
+                            box.prop(phaenotyp, "forces", text="Force")
+
+                            # sliders to scale forces and deflection
+                            box.prop(phaenotyp, "viz_scale", text="scale", slider=True)
+                            box.prop(phaenotyp, "viz_deflection", text="deflection", slider=True)
+
+                            # Text
+                            box = layout.box()
+                            box.label(text="Result:")
+                            if bpy.context.active_object.mode == "EDIT":
+                                if len(bpy.context.selected_objects) == 1:
+                                    obj =  bpy.context.selected_objects[0]
+                                    type = getattr(obj, 'type', '')
+                                    if type == "CURVE":
+                                        selected = 0
+                                        points = bpy.context.selected_objects[0].data.splines[0].points
+                                        for point in points:
+                                            if point.select:
+                                                selected = selected + 1
+
+                                        if selected == 1: # if one point of one curve is selected
+                                            box.operator("wm.text", text="generate")
+                                        else:
+                                            box.label(text="Select on Point of one Member-Curve")
                                     else:
                                         box.label(text="Select on Point of one Member-Curve")
                                 else:
                                     box.label(text="Select on Point of one Member-Curve")
                             else:
                                 box.label(text="Select on Point of one Member-Curve")
-                        else:
-                            box.label(text="Select on Point of one Member-Curve")
 
-                        if len(data.texts) > 0:
-                            for text in data.texts:
-                                box.label(text=text)
+                            if len(data.texts) > 0:
+                                for text in data.texts:
+                                    box.label(text=text)
 
-                        # Report
-                        box = layout.box()
-                        box.label(text="Report:")
-                        if bpy.data.is_saved:
-                            box.operator("wm.report", text="generate")
-                        else:
-                            box.label(text="Please save Blender-File first")
+                            # Report
+                            box = layout.box()
+                            box.label(text="Report:")
+                            if bpy.data.is_saved:
+                                box.operator("wm.report", text="generate")
+                            else:
+                                box.label(text="Please save Blender-File first")
 
 
         box = layout.box()
