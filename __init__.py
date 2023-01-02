@@ -1319,22 +1319,27 @@ class OBJECT_PT_Phaenotyp(Panel):
 
                         selected_objects = bpy.context.selected_objects
                         if len(selected_objects) > 1:
-                            box_text.label(text="Please select the vizualisation object only")
+                            box_text.label(text="Please select the vizualisation object only - too many objects")
+
+                        elif len(selected_objects) == 0:
+                                box_text.label(text="Please select the vizualisation object - no object selected")
+
+                        elif selected_objects[0].name_full != "<Phaenotyp>member":
+                                box_text.label(text="Please select the vizualisation object - wrong object selected")
 
                         else:
-                            if selected_objects[0].name_full != "<Phaenotyp>member":
-                                box_text.label(text="Please select the vizualisation")
-
-                            else:
+                            if context.active_object.mode == 'EDIT':
                                 vert_sel = bpy.context.active_object.data.total_vert_sel
                                 if vert_sel != 1:
-                                    box_text.label(text="Select on vertex only")
+                                    box_text.label(text="Select one vertex only")
 
                                 else:
                                     box_text.operator("wm.text", text="Generate")
                                     if len(data["texts"]) > 0:
                                         for text in data["texts"]:
                                             box_text.label(text=text)
+                            else:
+                                box_text.label(text="Switch to edit-mode")
 
                         # Report
                         box_report = layout.box()
