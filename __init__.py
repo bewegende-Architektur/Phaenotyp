@@ -1289,7 +1289,11 @@ class OBJECT_PT_Phaenotyp(Panel):
                             name = keyblock.name
                             box_ga.label(text=name)
 
-                        box_ga.operator("wm.ga_start", text="Start")
+                        # check population_size and elitism
+                        if phaenotyp.population_size*0.5 > phaenotyp.elitism:
+                            box_ga.operator("wm.ga_start", text="Start")
+                        else:
+                            box_ga.label(text="Elitism should be smaller than 50% of population size.")
 
                         if len(data["ga_individuals"]) > 0 and not bpy.context.screen.is_animation_playing:
                             box_ga.prop(phaenotyp, "ga_ranking", text="Result sorted by fitness.")
