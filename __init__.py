@@ -3,7 +3,7 @@ bl_info = {
     "description": "Genetic optimization of architectural structures",
     "author": "bewegende Architektur e.U. and Karl Deix",
     "version": (0, 1, 0),
-    "blender": (3, 3, 4),
+    "blender": (3, 4, 1),
     "location": "3D View > Tools",
 }
 
@@ -1155,6 +1155,7 @@ class OBJECT_PT_Phaenotyp(Panel):
 
             # check or uncheck scipy if available
             if data["scipy_available"]:
+                box_scipy = layout.box()
                 box_scipy.label(text = "Scipy is available.")
                 box_scipy.prop(phaenotyp, "use_scipy", text="use scipy")
 
