@@ -157,13 +157,17 @@ def update():
             create_indivdual(chromosome)
 
         else:
+            # copy to population
+            for name, individual in individuals.items():
+                environment["population"][name] = individual
+
             environment["ga_state"] = "create new generation"
 
 
     if environment["ga_state"] == "create new generation":
         # sort previous population according to fitness
         list_result = []
-        for name, individual in individuals.items():
+        for name, individual in environment["population"].items():
             list_result.append([name, individual["chromosome"], individual["fitness"]])
 
         sorted_list = sorted(list_result, key = lambda x: x[2])
@@ -181,7 +185,7 @@ def update():
             individual["fitness"] = fitness
             environment["population"][name] = individual
 
-            text = "individual" + name + " with fitness " + str(fitness)
+            text = "individual frame:" + name + " with fitness " + str(fitness)
             print_data(text)
 
 
@@ -217,8 +221,8 @@ def update():
     if environment["ga_state"] == "populate new generation":
         if len(environment["new_generation"]) < environment["new_generation_size"]:
             # pair best 50 % of the previous population
-            random_number_1 = random.randint(0, int(len(environment["population"])*0.5))
-            random_number_2 = random.randint(0, int(len(environment["population"])*0.5))
+            random_number_1 = random.randint(0, environment["new_generation_size"]*0.5)
+            random_number_2 = random.randint(0, environment["new_generation_size"]*0.5)
 
             parent_1_name = list(environment["population"].keys())[random_number_1]
             parent_2_name = list(environment["population"].keys())[random_number_2]
