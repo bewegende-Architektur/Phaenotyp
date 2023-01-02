@@ -193,7 +193,7 @@ def update():
 
         # replace overall best of all generations
         for id, individual in individuals.items():
-            if individual["fitness"] > environment["best"]["fitness"]:
+            if individual["fitness"] < environment["best"]["fitness"]:
                 environment["best"] = individual
 
         text = "best individual: " + str(environment["best"]["name"]) + " with fitness: " + str(environment["best"]["fitness"])
