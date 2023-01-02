@@ -109,28 +109,47 @@ def create_indivdual(chromosome):
 
 def mate_chromosomes(chromosome_1, chromosome_2):
     scene = bpy.context.scene
+    phaenotyp = scene.phaenotyp
     data = scene["<Phaenotyp>"]
     environment = data["ga_environment"]
     individuals = data["ga_individuals"]
 
-    # chromosome for offspring
-    child_chromosome = []
-    for gp1, gp2 in zip(chromosome_1, chromosome_2):
+    if phaenotyp.mate_type == "direct":
+        # chromosome for offspring
+        child_chromosome = []
+        for gp1, gp2 in zip(chromosome_1, chromosome_2):
 
-        # random probability
-        prob = random.random()
+            # random probability
+            prob = random.random()
 
-        # if prob is less than 0.45, insert gene from parent 1
-        if prob < 0.45:
-            child_chromosome.append(gp1)
+            # if prob is less than 0.45, insert gene from parent 1
+            if prob < 0.45:
+                child_chromosome.append(gp1)
 
-        # if prob is between 0.45 and 0.90, insert gene from parent 2
-        elif prob < 0.90:
-            child_chromosome.append(gp2)
+            # if prob is between 0.45 and 0.90, insert gene from parent 2
+            elif prob < 0.90:
+                child_chromosome.append(gp2)
 
-        # otherwise insert random gene(mutate) to maintain diversity
-        else:
-            child_chromosome.append(random.choice(environment["genes"]))
+            # otherwise insert random gene(mutate) to maintain diversity
+            else:
+                child_chromosome.append(random.choice(environment["genes"]))
+
+    if phaenotyp.mate_type == "morph":
+        # chromosome for offspring
+        child_chromosome = []
+        for gp1, gp2 in zip(chromosome_1, chromosome_2):
+
+            # random probability
+            prob = random.random()
+
+            # if prob is less than 0.9, morph genes from parents
+            if prob < 0.90:
+                morph = (gp1 + gp2)*0.5
+                child_chromosome.append(morph)
+
+            # otherwise insert random gene(mutate) to maintain diversity
+            else:
+                child_chromosome.append(random.choice(environment["genes"]))
 
     return child_chromosome
 
@@ -221,8 +240,8 @@ def update():
     if environment["ga_state"] == "populate new generation":
         if len(environment["new_generation"]) < environment["new_generation_size"]:
             # pair best 50 % of the previous population
-            random_number_1 = random.randint(0, environment["new_generation_size"]*0.5)
-            random_number_2 = random.randint(0, environment["new_generation_size"]*0.5)
+            random_number_1 = random.randint(0, int(environment["new_generation_size"]*0.5))
+            random_number_2 = random.randint(0, int(environment["new_generation_size"]*0.5))
 
             parent_1_name = list(environment["population"].keys())[random_number_1]
             parent_2_name = list(environment["population"].keys())[random_number_2]

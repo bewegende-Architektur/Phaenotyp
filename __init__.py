@@ -270,6 +270,15 @@ class phaenotyp_properties(PropertyGroup):
                ]
         )
 
+    mate_type: EnumProperty(
+        name="mate_type:",
+        description="Type of mating",
+        items=[
+                ("direct", "direct", ""),
+                ("morph", "morph", "")
+               ]
+        )
+
     ga_optimization: EnumProperty(
         name="ga_optimization:",
         description="Enables sectional optimization after each frame",
@@ -1273,6 +1282,7 @@ class OBJECT_PT_Phaenotyp(Panel):
                         box_ga.prop(phaenotyp, "population_size", text="Size of population for GA")
                         box_ga.prop(phaenotyp, "elitism", text="Size of elitism for GA")
                         box_ga.prop(phaenotyp, "fitness_function", text="Fitness function")
+                        box_ga.prop(phaenotyp, "mate_type", text="Type of mating")
                         box_ga.prop(phaenotyp, "ga_optimization", text="Sectional optimization")
 
                         for keyblock in shape_key.key_blocks:
