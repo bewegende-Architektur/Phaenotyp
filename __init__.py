@@ -12,22 +12,13 @@ bl_info = {
 # Analysis with: https://github.com/JWock82/PyNite
 # GA based on: https://www.geeksforgeeks.org/genetic-algorithms/
 
-
 import bpy
 from bpy.props import (IntProperty, FloatProperty, BoolProperty, StringProperty, EnumProperty, PointerProperty)
 from bpy.types import (Panel, Menu, Operator, PropertyGroup)
 from bpy.app.handlers import persistent
-import bmesh
-from threading import Thread
-import random
-import sys
+
 import os
 import webbrowser
-
-from math import sqrt
-from math import tanh
-
-from mathutils import Matrix
 
 from phaenotyp import basics, material, geometry, calculation, ga, report
 
@@ -66,19 +57,6 @@ def create_data():
 
 def print_data(text):
     print("Phaenotyp |", text)
-
-
-'''
-import subprocess
-import sys
-
-py_exec = str(sys.executable)
-subprocess.call([py_exec, "-m", "ensurepip", "--user" ])
-subprocess.call([py_exec, "-m", "pip", "install", "--upgrade", "pip" ])
-subprocess.call([py_exec,"-m", "pip", "install", f"--target={py_exec[:-14]}" + "lib", "SciPy"])
-
-import scipy
-'''
 
 def viz_update(self, context):
     scene = context.scene
