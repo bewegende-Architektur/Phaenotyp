@@ -1155,7 +1155,6 @@ class OBJECT_PT_Phaenotyp(Panel):
 
             # check or uncheck scipy if available
             if data["scipy_available"]:
-                box_scipy = layout.box()
                 box_scipy.label(text = "Scipy is available.")
                 box_scipy.prop(phaenotyp, "use_scipy", text="use scipy")
 
@@ -1321,7 +1320,11 @@ class OBJECT_PT_Phaenotyp(Panel):
                         box_support.enabled = False
                         box_profile.enabled = False
                         box_load.enabled = False
-                        box_scipy.enabled = False
+
+                        try:
+                            box_scipy.enabled = False
+                        except:
+                            pass
 
                         box_viz = layout.box()
                         box_viz.label(text="Vizualisation:")
