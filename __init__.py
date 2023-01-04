@@ -705,16 +705,13 @@ class WM_OT_optimize_2(Operator):
 
         return {"FINISHED"}
 
-class WM_OT_optimize_3(Operator):
-    bl_label = "optimize_3"
-    bl_idname = "wm.optimize_3"
+class WM_OT_topology_1(Operator):
+    bl_label = "topolgy_1"
+    bl_idname = "wm.topolgy_1"
     bl_description = "Decimate topological performance"
 
     def execute(self, context):
         print_data("optimization 3 - Decimate topological performance")
-        geometry.update_members_pre()
-        calculation.transfer_analyze()
-        geometry.update_members_post()
         calculation.decimate_topology()
 
         return {"FINISHED"}
@@ -1270,7 +1267,14 @@ class OBJECT_PT_Phaenotyp(Panel):
                     if data["process"]["done"]:
                         box_opt.operator("wm.optimize_1", text="Simple - sectional performance")
                         box_opt.operator("wm.optimize_2", text="Complex - sectional performance")
-                        box_opt.operator("wm.optimize_3", text="Decimate - topological performance")
+                    else:
+                        box_opt.label(text="Run single analysis first.")
+
+                    # Topology
+                    box_opt = layout.box()
+                    box_opt.label(text="Topology:")
+                    if data["process"]["done"]:
+                        box_opt.operator("wm.topolgy_1", text="Decimate - topological performance")
                     else:
                         box_opt.label(text="Run single analysis first.")
 
@@ -1379,7 +1383,7 @@ classes = (
 
     WM_OT_optimize_1,
     WM_OT_optimize_2,
-    WM_OT_optimize_3,
+    WM_OT_topology_1,
 
     WM_OT_ga_start,
     WM_OT_ga_ranking,
