@@ -461,85 +461,85 @@ def simple_sectional():
             member["Di"][str(frame)] = member["Di"][str(frame)] * 0.8
 
 def complex_sectional():
-        scene = bpy.context.scene
-        phaenotyp = scene.phaenotyp
-        data = scene["<Phaenotyp>"]
-        members = data["members"]
-        frame = bpy.context.scene.frame_current
+    scene = bpy.context.scene
+    phaenotyp = scene.phaenotyp
+    data = scene["<Phaenotyp>"]
+    members = data["members"]
+    frame = bpy.context.scene.frame_current
 
-        for id, member in members.items():
-            #treshhold bei Prüfung!
-            # without buckling (Zugstab)
+    for id, member in members.items():
+        #treshhold bei Prüfung!
+        # without buckling (Zugstab)
 
-            if abs(member["max_long_stress"][str(frame)]/member["acceptable_sigma_buckling"][str(frame)]) > 1:
-                faktor_a = 1+(abs(member["max_long_stress"][str(frame)])/member["acceptable_sigma_buckling"][str(frame)]-1)*0.36
+        if abs(member["max_long_stress"][str(frame)]/member["acceptable_sigma_buckling"][str(frame)]) > 1:
+            faktor_a = 1+(abs(member["max_long_stress"][str(frame)])/member["acceptable_sigma_buckling"][str(frame)]-1)*0.36
 
-            else:
-                faktor_a = 0.5 + 0.6*(tanh((abs(member["max_long_stress"][str(frame)])/member["acceptable_sigma_buckling"][str(frame)] -0.5)*2.4))
+        else:
+            faktor_a = 0.5 + 0.6*(tanh((abs(member["max_long_stress"][str(frame)])/member["acceptable_sigma_buckling"][str(frame)] -0.5)*2.4))
 
-            faktor_d = sqrt(abs(faktor_a))
-            member["A"][str(frame)] = member["A"][str(frame)]*faktor_a
-            member["Do"][str(frame)] = member["Do"][str(frame)]*faktor_d
-            member["Di"][str(frame)] = member["Di"][str(frame)]*faktor_d
+        faktor_d = sqrt(abs(faktor_a))
+        member["A"][str(frame)] = member["A"][str(frame)]*faktor_a
+        member["Do"][str(frame)] = member["Do"][str(frame)]*faktor_d
+        member["Di"][str(frame)] = member["Di"][str(frame)]*faktor_d
 
 def decimate_topology():
-        scene = bpy.context.scene
-        phaenotyp = scene.phaenotyp
-        data = scene["<Phaenotyp>"]
-        members = data["members"]
-        obj = data["structure"] # applied to structure
-        frame = bpy.context.scene.frame_current
+    scene = bpy.context.scene
+    phaenotyp = scene.phaenotyp
+    data = scene["<Phaenotyp>"]
+    members = data["members"]
+    obj = data["structure"] # applied to structure
+    frame = bpy.context.scene.frame_current
 
-        bpy.context.view_layer.objects.active = obj
+    bpy.context.view_layer.objects.active = obj
 
-        # create vertex-group if not existing
-        bpy.ops.object.mode_set(mode = 'OBJECT')
-        decimate_group = obj.vertex_groups.get("<Phaenotyp>decimate")
-        if not decimate_group:
-            decimate_group = obj.vertex_groups.new(name="<Phaenotyp>decimate")
+    # create vertex-group if not existing
+    bpy.ops.object.mode_set(mode = 'OBJECT')
+    decimate_group = obj.vertex_groups.get("<Phaenotyp>decimate")
+    if not decimate_group:
+        decimate_group = obj.vertex_groups.new(name="<Phaenotyp>decimate")
 
-        # create factor-list
-        weights = []
-        for vertex in obj.data.vertices:
-            weights.append([])
+    # create factor-list
+    weights = []
+    for vertex in obj.data.vertices:
+        weights.append([])
 
-        # create factors for nodes from members
-        for id, member in members.items():
-            factor = abs(member["max_long_stress"][str(frame)]/member["acceptable_sigma_buckling"][str(frame)])
-            # first node
-            vertex_0_id = member["vertex_0_id"]
-            weights[vertex_0_id].append(factor)
+    # create factors for nodes from members
+    for id, member in members.items():
+        factor = abs(member["max_long_stress"][str(frame)]/member["acceptable_sigma_buckling"][str(frame)])
+        # first node
+        vertex_0_id = member["vertex_0_id"]
+        weights[vertex_0_id].append(factor)
 
-            # second node
-            vertex_1_id = member["vertex_1_id"]
-            weights[vertex_1_id].append(factor)
+        # second node
+        vertex_1_id = member["vertex_1_id"]
+        weights[vertex_1_id].append(factor)
 
-        # sum up forces of each node and get highest value
-        sums = []
-        highest_sum = 0
-        for id, weights_per_node in enumerate(weights):
-            sum = 0
-            if len(weights_per_node) > 0:
-                for weight in weights_per_node:
-                    sum = sum + weight
-                    if sum > highest_sum:
-                        highest_sum = sum
+    # sum up forces of each node and get highest value
+    sums = []
+    highest_sum = 0
+    for id, weights_per_node in enumerate(weights):
+        sum = 0
+        if len(weights_per_node) > 0:
+            for weight in weights_per_node:
+                sum = sum + weight
+                if sum > highest_sum:
+                    highest_sum = sum
 
-            sums.append(sum)
-
-
-        for id, sum in enumerate(sums):
-            weight = 1 / highest_sum * sum
-            decimate_group.add([id], weight, 'REPLACE')
+        sums.append(sum)
 
 
-        # delete modifiere if existing
-        try:
-            bpy.ops.object.modifier_remove(modifier="<Phaenotyp>decimate")
-        except:
-            pass
+    for id, sum in enumerate(sums):
+        weight = 1 / highest_sum * sum
+        decimate_group.add([id], weight, 'REPLACE')
 
-        # create decimate modifiere
-        mod = obj.modifiers.new("<Phaenotyp>decimate", "DECIMATE")
-        mod.ratio = 0.1
-        mod.vertex_group = "<Phaenotyp>decimate"
+
+    # delete modifiere if existing
+    try:
+        bpy.ops.object.modifier_remove(modifier="<Phaenotyp>decimate")
+    except:
+        pass
+
+    # create decimate modifiere
+    mod = obj.modifiers.new("<Phaenotyp>decimate", "DECIMATE")
+    mod.ratio = 0.1
+    mod.vertex_group = "<Phaenotyp>decimate"
