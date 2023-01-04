@@ -460,6 +460,12 @@ def simple_sectional():
             member["Do"][str(frame)] = member["Do"][str(frame)] * 0.8
             member["Di"][str(frame)] = member["Di"][str(frame)] * 0.8
 
+        # set miminum size of Do and Di to avoid division by zero
+        Do_Di_ratio = member["Do"][str(frame)]/member["Di"][str(frame)]
+        if member["Di"][str(frame)] < 0.001:
+            member["Di"][str(frame)] = 0.001
+            member["Do"][str(frame)] = member["Di"][str(frame)] * Do_Di_ratio
+
 def complex_sectional():
     scene = bpy.context.scene
     phaenotyp = scene.phaenotyp
@@ -478,9 +484,14 @@ def complex_sectional():
             faktor_a = 0.5 + 0.6*(tanh((abs(member["max_long_stress"][str(frame)])/member["acceptable_sigma_buckling"][str(frame)] -0.5)*2.4))
 
         faktor_d = sqrt(abs(faktor_a))
-        member["A"][str(frame)] = member["A"][str(frame)]*faktor_a
         member["Do"][str(frame)] = member["Do"][str(frame)]*faktor_d
         member["Di"][str(frame)] = member["Di"][str(frame)]*faktor_d
+
+        # set miminum size of Do and Di to avoid division by zero
+        Do_Di_ratio = member["Do"][str(frame)]/member["Di"][str(frame)]
+        if member["Di"][str(frame)] < 0.001:
+            member["Di"][str(frame)] = 0.001
+            member["Do"][str(frame)] = member["Di"][str(frame)] * Do_Di_ratio
 
 def decimate_topology():
     scene = bpy.context.scene
