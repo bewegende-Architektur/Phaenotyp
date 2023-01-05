@@ -467,12 +467,14 @@ class WM_OT_set_profile(Operator):
                 member["J"] = {}
                 member["A"] = {}
                 member["kg"] = {}
+                member["ir"] = {}
 
                 member["Iy"]["first"] = material.current["Iy"] # from gui
                 member["Iz"]["first"] = material.current["Iz"] # from gui
                 member["J"]["first"] = material.current["J"] # from gui
                 member["A"]["first"] = material.current["A"] # from gui
                 member["kg"]["first"] = material.current["kg"] # from gui
+                member["ir"]["first"] = material.current["ir"] # from gui
 
                 # results
                 member["axial"] = {}
@@ -484,7 +486,6 @@ class WM_OT_set_profile(Operator):
                 member["torque"] = {}
                 member["sigma"] = {}
 
-                member["ir"] = {}
                 member["Wy"] = {}
                 member["WJ"] = {}
 
@@ -1425,14 +1426,15 @@ classes = (
 @persistent
 def update_post(scene):
     # only run if Phanotyp is used
-    data_available = scene.get("members")
+    data_available = scene.get("<Phaenotyp>")
+
     if data_available:
         phaenotyp = scene.phaenotyp
+        data = scene["<Phaenotyp>"]
 
         # only run if member is available
         members_available = data.get("members")
         if members_available:
-            data = scene["<Phaenotyp>"]
             members = data["members"]
             frame = scene.frame_current
 
@@ -1466,12 +1468,17 @@ def update_post(scene):
                     print_data("calculation - done")
 
             else:
-                # check if a result is available
-                result_available = members[0].get(["axial"])
+                # check if a result is available for the first member
+                result_available = members[str(0)].get("axial")
                 if result_available:
+                    # check if a result is available for the first member at frame
                     result_at_frame = result_available.get(str(frame))
                     if result_at_frame:
                         geometry.update_members_post()
+                    else:
+                        # the process ist not done for this frame
+                        # some functions will be grayed out like optimization
+                        data["process"]["done"] = False
 
 def register():
     from bpy.utils import register_class
