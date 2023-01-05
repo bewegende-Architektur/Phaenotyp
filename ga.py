@@ -23,17 +23,26 @@ def create_indivdual(chromosome):
         if id > 0: # to exlude basis
             key.value = chromosome[id-1]*0.1
 
-    # get fitness
-    calculation.transfer_analyze()
-    if phaenotyp.ga_optimization == "simple":
-        calculation.simple_sectional()
-        geometry.update_members_pre()
-        calculation.transfer_analyze()
+    individual = {}
+    individual["name"] = str(frame) # individuals are identified by frame
+    individual["chromosome"] = chromosome
+    individuals[str(frame)] = individual
 
-    if phaenotyp.ga_optimization == "complex":
-        calculation.complex_sectional()
-        geometry.update_members_pre()
-        calculation.transfer_analyze()
+    text = "new individual frame:" + str(frame) + " " + str(chromosome)
+    print_data(text)
+
+def get_fitness(individual):
+    scene = bpy.context.scene
+    phaenotyp = scene.phaenotyp
+    data = scene["<Phaenotyp>"]
+    obj = data["structure"]
+    shape_keys = obj.data.shape_keys.key_blocks
+    members = data["members"]
+    frame = bpy.context.scene.frame_current
+
+    environment = data["ga_environment"]
+    individuals = data["ga_individuals"]
+
 
     if environment["fitness_function"] == "average_sigma":
         forces = []
@@ -98,13 +107,10 @@ def create_indivdual(chromosome):
 
         fitness = sum_forces
 
-    individual = {}
-    individual["name"] = str(frame) # individuals are identified by frame
-    individual["chromosome"] = chromosome
-    individual["fitness"] = fitness
-    individuals[str(frame)] = individual
 
-    text = "new individual frame:" + str(frame) + " " + str(chromosome) + ", fitness: " + str(fitness)
+    individual["fitness"] = fitness
+
+    text = "individual:" + individual["name"] + " " + str(individual["chromosome"]) + ", fitness: " + str(individual["fitness"])
     print_data(text)
 
 def mate_chromosomes(chromosome_1, chromosome_2):
@@ -176,6 +182,25 @@ def update():
             create_indivdual(chromosome)
 
         else:
+            # run twice if optimization is activated
+            if phaenotyp.ga_optimization in ["simple", "complex"]:
+                environment["ga_state"] = "restart for optimization"
+
+    if environment["ga_state"] == "restart for optimization":
+        pass
+    '''
+            # get fitness
+            geometry.update_members_pre()
+            calculation.start_job()
+
+            # if animation finished
+            if bpy.context.scene.frame_end == bpy.context.scene.frame_current:
+                # avoid to repeat at end
+                bpy.ops.screen.animation_cancel()
+
+                calculation.join_jobs()
+                calculation.interweave_results()
+
             # copy to population
             for name, individual in individuals.items():
                 environment["population"][name] = individual
@@ -268,6 +293,7 @@ def update():
 
             # start new generation
             environment["ga_state"] = "create new generation"
+        '''
 
 def goto_indivual():
     scene = bpy.context.scene

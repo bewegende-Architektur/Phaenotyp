@@ -283,9 +283,10 @@ def update_members_pre():
 
         # copy properties if not set by optimization
         # or the user changed the frame during optimization
-        if str(frame) not in member["ir"]:
+        if str(frame) not in member["Do"]:
             member["Do"][str(frame)] = member["Do"]["first"]
             member["Di"][str(frame)] = member["Di"]["first"]
+        if str(frame) not in member["ir"]:
             member["Iy"][str(frame)] = member["Iy"]["first"]
             member["Iz"][str(frame)] = member["Iz"]["first"]
             member["J"][str(frame)] = member["J"]["first"]
