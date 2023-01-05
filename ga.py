@@ -26,13 +26,13 @@ def create_indivdual(chromosome):
     # get fitness
     calculation.transfer_analyze()
     if phaenotyp.ga_optimization == "simple":
-        geometry.update_members_pre()
         calculation.simple_sectional()
+        geometry.update_members_pre()
         calculation.transfer_analyze()
 
     if phaenotyp.ga_optimization == "complex":
-        geometry.update_members_pre()
         calculation.complex_sectional()
+        geometry.update_members_pre()
         calculation.transfer_analyze()
 
     if environment["fitness_function"] == "average_sigma":
