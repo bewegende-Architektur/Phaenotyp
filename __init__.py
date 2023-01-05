@@ -45,8 +45,6 @@ def create_data():
         data["loads_e"] = {}
         data["loads_f"] = {}
 
-        data["process"]["calculate_update_post"] = False
-        data["process"]["genetetic_mutation_update_post"] = False
         data["process"]["scipy_available"] = False
         data["process"]["done"] = False
 
@@ -683,13 +681,33 @@ class WM_OT_calculate_animation(Operator):
         members = scene["<Phaenotyp>"]["members"]
         frame = scene.frame_current
 
-        # activate calculation in update_post
-        data["process"]["calculate_update_post"] = True
-
-        # set animation to first frame and start
         start = bpy.context.scene.frame_start
-        bpy.context.scene.frame_current = start
-        bpy.ops.screen.animation_play()
+        end = bpy.context.scene.frame_end
+
+        for frame in range(start, end):
+            # update scene
+            bpy.context.scene.frame_current = frame
+            bpy.context.view_layer.update()
+
+            # calculate new properties for each member
+            geometry.update_members_pre()
+
+            # create on single job
+            calculation.start_job()
+
+            # update window (try to suppress warning)
+            # as suggested by Chebhou
+            # https://blender.stackexchange.com/questions/28673/update-viewport-while-running-script
+            bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
+
+        # wait for it and interweave results to data
+        calculation.join_jobs()
+        calculation.interweave_results()
+
+        # calculate new visualization-mesh
+        geometry.update_members_post()
+
+        basics.view_vertex_colors()
 
         return {"FINISHED"}
 
@@ -1095,8 +1113,6 @@ class WM_OT_reset(Operator):
         data["loads_e"] = {}
         data["loads_f"] = {}
 
-        data["process"]["calculate_update_post"] = False
-        data["process"]["genetetic_mutation_update_post"] = False
         data["process"]["scipy_available"] = False
         data["process"]["done"] = False
 
@@ -1438,47 +1454,19 @@ def update_post(scene):
             members = data["members"]
             frame = scene.frame_current
 
-            # Analyze Animation
-            if data["process"]["calculate_update_post"]:
-                # create on single job, wait for it and interweave results to data
-                geometry.update_members_pre()
-                calculation.start_job()
+            # check if a result is available for the first member
+            result_available = members[str(0)].get("axial")
+            if result_available:
+                # check if a result is available for the first member at frame
+                result_at_frame = result_available.get(str(frame))
+                if result_at_frame:
+                    geometry.update_members_post()
+                    data["process"]["done"] = True
 
-                # if animation finished
-                if bpy.context.scene.frame_end == bpy.context.scene.frame_current:
-                    # avoid to repeat at end
-                    bpy.ops.screen.animation_cancel()
-
-                    calculation.join_jobs()
-                    calculation.interweave_results()
-
-                    basics.view_vertex_colors()
-
-                    data["process"]["calculate_update_post"] = False
-                    print_data("calculation - done")
-
-            # Genetic Mutation (Analys in fitness function)
-            elif data["process"]["genetetic_mutation_update_post"]:
-                geometry.update_members_pre()
-                ga.update() # starts calculation
-                # avoid to repeat at end
-                if bpy.context.scene.frame_end == bpy.context.scene.frame_current:
-                    bpy.ops.screen.animation_cancel()
-                    data["process"]["genetetic_mutation_update_post"] = False
-                    print_data("calculation - done")
-
-            else:
-                # check if a result is available for the first member
-                result_available = members[str(0)].get("axial")
-                if result_available:
-                    # check if a result is available for the first member at frame
-                    result_at_frame = result_available.get(str(frame))
-                    if result_at_frame:
-                        geometry.update_members_post()
-                    else:
-                        # the process ist not done for this frame
-                        # some functions will be grayed out like optimization
-                        data["process"]["done"] = False
+                else:
+                    # the process ist not done for this frame
+                    # some functions will be grayed out like optimization
+                    data["process"]["done"] = False
 
 def register():
     from bpy.utils import register_class

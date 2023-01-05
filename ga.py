@@ -173,11 +173,14 @@ def update():
     obj = data["structure"]
     shape_keys = obj.data.shape_keys.key_blocks
     members = data["members"]
-    start = bpy.context.scene.frame_start
-    frame = bpy.context.scene.frame_current
 
     environment = data["ga_environment"]
     individuals = data["ga_individuals"]
+
+    new_generation_size = environment["new_generation_size"]
+    generation_id = environment["generation_id"]
+    start = bpy.context.scene.frame_start + new_generation_size*generation_id
+    frame = bpy.context.scene.frame_current
 
     if environment["ga_state"] == "create initial population":
         if len(individuals) <= environment["population_size"]:
@@ -205,6 +208,14 @@ def update():
                 bpy.context.scene.frame_current = start
                 environment["ga_state"] = "restart for optimization"
 
+            else:
+                # copy to population
+                for name, individual in individuals.items():
+                    environment["population"][name] = individual
+
+                environment["ga_state"] = "create new generation"
+
+
     elif environment["ga_state"] == "restart for optimization":
         if frame + start <= environment["population_size"]:
             if phaenotyp.ga_optimization == "simple":
@@ -226,32 +237,13 @@ def update():
             calculation.join_jobs()
             calculation.interweave_results()
 
-            bpy.ops.screen.animation_cancel() # for debuging only
-            environment["ga_state"] == "STOP" # for debuging only
-
-    else:
-        pass
-    '''
-            # get fitness
-            geometry.update_members_pre()
-            calculation.start_job()
-
-            # if animation finished
-            if bpy.context.scene.frame_end == bpy.context.scene.frame_current:
-                # avoid to repeat at end
-                bpy.ops.screen.animation_cancel()
-
-                calculation.join_jobs()
-                calculation.interweave_results()
-
             # copy to population
             for name, individual in individuals.items():
                 environment["population"][name] = individual
 
             environment["ga_state"] = "create new generation"
 
-
-    if environment["ga_state"] == "create new generation":
+    elif environment["ga_state"] == "create new generation":
         # sort previous population according to fitness
         list_result = []
         for name, individual in environment["population"].items():
@@ -290,7 +282,6 @@ def update():
         text = "best individual: " + str(environment["best"]["name"]) + " with fitness: " + str(environment["best"]["fitness"])
         print_data(text)
 
-
         # create empty list of a new generation
         new_generation = []
         text = "generation " + str(environment["generation_id"]) + ":"
@@ -304,8 +295,7 @@ def update():
 
         environment["ga_state"] = "populate new generation"
 
-
-    if environment["ga_state"] == "populate new generation":
+    elif environment["ga_state"] == "populate new generation":
         if len(environment["new_generation"]) < environment["new_generation_size"]:
             # pair best 50 % of the previous population
             random_number_1 = random.randint(0, int(environment["new_generation_size"]*0.5))
@@ -319,12 +309,23 @@ def update():
 
             chromosome = mate_chromosomes(parent_1["chromosome"], parent_2["chromosome"])
 
-            create_indivdual(chromosome)
-            name = str(frame)
-            individual = individuals[name]
-            environment["new_generation"][name] = individual # append to new_generation
+            create_indivdual(chromosome) # and change frame to shape key
+            geometry.update_members_pre() # update members after changed shapey key
+            calculation.start_job() # append to jobs
 
         if len(environment["new_generation"]) == environment["new_generation_size"]:
+            # wait for jobs to be done and intervewave into data
+            calculation.join_jobs()
+            calculation.interweave_results()
+
+            if phaenotyp.ga_optimization in ["simple", "complex"]:
+                # set frame to start again
+                bpy.context.scene.frame_current = start
+                environment["ga_state"] = "restart for optimization"
+
+            # calculate fitness
+            for name, individual in environment["new_generation"].items():
+                calculate_fitness(individual)
 
             # replace population with new_generation
             environment["population"] = {}
@@ -336,7 +337,9 @@ def update():
 
             # start new generation
             environment["ga_state"] = "create new generation"
-    '''
+
+    else:
+        pass
 
 
 def goto_indivual():
