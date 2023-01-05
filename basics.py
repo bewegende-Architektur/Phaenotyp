@@ -33,3 +33,16 @@ def delete_obj_if_name_contains(text):
     for obj in bpy.data.objects:
         if text in obj.name_full:
             bpy.data.objects.remove(obj, do_unlink=True)
+
+# change view to show vertex-colors
+def view_vertex_colors():
+    # change viewport to material
+    # based on approach from Hotox:
+    # https://devtalk.blender.org/t/how-to-change-view3dshading-type-in-2-8/3462
+    for area in bpy.context.screen.areas:
+        if area.type == 'VIEW_3D':
+            for space in area.spaces:
+                if space.type == 'VIEW_3D':
+                    space.shading.type = 'SOLID'
+                    space.shading.light = 'FLAT'
+                    space.shading.color_type = 'VERTEX'

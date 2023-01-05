@@ -5,6 +5,12 @@ from phaenotyp import basics, material
 from math import sqrt
 from math import tanh
 
+import multiprocessing
+manager = multiprocessing.Manager() # needed for mp
+feas = manager.dict() # is saving all calculations accesables by frame
+fea_jobs = [] # to store jobs
+
+
 def print_data(text):
     print("Phaenotyp |", text)
 
@@ -213,7 +219,6 @@ def run_fea(feas, truss, members, frame):
         truss.analyze(check_statics=False, sparse=True)
     else:
         truss.analyze(check_statics=False, sparse=False)
-
 
     fea = {}
 
@@ -491,6 +496,39 @@ def run_fea(feas, truss, members, frame):
     print_data(text)
 
     data["process"]["done"] = True
+
+def start_job():
+    scene = bpy.context.scene
+    data = scene["<Phaenotyp>"]
+    members = scene["<Phaenotyp>"]["members"]
+    frame = scene.frame_current
+
+    # append task to mp
+    # every calculation is one frame! (not every frame has a calculation)
+    # every calculation can be redone at the frame
+    fea_data = prepare_fea()
+    #calculation.run_fea(fea, frame)
+    # pass fea to job instead:
+    job = multiprocessing.Process(target=run_fea, args=(feas, fea_data, members, frame,))
+    fea_jobs.append(job)
+    job.start()
+
+def join_jobs():
+    # wait for all jobs to be done
+    for job in fea_jobs:
+        job.join()
+
+def interweave_results():
+    scene = bpy.context.scene
+    data = scene["<Phaenotyp>"]
+    members = scene["<Phaenotyp>"]["members"]
+
+    # retrieve result and weave into data
+    # retrieve result and weave into data
+    for fea_id, fea in feas.items():
+        for member_id, member in fea.items():
+            for result_name, result in member.items():
+                members[member_id][result_name][str(fea_id)] = result[str(fea_id)]
 
 def simple_sectional():
     scene = bpy.context.scene
