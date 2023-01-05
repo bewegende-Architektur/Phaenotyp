@@ -2,7 +2,7 @@ bl_info = {
     "name": "Phänotyp",
     "description": "Genetic optimization of architectural structures",
     "author": "bewegende Architektur e.U. and Karl Deix",
-    "version": (0, 1, 0),
+    "version": (0, 1, 1),
     "blender": (3, 4, 1),
     "location": "3D View > Tools",
 }
@@ -476,6 +476,7 @@ class WM_OT_set_profile(Operator):
 
                 # results
                 member["axial"] = {}
+                member["axial"] = {}
                 member["moment_y"] = {}
                 member["moment_z"] = {}
                 member["shear_y"] = {}
@@ -499,10 +500,10 @@ class WM_OT_set_profile(Operator):
                 member["max_sum_tau"] = {}
                 member["max_sigmav"] = {}
                 member["max_sigma"] = {}
-                member["acceptable_sigma_buckling"] = {} # <---------------- sonst doppelt?
+                member["acceptable_sigma_buckling"] = {}
                 member["lamda"] = {}
-                member["lever_arm"] = {} # lever_arm at eleven points of each member
-                member["max_lever_arm"] = {} # max value of lever_arm
+                member["lever_arm"] = {}
+                member["max_lever_arm"] = {}
                 member["initial_positions"] = {}
                 member["deflection"] = {}
                 member["overstress"] = {}
@@ -645,9 +646,52 @@ class WM_OT_calculate_single_frame(Operator):
     bl_description = "Calulate single frame"
 
     def execute(self, context):
+        scene = context.scene
+        phaenotyp = scene.phaenotyp
+        data = scene["<Phaenotyp>"]
+        members = scene["<Phaenotyp>"]["members"]
+        frame = bpy.context.scene.frame_current
+
+        # calculate new properties for each member
         geometry.update_members_pre()
-        calculation.transfer_analyze()
+
+        # append task to mp
+        # every calculation is one frame! (not every frame has a calculation)
+        # every calculation can be redone at the frame
+        fea_data = calculation.prepare_fea()
+        #calculation.run_fea(fea, frame)
+        # pass fea to job instead:
+        members = scene["<Phaenotyp>"]["members"]
+        job = multiprocessing.Process(target=calculation.run_fea, args=(feas, fea_data, members, frame,))
+        fea_jobs.append(job)
+        job.start()
+
+        # wait for all jobs to be done
+        for job in fea_jobs:
+            job.join()
+
+        # retrieve result and weave into data
+        # retrieve result and weave into data
+        for fea_id, fea in feas.items():
+            for member_id, member in fea.items():
+                for result_name, result in member.items():
+                    members[member_id][result_name][str(fea_id)] = result[str(fea_id)]
+                    print(result_name)
+                    #print(result[str(fea_id)])
+
+        # calculate new visualization-mesh
         geometry.update_members_post()
+
+        # change viewport to material
+        # based on approach from Hotox:
+        # https://devtalk.blender.org/t/how-to-change-view3dshading-type-in-2-8/3462
+        for area in bpy.context.screen.areas:
+            if area.type == 'VIEW_3D':
+                for space in area.spaces:
+                    if space.type == 'VIEW_3D':
+                        space.shading.type = 'SOLID'
+                        space.shading.light = 'FLAT'
+                        space.shading.color_type = 'VERTEX'
 
         return {"FINISHED"}
 
@@ -660,10 +704,19 @@ class WM_OT_calculate_animation(Operator):
         scene = context.scene
         phaenotyp = scene.phaenotyp
         data = scene["<Phaenotyp>"]
+        members = scene["<Phaenotyp>"]["members"]
+        frame = bpy.context.scene.frame_current
 
-        geometry.update_members_pre()
-        calculation.transfer_analyze()
-        geometry.update_members_post()
+        # change viewport to material
+        # based on approach from Hotox:
+        # https://devtalk.blender.org/t/how-to-change-view3dshading-type-in-2-8/3462
+        for area in bpy.context.screen.areas:
+            if area.type == 'VIEW_3D':
+                for space in area.spaces:
+                    if space.type == 'VIEW_3D':
+                        space.shading.type = 'SOLID'
+                        space.shading.light = 'FLAT'
+                        space.shading.color_type = 'VERTEX'
 
         # activate calculation in update_post
         data["process"]["calculate_update_post"] = True
@@ -685,7 +738,8 @@ class WM_OT_optimize_1(Operator):
 
         calculation.simple_sectional()
         geometry.update_members_pre()
-        calculation.transfer_analyze()
+        fea = calculation.prepare_fea()
+        result = calculation.run_fea(fea)
         geometry.update_members_post()
 
         return {"FINISHED"}
@@ -700,7 +754,8 @@ class WM_OT_optimize_2(Operator):
 
         calculation.complex_sectional()
         geometry.update_members_pre()
-        calculation.transfer_analyze()
+        fea = calculation.prepare_fea()
+        result = calculation.run_fea(fea)
         geometry.update_members_post()
 
         return {"FINISHED"}
@@ -1093,7 +1148,7 @@ class WM_OT_reset(Operator):
         return {"FINISHED"}
 
 class OBJECT_PT_Phaenotyp(Panel):
-    bl_label = "Phänotyp 0.1.0"
+    bl_label = "Phänotyp 0.1.1"
     bl_idname = "OBJECT_PT_custom_panel"
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
@@ -1395,23 +1450,56 @@ classes = (
     OBJECT_PT_Phaenotyp
 )
 
+# copy to better position
+import multiprocessing
+manager = multiprocessing.Manager() # needed for mp
+feas = manager.dict() # is saving all calculations accesables by frame
+fea_jobs = [] # to store jobs
+
 @persistent
 def update_post(scene):
     phaenotyp = scene.phaenotyp
     data = scene["<Phaenotyp>"]
+    frame = scene.frame_current
 
     geometry.update_members_pre()
 
     # Analyze Animation
     if data["process"]["calculate_update_post"]:
-        calculation.transfer_analyze()
+        # append task to mp
+        # every calculation is one frame! (not every frame has a calculation)
+        # every calculation can be redone at the frame
+        fea_data = calculation.prepare_fea()
+        #calculation.run_fea(fea, frame)
+        # pass fea to job instead:
+        members = scene["<Phaenotyp>"]["members"]
+        job = multiprocessing.Process(target=calculation.run_fea, args=(feas, fea_data, members, frame,))
+        fea_jobs.append(job)
+        job.start()
 
         # avoid to repeat at end
         if bpy.context.scene.frame_end == bpy.context.scene.frame_current:
             bpy.ops.screen.animation_cancel()
+
+            # wait for all jobs to be done
+            for job in fea_jobs:
+                job.join()
+
+            # retrieve result and weave into data
+            for fea_id, fea in feas.items():
+                for member_id, member in fea.items():
+                    for result_name, result in member.items():
+                        members[member_id][result_name][str(fea_id)] = result[str(fea_id)]
+
+
             data["process"]["calculate_update_post"] = False
             print_data("calculation - done")
 
+    else:
+        geometry.update_members_post()
+
+    # in animation packen?
+    '''
     # Genetic Mutation (Analys in fitness function)
     if data["process"]["genetetic_mutation_update_post"]:
         ga.update()
@@ -1420,8 +1508,9 @@ def update_post(scene):
             bpy.ops.screen.animation_cancel()
             data["process"]["genetetic_mutation_update_post"] = False
             print_data("calculation - done")
+    '''
 
-    geometry.update_members_post()
+    #geometry.update_members_post()
 
 def register():
     from bpy.utils import register_class

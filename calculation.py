@@ -5,6 +5,9 @@ from phaenotyp import basics, material
 from math import sqrt
 from math import tanh
 
+def print_data(text):
+    print("Phaenotyp |", text)
+
 def check_scipy():
     scene = bpy.context.scene
     data = scene["<Phaenotyp>"]
@@ -16,7 +19,7 @@ def check_scipy():
     except:
         data["scipy_available"] = False
 
-def transfer_analyze():
+def prepare_fea():
     scene = bpy.context.scene
     phaenotyp = scene.phaenotyp
     data = scene["<Phaenotyp>"]
@@ -192,14 +195,64 @@ def transfer_analyze():
             z = edge_load_area_z[i]
             truss.add_member_dist_load(name, 'FZ', z, z)
 
+    return truss
+
+def run_fea(feas, truss, members, frame):
+    # the variables turss, members and frame are passed to mp
+    # this variables can not be returned with multiprocessing
+    # instead of this a dict with multiprocessing.Manager is created
+    # the dict feas stores one anlysis for each frame
+    # the dict fea is created temporarily in run_fea and is wirrten to feas
+
+    scene = bpy.context.scene
+    phaenotyp = scene.phaenotyp
+    data = scene["<Phaenotyp>"]
+
     # analyze the model
     if data["scipy_available"] and phaenotyp.use_scipy:
         truss.analyze(check_statics=False, sparse=True)
     else:
         truss.analyze(check_statics=False, sparse=False)
 
+
+    fea = {}
+
     # get forces
     for id, member in members.items():
+        result = {} # stores result for one member
+
+        result["axial"] = {}
+        result["moment_y"] = {}
+        result["moment_z"] = {}
+        result["shear_y"] = {}
+        result["shear_z"] = {}
+        result["torque"] = {}
+        result["sigma"] = {}
+
+        result["ir"] = {}
+        result["Wy"] = {}
+        result["WJ"] = {}
+
+        result["long_stress"] = {}
+        result["tau_shear"] = {}
+        result["tau_torsion"] = {}
+        result["sum_tau"] = {}
+        result["sigmav"] = {}
+        result["sigma"] = {}
+        result["max_long_stress"] = {}
+        result["max_tau_shear"] = {}
+        result["max_tau_torsion"] = {}
+        result["max_sum_tau"] = {}
+        result["max_sigmav"] = {}
+        result["max_sigma"] = {}
+        result["acceptable_sigma_buckling"] = {}
+        result["lamda"] = {}
+        result["lever_arm"] = {}
+        result["max_lever_arm"] = {}
+        member["initial_positions"] = {} # <----------------- nicht verwendet?
+        result["deflection"] = {}
+        result["overstress"] = {}
+
         id = str(id)
         name = "member_" + str(id)
         L = truss.Members[name].L() # Member length
@@ -210,63 +263,63 @@ def transfer_analyze():
             axial_pos = truss.Members[name].axial(x=L/10*i)
             axial_pos = axial_pos * (-1) # Druckkraft gleich minus
             axial.append(axial_pos)
-        member["axial"][str(frame)] = axial
+        result["axial"][str(frame)] = axial
 
         # buckling
-        member["ir"][str(frame)] = sqrt(member["J"][str(frame)]/member["A"][str(frame)]) # für runde Querschnitte in  cm
+        result["ir"][str(frame)] = sqrt(member["J"][str(frame)]/member["A"][str(frame)]) # für runde Querschnitte in  cm
 
         moment_y = []
         for i in range(11): # get the forces at 11 positions and
             moment_y_pos = truss.Members[name].moment("My", x=L/10*i)
             moment_y.append(moment_y_pos)
-        member["moment_y"][str(frame)] = moment_y
+        result["moment_y"][str(frame)] = moment_y
 
         moment_z = []
         for i in range(11): # get the forces at 11 positions and
             moment_z_pos = truss.Members[name].moment("Mz", x=L/10*i)
             moment_z.append(moment_z_pos)
-        member["moment_z"][str(frame)] = moment_z
+        result["moment_z"][str(frame)] = moment_z
 
         shear_y = []
         for i in range(11): # get the forces at 11 positions and
             shear_y_pos = truss.Members[name].shear("Fy", x=L/10*i)
             shear_y.append(shear_y_pos)
-        member["shear_y"][str(frame)] = shear_y
+        result["shear_y"][str(frame)] = shear_y
 
         shear_z = []
         for i in range(11): # get the forces at 11 positions and
             shear_z_pos = truss.Members[name].shear("Fz", x=L/10*i)
             shear_z.append(shear_z_pos)
-        member["shear_z"][str(frame)] = shear_z
+        result["shear_z"][str(frame)] = shear_z
 
         torque = []
         for i in range(11): # get the forces at 11 positions and
             torque_pos = truss.Members[name].torque(x=L/10*i)
             torque.append(torque_pos)
-        member["torque"][str(frame)] = torque
+        result["torque"][str(frame)] = torque
 
 
         # modulus from the moments of area
         #(Wy and Wz are the same within a pipe)
-        member["Wy"][str(frame)] = member["Iy"][str(frame)]/(member["Do"][str(frame)]/2)
+        result["Wy"][str(frame)] = member["Iy"][str(frame)]/(member["Do"][str(frame)]/2)
 
         # polar modulus of torsion
-        member["WJ"][str(frame)] = member["J"][str(frame)]/(member["Do"][str(frame)]/2)
+        result["WJ"][str(frame)] = member["J"][str(frame)]/(member["Do"][str(frame)]/2)
 
         # calculation of the longitudinal stresses
         long_stress = []
         for i in range(11): # get the stresses at 11 positions and
             moment_h = sqrt(moment_y[i]**2+moment_z[i]**2)
             if axial[i] > 0:
-                s = axial[i]/member["A"][str(frame)] + moment_h/member["Wy"][str(frame)]
+                s = axial[i]/member["A"][str(frame)] + moment_h/result["Wy"][str(frame)]
             else:
-                s = axial[i]/member["A"][str(frame)] - moment_h/member["Wy"][str(frame)]
+                s = axial[i]/member["A"][str(frame)] - moment_h/result["Wy"][str(frame)]
             long_stress.append(s)
 
         # get max stress of the beam
         # (can be positive or negative)
-        member["long_stress"][str(frame)] = long_stress
-        member["max_long_stress"][str(frame)] = basics.return_max_diff_to_zero(long_stress) #  -> is working as fitness
+        result["long_stress"][str(frame)] = long_stress
+        result["max_long_stress"][str(frame)] = basics.return_max_diff_to_zero(long_stress) #  -> is working as fitness
 
         # calculation of the shear stresses from shear force
         # (always positive)
@@ -279,19 +332,19 @@ def transfer_analyze():
         # get max shear stress of shear force of the beam
         # shear stress is mostly small compared to longitudinal
         # in common architectural usage and only importand with short beam lenght
-        member["tau_shear"][str(frame)] = tau_shear
-        member["max_tau_shear"][str(frame)] = max(tau_shear)
+        result["tau_shear"][str(frame)] = tau_shear
+        result["max_tau_shear"][str(frame)] = max(tau_shear)
 
         # Calculation of the torsion stresses
         # (always positiv)
         tau_torsion = []
         for i in range(11): # get the stresses at 11 positions and
-            tau = abs(torque[i]/member["WJ"][str(frame)])
+            tau = abs(torque[i]/result["WJ"][str(frame)])
             tau_torsion.append(tau)
 
         # get max torsion stress of the beam
-        member["tau_torsion"][str(frame)] = tau_torsion
-        member["max_tau_torsion"][str(frame)] = max(tau_torsion)
+        result["tau_torsion"][str(frame)] = tau_torsion
+        result["max_tau_torsion"][str(frame)] = max(tau_torsion)
 
         # torsion stress is mostly small compared to longitudinal
         # in common architectural usage
@@ -303,8 +356,8 @@ def transfer_analyze():
             tau = tau_shear[0] + tau_torsion[0]
             sum_tau.append(tau)
 
-        member["sum_tau"][str(frame)] = sum_tau
-        member["max_sum_tau"][str(frame)] = max(sum_tau)
+        result["sum_tau"][str(frame)] = sum_tau
+        result["max_sum_tau"][str(frame)] = max(sum_tau)
 
         # combine shear and torque
         sigmav = []
@@ -312,49 +365,50 @@ def transfer_analyze():
             sv = sqrt(long_stress[0]**2 + 3*sum_tau[0]**2)
             sigmav.append(sv)
 
-        member["sigmav"][str(frame)] = sigmav
-        member["max_sigmav"][str(frame)] = max(sigmav)
+        result["sigmav"][str(frame)] = sigmav
+        result["max_sigmav"][str(frame)] = max(sigmav)
         # check out: http://www.bs-wiki.de/mediawiki/index.php?title=Festigkeitsberechnung
 
-        member["sigma"][str(frame)] = member["long_stress"][str(frame)]
-        member["max_sigma"][str(frame)] = member["max_long_stress"][str(frame)]
+        result["sigma"][str(frame)] = result["long_stress"][str(frame)]
+        result["max_sigma"][str(frame)] = result["max_long_stress"][str(frame)]
 
         # for the definition of the fitness criteria prepared
         # max longitudinal stress for steel St360 in kN/cm²
         # tensile strength: 36 kN/cm², yield point 23.5 kN/cm²
-        member["overstress"][str(frame)] = False
+        result["overstress"][str(frame)] = False
 
         # for example ["steel_S235", "steel S235", 21000, 8100, 7.85, 16.0, 9.5, 10.5, 23.5, knick_model235],
-        if abs(member["max_sigma"][str(frame)]) > member["acceptable_sigma"]:
-            member["overstress"][str(frame)] = True
+        if abs(result["max_sigma"][str(frame)]) > member["acceptable_sigma"]:
+            result["overstress"][str(frame)] = True
 
-        if abs(member["max_tau_shear"][str(frame)]) > member["acceptable_shear"]:
-            member["overstress"][str(frame)] = True
+        if abs(result["max_tau_shear"][str(frame)]) > member["acceptable_shear"]:
+            result["overstress"][str(frame)] = True
 
-        if abs(member["max_tau_torsion"][str(frame)]) > member["acceptable_torsion"]:
-            member["overstress"][str(frame)] = True
+        if abs(result["max_tau_torsion"][str(frame)]) > member["acceptable_torsion"]:
+            result["overstress"][str(frame)] = True
 
-        if abs(member["max_sigmav"][str(frame)]) > member["acceptable_sigmav"]:
-            member["overstress"][str(frame)] = True
+        if abs(result["max_sigmav"][str(frame)]) > member["acceptable_sigmav"]:
+            result["overstress"][str(frame)] = True
 
         # buckling
-        if member["axial"][str(frame)][0] < 0: # nur für Druckstäbe - axial ist überall im Stab gleich?
-            member["lamda"][str(frame)] = L*0.5/member["ir"][str(frame)] # für eingespannte Stäbe ist die Knicklänge 0.5 der Stablänge L, Stablänge muss in cm sein !
-            if member["lamda"][str(frame)] > 20: # für lamda < 20 (kurze Träger) gelten die default-Werte)
+        if result["axial"][str(frame)][0] < 0: # nur für Druckstäbe - axial ist überall im Stab gleich?
+            result["lamda"][str(frame)] = L*0.5/result["ir"][str(frame)] # für eingespannte Stäbe ist die Knicklänge 0.5 der Stablänge L, Stablänge muss in cm sein !
+            if result["lamda"][str(frame)] > 20: # für lamda < 20 (kurze Träger) gelten die default-Werte)
                 kn = member["knick_model"]
                 function_to_run = poly1d(polyfit(material.kn_lamda, kn, 6))
-                member["acceptable_sigma_buckling"][str(frame)] = function_to_run(member["lamda"][str(frame)])
-                if member["lamda"][str(frame)] > 250: # Schlankheit zu schlank
-                    member["overstress"][str(frame)] = True
-                if abs(member["acceptable_sigma_buckling"][str(frame)]) > abs(member["max_sigma"][str(frame)]): # Sigma
-                    member["overstress"][str(frame)] = True
+                result["acceptable_sigma_buckling"][str(frame)] = function_to_run(result["lamda"][str(frame)])
+                if result["lamda"][str(frame)] > 250: # Schlankheit zu schlank
+                    result["overstress"][str(frame)] = True
+                if abs(result["acceptable_sigma_buckling"][str(frame)]) > abs(result["max_sigma"][str(frame)]): # Sigma
+                    result["overstress"][str(frame)] = True
 
             else:
-                member["acceptable_sigma_buckling"][str(frame)] = member["acceptable_sigma"]
+                result["acceptable_sigma_buckling"][str(frame)] = member["acceptable_sigma"]
 
         # without buckling
         else:
-            member["acceptable_sigma_buckling"][str(frame)] = member["acceptable_sigma"]
+            result["acceptable_sigma_buckling"][str(frame)] = member["acceptable_sigma"]
+            result["lamda"][str(frame)] = None # to avoid missing KeyError
 
         # lever_arm
         lever_arm = []
@@ -362,16 +416,16 @@ def transfer_analyze():
             moment_h = sqrt(moment_y[i]**2+moment_z[i]**2)
 
             # to avoid division by zero
-            if member["axial"][str(frame)][i] < 0.1:
+            if result["axial"][str(frame)][i] < 0.1:
                 lv = moment_h / 0.1
             else:
-                lv = moment_h / member["axial"][str(frame)][i]
+                lv = moment_h / result["axial"][str(frame)][i]
 
             lv = abs(lv) # absolute highest value within member
             lever_arm.append(lv)
 
-        member["lever_arm"][str(frame)] = lever_arm
-        member["max_lever_arm"][str(frame)] = max(lever_arm)
+        result["lever_arm"][str(frame)] = lever_arm
+        result["max_lever_arm"][str(frame)] = max(lever_arm)
 
         # deflection
         deflection = []
@@ -427,20 +481,14 @@ def transfer_analyze():
 
             deflection.append([x,y,z])
 
+        result["deflection"][str(frame)] = deflection
 
-        member["deflection"][str(frame)] = deflection
+        fea[str(id)] = result
 
-    # change viewport to material
-    # based on approach from Hotox:
-    # https://devtalk.blender.org/t/how-to-change-view3dshading-type-in-2-8/3462
-    for area in bpy.context.screen.areas:
-        if area.type == 'VIEW_3D':
-            for space in area.spaces:
-                if space.type == 'VIEW_3D':
-                    space.shading.type = 'SOLID'
-                    space.shading.light = 'FLAT'
-                    space.shading.color_type = 'VERTEX'
+    feas[str(frame)] = fea
 
+    text = "multiprocessing job:", str(frame), "done"
+    print_data(text)
 
     data["process"]["done"] = True
 
