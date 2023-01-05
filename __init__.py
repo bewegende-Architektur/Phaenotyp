@@ -347,9 +347,6 @@ class WM_OT_set_structure(Operator):
         data["structure"] = bpy.context.active_object
         bpy.ops.object.mode_set(mode="EDIT")
 
-        # if user is changing the setup, the visualization is disabled
-        data["process"]["done"] = False
-
         # check for scipy
         calculation.check_scipy()
 
@@ -456,11 +453,14 @@ class WM_OT_set_profile(Operator):
                 member["d"] = material.current["d"] # from gui
 
                 # this variables can change per frame
+                # the key "first" is used to store the user-input of each member
+                # this is importand, if a user is chaning the frame during the
+                # input for some reason
                 member["Do"] = {}
                 member["Di"] = {}
 
-                member["Do"][str(frame)] = material.current["Do"] # from gui
-                member["Di"][str(frame)] = material.current["Di"] # from fui
+                member["Do"]["first"] = material.current["Do"] # from gui
+                member["Di"]["first"] = material.current["Di"] # from fui
 
                 member["Iy"] = {}
                 member["Iz"] = {}
@@ -468,11 +468,11 @@ class WM_OT_set_profile(Operator):
                 member["A"] = {}
                 member["kg"] = {}
 
-                member["Iy"][str(frame)] = material.current["Iy"] # from gui
-                member["Iz"][str(frame)] = material.current["Iz"] # from gui
-                member["J"][str(frame)] = material.current["J"] # from gui
-                member["A"][str(frame)] = material.current["A"] # from gui
-                member["kg"][str(frame)] = material.current["kg"] # from gui
+                member["Iy"]["first"] = material.current["Iy"] # from gui
+                member["Iz"]["first"] = material.current["Iz"] # from gui
+                member["J"]["first"] = material.current["J"] # from gui
+                member["A"]["first"] = material.current["A"] # from gui
+                member["kg"]["first"] = material.current["kg"] # from gui
 
                 # results
                 member["axial"] = {}
@@ -680,7 +680,7 @@ class WM_OT_calculate_animation(Operator):
         phaenotyp = scene.phaenotyp
         data = scene["<Phaenotyp>"]
         members = scene["<Phaenotyp>"]["members"]
-        frame = bpy.context.scene.frame_current
+        frame = scene.frame_current
 
         # activate calculation in update_post
         data["process"]["calculate_update_post"] = True
@@ -1424,42 +1424,54 @@ classes = (
 
 @persistent
 def update_post(scene):
-    phaenotyp = scene.phaenotyp
-    data = scene["<Phaenotyp>"]
-    members = scene["<Phaenotyp>"]["members"]
-    frame = scene.frame_current
+    # only run if Phanotyp is used
+    data_available = scene.get("members")
+    if data_available:
+        phaenotyp = scene.phaenotyp
 
-    geometry.update_members_pre()
+        # only run if member is available
+        members_available = data.get("members")
+        if members_available:
+            data = scene["<Phaenotyp>"]
+            members = data["members"]
+            frame = scene.frame_current
 
-    # Analyze Animation
-    if data["process"]["calculate_update_post"]:
-        # create on single job, wait for it and interweave results to data
-        calculation.start_job()
+            # Analyze Animation
+            if data["process"]["calculate_update_post"]:
+                # create on single job, wait for it and interweave results to data
+                geometry.update_members_pre()
+                calculation.start_job()
 
-        # if animation finished
-        if bpy.context.scene.frame_end == bpy.context.scene.frame_current:
-            # avoid to repeat at end
-            bpy.ops.screen.animation_cancel()
+                # if animation finished
+                if bpy.context.scene.frame_end == bpy.context.scene.frame_current:
+                    # avoid to repeat at end
+                    bpy.ops.screen.animation_cancel()
 
-            calculation.join_jobs()
-            calculation.interweave_results()
+                    calculation.join_jobs()
+                    calculation.interweave_results()
 
-            basics.view_vertex_colors()
+                    basics.view_vertex_colors()
 
-            data["process"]["calculate_update_post"] = False
-            print_data("calculation - done")
+                    data["process"]["calculate_update_post"] = False
+                    print_data("calculation - done")
 
-    # Genetic Mutation (Analys in fitness function)
-    elif data["process"]["genetetic_mutation_update_post"]:
-        ga.update() # starts calculation
-        # avoid to repeat at end
-        if bpy.context.scene.frame_end == bpy.context.scene.frame_current:
-            bpy.ops.screen.animation_cancel()
-            data["process"]["genetetic_mutation_update_post"] = False
-            print_data("calculation - done")
+            # Genetic Mutation (Analys in fitness function)
+            elif data["process"]["genetetic_mutation_update_post"]:
+                geometry.update_members_pre()
+                ga.update() # starts calculation
+                # avoid to repeat at end
+                if bpy.context.scene.frame_end == bpy.context.scene.frame_current:
+                    bpy.ops.screen.animation_cancel()
+                    data["process"]["genetetic_mutation_update_post"] = False
+                    print_data("calculation - done")
 
-    else:
-        geometry.update_members_post()
+            else:
+                # check if a result is available
+                result_available = members[0].get(["axial"])
+                if result_available:
+                    result_at_frame = result_available.get(str(frame))
+                    if result_at_frame:
+                        geometry.update_members_post()
 
 def register():
     from bpy.utils import register_class
