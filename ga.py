@@ -33,7 +33,6 @@ def create_indivdual(chromosome):
 
 def calculate_fitness(individual):
     scene = bpy.context.scene
-    phaenotyp = scene.phaenotyp
     data = scene["<Phaenotyp>"]
     obj = data["structure"]
 
@@ -42,7 +41,6 @@ def calculate_fitness(individual):
 
     environment = data["ga_environment"]
     individuals = data["ga_individuals"]
-
 
     if environment["fitness_function"] == "average_sigma":
         forces = []
@@ -169,11 +167,13 @@ def mate_chromosomes(chromosome_1, chromosome_2):
 
 def update():
     scene = bpy.context.scene
+    phaenotyp = scene.phaenotyp
     data = scene["<Phaenotyp>"]
     data = scene["<Phaenotyp>"]
     obj = data["structure"]
     shape_keys = obj.data.shape_keys.key_blocks
     members = data["members"]
+    start = bpy.context.scene.frame_start
     frame = bpy.context.scene.frame_current
 
     environment = data["ga_environment"]
@@ -200,13 +200,36 @@ def update():
             for name, individual in individuals.items():
                 calculate_fitness(individual)
 
-            #if phaenotyp.ga_optimization in ["simple", "complex"]:
-            #    environment["ga_state"] = "restart for optimization"
+            if phaenotyp.ga_optimization in ["simple", "complex"]:
+                # set frame to start again
+                bpy.context.scene.frame_current = start
+                environment["ga_state"] = "restart for optimization"
+
+    elif environment["ga_state"] == "restart for optimization":
+        if frame + start <= environment["population_size"]:
+            if phaenotyp.ga_optimization == "simple":
+                calculation.simple_sectional()
+
+            if phaenotyp.ga_optimization == "complex":
+                calculation.complex_sectional()
+
+            # apply shape keys
+            chromosome = individuals[str(frame)]["chromosome"]
+            for id, key in enumerate(shape_keys):
+                if id > 0: # to exlude basis
+                    key.value = chromosome[id-1]*0.1
+
+            geometry.update_members_pre()
+            calculation.start_job()
+
+        else:
+            calculation.join_jobs()
+            calculation.interweave_results()
 
             bpy.ops.screen.animation_cancel() # for debuging only
             environment["ga_state"] == "STOP" # for debuging only
 
-    if environment["ga_state"] == "restart for optimization":
+    else:
         pass
     '''
             # get fitness
@@ -313,7 +336,8 @@ def update():
 
             # start new generation
             environment["ga_state"] = "create new generation"
-        '''
+    '''
+
 
 def goto_indivual():
     scene = bpy.context.scene
