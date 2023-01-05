@@ -31,14 +31,14 @@ def create_indivdual(chromosome):
     text = "new individual frame:" + str(frame) + " " + str(chromosome)
     print_data(text)
 
-def get_fitness(individual):
+def calculate_fitness(individual):
     scene = bpy.context.scene
     phaenotyp = scene.phaenotyp
     data = scene["<Phaenotyp>"]
     obj = data["structure"]
-    shape_keys = obj.data.shape_keys.key_blocks
+
     members = data["members"]
-    frame = bpy.context.scene.frame_current
+    frame = individual["name"]
 
     environment = data["ga_environment"]
     individuals = data["ga_individuals"]
@@ -110,7 +110,15 @@ def get_fitness(individual):
 
     individual["fitness"] = fitness
 
-    text = "individual:" + individual["name"] + " " + str(individual["chromosome"]) + ", fitness: " + str(individual["fitness"])
+    # get text from chromosome
+    str_chromosome = "["
+    for gene in individual["chromosome"]:
+        str_chromosome += str(round(gene, 3))
+        str_chromosome += ", "
+    str_chromosome[-1]
+    str_chromosome += "]"
+
+    text = "individual: " + individual["name"] + " " + str_chromosome + ", fitness: " + str(individual["fitness"])
     print_data(text)
 
 def mate_chromosomes(chromosome_1, chromosome_2):
@@ -172,19 +180,31 @@ def update():
     individuals = data["ga_individuals"]
 
     if environment["ga_state"] == "create initial population":
-        if len(individuals) < environment["population_size"]:
+        if len(individuals) <= environment["population_size"]:
             # create chromosome with set of shapekeys (random for first population)
             chromosome = []
             for gnome_len in range(len(shape_keys)-1): # -1 to exlude basis
                 gene = random.choice(environment["genes"])
                 chromosome.append(gene)
 
-            create_indivdual(chromosome)
+            create_indivdual(chromosome) # and change frame to shape key
+            geometry.update_members_pre() # update members after changed shapey key
+            calculation.start_job() # append to jobs
 
         else:
-            # run twice if optimization is activated
-            if phaenotyp.ga_optimization in ["simple", "complex"]:
-                environment["ga_state"] = "restart for optimization"
+            # wait for jobs to be done and intervewave into data
+            calculation.join_jobs()
+            calculation.interweave_results()
+
+            # calculate fitness
+            for name, individual in individuals.items():
+                calculate_fitness(individual)
+
+            #if phaenotyp.ga_optimization in ["simple", "complex"]:
+            #    environment["ga_state"] = "restart for optimization"
+
+            bpy.ops.screen.animation_cancel() # for debuging only
+            environment["ga_state"] == "STOP" # for debuging only
 
     if environment["ga_state"] == "restart for optimization":
         pass

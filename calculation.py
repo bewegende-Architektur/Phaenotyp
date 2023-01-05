@@ -492,7 +492,7 @@ def run_fea(feas, truss, members, frame):
 
     feas[str(frame)] = fea
 
-    text = "multiprocessing job:", str(frame), "done"
+    text = "multiprocessing job: " + str(frame) + " done"
     print_data(text)
 
     data["process"]["done"] = True
