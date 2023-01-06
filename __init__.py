@@ -256,6 +256,14 @@ class phaenotyp_properties(PropertyGroup):
         max = 100
         )
 
+    generations: IntProperty(
+        name = "generations",
+        description="Amount of generations",
+        default = 10,
+        min = 1,
+        max = 100
+        )
+
     fitness_function: EnumProperty(
         name = "fitness_function",
         description = "Fitness function",
@@ -682,7 +690,7 @@ class WM_OT_calculate_animation(Operator):
         frame = scene.frame_current
 
         start = bpy.context.scene.frame_start
-        end = bpy.context.scene.frame_end
+        end = bpy.context.scene.frame_end + start
 
         for frame in range(start, end):
             # update scene
@@ -777,6 +785,7 @@ class WM_OT_ga_start(Operator):
         # pass from gui
         data["ga_environment"]["population_size"] = phaenotyp.population_size
         data["ga_environment"]["elitism"] = phaenotyp.elitism
+        data["ga_environment"]["generations"] = phaenotyp.generations
         data["ga_environment"]["new_generation_size"] = phaenotyp.population_size - phaenotyp.elitism
         data["ga_environment"]["fitness_function"] = phaenotyp.fitness_function
 
@@ -785,17 +794,52 @@ class WM_OT_ga_start(Operator):
         data["ga_environment"]["new_generation"] = {}
         data["ga_environment"]["generation_id"] = 1
         data["ga_environment"]["genes"] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
-        data["ga_environment"]["ga_state"] = "create initial population"
         data["ga_environment"]["best"] = None
         data["ga_individuals"] = {}
 
-        # activate calculation in update_post
-        data["process"]["genetetic_mutation_update_post"] = True
+        # shorten
+        population_size = data["ga_environment"]["population_size"]
+        elitism = data["ga_environment"]["elitism"]
+        generations = data["ga_environment"]["generations"]
+        new_generation_size = data["ga_environment"]["new_generation_size"]
+        fitness_function = data["ga_environment"]["fitness_function"]
+        generation_id = data["ga_environment"]["generation_id"]
 
-        # set animation to first frame and start
-        start = bpy.context.scene.frame_start
-        bpy.context.scene.frame_current = start
-        bpy.ops.screen.animation_play()
+        # create start and end of calculation and create individuals
+        start = 0
+        end = population_size
+
+        # set frame_start to 0
+        bpy.context.scene.frame_start = start
+        # set frame_end to first size of inital population
+        bpy.context.scene.frame_end = end
+
+        ga.create_initial_individuals(start, end)
+
+        # optimize if sectional performance if activated
+        if phaenotyp.ga_optimization in ["simple", "complex"]:
+            ga.sectional_optimization(start, end)
+
+        ga.calculate_fitness(start, end)
+        ga.populate_initial_population()
+
+        # replace range
+        for i in range(generations):
+            start = end
+            end = start + new_generation_size
+
+            # expand frame
+            bpy.context.scene.frame_end = end
+
+            ga.do_elitism(start, end)
+            ga.create_new_individuals(start, end)
+            if phaenotyp.ga_optimization in ["simple", "complex"]:
+                ga.sectional_optimization(start, end)
+            ga.calculate_fitness(start, end)
+            ga.populate_new_generation(start, end)
+            #ga.replace_population()
+
+        basics.view_vertex_colors()
 
         return {"FINISHED"}
 
@@ -1329,6 +1373,7 @@ class OBJECT_PT_Phaenotyp(Panel):
                         box_ga.label(text="Genetic Mutation:")
                         box_ga.prop(phaenotyp, "population_size", text="Size of population for GA")
                         box_ga.prop(phaenotyp, "elitism", text="Size of elitism for GA")
+                        box_ga.prop(phaenotyp, "generations", text="'Amount of generations'")
                         box_ga.prop(phaenotyp, "fitness_function", text="Fitness function")
                         box_ga.prop(phaenotyp, "mate_type", text="Type of mating")
                         box_ga.prop(phaenotyp, "ga_optimization", text="Sectional optimization")

@@ -28,96 +28,110 @@ def create_indivdual(chromosome):
     individual["chromosome"] = chromosome
     individuals[str(frame)] = individual
 
-    text = "new individual frame:" + str(frame) + " " + str(chromosome)
-    print_data(text)
+    #text = "new individual frame:" + str(frame) + " " + str(chromosome)
+    #print_data(text)
 
-def calculate_fitness(individual):
+def calculate_fitness(start, end):
     scene = bpy.context.scene
+    phaenotyp = scene.phaenotyp
     data = scene["<Phaenotyp>"]
     obj = data["structure"]
-
     members = data["members"]
-    frame = individual["name"]
 
     environment = data["ga_environment"]
     individuals = data["ga_individuals"]
 
-    if environment["fitness_function"] == "average_sigma":
-        forces = []
-        for id, member in members.items():
-            force = member["max_sigma"][str(frame)]
-            forces.append(force)
+    # calculate fitness
+    for frame in range(start, end):
+        individual = individuals[str(frame)]
+        scene = bpy.context.scene
+        data = scene["<Phaenotyp>"]
+        obj = data["structure"]
 
-        # average
-        sum_forces = 0
-        for force in forces:
-            sum_forces = sum_forces + abs(force)
+        members = data["members"]
+        frame = individual["name"]
 
-        fitness = sum_forces / len(forces)
+        environment = data["ga_environment"]
+        individuals = data["ga_individuals"]
 
-    if environment["fitness_function"] == "member_sigma":
-        forces = []
-        for id, member in members.items():
-            force = member["max_sigma"][str(frame)]
-            forces.append(force)
+        if environment["fitness_function"] == "average_sigma":
+            forces = []
+            for id, member in members.items():
+                force = member["max_sigma"][str(frame)]
+                forces.append(force)
 
-        fitness = return_max_diff_to_zero(forces)
-        fitness = abs(fitness)
+            # average
+            sum_forces = 0
+            for force in forces:
+                sum_forces = sum_forces + abs(force)
 
-    if environment["fitness_function"] == "volume":
-        dg = bpy.context.evaluated_depsgraph_get()
-        obj = scene["<Phaenotyp>"]["structure"].evaluated_get(dg)
-        mesh = obj.to_mesh(preserve_all_data_layers=True, depsgraph=dg)
+            fitness = sum_forces / len(forces)
 
-        bm = bmesh.new()
-        bm.from_mesh(mesh)
+        if environment["fitness_function"] == "member_sigma":
+            forces = []
+            for id, member in members.items():
+                force = member["max_sigma"][str(frame)]
+                forces.append(force)
 
-        volume = bm.calc_volume()
-        negative_volume = volume * (-1) # in order to make the highest volume the best fitness
-        fitness = negative_volume
+            fitness = return_max_diff_to_zero(forces)
+            fitness = abs(fitness)
 
-    if environment["fitness_function"] == "weight":
-        for id, member in members.items():
-            force = member["max_sigma"][str(frame)]
-            forces.append(force)
+        if environment["fitness_function"] == "volume":
+            dg = bpy.context.evaluated_depsgraph_get()
+            obj = scene["<Phaenotyp>"]["structure"].evaluated_get(dg)
+            mesh = obj.to_mesh(preserve_all_data_layers=True, depsgraph=dg)
 
-    if environment["fitness_function"] == "lever_arm_truss":
-        forces = []
-        for id, member in members.items():
-            force = member["max_lever_arm"][str(frame)]
-            forces.append(force)
+            bm = bmesh.new()
+            bm.from_mesh(mesh)
 
-        sum_forces = 0
-        for force in forces:
-            sum_forces = sum_forces + abs(force)
+            volume = bm.calc_volume()
+            negative_volume = volume * (-1) # in order to make the highest volume the best fitness
+            fitness = negative_volume
 
-        fitness = sum_forces *(-1)
+        if environment["fitness_function"] == "weight":
+            for id, member in members.items():
+                force = member["max_sigma"][str(frame)]
+                forces.append(force)
 
-    if environment["fitness_function"] == "lever_arm_bending":
-        forces = []
-        for id, member in members.items():
-            force = member["max_lever_arm"][str(frame)]
-            forces.append(force)
+        if environment["fitness_function"] == "lever_arm_truss":
+            forces = []
+            for id, member in members.items():
+                force = member["max_lever_arm"][str(frame)]
+                forces.append(force)
 
-        sum_forces = 0
-        for force in forces:
-            sum_forces = sum_forces + abs(force)
+            sum_forces = 0
+            for force in forces:
+                sum_forces = sum_forces + abs(force)
 
-        fitness = sum_forces
+            fitness = sum_forces *(-1)
+
+        if environment["fitness_function"] == "lever_arm_bending":
+            forces = []
+            for id, member in members.items():
+                force = member["max_lever_arm"][str(frame)]
+                forces.append(force)
+
+            sum_forces = 0
+            for force in forces:
+                sum_forces = sum_forces + abs(force)
+
+            fitness = sum_forces
 
 
-    individual["fitness"] = fitness
+        individual["fitness"] = fitness
 
-    # get text from chromosome
-    str_chromosome = "["
-    for gene in individual["chromosome"]:
-        str_chromosome += str(round(gene, 3))
-        str_chromosome += ", "
-    str_chromosome[-1]
-    str_chromosome += "]"
+        '''
+        # get text from chromosome
+        str_chromosome = "["
+        for gene in individual["chromosome"]:
+            str_chromosome += str(round(gene, 3))
+            str_chromosome += ", "
+        str_chromosome[-1]
+        str_chromosome += "]"
 
-    text = "individual: " + individual["name"] + " " + str_chromosome + ", fitness: " + str(individual["fitness"])
-    print_data(text)
+        text = "individual: " + individual["name"] + " " + str_chromosome + ", fitness: " + str(individual["fitness"])
+        print_data(text)
+        '''
 
 def mate_chromosomes(chromosome_1, chromosome_2):
     scene = bpy.context.scene
@@ -165,10 +179,9 @@ def mate_chromosomes(chromosome_1, chromosome_2):
 
     return child_chromosome
 
-def update():
+def create_initial_individuals(start, end):
     scene = bpy.context.scene
     phaenotyp = scene.phaenotyp
-    data = scene["<Phaenotyp>"]
     data = scene["<Phaenotyp>"]
     obj = data["structure"]
     shape_keys = obj.data.shape_keys.key_blocks
@@ -179,168 +192,245 @@ def update():
 
     new_generation_size = environment["new_generation_size"]
     generation_id = environment["generation_id"]
-    start = bpy.context.scene.frame_start + new_generation_size*generation_id
-    frame = bpy.context.scene.frame_current
 
-    if environment["ga_state"] == "create initial population":
-        if len(individuals) <= environment["population_size"]:
-            # create chromosome with set of shapekeys (random for first population)
-            chromosome = []
-            for gnome_len in range(len(shape_keys)-1): # -1 to exlude basis
-                gene = random.choice(environment["genes"])
-                chromosome.append(gene)
+    for frame in range(start, end):
+        # create chromosome with set of shapekeys (random for first population)
+        chromosome = []
+        for gnome_len in range(len(shape_keys)-1): # -1 to exlude basis
+            gene = random.choice(environment["genes"])
+            chromosome.append(gene)
 
-            create_indivdual(chromosome) # and change frame to shape key
-            geometry.update_members_pre() # update members after changed shapey key
-            calculation.start_job() # append to jobs
+        # update scene
+        bpy.context.scene.frame_current = frame
+        bpy.context.view_layer.update()
 
-        else:
-            # wait for jobs to be done and intervewave into data
-            calculation.join_jobs()
-            calculation.interweave_results()
+        create_indivdual(chromosome) # and change frame to shape key
 
-            # calculate fitness
-            for name, individual in individuals.items():
-                calculate_fitness(individual)
+        # calculate new properties for each member
+        geometry.update_members_pre()
 
-            if phaenotyp.ga_optimization in ["simple", "complex"]:
-                # set frame to start again
-                bpy.context.scene.frame_current = start
-                environment["ga_state"] = "restart for optimization"
+        # create on single job
+        calculation.start_job()
 
-            else:
-                # copy to population
-                for name, individual in individuals.items():
-                    environment["population"][name] = individual
+        # update window (try to suppress warning)
+        # as suggested by Chebhou
+        # https://blender.stackexchange.com/questions/28673/update-viewport-while-running-script
+        bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
 
-                environment["ga_state"] = "create new generation"
+    # wait for jobs to be done and intervewave into data
+    calculation.join_jobs()
+    calculation.interweave_results()
 
+def sectional_optimization(start, end):
+    scene = bpy.context.scene
+    phaenotyp = scene.phaenotyp
+    data = scene["<Phaenotyp>"]
+    obj = data["structure"]
+    shape_keys = obj.data.shape_keys.key_blocks
+    members = data["members"]
 
-    elif environment["ga_state"] == "restart for optimization":
-        if frame + start <= environment["population_size"]:
-            if phaenotyp.ga_optimization == "simple":
-                calculation.simple_sectional()
+    environment = data["ga_environment"]
+    individuals = data["ga_individuals"]
 
-            if phaenotyp.ga_optimization == "complex":
-                calculation.complex_sectional()
+    new_generation_size = environment["new_generation_size"]
+    generation_id = environment["generation_id"]
 
-            # apply shape keys
-            chromosome = individuals[str(frame)]["chromosome"]
-            for id, key in enumerate(shape_keys):
-                if id > 0: # to exlude basis
-                    key.value = chromosome[id-1]*0.1
+    for frame in range(start, end):
+        # update scene
+        bpy.context.scene.frame_current = frame
+        bpy.context.view_layer.update()
 
-            geometry.update_members_pre()
-            calculation.start_job()
+        if phaenotyp.ga_optimization == "simple":
+            calculation.simple_sectional()
 
-        else:
-            calculation.join_jobs()
-            calculation.interweave_results()
+        if phaenotyp.ga_optimization == "complex":
+            calculation.complex_sectional()
 
-            # copy to population
-            for name, individual in individuals.items():
+        # apply shape keys
+        chromosome = individuals[str(frame)]["chromosome"]
+        for id, key in enumerate(shape_keys):
+            if id > 0: # to exlude basis
+                key.value = chromosome[id-1]*0.1
+
+        # calculate new properties for each member
+        geometry.update_members_pre()
+
+        # create on single job
+        calculation.start_job()
+
+        # update window (try to suppress warning)
+        # as suggested by Chebhou
+        # https://blender.stackexchange.com/questions/28673/update-viewport-while-running-script
+        bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
+
+    # wait for jobs to be done and intervewave into data
+    calculation.join_jobs()
+    calculation.interweave_results()
+
+def populate_initial_population():
+    scene = bpy.context.scene
+    data = scene["<Phaenotyp>"]
+    members = data["members"]
+
+    environment = data["ga_environment"]
+    individuals = data["ga_individuals"]
+
+    # copy to population
+    for name, individual in individuals.items():
+        environment["population"][name] = individual
+
+        # get text from chromosome
+        str_chromosome = "["
+        for gene in individual["chromosome"]:
+            str_chromosome += str(round(gene, 3))
+            str_chromosome += ", "
+        str_chromosome[-1]
+        str_chromosome += "]"
+
+        # print info
+        text = "individual: " + str(individual["name"]) + " "
+        text += str_chromosome + ", fitness: " + str(individual["fitness"])
+        print_data(text)
+
+def do_elitism(start, end):
+    scene = bpy.context.scene
+    data = scene["<Phaenotyp>"]
+    members = data["members"]
+
+    environment = data["ga_environment"]
+    individuals = data["ga_individuals"]
+
+    # sort population according to fitness
+    list_result = []
+    for name, individual in environment["population"].items():
+        list_result.append([name, individual["chromosome"], individual["fitness"]])
+
+    sorted_list = sorted(list_result, key = lambda x: x[2])
+
+    print_data("Sorted population:")
+    for individual in sorted_list:
+        name = individual[0]
+        chromosome = individual[1]
+        fitness = individual[2]
+
+        # copy individuals to population (can't be appended)
+        individual = {}
+        individual["name"] = name # indiviuals are identified by the frame
+        individual["chromosome"] = chromosome
+        individual["fitness"] = fitness
+        environment["population"][name] = individual
+
+        text = "individual frame:" + name + " with fitness " + str(fitness)
+        print_data(text)
+
+    # for first run only
+    if environment["best"] == None:
+        name = list(environment["population"].keys())[0] # get first element
+        environment["best"] = environment["population"][name]
+
+    # replace overall best of all generations
+    for id, individual in individuals.items():
+        if individual["fitness"] < environment["best"]["fitness"]:
+            environment["best"] = individual
+
+    text = "best individual: " + str(environment["best"]["name"]) + " with fitness: " + str(environment["best"]["fitness"])
+    print_data(text)
+
+    # create empty list of a new generation
+    text = "generation " + str(environment["generation_id"]) + ":"
+    print_data(text)
+
+    # copy fittest ten percent directly
+    for i in range(environment["elitism"]):
+        name = list(environment["population"].keys())[i] # get nth element
+        individual = individuals[name]
+        environment["new_generation"][name] = individual
+
+def create_new_individuals(start, end):
+    scene = bpy.context.scene
+    phaenotyp = scene.phaenotyp
+    data = scene["<Phaenotyp>"]
+    obj = data["structure"]
+    shape_keys = obj.data.shape_keys.key_blocks
+    members = data["members"]
+
+    environment = data["ga_environment"]
+    individuals = data["ga_individuals"]
+
+    new_generation_size = environment["new_generation_size"]
+    generation_id = environment["generation_id"]
+
+    for frame in range(start, end):
+        # pair best 50 % of the previous population
+        random_number_1 = random.randint(0, int(new_generation_size*0.5))
+        random_number_2 = random.randint(0, int(new_generation_size*0.5))
+        parent_1_name = list(environment["population"].keys())[random_number_1]
+        parent_2_name = list(environment["population"].keys())[random_number_2]
+
+        parent_1 = individuals[parent_1_name]
+        parent_2 = individuals[parent_2_name]
+
+        chromosome = mate_chromosomes(parent_1["chromosome"], parent_2["chromosome"])
+
+        # update scene
+        bpy.context.scene.frame_current = frame
+        bpy.context.view_layer.update()
+
+        create_indivdual(chromosome) # and change frame to shape key
+
+        # calculate new properties for each member
+        geometry.update_members_pre()
+
+        # create on single job
+        calculation.start_job()
+
+        # update window (try to suppress warning)
+        # as suggested by Chebhou
+        # https://blender.stackexchange.com/questions/28673/update-viewport-while-running-script
+        bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
+
+    # wait for jobs to be done and intervewave into data
+    calculation.join_jobs()
+    calculation.interweave_results()
+
+def populate_new_generation(start, end):
+    scene = bpy.context.scene
+    phaenotyp = scene.phaenotyp
+    data = scene["<Phaenotyp>"]
+    obj = data["structure"]
+    shape_keys = obj.data.shape_keys.key_blocks
+    members = data["members"]
+
+    environment = data["ga_environment"]
+    individuals = data["ga_individuals"]
+
+    new_generation_size = environment["new_generation_size"]
+    generation_id = environment["generation_id"]
+
+    # copy to population
+    for name, individual in individuals.items():
+        for frame in range(start, end):
+            if str(frame) == name:
                 environment["population"][name] = individual
 
-            environment["ga_state"] = "create new generation"
+def replace_population():
+    scene = bpy.context.scene
+    phaenotyp = scene.phaenotyp
+    data = scene["<Phaenotyp>"]
+    obj = data["structure"]
+    shape_keys = obj.data.shape_keys.key_blocks
+    members = data["members"]
 
-    elif environment["ga_state"] == "create new generation":
-        # sort previous population according to fitness
-        list_result = []
-        for name, individual in environment["population"].items():
-            list_result.append([name, individual["chromosome"], individual["fitness"]])
+    environment = data["ga_environment"]
+    individuals = data["ga_individuals"]
 
-        sorted_list = sorted(list_result, key = lambda x: x[2])
+    # replace population with new_generation
+    environment["population"] = {}
+    for id, individual in environment["new_generation"].items():
+        environment["population"][id] = individual
 
-        print_data("Sorted population:")
-        for individual in sorted_list:
-            name = individual[0]
-            chromosome = individual[1]
-            fitness = individual[2]
-
-            # copy individuals to population (can't be appended)
-            individual = {}
-            individual["name"] = name # indiviuals are identified by the frame
-            individual["chromosome"] = chromosome
-            individual["fitness"] = fitness
-            environment["population"][name] = individual
-
-            text = "individual frame:" + name + " with fitness " + str(fitness)
-            print_data(text)
-
-
-        # for first run only
-        if environment["best"] == None:
-            name = list(environment["population"].keys())[0] # get first element
-            environment["best"] = environment["population"][name]
-
-
-        # replace overall best of all generations
-        for id, individual in individuals.items():
-            if individual["fitness"] < environment["best"]["fitness"]:
-                environment["best"] = individual
-
-        text = "best individual: " + str(environment["best"]["name"]) + " with fitness: " + str(environment["best"]["fitness"])
-        print_data(text)
-
-        # create empty list of a new generation
-        new_generation = []
-        text = "generation " + str(environment["generation_id"]) + ":"
-        print_data(text)
-
-        # copy fittest ten percent directly
-        for i in range(environment["elitism"]):
-            name = list(environment["population"].keys())[i] # get nth element
-            individual = individuals[name]
-            environment["new_generation"][name] = individual
-
-        environment["ga_state"] = "populate new generation"
-
-    elif environment["ga_state"] == "populate new generation":
-        if len(environment["new_generation"]) < environment["new_generation_size"]:
-            # pair best 50 % of the previous population
-            random_number_1 = random.randint(0, int(environment["new_generation_size"]*0.5))
-            random_number_2 = random.randint(0, int(environment["new_generation_size"]*0.5))
-
-            parent_1_name = list(environment["population"].keys())[random_number_1]
-            parent_2_name = list(environment["population"].keys())[random_number_2]
-
-            parent_1 = individuals[parent_1_name]
-            parent_2 = individuals[parent_2_name]
-
-            chromosome = mate_chromosomes(parent_1["chromosome"], parent_2["chromosome"])
-
-            create_indivdual(chromosome) # and change frame to shape key
-            geometry.update_members_pre() # update members after changed shapey key
-            calculation.start_job() # append to jobs
-
-        if len(environment["new_generation"]) == environment["new_generation_size"]:
-            # wait for jobs to be done and intervewave into data
-            calculation.join_jobs()
-            calculation.interweave_results()
-
-            if phaenotyp.ga_optimization in ["simple", "complex"]:
-                # set frame to start again
-                bpy.context.scene.frame_current = start
-                environment["ga_state"] = "restart for optimization"
-
-            # calculate fitness
-            for name, individual in environment["new_generation"].items():
-                calculate_fitness(individual)
-
-            # replace population with new_generation
-            environment["population"] = {}
-            for id, individual in environment["new_generation"].items():
-                environment["population"][id] = individual
-
-            environment["new_generation"] = {}
-            environment["generation_id"] += 1
-
-            # start new generation
-            environment["ga_state"] = "create new generation"
-
-    else:
-        pass
-
+    environment["new_generation"] = {}
+    environment["generation_id"] += 1
 
 def goto_indivual():
     scene = bpy.context.scene

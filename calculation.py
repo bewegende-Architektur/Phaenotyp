@@ -303,7 +303,6 @@ def run_fea(feas, truss, members, frame):
             torque.append(torque_pos)
         result["torque"][str(frame)] = torque
 
-
         # modulus from the moments of area
         #(Wy and Wz are the same within a pipe)
         result["Wy"][str(frame)] = member["Iy"][str(frame)]/(member["Do"][str(frame)]/2)
@@ -492,10 +491,8 @@ def run_fea(feas, truss, members, frame):
 
     feas[str(frame)] = fea
 
-    text = "multiprocessing job: " + str(frame) + " done"
-    print_data(text)
-
-    data["process"]["done"] = True
+    #text = "multiprocessing job: " + str(frame) + " done"
+    #print_data(text)
 
 def start_job():
     scene = bpy.context.scene
