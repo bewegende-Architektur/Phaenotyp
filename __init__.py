@@ -21,6 +21,7 @@ import os
 import webbrowser
 
 from phaenotyp import basics, material, geometry, calculation, ga, report
+import itertools
 
 def create_data():
     data = bpy.context.scene.get("<Phaenotyp>")
@@ -281,7 +282,8 @@ class phaenotyp_properties(PropertyGroup):
         description="Type of mating",
         items=[
                 ("direct", "direct", ""),
-                ("morph", "morph", "")
+                ("morph", "morph", ""),
+                ("bruteforce", "bruteforce", "")
                ]
         )
 
@@ -782,6 +784,7 @@ class WM_OT_ga_start(Operator):
         obj = data["structure"]
 
         print_data("start genetic muataion over selected shape keys")
+
         # pass from gui
         data["ga_environment"]["population_size"] = phaenotyp.population_size
         data["ga_environment"]["elitism"] = phaenotyp.elitism
@@ -805,39 +808,77 @@ class WM_OT_ga_start(Operator):
         fitness_function = data["ga_environment"]["fitness_function"]
         generation_id = data["ga_environment"]["generation_id"]
 
-        # create start and end of calculation and create individuals
-        start = 0
-        end = population_size
+        if phaenotyp.mate_type in ["direct", "morph"]:
 
-        # set frame_start to 0
-        bpy.context.scene.frame_start = start
-        # set frame_end to first size of inital population
-        bpy.context.scene.frame_end = end
+            # create start and end of calculation and create individuals
+            start = 0
+            end = population_size
 
-        ga.create_initial_individuals(start, end)
-
-        # optimize if sectional performance if activated
-        if phaenotyp.ga_optimization in ["simple", "complex"]:
-            ga.sectional_optimization(start, end)
-
-        ga.calculate_fitness(start, end)
-        ga.populate_initial_population()
-
-        # replace range
-        for i in range(generations):
-            start = end
-            end = start + new_generation_size
-
-            # expand frame
+            # set frame_start to 0
+            bpy.context.scene.frame_start = start
+            # set frame_end to first size of inital population
             bpy.context.scene.frame_end = end
 
-            ga.do_elitism(start, end)
-            ga.create_new_individuals(start, end)
+            ga.create_initial_individuals(start, end)
+
+            # optimize if sectional performance if activated
             if phaenotyp.ga_optimization in ["simple", "complex"]:
                 ga.sectional_optimization(start, end)
+
             ga.calculate_fitness(start, end)
-            ga.populate_new_generation(start, end)
-            #ga.replace_population()
+            ga.populate_initial_population()
+
+            # replace range
+            for i in range(generations):
+                start = end
+                end = start + new_generation_size
+
+                # expand frame
+                bpy.context.scene.frame_end = end
+
+                ga.do_elitism(start, end)
+                ga.create_new_individuals(start, end)
+                if phaenotyp.ga_optimization in ["simple", "complex"]:
+                    ga.sectional_optimization(start, end)
+                ga.calculate_fitness(start, end)
+                ga.populate_new_generation(start, end)
+                #ga.replace_population()
+
+        if phaenotyp.mate_type == "bruteforce":
+            data = scene["<Phaenotyp>"]
+            shape_keys = obj.data.shape_keys.key_blocks
+
+            # create matrix of possible combinations
+            matrix = []
+            for key in range(len(shape_keys)-1): # to exclude basis
+                genes = data["ga_environment"]["genes"]
+                matrix.append(genes)
+
+            chromosomes = list(itertools.product(*matrix))
+
+            # create start and end of calculation and create individuals
+            start = 0
+            end = len(chromosomes)
+
+            # set frame_start to 0
+            bpy.context.scene.frame_start = start
+            # set frame_end to first size of inital population
+            bpy.context.scene.frame_end = end
+
+            # pair with bruteforce
+            ga.bruteforce(chromosomes)
+            ga.calculate_fitness(start, end)
+
+            '''
+            ga.create_initial_individuals(start, end)
+
+            # optimize if sectional performance if activated
+            if phaenotyp.ga_optimization in ["simple", "complex"]:
+                ga.sectional_optimization(start, end)
+
+            ga.calculate_fitness(start, end)
+            ga.populate_initial_population()
+            '''
 
         basics.view_vertex_colors()
 
@@ -1371,9 +1412,10 @@ class OBJECT_PT_Phaenotyp(Panel):
                         # Genetic Mutation:
                         box_ga = layout.box()
                         box_ga.label(text="Genetic Mutation:")
-                        box_ga.prop(phaenotyp, "population_size", text="Size of population for GA")
-                        box_ga.prop(phaenotyp, "elitism", text="Size of elitism for GA")
-                        box_ga.prop(phaenotyp, "generations", text="'Amount of generations'")
+                        if phaenotyp.mate_type in ["direct", "morph"]:
+                            box_ga.prop(phaenotyp, "population_size", text="Size of population for GA")
+                            box_ga.prop(phaenotyp, "elitism", text="Size of elitism for GA")
+                            box_ga.prop(phaenotyp, "generations", text="'Amount of generations'")
                         box_ga.prop(phaenotyp, "fitness_function", text="Fitness function")
                         box_ga.prop(phaenotyp, "mate_type", text="Type of mating")
                         box_ga.prop(phaenotyp, "ga_optimization", text="Sectional optimization")

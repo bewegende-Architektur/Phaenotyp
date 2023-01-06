@@ -491,8 +491,8 @@ def run_fea(feas, truss, members, frame):
 
     feas[str(frame)] = fea
 
-    #text = "multiprocessing job: " + str(frame) + " done"
-    #print_data(text)
+    text = "multiprocessing job: " + str(frame) + " done"
+    print_data(text)
 
 def start_job():
     scene = bpy.context.scene

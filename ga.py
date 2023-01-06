@@ -179,6 +179,42 @@ def mate_chromosomes(chromosome_1, chromosome_2):
 
     return child_chromosome
 
+def bruteforce(chromosomes):
+    scene = bpy.context.scene
+    phaenotyp = scene.phaenotyp
+    data = scene["<Phaenotyp>"]
+    obj = data["structure"]
+    shape_keys = obj.data.shape_keys.key_blocks
+    members = data["members"]
+
+    environment = data["ga_environment"]
+    individuals = data["ga_individuals"]
+
+    for frame, chromosome in enumerate(chromosomes):
+        text = str(frame) + " " + str(chromosome)
+        print_data(text)
+
+        # update scene
+        bpy.context.scene.frame_current = frame
+        bpy.context.view_layer.update()
+
+        create_indivdual(chromosome) # and change frame to shape key
+
+        # calculate new properties for each member
+        geometry.update_members_pre()
+
+        # create on single job
+        calculation.start_job()
+
+        # update window (try to suppress warning)
+        # as suggested by Chebhou
+        # https://blender.stackexchange.com/questions/28673/update-viewport-while-running-script
+        bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
+
+    # wait for jobs to be done and intervewave into data
+    calculation.join_jobs()
+    calculation.interweave_results()
+
 def create_initial_individuals(start, end):
     scene = bpy.context.scene
     phaenotyp = scene.phaenotyp
