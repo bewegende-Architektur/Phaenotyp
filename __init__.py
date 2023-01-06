@@ -899,6 +899,74 @@ class WM_OT_ga_ranking(Operator):
 
         return {"FINISHED"}
 
+class WM_OT_ga_render_animation(Operator):
+    bl_label = "ga_ranking"
+    bl_idname = "wm.ga_render_animation"
+    bl_description = "Go to indivual by ranking."
+
+    def execute(self, context):
+        scene = context.scene
+        data = scene["<Phaenotyp>"]
+
+        environment = data["ga_environment"]
+        individuals = data["ga_individuals"]
+
+        print_data("render animation")
+
+        # change engine, shading
+        bpy.context.scene.render.engine = 'BLENDER_WORKBENCH'
+        bpy.context.scene.display.shading.light = 'FLAT'
+        bpy.context.scene.display.shading.color_type = 'VERTEX'
+
+        # use stamp
+        bpy.context.scene.render.use_stamp = True
+        bpy.context.scene.render.use_stamp_note = True
+        bpy.context.scene.render.stamp_note_text = ""
+        bpy.context.scene.render.stamp_background[3] = 1
+        bpy.context.scene.render.stamp_background = (0, 0, 0, 1)
+
+        filepath = bpy.data.filepath
+        directory = os.path.dirname(filepath)
+
+        # render all indiviuals
+        image_id = 0 # to sort images by fitness in filemanager
+        for frame, individual in individuals.items():
+            filename = directory + "/ga_animation/image_id_" + str(image_id) + "-individual_" + str(frame)
+
+            # get text from chromosome
+            str_chromosome = "["
+            for gene in individual["chromosome"]:
+                str_chromosome += str(round(gene, 3))
+                str_chromosome += ", "
+            str_chromosome[-1]
+            str_chromosome += "]"
+
+            # set note
+            text = filename + " -> " + str_chromosome + " fitness " + str(individual["fitness"])
+            bpy.context.scene.render.stamp_note_text = text
+
+            # set path and render
+            bpy.context.scene.render.filepath = filename
+            bpy.context.scene.render.image_settings.file_format='PNG'
+            bpy.context.scene.render.filepath=filename
+            bpy.ops.render.render(write_still=1)
+
+            # update scene to give a visual feedback of the progress for user
+            # update scene
+            bpy.context.scene.frame_current = int(frame)
+            bpy.context.view_layer.update()
+
+            # update window (try to suppress warning)
+            # as suggested by Chebhou
+            # https://blender.stackexchange.com/questions/28673/update-viewport-while-running-script
+            bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
+
+            image_id += 1
+
+        print_data("render animation - done")
+
+        return {"FINISHED"}
+
 class WM_OT_text(Operator):
     bl_label = "text"
     bl_idname = "wm.text"
@@ -1431,6 +1499,7 @@ class OBJECT_PT_Phaenotyp(Panel):
                             box_ga.label(text="Elitism should be smaller than 50% of population size.")
 
                         if len(data["ga_individuals"]) > 0 and not bpy.context.screen.is_animation_playing:
+                            box_ga.label(text="Select individual by fitness:")
                             box_ga.prop(phaenotyp, "ga_ranking", text="Result sorted by fitness.")
                             if phaenotyp.ga_ranking >= len(data["ga_individuals"]):
                                 text = "Only " + str(len(data["ga_individuals"])) + " available."
@@ -1438,6 +1507,9 @@ class OBJECT_PT_Phaenotyp(Panel):
                             else:
                                 # show
                                 box_ga.operator("wm.ga_ranking", text="Generate")
+
+                            box_ga.label(text="Render sorted indiviuals:")
+                            box_ga.operator("wm.ga_render_animation", text="Generate")
 
                     # Visualization
                     if data["process"]["done"]:
@@ -1518,6 +1590,7 @@ classes = (
 
     WM_OT_ga_start,
     WM_OT_ga_ranking,
+    WM_OT_ga_render_animation,
 
     WM_OT_text,
     WM_OT_report,
