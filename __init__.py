@@ -1324,7 +1324,26 @@ class OBJECT_PT_Phaenotyp(Panel):
         box_structure = layout.box()
         data = bpy.context.scene.get("<Phaenotyp>")
 
-        if not data or data["structure"] == None:
+        # check if phaenotyp created data allready
+        ready_to_go = True
+
+        if not data:
+            ready_to_go = False
+
+        else:
+            structure = data.get("structure")
+
+            # is the obj defined? Maybe someone deleted the structure after calc ...
+            if not structure:
+                ready_to_go = False
+
+            else:
+                # Phaenotyp started, but no structure defined by user
+                if structure == None:
+                    ready_to_go = False
+
+        # user needs to define a structure
+        if not ready_to_go:
             box_structure.label(text="Structure:")
             box_structure.operator("wm.set_structure", text="Set")
 
