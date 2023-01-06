@@ -661,6 +661,11 @@ class WM_OT_calculate_single_frame(Operator):
         members = scene["<Phaenotyp>"]["members"]
         frame = bpy.context.scene.frame_current
 
+        # handle process
+        calculation.fea_jobs_amount = 1
+        calculation.fea_jobs_done.value = 0
+        calculation.fea_jobs = []
+
         # calculate new properties for each member
         geometry.update_members_pre()
 
@@ -694,6 +699,10 @@ class WM_OT_calculate_animation(Operator):
         start = bpy.context.scene.frame_start
         end = bpy.context.scene.frame_end + start
 
+        calculation.fea_jobs_amount = end - start
+        calculation.fea_jobs_done.value = 0
+        calculation.fea_jobs = []
+
         for frame in range(start, end):
             # update scene
             bpy.context.scene.frame_current = frame
@@ -704,11 +713,6 @@ class WM_OT_calculate_animation(Operator):
 
             # create on single job
             calculation.start_job()
-
-            # update window (try to suppress warning)
-            # as suggested by Chebhou
-            # https://blender.stackexchange.com/questions/28673/update-viewport-while-running-script
-            bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
 
         # wait for it and interweave results to data
         calculation.join_jobs()
@@ -728,6 +732,11 @@ class WM_OT_optimize_1(Operator):
 
     def execute(self, context):
         print_data("optimization 1 - simple sectional performance")
+
+        # handle process
+        calculation.fea_jobs_amount = 1
+        calculation.fea_jobs_done.value = 0
+        calculation.fea_jobs = []
 
         calculation.simple_sectional()
         geometry.update_members_pre()
@@ -749,6 +758,11 @@ class WM_OT_optimize_2(Operator):
     def execute(self, context):
         print_data("optimization 2 - complex sectional performance")
 
+        # handle process
+        calculation.fea_jobs_amount = 1
+        calculation.fea_jobs_done.value = 0
+        calculation.fea_jobs = []
+        
         calculation.complex_sectional()
         geometry.update_members_pre()
 
@@ -809,7 +823,6 @@ class WM_OT_ga_start(Operator):
         generation_id = data["ga_environment"]["generation_id"]
 
         if phaenotyp.mate_type in ["direct", "morph"]:
-
             # create start and end of calculation and create individuals
             start = 0
             end = population_size
@@ -818,6 +831,13 @@ class WM_OT_ga_start(Operator):
             bpy.context.scene.frame_start = start
             # set frame_end to first size of inital population
             bpy.context.scene.frame_end = end
+
+            # handle process
+            calculation.fea_jobs_amount = (generations+1)*(end-start)
+            if phaenotyp.ga_optimization in ["simple", "complex"]:
+                calculation.fea_jobs_amount = (generations+1)*(end-start)*2
+            calculation.fea_jobs = []
+            calculation.fea_jobs_done.value = 0
 
             ga.create_initial_individuals(start, end)
 
@@ -865,20 +885,18 @@ class WM_OT_ga_start(Operator):
             # set frame_end to first size of inital population
             bpy.context.scene.frame_end = end
 
+            # handle process
+            calculation.fea_jobs_amount = end - start
+            if phaenotyp.ga_optimization in ["simple", "complex"]:
+                calculation.fea_jobs_amount = (end - start)*2
+            calculation.fea_jobs = []
+            calculation.fea_jobs_done.value = 0
+
             # pair with bruteforce
             ga.bruteforce(chromosomes)
-            ga.calculate_fitness(start, end)
-
-            '''
-            ga.create_initial_individuals(start, end)
-
-            # optimize if sectional performance if activated
             if phaenotyp.ga_optimization in ["simple", "complex"]:
                 ga.sectional_optimization(start, end)
-
             ga.calculate_fitness(start, end)
-            ga.populate_initial_population()
-            '''
 
         basics.view_vertex_colors()
 
@@ -951,15 +969,9 @@ class WM_OT_ga_render_animation(Operator):
             bpy.context.scene.render.filepath=filename
             bpy.ops.render.render(write_still=1)
 
-            # update scene to give a visual feedback of the progress for user
             # update scene
             bpy.context.scene.frame_current = int(frame)
             bpy.context.view_layer.update()
-
-            # update window (try to suppress warning)
-            # as suggested by Chebhou
-            # https://blender.stackexchange.com/questions/28673/update-viewport-while-running-script
-            bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
 
             image_id += 1
 

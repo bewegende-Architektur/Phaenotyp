@@ -9,7 +9,8 @@ import multiprocessing
 manager = multiprocessing.Manager() # needed for mp
 feas = manager.dict() # is saving all calculations accesables by frame
 fea_jobs = [] # to store jobs
-
+fea_jobs_amount = 0 # to track progress
+fea_jobs_done = multiprocessing.Value('i', 0) # to track progress
 
 def print_data(text):
     print("Phaenotyp |", text)
@@ -203,7 +204,7 @@ def prepare_fea():
 
     return truss
 
-def run_fea(feas, truss, members, frame):
+def run_fea(feas, truss, members, frame, fea_jobs_amount, fea_jobs_done):
     # the variables turss, members and frame are passed to mp
     # this variables can not be returned with multiprocessing
     # instead of this a dict with multiprocessing.Manager is created
@@ -491,7 +492,10 @@ def run_fea(feas, truss, members, frame):
 
     feas[str(frame)] = fea
 
-    text = "multiprocessing job: " + str(frame) + " done"
+    fea_jobs_done.value += 1
+
+    progress = str(fea_jobs_done.value) + " of " + str(fea_jobs_amount)
+    text = "multiprocessing job for frame " + str(frame) + " done | " + progress
     print_data(text)
 
 def start_job():
@@ -506,7 +510,7 @@ def start_job():
     fea_data = prepare_fea()
     #calculation.run_fea(fea, frame)
     # pass fea to job instead:
-    job = multiprocessing.Process(target=run_fea, args=(feas, fea_data, members, frame,))
+    job = multiprocessing.Process(target=run_fea, args=(feas, fea_data, members, frame, fea_jobs_amount, fea_jobs_done))
     fea_jobs.append(job)
     job.start()
 

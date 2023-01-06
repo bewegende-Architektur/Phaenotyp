@@ -191,9 +191,6 @@ def bruteforce(chromosomes):
     individuals = data["ga_individuals"]
 
     for frame, chromosome in enumerate(chromosomes):
-        text = str(frame) + " " + str(chromosome)
-        print_data(text)
-
         # update scene
         bpy.context.scene.frame_current = frame
         bpy.context.view_layer.update()
@@ -205,11 +202,6 @@ def bruteforce(chromosomes):
 
         # create on single job
         calculation.start_job()
-
-        # update window (try to suppress warning)
-        # as suggested by Chebhou
-        # https://blender.stackexchange.com/questions/28673/update-viewport-while-running-script
-        bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
 
     # wait for jobs to be done and intervewave into data
     calculation.join_jobs()
@@ -247,11 +239,6 @@ def create_initial_individuals(start, end):
 
         # create on single job
         calculation.start_job()
-
-        # update window (try to suppress warning)
-        # as suggested by Chebhou
-        # https://blender.stackexchange.com/questions/28673/update-viewport-while-running-script
-        bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
 
     # wait for jobs to be done and intervewave into data
     calculation.join_jobs()
@@ -293,11 +280,6 @@ def sectional_optimization(start, end):
 
         # create on single job
         calculation.start_job()
-
-        # update window (try to suppress warning)
-        # as suggested by Chebhou
-        # https://blender.stackexchange.com/questions/28673/update-viewport-while-running-script
-        bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
 
     # wait for jobs to be done and intervewave into data
     calculation.join_jobs()
@@ -419,11 +401,6 @@ def create_new_individuals(start, end):
 
         # create on single job
         calculation.start_job()
-
-        # update window (try to suppress warning)
-        # as suggested by Chebhou
-        # https://blender.stackexchange.com/questions/28673/update-viewport-while-running-script
-        bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
 
     # wait for jobs to be done and intervewave into data
     calculation.join_jobs()
