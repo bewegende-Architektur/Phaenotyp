@@ -762,7 +762,7 @@ class WM_OT_optimize_2(Operator):
         calculation.fea_jobs_amount = 1
         calculation.fea_jobs_done.value = 0
         calculation.fea_jobs = []
-        
+
         calculation.complex_sectional()
         geometry.update_members_pre()
 
@@ -948,8 +948,11 @@ class WM_OT_ga_render_animation(Operator):
 
         # render all indiviuals
         image_id = 0 # to sort images by fitness in filemanager
+        amount_of_digts = len(str(len(individuals))) # write in format 01, 001 or 0001 ...
+
         for frame, individual in individuals.items():
-            filename = directory + "/ga_animation/image_id_" + str(image_id) + "-individual_" + str(frame)
+            str_image_id = str(image_id).zfill(amount_of_digts)
+            filename = directory + "/Phaenotyp-ga_animation/image_id_" + str_image_id + "-individual_" + str(frame)
 
             # get text from chromosome
             str_chromosome = "["
@@ -1085,7 +1088,7 @@ class WM_OT_report(Operator):
         directory = os.path.dirname(filepath)
 
         try:
-            os.mkdir(os.path.join(directory, "report"))
+            os.mkdir(os.path.join(directory, "Phaenotyp-report"))
         except:
             pass
 
@@ -1253,7 +1256,7 @@ class WM_OT_report(Operator):
             report.end(file)
 
         # open file
-        file_to_open = directory + "/report/axial.html"
+        file_to_open = directory + "/Phaenotyp-report/axial.html"
         webbrowser.open(file_to_open)
 
         return {"FINISHED"}
@@ -1331,20 +1334,6 @@ class OBJECT_PT_Phaenotyp(Panel):
 
             obj = data["structure"]
             box_structure.label(text = obj.name_full + " is defined as structure")
-
-            text = "Press Strg+A and apply "
-            if obj.location[0] != 0 or obj.location[1] != 0 or obj.location[2] != 0:
-                text = text + "Location "
-
-            if obj.rotation_euler[0] != 0 or obj.rotation_euler[1] != 0 or obj.rotation_euler[2] != 0:
-                text = text + "Rotation "
-
-            if obj.scale[0] != 1 or obj.scale[1] != 1 or obj.scale[2] != 1:
-                text = text + "Scale "
-
-            if text != "Press Strg+A and apply ":
-                text = text + "to avoid weird behaviour"
-                box_structure.label(text = text)
 
             # check or uncheck scipy if available
             if data["scipy_available"]:

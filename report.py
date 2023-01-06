@@ -1,5 +1,5 @@
 def start(directory, name, width, height):
-    filename = directory + "/report/" + name
+    filename = directory + "/Phaenotyp-report/" + name
     file = open(filename, "w")
 
     file.write("<html>\n")

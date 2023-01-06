@@ -50,13 +50,22 @@ def prepare_fea():
     edges = mesh.edges
     faces = mesh.polygons
 
+    # like suggested here by Gorgious and CodeManX:
+    # https://blender.stackexchange.com/questions/6155/how-to-convert-coordinates-from-vertex-to-world-space
+    mat = obj.matrix_world
+
     # add nodes from vertices
     for vertex in vertices:
         vertex_id = vertex.index
         name = "node_" + str(vertex_id)
-        x = vertex.co[0] * 100 # convert to cm for calculation
-        y = vertex.co[1] * 100 # convert to cm for calculation
-        z = vertex.co[2] * 100 # convert to cm for calculation
+
+        # like suggested here by Gorgious and CodeManX:
+        # https://blender.stackexchange.com/questions/6155/how-to-convert-coordinates-from-vertex-to-world-space
+        v = mat @ vertex.co
+
+        x = v[0] * 100 # convert to cm for calculation
+        y = v[1] * 100 # convert to cm for calculation
+        z = v[2] * 100 # convert to cm for calculation
 
         truss.add_node(name, x,y,z)
 
@@ -73,10 +82,15 @@ def prepare_fea():
         vertex_0_id = member["vertex_0_id"]
         vertex_1_id = member["vertex_1_id"]
 
+        # like suggested here by Gorgious and CodeManX:
+        # https://blender.stackexchange.com/questions/6155/how-to-convert-coordinates-from-vertex-to-world-space
+        v_0 = mat @ vertices[vertex_0_id].co
+        v_1 = mat @ vertices[vertex_1_id].co
+
         # save initial_positions to mix with deflection
         initial_positions = []
         for i in range(11):
-            position = (vertices[vertex_0_id].co*(i) + vertices[vertex_1_id].co*(10-i))*0.1
+            position = (v_0*(i) + v_1*(10-i))*0.1
             x = position[0]
             y = position[1]
             z = position[2]

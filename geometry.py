@@ -331,6 +331,7 @@ def update_members_post():
             z = position[2]*(1-f) + member["initial_positions"][str(frame)][10-i][2]*f
             vertices[mesh_vertex_ids[i]].co = (x,y,z)
 
+            # red or blue?
             if result[str(frame)][i] > 0:
                 h = 0
             else:
