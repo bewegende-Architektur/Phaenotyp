@@ -167,7 +167,6 @@ def prepare_fea():
             a -= v_j[0] * v_i[1]
 
         area_projected = abs(a) / 2.0
-        print("face", face.index, area_projected, face.area)
 
         # get distances and perimeter
         distances = []
