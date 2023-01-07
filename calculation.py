@@ -545,6 +545,10 @@ def interweave_results():
             for result_name, result in member.items():
                 members[member_id][result_name][str(fea_id)] = result[str(fea_id)]
 
+    # clear dict to speed up singleframes after animation
+    feas.clear()
+    fea_jobs = []
+
 def simple_sectional():
     scene = bpy.context.scene
     phaenotyp = scene.phaenotyp

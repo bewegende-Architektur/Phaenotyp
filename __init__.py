@@ -1302,6 +1302,12 @@ class WM_OT_reset(Operator):
         # switch to object-mode
         bpy.ops.object.mode_set(mode="OBJECT")
 
+        # reset mp
+        calculation.feas.clear()
+        calculation.fea_jobs = []
+        calculation.fea_jobs_amount = 0
+        calculation.fea_jobs_done.value = 0
+
         return {"FINISHED"}
 
 class OBJECT_PT_Phaenotyp(Panel):
