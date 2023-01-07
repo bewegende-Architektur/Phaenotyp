@@ -126,9 +126,16 @@ def prepare_fea():
 
     loads_f = data["loads_f"]
     for id, load in loads_f.items():
-        face = data["structure"].data.polygons[id]
-        edge_keys = face.edge_keys
+        # int(id), otherwise crashing Speicherzugriffsfehler
+        face = data["structure"].data.polygons[int(id)]
         normal = face.normal
+
+        # apply matrix
+        # like suggested here by Gorgious and CodeManX:
+        # https://blender.stackexchange.com/questions/6155/how-to-convert-coordinates-from-vertex-to-world-space
+        normal = mat @ normal
+
+        edge_keys = face.edge_keys
         area = face.area
 
         load_normal = load[0]
@@ -136,30 +143,42 @@ def prepare_fea():
         load_area_z = load[2]
 
         # get projected area
-        # based on: https://stackoverflow.com/questions/24467972/calculate-area-of-polygon-given-x-y-coordinates
+        # based on answer from Nikos Athanasiou:
+        # https://stackoverflow.com/questions/24467972/calculate-area-of-polygon-given-x-y-coordinates
         vertex_ids = face.vertices
         vertices_temp = []
         for vertex_id in vertex_ids:
             vertex = vertices[vertex_id]
-            vertices_temp.append(vertex)
+
+            # like suggested here by Gorgious and CodeManX:
+            # https://blender.stackexchange.com/questions/6155/how-to-convert-coordinates-from-vertex-to-world-space
+            v = mat @ vertex.co
+
+            vertices_temp.append(v)
 
         n = len(vertices_temp)
         a = 0.0
         for i in range(n):
             j = (i + 1) % n
-            a += vertices[i].co[0] * vertices[j].co[1]
-            a -= vertices[j].co[0] * vertices[i].co[1]
+            v_i = vertices_temp[i]
+            v_j = vertices_temp[j]
+
+            a += v_i[0] * v_j[1]
+            a -= v_j[0] * v_i[1]
 
         area_projected = abs(a) / 2.0
+        print("face", face.index, area_projected, face.area)
 
         # get distances and perimeter
         distances = []
-        for edge_key in load.edge_keys:
+        for edge_key in edge_keys:
             vertex_0_id = edge_key[0]
             vertex_1_id = edge_key[1]
 
-            vertex_0_co = vertices[vertex_0_id].co
-            vertex_1_co = vertices[vertex_1_id].co
+            # like suggested here by Gorgious and CodeManX:
+            # https://blender.stackexchange.com/questions/6155/how-to-convert-coordinates-from-vertex-to-world-space
+            vertex_0_co = mat @ vertices[vertex_0_id].co
+            vertex_1_co = mat @ vertices[vertex_1_id].co
 
             dist_vector = vertex_0_co - vertex_1_co
             dist = dist_vector.length
@@ -192,7 +211,7 @@ def prepare_fea():
 
         # i is the id within the class (0, 1, 3 and maybe more)
         # edge_id is the id of the edge in the mesh -> the member
-        for edge_key in load.edge_keys:
+        for i, edge_key in enumerate(edge_keys):
             # get name <---------------------------------------- maybe better method?
             for edge in edges:
                 if edge.vertices[0] in edge_key:

@@ -10,6 +10,10 @@ def create_supports(structure_obj, supports):
     col.objects.link(obj)
     bpy.context.view_layer.objects.active = obj
 
+    # like suggested here by Gorgious and CodeManX:
+    # https://blender.stackexchange.com/questions/6155/how-to-convert-coordinates-from-vertex-to-world-space
+    mat = structure_obj.matrix_world
+
     verts = []
     edges = []
     faces = []
@@ -29,9 +33,13 @@ def create_supports(structure_obj, supports):
         rot_y = support[4]
         rot_z = support[5]
 
-        x = structure_obj_vertices[id].co[0]
-        y = structure_obj_vertices[id].co[1]
-        z = structure_obj_vertices[id].co[2]
+        # like suggested here by Gorgious and CodeManX:
+        # https://blender.stackexchange.com/questions/6155/how-to-convert-coordinates-from-vertex-to-world-space
+        v = mat @ structure_obj_vertices[id].co
+
+        x = v[0]
+        y = v[1]
+        z = v[2]
 
         # to set position
         offset = Vector((x, y, z))
@@ -157,6 +165,10 @@ def create_members(structure_obj, members):
     edges = []
     faces = []
 
+    # like suggested here by Gorgious and CodeManX:
+    # https://blender.stackexchange.com/questions/6155/how-to-convert-coordinates-from-vertex-to-world-space
+    mat = structure_obj.matrix_world
+
     structure_obj_vertices = structure_obj.data.vertices
 
     len_verts = 0
@@ -169,8 +181,10 @@ def create_members(structure_obj, members):
         vertex_0_id = member["vertex_0_id"]
         vertex_1_id = member["vertex_1_id"]
 
-        vertex_0_co = structure_obj_vertices[vertex_0_id].co
-        vertex_1_co = structure_obj_vertices[vertex_1_id].co
+        # like suggested here by Gorgious and CodeManX:
+        # https://blender.stackexchange.com/questions/6155/how-to-convert-coordinates-from-vertex-to-world-space
+        vertex_0_co = mat @ structure_obj_vertices[vertex_0_id].co
+        vertex_1_co = mat @ structure_obj_vertices[vertex_1_id].co
 
         # create vertices
         for i in range(11):
@@ -350,11 +364,21 @@ def update_members_post():
             attribute.data[mesh_vertex_ids[i]].color = [c.r, c.g, c.b, 1.0]
 
 def create_loads(structure_obj, loads_v, loads_e, loads_f):
+
+    # like suggested here by Gorgious and CodeManX:
+    # https://blender.stackexchange.com/questions/6155/how-to-convert-coordinates-from-vertex-to-world-space
+    mat = structure_obj.matrix_world
+
     for id, load in loads_v.items():
         id = int(id)
-        x = structure_obj.data.vertices[id].co[0] # text pos x
-        y = structure_obj.data.vertices[id].co[1] # text pos y
-        z = structure_obj.data.vertices[id].co[2] # text pos z
+
+        # like suggested here by Gorgious and CodeManX:
+        # https://blender.stackexchange.com/questions/6155/how-to-convert-coordinates-from-vertex-to-world-space
+        v = mat @ structure_obj.data.vertices[id].co
+
+        x = v[0] # text pos x
+        y = v[1] # text pos y
+        z = v[2] # text pos z
 
         name = "<Phaenotyp>support_" + str(id)
         font_curve = bpy.data.curves.new(type="FONT", name="<Phaenotyp>load_text")
@@ -381,10 +405,12 @@ def create_loads(structure_obj, loads_v, loads_e, loads_f):
         vertex_0_id = structure_obj.data.edges[id].vertices[0]
         vertex_1_id = structure_obj.data.edges[id].vertices[1]
 
-        vertex_0 = structure_obj.data.vertices[vertex_0_id]
-        vertex_1 = structure_obj.data.vertices[vertex_1_id]
+        # like suggested here by Gorgious and CodeManX:
+        # https://blender.stackexchange.com/questions/6155/how-to-convert-coordinates-from-vertex-to-world-space
+        vertex_0 = mat @ structure_obj.data.vertices[vertex_0_id].co
+        vertex_1 = mat @ structure_obj.data.vertices[vertex_1_id].co
 
-        mid = (vertex_0.co + vertex_1.co) / 2
+        mid = (vertex_0 + vertex_1) / 2
 
         x = mid[0] # text pos x
         y = mid[1] # text pos y
@@ -415,9 +441,13 @@ def create_loads(structure_obj, loads_v, loads_e, loads_f):
 
         face = structure_obj.data.polygons[id]
 
-        x = face.center[0] # text pos x
-        y = face.center[1] # text pos y
-        z = face.center[2] # text pos z
+        # like suggested here by Gorgious and CodeManX:
+        # https://blender.stackexchange.com/questions/6155/how-to-convert-coordinates-from-vertex-to-world-space
+        center = mat @ face.center
+
+        x = center[0] # text pos x
+        y = center[1] # text pos y
+        z = center[2] # text pos z
 
         name = "<Phaenotyp>support_" + str(id)
         font_curve = bpy.data.curves.new(type="FONT", name="<Phaenotyp>load_text")
