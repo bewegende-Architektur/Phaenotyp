@@ -128,12 +128,13 @@ def prepare_fea():
     for id, load in loads_f.items():
         # int(id), otherwise crashing Speicherzugriffsfehler
         face = data["structure"].data.polygons[int(id)]
-        normal = face.normal
+        org_normal = face.normal
 
         # apply matrix
         # like suggested here by Gorgious and CodeManX:
         # https://blender.stackexchange.com/questions/6155/how-to-convert-coordinates-from-vertex-to-world-space
-        normal = mat @ normal
+        normal = mat @ org_normal
+        print(org_normal, normal)
 
         edge_keys = face.edge_keys
         area = face.area
