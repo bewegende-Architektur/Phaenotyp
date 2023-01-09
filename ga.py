@@ -27,14 +27,10 @@ def create_indivdual(chromosome, parent_1, parent_2):
     individual["name"] = str(frame) # individuals are identified by frame
     individual["chromosome"] = chromosome
 
-    if parent_1 and parent_2:
-        individual["parent_1"] = str(parent_1)
-        individual["parent_2"] = str(parent_2)
+    individual["parent_1"] = str(parent_1)
+    individual["parent_2"] = str(parent_2)
 
     individuals[str(frame)] = individual
-
-    #text = "new individual frame:" + str(frame) + " " + str(chromosome)
-    #print_data(text)
 
 def calculate_fitness(start, end):
     scene = bpy.context.scene
@@ -288,11 +284,19 @@ def populate_initial_generation():
 
     # copy to generation
     for name, individual in individuals.items():
+        # get data from individual
+        chromosome = individual["chromosome"]
+        fitness = individual["fitness"]
+        parent_1 = individual["parent_1"]
+        parent_2 = individual["parent_2"]
+
         # copy individual to next generation
         individual_copy = {}
         individual_copy["name"] = name
-        individual_copy["chromosome"] = individual["chromosome"]
-        individual_copy["fitness"] = individual["fitness"]
+        individual_copy["chromosome"] = chromosome
+        individual_copy["fitness"] = fitness
+        individual_copy["parent_1"] = parent_1
+        individual_copy["parent_2"] = parent_2
 
         initial_generation[name] = individual_copy
 
@@ -346,14 +350,16 @@ def do_elitism():
         # get data from individual
         chromosome = individual["chromosome"]
         fitness = individual["fitness"]
+        parent_1 = individual["parent_1"]
+        parent_2 = individual["parent_2"]
 
         # copy individual to next generation
         individual_copy = {}
         individual_copy["name"] = name
         individual_copy["chromosome"] = chromosome
         individual_copy["fitness"] = fitness
-        # track elitism for next generation
-        individual_copy["elitism"] = True
+        individual_copy["parent_1"] = parent_1
+        individual_copy["parent_2"] = parent_2
 
         next_generation[name] = individual_copy
 
@@ -451,8 +457,6 @@ def populate_new_generation(start, end):
                 individual_copy["name"] = name
                 individual_copy["chromosome"] = chromosome
                 individual_copy["fitness"] = fitness
-
-                # track parents for next generation
                 individual_copy["parent_1"] = parent_1
                 individual_copy["parent_2"] = parent_2
 
