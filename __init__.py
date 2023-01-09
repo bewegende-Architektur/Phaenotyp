@@ -697,7 +697,7 @@ class WM_OT_calculate_animation(Operator):
         frame = scene.frame_current
 
         start = bpy.context.scene.frame_start
-        end = bpy.context.scene.frame_end + start
+        end = bpy.context.scene.frame_end + 1 # to render also last frame
 
         calculation.fea_jobs_amount = end - start
         calculation.fea_jobs_done.value = 0
