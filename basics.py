@@ -1,5 +1,12 @@
 import bpy
 
+# this function is sorting the keys of the dict
+# (to avoid iterating like 0,10,2,3 ...)
+def sorted_keys(dict):
+    keys_int = list(map(int, dict))
+    sorted_int_keys = sorted(keys_int)
+    return sorted_int_keys
+
 # function to return the smallest_minus or biggest_plus in a list
 def return_max_diff_to_zero(list):
     list_copy = list.copy()

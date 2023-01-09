@@ -1069,13 +1069,13 @@ class WM_OT_text(Operator):
 
         return {"FINISHED"}
 
-class WM_OT_report(Operator):
+class WM_OT_report_overview(Operator):
     bl_label = "report"
-    bl_idname = "wm.report"
+    bl_idname = "wm.report_overview"
     bl_description = "Generate report as html-format"
 
     def execute(self, context):
-        print_data("Generate report as html-format")
+        print_data("Generate report overview in html-format")
 
         scene = bpy.context.scene
         phaenotyp = scene.phaenotyp
@@ -1083,180 +1083,68 @@ class WM_OT_report(Operator):
         members = data["members"]
         frame = bpy.context.scene.frame_current
 
+
         # create folder
         filepath = bpy.data.filepath
         directory = os.path.dirname(filepath)
 
         try:
-            os.mkdir(os.path.join(directory, "Phaenotyp-report"))
+            os.mkdir(os.path.join(directory, "Phaenotyp-overview"))
         except:
             pass
 
+        directory += "/Phaenotyp-overview/"
 
-        ### members
-        for id, member in members.items():
-            name = member["name"]
-            file = report.start(directory, name, 1920, 800)
+        report.copy_sorttable(directory)
 
-            # list elements with one entry at all
-            results = ["vertex_1_id", "vertex_0_id",
-                "acceptable_sigma", "acceptable_shear", "acceptable_torsion", "acceptable_sigmav",
-                "E", "G", "d"]
-            y = 20
-            for result in results:
-                value = "member['" + result + "']"
-                report.text(file, 0, y, result + ": " + str(eval(value)), 'start')
-                y = y + 20
+        sorted_frames = basics.sorted_keys(members["0"]["axial"])
+        start = sorted_frames[0] # first frame (if user is changing start frame)
+        end = sorted_frames[len(sorted_frames)-1]
 
-            # list elements with one entry per frame
-            results = ["ir", "Do", "Di", "Iy", "Iz", "J", "A", "kg","Wy", "WJ"]
-
-            y = 220
-            for result in results:
-                value = "member['" + result + "']['" + str(frame) + "']"
-                value = round(eval(value), 3)
-                report.text(file, 0, y, result + ": " + str(value), 'start')
-                y = y + 20
-
-            # positions within members
-            y = 460
-            for pos in range(11):
-                report.text(file, 0, y, "pos: " + str(pos), 'start')
-                y = y + 20
-
-            # write forces
-            results = ["axial", "moment_y", "moment_z", "shear_y", "shear_z", "torque", "sigma", "long_stress", "tau_shear", "tau_torsion", "sum_tau", "lever_arm"]
-            x = 150
-            for result in results:
-                y = 460
-                report.text(file, x, y-20, result + ":", 'end')
-                for pos in range(11):
-                    value = "member['" + result + "']['" + str(frame) + "']" + "[" + str(pos) + "]"
-                    value = round(eval(value), 3)
-                    report.text(file, x, y, str(value), 'end')
-                    y = y + 20
-
-                x = x + 160
-
-        report.end(file)
-
-        ### overview
-        # lists with 1 value per member per frame
-        results = ["max_long_stress", "max_tau_shear", "max_tau_torsion", "max_sum_tau", "max_sigmav", "max_sigma", "max_lever_arm"]
-        for result in results:
-            html = result + ".html"
-            file = report.start(directory, html, 1920, 20*len(members)+20)
-
-            y = 20
-            # create list of specific result
-            list_result = []
-            for id, member in members.items():
-                value = "member['" + result + "']['" + str(frame) + "']"
-                value = round(eval(value), 3)
-                list_result.append([member["name"], value])
-
-            sorted_list = sorted(list_result, key = lambda x: x[1])
-
-            # calculate factor for scaling
-            bottom = abs(sorted_list[0][1])
-            top = abs(sorted_list[len(sorted_list)-1][1])
-
-            if bottom > top:
-                factor = 1/bottom
-
-            elif top > bottom:
-                factor = 1/top
-
-            elif top == bottom:
-                if top != 0:
-                    factor = 1/top
-                else:
-                    factor = 0
-
-            else:
-                factor = 0
-
-            # draw results of members
-            for name, value in sorted_list:
-                report.text_link(file, 0, y, name) # 'start' 'middle' 'end'
-
-                if value > 0:
-                    color = "255,0,0"
-                else:
-                    color = "0,0,255"
-
-                report.line(file, 150, y-4, 150+abs(value*500)*factor, y-4, 5, color)
-
-                text = str(round(value, 3)) + " xx"
-                report.text(file, 150+abs(value*500)*factor+5, y, text, 'start') # 'start' 'middle' 'end'
-
-                y = y + 20
-
-            report.end(file)
-
-        # lists with 10 values per member per frame
-
-        results = ["axial", "moment_y", "moment_z", "shear_y", "shear_z", "torque", "lever_arm"]
-        for result in results:
-            html = result + ".html"
-            file = report.start(directory, html, 1920, 20*len(members)+20)
-
-            y = 20
-
-            # create list of specific result
-            list_result = []
-            for id, member in members.items():
-                values = "member['" + result + "']['" + str(frame) + "']"
-                values = eval(values)
-                entries = []
-                for x in values:
-                    entries.append(x)
-
-                value = basics.return_max_diff_to_zero(entries)
-                value = round(value, 3)
-                list_result.append([member["name"], value])
-
-            sorted_list = sorted(list_result, key = lambda x: x[1])
-
-            # calculate factor for scaling
-            bottom = abs(sorted_list[0][1])
-            top = abs(sorted_list[len(sorted_list)-1][1])
-
-            if bottom > top:
-                factor = 1/bottom
-
-            elif top > bottom:
-                factor = 1/top
-
-            elif top == bottom:
-                if top != 0:
-                    factor = 1/top
-                else:
-                    factor = 0
-
-            else:
-                factor = 0
-
-            # draw results of members
-            for name, value in sorted_list:
-                report.text_link(file, 0, y, name) # 'start' 'middle' 'end'
-
-                if value > 0:
-                    color = "255,0,0"
-                else:
-                    color = "0,0,255"
-
-                report.line(file, 150, y-4, 150+abs(value*500)*factor, y-4, 5, color)
-
-                text = str(round(value, 3)) + " xx"
-                report.text(file, 150+abs(value*500)*factor+5, y, text, 'start') # 'start' 'middle' 'end'
-
-                y = y + 20
-
-            report.end(file)
+        report.report_overview(directory, start, end)
 
         # open file
-        file_to_open = directory + "/Phaenotyp-report/axial.html"
+        file_to_open = directory + "/axial.html"
+        webbrowser.open(file_to_open)
+
+        return {"FINISHED"}
+
+class WM_OT_report_frame(Operator):
+    bl_label = "report"
+    bl_idname = "wm.report_frame"
+    bl_description = "Generate report as html-format"
+
+    def execute(self, context):
+        print_data("Generate report at frame in html-format")
+
+        scene = bpy.context.scene
+        phaenotyp = scene.phaenotyp
+        data = scene["<Phaenotyp>"]
+        members = data["members"]
+        frame = bpy.context.scene.frame_current
+
+
+        # create folder
+        filepath = bpy.data.filepath
+        directory = os.path.dirname(filepath)
+
+        try:
+            os.mkdir(os.path.join(directory, "Phaenotyp-frame"))
+        except:
+            pass
+
+        directory += "/Phaenotyp-frame/"
+
+        report.copy_sorttable(directory)
+
+        sorted_frames = basics.sorted_keys(members["0"]["axial"])
+        start = sorted_frames[0] # first frame (if user is changing start frame)
+        end = sorted_frames[len(sorted_frames)-1]
+
+        report.report_frame(directory, frame)
+
+        # open file
+        file_to_open = directory + "/axial.html"
         webbrowser.open(file_to_open)
 
         return {"FINISHED"}
@@ -1589,12 +1477,13 @@ class OBJECT_PT_Phaenotyp(Panel):
                                 box_text.label(text="Switch to edit-mode")
 
                         # Report
-                        box_report = layout.box()
-                        box_report.label(text="Report:")
+                        box_report_overview = layout.box()
+                        box_report_overview.label(text="Report:")
                         if bpy.data.is_saved:
-                            box_report.operator("wm.report", text="Generate")
+                            box_report_overview.operator("wm.report_overview", text="overview")
+                            box_report_overview.operator("wm.report_frame", text="frame")
                         else:
-                            box_report.label(text="Please save Blender-File first")
+                            box_report_overview.label(text="Please save Blender-File first")
 
 
         box_reset = layout.box()
@@ -1619,7 +1508,8 @@ classes = (
     WM_OT_ga_render_animation,
 
     WM_OT_text,
-    WM_OT_report,
+    WM_OT_report_overview,
+    WM_OT_report_frame,
 
     WM_OT_reset,
     OBJECT_PT_Phaenotyp
