@@ -443,14 +443,18 @@ def populate_new_generation(start, end):
                 # get data from individual
                 chromosome = individual["chromosome"]
                 fitness = individual["fitness"]
+                parent_1 = individual["parent_1"]
+                parent_2 = individual["parent_2"]
 
                 # copy individual to next generation
                 individual_copy = {}
                 individual_copy["name"] = name
                 individual_copy["chromosome"] = chromosome
                 individual_copy["fitness"] = fitness
-                # track elitism for next generation
-                individual_copy["elitism"] = True
+
+                # track parents for next generation
+                individual_copy["parent_1"] = parent_1
+                individual_copy["parent_2"] = parent_2
 
                 generation[name] = individual_copy
 
