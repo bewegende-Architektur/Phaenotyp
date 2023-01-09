@@ -6,7 +6,7 @@ from phaenotyp import geometry, calculation
 def print_data(text):
     print("Phaenotyp |", text)
 
-def create_indivdual(chromosome):
+def create_indivdual(chromosome, parent_1, parent_2):
     scene = bpy.context.scene
     phaenotyp = scene.phaenotyp
     data = scene["<Phaenotyp>"]
@@ -26,6 +26,11 @@ def create_indivdual(chromosome):
     individual = {}
     individual["name"] = str(frame) # individuals are identified by frame
     individual["chromosome"] = chromosome
+
+    if parent_1 and parent_2:
+        individual["parent_1"] = str(parent_1)
+        individual["parent_2"] = str(parent_2)
+
     individuals[str(frame)] = individual
 
     #text = "new individual frame:" + str(frame) + " " + str(chromosome)
@@ -120,19 +125,6 @@ def calculate_fitness(start, end):
 
         individual["fitness"] = fitness
 
-        '''
-        # get text from chromosome
-        str_chromosome = "["
-        for gene in individual["chromosome"]:
-            str_chromosome += str(round(gene, 3))
-            str_chromosome += ", "
-        str_chromosome[-1]
-        str_chromosome += "]"
-
-        text = "individual: " + individual["name"] + " " + str_chromosome + ", fitness: " + str(individual["fitness"])
-        print_data(text)
-        '''
-
 def mate_chromosomes(chromosome_1, chromosome_2):
     scene = bpy.context.scene
     phaenotyp = scene.phaenotyp
@@ -218,11 +210,8 @@ def create_initial_individuals(start, end):
     environment = data["ga_environment"]
     individuals = data["ga_individuals"]
 
-    new_generation_size = environment["new_generation_size"]
-    generation_id = environment["generation_id"]
-
     for frame in range(start, end):
-        # create chromosome with set of shapekeys (random for first population)
+        # create chromosome with set of shapekeys (random for first generation)
         chromosome = []
         for gnome_len in range(len(shape_keys)-1): # -1 to exlude basis
             gene = random.choice(environment["genes"])
@@ -232,7 +221,7 @@ def create_initial_individuals(start, end):
         bpy.context.scene.frame_current = frame
         bpy.context.view_layer.update()
 
-        create_indivdual(chromosome) # and change frame to shape key
+        create_indivdual(chromosome, None, None) # and change frame to shape key
 
         # calculate new properties for each member
         geometry.update_members_pre()
@@ -285,7 +274,7 @@ def sectional_optimization(start, end):
     calculation.join_jobs()
     calculation.interweave_results()
 
-def populate_initial_population():
+def populate_initial_generation():
     scene = bpy.context.scene
     data = scene["<Phaenotyp>"]
     members = data["members"]
@@ -293,16 +282,26 @@ def populate_initial_population():
     environment = data["ga_environment"]
     individuals = data["ga_individuals"]
 
-    # copy to population
-    for name, individual in individuals.items():
-        environment["population"][name] = individual
+     # create initial generation
+    environment["generations"]["0"] = {} # create dict
+    initial_generation = environment["generations"]["0"]
 
-        # get text from chromosome
+    # copy to generation
+    for name, individual in individuals.items():
+        # copy individual to next generation
+        individual_copy = {}
+        individual_copy["name"] = name
+        individual_copy["chromosome"] = individual["chromosome"]
+        individual_copy["fitness"] = individual["fitness"]
+
+        initial_generation[name] = individual_copy
+
+        # get text from chromosome for printing
         str_chromosome = "["
         for gene in individual["chromosome"]:
             str_chromosome += str(round(gene, 3))
             str_chromosome += ", "
-        str_chromosome[-1]
+        str_chromosome = str_chromosome[:-2]
         str_chromosome += "]"
 
         # print info
@@ -310,59 +309,66 @@ def populate_initial_population():
         text += str_chromosome + ", fitness: " + str(individual["fitness"])
         print_data(text)
 
-def do_elitism(start, end):
+def do_elitism():
     scene = bpy.context.scene
     data = scene["<Phaenotyp>"]
     members = data["members"]
 
     environment = data["ga_environment"]
     individuals = data["ga_individuals"]
+    generation_id = data["ga_environment"]["generation_id"]
 
-    # sort population according to fitness
+    # the current generation
+    current_generation = environment["generations"][str(generation_id)]
+
+    # sort current generation according to fitness
     list_result = []
-    for name, individual in environment["population"].items():
+    for name, individual in current_generation.items():
         list_result.append([name, individual["chromosome"], individual["fitness"]])
 
     sorted_list = sorted(list_result, key = lambda x: x[2])
 
-    print_data("Sorted population:")
-    for individual in sorted_list:
-        name = individual[0]
-        chromosome = individual[1]
-        fitness = individual[2]
+    # the next generation
+    generation_id = generation_id + 1 # increase id
+    data["ga_environment"]["generation_id"] = generation_id # += would not working
 
-        # copy individuals to population (can't be appended)
-        individual = {}
-        individual["name"] = name # indiviuals are identified by the frame
-        individual["chromosome"] = chromosome
-        individual["fitness"] = fitness
-        environment["population"][name] = individual
-
-        text = "individual frame:" + name + " with fitness " + str(fitness)
-        print_data(text)
-
-    # for first run only
-    if environment["best"] == None:
-        name = list(environment["population"].keys())[0] # get first element
-        environment["best"] = environment["population"][name]
-
-    # replace overall best of all generations
-    for id, individual in individuals.items():
-        if individual["fitness"] < environment["best"]["fitness"]:
-            environment["best"] = individual
-
-    text = "best individual: " + str(environment["best"]["name"]) + " with fitness: " + str(environment["best"]["fitness"])
-    print_data(text)
-
-    # create empty list of a new generation
-    text = "generation " + str(environment["generation_id"]) + ":"
-    print_data(text)
+    environment["generations"][str(generation_id)] = {} # create dict
+    next_generation = environment["generations"][str(generation_id)]
 
     # copy fittest ten percent directly
     for i in range(environment["elitism"]):
-        name = list(environment["population"].keys())[i] # get nth element
+        # name of nth best individual
+        name = sorted_list[i][0]
+
+        # get individual
         individual = individuals[name]
-        environment["new_generation"][name] = individual
+
+        # get data from individual
+        chromosome = individual["chromosome"]
+        fitness = individual["fitness"]
+
+        # copy individual to next generation
+        individual_copy = {}
+        individual_copy["name"] = name
+        individual_copy["chromosome"] = chromosome
+        individual_copy["fitness"] = fitness
+        # track elitism for next generation
+        individual_copy["elitism"] = True
+
+        next_generation[name] = individual_copy
+
+        # get text from chromosome for printing
+        str_chromosome = "["
+        for gene in individual["chromosome"]:
+            str_chromosome += str(round(gene, 3))
+            str_chromosome += ", "
+        str_chromosome = str_chromosome[:-2]
+        str_chromosome += "]"
+
+        # print info
+        text = "elitism: " + str(individual["name"]) + " "
+        text += str_chromosome + ", fitness: " + str(individual["fitness"])
+        print_data(text)
 
 def create_new_individuals(start, end):
     scene = bpy.context.scene
@@ -378,12 +384,14 @@ def create_new_individuals(start, end):
     new_generation_size = environment["new_generation_size"]
     generation_id = environment["generation_id"]
 
+    old_generation = environment["generations"][str(generation_id-1)]
+    print()
     for frame in range(start, end):
-        # pair best 50 % of the previous population
+        # pair best 50 % of the previous generation
         random_number_1 = random.randint(0, int(new_generation_size*0.5))
         random_number_2 = random.randint(0, int(new_generation_size*0.5))
-        parent_1_name = list(environment["population"].keys())[random_number_1]
-        parent_2_name = list(environment["population"].keys())[random_number_2]
+        parent_1_name = list(old_generation.keys())[random_number_1]
+        parent_2_name = list(old_generation.keys())[random_number_2]
 
         parent_1 = individuals[parent_1_name]
         parent_2 = individuals[parent_2_name]
@@ -394,7 +402,8 @@ def create_new_individuals(start, end):
         bpy.context.scene.frame_current = frame
         bpy.context.view_layer.update()
 
-        create_indivdual(chromosome) # and change frame to shape key
+        # and change frame to shape key - save name of parents for tree
+        create_indivdual(chromosome, parent_1_name, parent_2_name)
 
         # calculate new properties for each member
         geometry.update_members_pre()
@@ -420,30 +429,43 @@ def populate_new_generation(start, end):
     new_generation_size = environment["new_generation_size"]
     generation_id = environment["generation_id"]
 
-    # copy to population
+    # the current generation, that was created in do_elitism
+    generation = environment["generations"][str(generation_id)]
+
+    # copy to generations
     for name, individual in individuals.items():
         for frame in range(start, end):
+            # get from individuals
             if str(frame) == name:
-                environment["population"][name] = individual
+                # get individual
+                individual = individuals[name]
 
-def replace_population():
-    scene = bpy.context.scene
-    phaenotyp = scene.phaenotyp
-    data = scene["<Phaenotyp>"]
-    obj = data["structure"]
-    shape_keys = obj.data.shape_keys.key_blocks
-    members = data["members"]
+                # get data from individual
+                chromosome = individual["chromosome"]
+                fitness = individual["fitness"]
 
-    environment = data["ga_environment"]
-    individuals = data["ga_individuals"]
+                # copy individual to next generation
+                individual_copy = {}
+                individual_copy["name"] = name
+                individual_copy["chromosome"] = chromosome
+                individual_copy["fitness"] = fitness
+                # track elitism for next generation
+                individual_copy["elitism"] = True
 
-    # replace population with new_generation
-    environment["population"] = {}
-    for id, individual in environment["new_generation"].items():
-        environment["population"][id] = individual
+                generation[name] = individual_copy
 
-    environment["new_generation"] = {}
-    environment["generation_id"] += 1
+                # get text from chromosome for printing
+                str_chromosome = "["
+                for gene in individual["chromosome"]:
+                    str_chromosome += str(round(gene, 3))
+                    str_chromosome += ", "
+                str_chromosome = str_chromosome[:-2]
+                str_chromosome += "]"
+
+                # print info
+                text = "child: " + str(individual["name"]) + " "
+                text += str_chromosome + ", fitness: " + str(individual["fitness"])
+                print_data(text)
 
 def goto_indivual():
     scene = bpy.context.scene

@@ -241,9 +241,9 @@ class phaenotyp_properties(PropertyGroup):
         max = 1000.0
         )
 
-    population_size: IntProperty(
-        name = "population_size",
-        description="Size of population for GA",
+    generation_size: IntProperty(
+        name = "generation_size",
+        description="Size of generation for GA",
         default = 20,
         min = 10,
         max = 1000
@@ -257,8 +257,8 @@ class phaenotyp_properties(PropertyGroup):
         max = 100
         )
 
-    generations: IntProperty(
-        name = "generations",
+    generation_amount: IntProperty(
+        name = "generation_amount",
         description="Amount of generations",
         default = 10,
         min = 1,
@@ -800,24 +800,22 @@ class WM_OT_ga_start(Operator):
         print_data("start genetic muataion over selected shape keys")
 
         # pass from gui
-        data["ga_environment"]["population_size"] = phaenotyp.population_size
+        data["ga_environment"]["generation_size"] = phaenotyp.generation_size
         data["ga_environment"]["elitism"] = phaenotyp.elitism
-        data["ga_environment"]["generations"] = phaenotyp.generations
-        data["ga_environment"]["new_generation_size"] = phaenotyp.population_size - phaenotyp.elitism
+        data["ga_environment"]["generation_amount"] = phaenotyp.generation_amount
+        data["ga_environment"]["new_generation_size"] = phaenotyp.generation_size - phaenotyp.elitism
         data["ga_environment"]["fitness_function"] = phaenotyp.fitness_function
 
         # clear to restart
-        data["ga_environment"]["population"] = {}
-        data["ga_environment"]["new_generation"] = {}
-        data["ga_environment"]["generation_id"] = 1
+        data["ga_environment"]["generations"] = {}
+        data["ga_environment"]["generation_id"] = 0
         data["ga_environment"]["genes"] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
-        data["ga_environment"]["best"] = None
         data["ga_individuals"] = {}
 
         # shorten
-        population_size = data["ga_environment"]["population_size"]
+        generation_size = data["ga_environment"]["generation_size"]
         elitism = data["ga_environment"]["elitism"]
-        generations = data["ga_environment"]["generations"]
+        generation_amount = data["ga_environment"]["generation_amount"]
         new_generation_size = data["ga_environment"]["new_generation_size"]
         fitness_function = data["ga_environment"]["fitness_function"]
         generation_id = data["ga_environment"]["generation_id"]
@@ -825,20 +823,25 @@ class WM_OT_ga_start(Operator):
         if phaenotyp.mate_type in ["direct", "morph"]:
             # create start and end of calculation and create individuals
             start = 0
-            end = population_size
+            end = generation_size
 
             # set frame_start to 0
             bpy.context.scene.frame_start = start
-            # set frame_end to first size of inital population
+            # set frame_end to first size of inital generation
             bpy.context.scene.frame_end = end
 
             # handle process
-            calculation.fea_jobs_amount = (generations+1)*(end-start)
+            job_amount = generation_size + (new_generation_size * generation_amount)
+            calculation.fea_jobs_amount = job_amount
             if phaenotyp.ga_optimization in ["simple", "complex"]:
-                calculation.fea_jobs_amount = (generations+1)*(end-start)*2
+                calculation.fea_jobs_amount = job_amount * 2
             calculation.fea_jobs = []
             calculation.fea_jobs_done.value = 0
 
+            # create initial generation
+            # the first generation contains 20 individuals (standard value is 20)
+            # the indiviuals are created with random genes
+            # there is no elitism possible, because there is no previous group
             ga.create_initial_individuals(start, end)
 
             # optimize if sectional performance if activated
@@ -846,23 +849,27 @@ class WM_OT_ga_start(Operator):
                 ga.sectional_optimization(start, end)
 
             ga.calculate_fitness(start, end)
-            ga.populate_initial_population()
+            ga.populate_initial_generation()
 
-            # replace range
-            for i in range(generations):
+            # create all other generations
+            # 2 indiviuals are taken from previous group (standard value is 10)
+            # 10 indiviuals are paired (standard ist 50 %)
+            for i in range(generation_amount):
                 start = end
                 end = start + new_generation_size
 
                 # expand frame
                 bpy.context.scene.frame_end = end
 
-                ga.do_elitism(start, end)
+                # create new generation and copy fittest percent
+                ga.do_elitism()
+
+                # create 18 new individuals (standard value of 20 - 10 % elitism)
                 ga.create_new_individuals(start, end)
                 if phaenotyp.ga_optimization in ["simple", "complex"]:
                     ga.sectional_optimization(start, end)
                 ga.calculate_fitness(start, end)
                 ga.populate_new_generation(start, end)
-                #ga.replace_population()
 
         if phaenotyp.mate_type == "bruteforce":
             data = scene["<Phaenotyp>"]
@@ -882,7 +889,7 @@ class WM_OT_ga_start(Operator):
 
             # set frame_start to 0
             bpy.context.scene.frame_start = start
-            # set frame_end to first size of inital population
+            # set frame_end to first size of inital generation
             bpy.context.scene.frame_end = end
 
             # handle process
@@ -1395,9 +1402,9 @@ class OBJECT_PT_Phaenotyp(Panel):
                         box_ga = layout.box()
                         box_ga.label(text="Genetic Mutation:")
                         if phaenotyp.mate_type in ["direct", "morph"]:
-                            box_ga.prop(phaenotyp, "population_size", text="Size of population for GA")
+                            box_ga.prop(phaenotyp, "generation_size", text="Size of generation for GA")
                             box_ga.prop(phaenotyp, "elitism", text="Size of elitism for GA")
-                            box_ga.prop(phaenotyp, "generations", text="'Amount of generations'")
+                            box_ga.prop(phaenotyp, "generation_amount", text="Amount of generations")
                         box_ga.prop(phaenotyp, "fitness_function", text="Fitness function")
                         box_ga.prop(phaenotyp, "mate_type", text="Type of mating")
                         box_ga.prop(phaenotyp, "ga_optimization", text="Sectional optimization")
@@ -1406,11 +1413,11 @@ class OBJECT_PT_Phaenotyp(Panel):
                             name = keyblock.name
                             box_ga.label(text=name)
 
-                        # check population_size and elitism
-                        if phaenotyp.population_size*0.5 > phaenotyp.elitism:
+                        # check generation_size and elitism
+                        if phaenotyp.generation_size*0.5 > phaenotyp.elitism:
                             box_ga.operator("wm.ga_start", text="Start")
                         else:
-                            box_ga.label(text="Elitism should be smaller than 50% of population size.")
+                            box_ga.label(text="Elitism should be smaller than 50% of generation size.")
 
                         if len(data["ga_individuals"]) > 0 and not bpy.context.screen.is_animation_playing:
                             box_ga.label(text="Select individual by fitness:")
