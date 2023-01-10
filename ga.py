@@ -394,10 +394,10 @@ def create_new_individuals(start, end):
     print()
     for frame in range(start, end):
         # pair best 50 % of the previous generation
-        random_number_1 = random.randint(0, int(new_generation_size*0.5))
-        random_number_2 = random.randint(0, int(new_generation_size*0.5))
-        parent_1_name = list(old_generation.keys())[random_number_1]
-        parent_2_name = list(old_generation.keys())[random_number_2]
+        # sample is used to avoid same random numbers
+        random_numbers = random.sample(range(int(new_generation_size*0.5)), 2)
+        parent_1_name = list(old_generation.keys())[random_numbers[0]]
+        parent_2_name = list(old_generation.keys())[random_numbers[1]]
 
         parent_1 = individuals[parent_1_name]
         parent_2 = individuals[parent_2_name]
