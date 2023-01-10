@@ -7,6 +7,13 @@ def sorted_keys(dict):
     sorted_int_keys = sorted(keys_int)
     return sorted_int_keys
 
+# to avoid division by zero if a force is 0
+def avoid_div_zero(a,b):
+    if b == 0:
+        return 0
+    else:
+        return a/b
+
 # function to return the smallest_minus or biggest_plus in a list
 def return_max_diff_to_zero(list):
     list_copy = list.copy()

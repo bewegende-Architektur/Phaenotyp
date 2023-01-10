@@ -1076,49 +1076,9 @@ class WM_OT_text(Operator):
 
         return {"FINISHED"}
 
-class WM_OT_report_overview(Operator):
+class WM_OT_report_members(Operator):
     bl_label = "report"
-    bl_idname = "wm.report_overview"
-    bl_description = "Generate report as html-format"
-
-    def execute(self, context):
-        print_data("Generate report overview in html-format")
-
-        scene = bpy.context.scene
-        phaenotyp = scene.phaenotyp
-        data = scene["<Phaenotyp>"]
-        members = data["members"]
-        frame = bpy.context.scene.frame_current
-
-
-        # create folder
-        filepath = bpy.data.filepath
-        directory = os.path.dirname(filepath)
-
-        try:
-            os.mkdir(os.path.join(directory, "Phaenotyp-overview"))
-        except:
-            pass
-
-        directory += "/Phaenotyp-overview/"
-
-        report.copy_sorttable(directory)
-
-        sorted_frames = basics.sorted_keys(members["0"]["axial"])
-        start = sorted_frames[0] # first frame (if user is changing start frame)
-        end = sorted_frames[len(sorted_frames)-1]
-
-        report.report_overview(directory, start, end)
-
-        # open file
-        file_to_open = directory + "/axial.html"
-        webbrowser.open(file_to_open)
-
-        return {"FINISHED"}
-
-class WM_OT_report_frame(Operator):
-    bl_label = "report"
-    bl_idname = "wm.report_frame"
+    bl_idname = "wm.report_members"
     bl_description = "Generate report as html-format"
 
     def execute(self, context):
@@ -1136,11 +1096,11 @@ class WM_OT_report_frame(Operator):
         directory = os.path.dirname(filepath)
 
         try:
-            os.mkdir(os.path.join(directory, "Phaenotyp-frame"))
+            os.mkdir(os.path.join(directory, "Phaenotyp-members"))
         except:
             pass
 
-        directory += "/Phaenotyp-frame/"
+        directory += "/Phaenotyp-members/"
 
         report.copy_sorttable(directory)
 
@@ -1148,10 +1108,124 @@ class WM_OT_report_frame(Operator):
         start = sorted_frames[0] # first frame (if user is changing start frame)
         end = sorted_frames[len(sorted_frames)-1]
 
-        report.report_frame(directory, frame)
+        report.report_members(directory, frame)
 
         # open file
         file_to_open = directory + "/axial.html"
+        webbrowser.open(file_to_open)
+
+        return {"FINISHED"}
+
+class WM_OT_report_frames(Operator):
+    bl_label = "report"
+    bl_idname = "wm.report_frames"
+    bl_description = "Generate report as html-format"
+
+    def execute(self, context):
+        print_data("Generate report overview in html-format")
+
+        scene = bpy.context.scene
+        phaenotyp = scene.phaenotyp
+        data = scene["<Phaenotyp>"]
+        members = data["members"]
+        frame = bpy.context.scene.frame_current
+
+
+        # create folder
+        filepath = bpy.data.filepath
+        directory = os.path.dirname(filepath)
+
+        try:
+            os.mkdir(os.path.join(directory, "Phaenotyp-frames"))
+        except:
+            pass
+
+        directory += "/Phaenotyp-frames/"
+
+        report.copy_sorttable(directory)
+
+        sorted_frames = basics.sorted_keys(members["0"]["axial"])
+        start = sorted_frames[0] # first frame (if user is changing start frame)
+        end = sorted_frames[len(sorted_frames)-1]
+
+        report.report_frames(directory, start, end)
+
+        # open file
+        file_to_open = directory + "/axial.html"
+        webbrowser.open(file_to_open)
+
+        return {"FINISHED"}
+
+class WM_OT_report_chromosomes(Operator):
+    bl_label = "report"
+    bl_idname = "wm.report_chromosomes"
+    bl_description = "Generate report as html-format"
+
+    def execute(self, context):
+        print_data("Generate report at frame in html-format")
+
+        scene = bpy.context.scene
+        phaenotyp = scene.phaenotyp
+        data = scene["<Phaenotyp>"]
+        members = data["members"]
+        frame = bpy.context.scene.frame_current
+
+
+        # create folder
+        filepath = bpy.data.filepath
+        directory = os.path.dirname(filepath)
+
+        try:
+            os.mkdir(os.path.join(directory, "Phaenotyp-chromosomes"))
+        except:
+            pass
+
+        directory += "/Phaenotyp-chromosomes/"
+
+        report.copy_sorttable(directory)
+
+        sorted_frames = basics.sorted_keys(members["0"]["axial"])
+        start = sorted_frames[0] # first frame (if user is changing start frame)
+        end = sorted_frames[len(sorted_frames)-1]
+
+        report.report_members(directory, frame)
+
+        # open file
+        file_to_open = directory + "/index.html"
+        webbrowser.open(file_to_open)
+
+        return {"FINISHED"}
+
+class WM_OT_report_tree(Operator):
+    bl_label = "report"
+    bl_idname = "wm.report_tree"
+    bl_description = "Generate report as html-format"
+
+    def execute(self, context):
+        print_data("Generate report at frame in html-format")
+
+        scene = bpy.context.scene
+        phaenotyp = scene.phaenotyp
+        data = scene["<Phaenotyp>"]
+        members = data["members"]
+        frame = bpy.context.scene.frame_current
+
+
+        # create folder
+        filepath = bpy.data.filepath
+        directory = os.path.dirname(filepath)
+
+        try:
+            os.mkdir(os.path.join(directory, "Phaenotyp-tree"))
+        except:
+            pass
+
+        directory += "/Phaenotyp-tree/"
+
+        report.report_tree(directory)
+
+        # open file
+        file_to_open = directory + "/index.html"
         webbrowser.open(file_to_open)
 
         return {"FINISHED"}
@@ -1484,13 +1558,20 @@ class OBJECT_PT_Phaenotyp(Panel):
                                 box_text.label(text="Switch to edit-mode")
 
                         # Report
-                        box_report_overview = layout.box()
-                        box_report_overview.label(text="Report:")
+                        box_report = layout.box()
+                        box_report.label(text="Report:")
                         if bpy.data.is_saved:
-                            box_report_overview.operator("wm.report_overview", text="overview")
-                            box_report_overview.operator("wm.report_frame", text="frame")
+                            box_report.operator("wm.report_members", text="members")
+                            box_report.operator("wm.report_frames", text="frames")
+
+                            # if ga
+                            ga_available = data.get("ga_environment")
+                            if ga_available:
+                                box_report.operator("wm.report_chromosomes", text="chromosomes")
+                                box_report.operator("wm.report_tree", text="tree")
+
                         else:
-                            box_report_overview.label(text="Please save Blender-File first")
+                            box_report.label(text="Please save Blender-File first")
 
 
         box_reset = layout.box()
@@ -1515,8 +1596,10 @@ classes = (
     WM_OT_ga_render_animation,
 
     WM_OT_text,
-    WM_OT_report_overview,
-    WM_OT_report_frame,
+    WM_OT_report_members,
+    WM_OT_report_frames,
+    WM_OT_report_chromosomes,
+    WM_OT_report_tree,
 
     WM_OT_reset,
     OBJECT_PT_Phaenotyp
