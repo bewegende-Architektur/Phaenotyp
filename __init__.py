@@ -1183,12 +1183,7 @@ class WM_OT_report_chromosomes(Operator):
         directory += "/Phaenotyp-chromosomes/"
 
         report.copy_sorttable(directory)
-
-        sorted_frames = basics.sorted_keys(members["0"]["axial"])
-        start = sorted_frames[0] # first frame (if user is changing start frame)
-        end = sorted_frames[len(sorted_frames)-1]
-
-        report.report_members(directory, frame)
+        report.report_chromosomes(directory)
 
         # open file
         file_to_open = directory + "/index.html"

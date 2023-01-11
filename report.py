@@ -3,7 +3,6 @@ from phaenotyp import basics
 import shutil
 import os.path
 
-
 class svg_individuals:
     instances = []
 
@@ -12,17 +11,16 @@ class svg_individuals:
     generation_size = None
     generation_amount = None
 
+    # scaling
+    fitness_best = None
+    fitness_weakest = None
+
     @staticmethod
     def setup():
-        # scaling
-        svg_individuals.fitness_best = 1
-        svg_individuals.fitness_weakest = 10
-
-        # globals
         svg_individuals.border_left = 100
         svg_individuals.border_right = 10
         svg_individuals.border_top = 20
-        svg_individuals.border_bottom = 10
+        svg_individuals.border_bottom = 100
 
         svg_individuals.line_h = 20
 
@@ -62,9 +60,9 @@ class svg_individuals:
     @staticmethod
     def end(file):
         # write end
-        file.write('</svg>')
-        file.write('</body>')
-        file.write('</html>')
+        file.write('</svg\n>')
+        file.write('</body\n>')
+        file.write('</html\n>')
         file.close()
 
     @staticmethod
@@ -125,12 +123,12 @@ class svg_individuals:
             col_id += 1
 
     @staticmethod
-    def draw_bgs(file):
+    def loop_bgs(file):
         for individual in svg_individuals.instances:
             individual.draw_bg(file)
 
     @staticmethod
-    def draw_vgs(file):
+    def loop_vgs(file):
         for individual in svg_individuals.instances:
             individual.draw_vg(file)
 
@@ -217,7 +215,10 @@ class svg_individuals:
             file.write('  <circle ' + dot_x + dot_y + 'r="4" stroke="black" stroke-width="1" fill="transparent" />\n')
 
             # create color as str
-            r, g, b = [255, 200, 255]
+            fitness_weakest = svg_individuals.fitness_weakest
+            fitness = self.fitness
+            value = int(basics.avoid_div_zero(255, fitness_weakest) * fitness)
+            r, g, b = [value, value, 255]
             r, g, b = [str(r), str(g), str(b)]
             c = 'rgb('+r+','+g+','+b+')'
 
@@ -324,7 +325,7 @@ def create_matrix(col, row):
 
     return matrix
 
-def fill_matrix_pos(matrix, result_type, frame, max_diff):
+def fill_matrix_members(matrix, result_type, frame, max_diff):
     scene = bpy.context.scene
     phaenotyp = scene.phaenotyp
     data = scene["<Phaenotyp>"]
@@ -364,7 +365,7 @@ def fill_matrix_pos(matrix, result_type, frame, max_diff):
 
     return matrix, highest, lowest
 
-def fill_matrix_frame(matrix, result_type, max_diff):
+def fill_matrix_frames(matrix, result_type, max_diff):
     scene = bpy.context.scene
     phaenotyp = scene.phaenotyp
     data = scene["<Phaenotyp>"]
@@ -401,13 +402,56 @@ def fill_matrix_frame(matrix, result_type, max_diff):
 
     return matrix, highest, lowest
 
+def fill_matrix_chromosomes(matrix, len_chromosome):
+    scene = bpy.context.scene
+    phaenotyp = scene.phaenotyp
+    data = scene["<Phaenotyp>"]
+    members = data["members"]
+    environment = data["ga_environment"]
+    individuals = data["ga_individuals"]
+
+    highest = 0
+    lowest = 0
+
+    # append genes (value of shapekey)
+    for gene_id in range(len_chromosome):
+        for name, individual in individuals.items():
+            gene = individual["chromosome"][gene_id]
+            matrix[int(name)][int(gene_id)] = gene
+
+            # find highest
+            if gene > highest:
+                highest = gene
+
+            # find highest
+            if gene < lowest:
+                lowest = gene
+
+    weakest = 0
+    best = 0
+
+    # append fitness
+    for name, individual in individuals.items():
+        fitness = individual["fitness"]
+        matrix[int(name)][int(len_chromosome)] = fitness
+
+        # find highest
+        if fitness > weakest:
+            weakest = fitness
+
+        # find highest
+        if fitness < weakest:
+            best = fitness
+
+    return matrix, highest, lowest, weakest, best
+
 def append_head(file, report_type):
     file.write('<html>\n')
     file.write("<head>\n")
     file.write('<title>')
     text = 'Phaenotyp | report ' + str(report_type)
     file.write(text)
-    file.write('</title>')
+    file.write('</title>\n')
 
     file.write("Phaenotyp | Report <br>\n")
     file.write("<br>\n")
@@ -454,7 +498,29 @@ def append_head(file, report_type):
         text = '<td height="20" width="20" bgcolor="FFFFFF">Member</td>'
         file.write(text)
 
-    elif report_type in ["chromosomes", "tree"]:
+    elif report_type == "chromosomes":
+        file.write("\n")
+        file.write("<style>\n")
+        file.write("* {font-family: sans-serif;}\n")
+        file.write("a:link {color: rgb(0, 0, 0); background-color: transparent; text-decoration: none;}\n")
+        file.write("a:visited {color: rgb(0,0,0); background-color: transparent; text-decoration: none;}\n")
+        file.write("a:hover {color: rgb(0,0,0); background-color: transparent; text-decoration: underline;}\n")
+        file.write("a:active {color: rgb(0,0,0); background-color: transparent; text-decoration: underline;}\n")
+        file.write("</style>\n")
+
+        # from https://www.kryogenix.org/
+        # as suggested by smilyface
+        # https://stackoverflow.com/questions/10683712/html-table-sort
+        file.write('<script src="sorttable.js"></script>\n')
+
+        file.write('<table class="sortable">\n')
+        file.write('<tr class="item">\n')
+
+        # empty part in the top-left
+        text = '<td height="20" width="20" bgcolor="FFFFFF">Individual</td>\n'
+        file.write(text)
+
+    elif report_type == "tree":
         file.write("<br>\n")
 
         file.write("<br>\n")
@@ -467,9 +533,10 @@ def append_head(file, report_type):
 def append_headlines(file, names, fill):
     for name in names:
         if fill:
-            name = str(name).zfill(fill)
+            if type(name) != str:
+                name = str(name).zfill(fill)
 
-        text = '<td height="20" width="20" align="right">' + str(name) + '</td>'
+        text = '<td height="20" width="20" align="right">' + str(name) + '</td>\n'
         file.write(text)
 
     file.write('</tr>')
@@ -480,7 +547,7 @@ def append_matrix_members(file, matrix, frame, highest, lowest, max_diff):
         file.write('<tr class="item">')
 
         # print member name
-        text = '<td height="20" width="20" align="left">' + str(member_id).zfill(3) + '</td>'
+        text = '<td height="20" width="20" align="left">' + str(member_id).zfill(3) + '</td>\n'
         file.write(text)
 
         if max_diff:
@@ -495,10 +562,10 @@ def append_matrix_members(file, matrix, frame, highest, lowest, max_diff):
                     color = rgb_to_hex((255, 255-value, 255-value))
 
                 else:
-                    value = int(255 / lowest * force)
+                    value = int(basics.avoid_div_zero(255, lowest) * force)
                     color = rgb_to_hex((255-value, 255-value, 255))
 
-                text = '<td height="20" width="20" align="right" bgcolor=' + color + '>' +str(round(force,3)) + '</td>'
+                text = '<td height="20" width="20" align="right" bgcolor=' + color + '>' +str(round(force,3)) + '</td>\n'
                 file.write(text)
 
         # otherwiese take first pos only
@@ -514,10 +581,10 @@ def append_matrix_members(file, matrix, frame, highest, lowest, max_diff):
                     color = rgb_to_hex((255, 255-value, 255-value))
 
                 else:
-                    value = int(255 / lowest * force)
+                    value = int(basics.avoid_div_zero(255, lowest) * force)
                     color = rgb_to_hex((255-value, 255-value, 255))
 
-                text = '<td height="20" width="20" align="right" bgcolor=' + color + '>' +str(round(force,3)) + '</td>'
+                text = '<td height="20" width="20" align="right" bgcolor=' + color + '>' +str(round(force,3)) + '</td>\n'
                 file.write(text)
 
         # end row
@@ -529,7 +596,7 @@ def append_matrix_frames(file, matrix, highest, lowest, max_diff):
         file.write('<tr class="item">')
 
         # print member name
-        text = '<td height="20" width="20" align="left">' + str(member_id).zfill(3) + '</td>'
+        text = '<td height="20" width="20" align="left">' + str(member_id).zfill(3) + '</td>\n'
         file.write(text)
 
         for force in member_entry:
@@ -545,11 +612,41 @@ def append_matrix_frames(file, matrix, highest, lowest, max_diff):
                 color = rgb_to_hex((255, 255-value, 255-value))
 
             else:
-                value = int(255 / lowest * force)
+                value = int(basics.avoid_div_zero(255, lowest) * force)
                 color = rgb_to_hex((255-value, 255-value, 255))
 
-            text = '<td height="20" width="20" align="right" bgcolor=' + color + '>' +str(round(force,3)) + '</td>'
+            text = '<td height="20" width="20" align="right" bgcolor=' + color + '>' +str(round(force,3)) + '</td>\n'
             file.write(text)
+
+        # end row
+        file.write("</tr>\n")
+
+def append_matrix_chromosomes(file, matrix, highest, lowest, weakest, best):
+    for name, individual_entry in enumerate(matrix):
+        # start row
+        file.write('<tr class="item">')
+
+        # print member name
+        text = '<td height="20" width="20" align="left">' + str(name).zfill(3) + '</td>\n'
+        file.write(text)
+
+        len_entries = len(individual_entry) # to check if gene
+        for id, entry in enumerate(individual_entry):
+            # if gene
+            if id < len_entries-1:
+                value = int(basics.avoid_div_zero(255, highest) * entry)
+                color = rgb_to_hex((255, 255-value, 255-value))
+
+                text = '<td height="20" width="20" align="right" bgcolor=' + color + '>' +str(round(entry,3)) + '</td>\n'
+                file.write(text)
+
+            # if fitness
+            else:
+                value = int(basics.avoid_div_zero(255, weakest) * entry)
+                color = rgb_to_hex((value, value, 255))
+
+                text = '<td height="20" width="20" align="right" bgcolor=' + color + '>' +str(round(entry,3)) + '</td>\n'
+                file.write(text)
 
         # end row
         file.write("</tr>\n")
@@ -587,14 +684,14 @@ def report_members(directory, frame):
         # create file
         filename = directory + str(force_type) + ".html"
         file = open(filename, 'w')
-        members_len = (len(members))
+        len_members = (len(members))
         frames_len = len(members["0"][force_type]) # Was wenn start wo anders?
 
         # create matrix with length of col and row
-        result_matrix = create_matrix(11, members_len)
+        result_matrix = create_matrix(11, len_members)
 
         # fill matrix with, result_matrix, forcetype, max_diff and absolute
-        result_matrix, highest, lowest = fill_matrix_pos(result_matrix, force_type, frame, max_diff)
+        result_matrix, highest, lowest = fill_matrix_members(result_matrix, force_type, frame, max_diff)
 
         # append start
         append_head(file, "members")
@@ -634,14 +731,14 @@ def report_frames(directory, start, end):
         # create file
         filename = directory + str(force_type) + ".html"
         file = open(filename, 'w')
-        members_len = (len(members))
+        len_members = (len(members))
         frames_len = len(members["0"][force_type]) # Was wenn start wo anders?
 
         # create matrix with length of col and row
-        result_matrix = create_matrix(frames_len, members_len)
+        result_matrix = create_matrix(frames_len, len_members)
 
         # fill matrix with, result_matrix, forcetype, max_diff and absolute
-        result_matrix, highest, lowest = fill_matrix_frame(result_matrix, force_type, max_diff)
+        result_matrix, highest, lowest = fill_matrix_frames(result_matrix, force_type, max_diff)
 
         # append start
         append_head(file, "frames")
@@ -654,32 +751,36 @@ def report_frames(directory, start, end):
 
         append_end(file)
 
-def report_chromosomes(directory, frame):
+def report_chromosomes(directory):
     scene = bpy.context.scene
     phaenotyp = scene.phaenotyp
     data = scene["<Phaenotyp>"]
+    obj = data["structure"]
+    shape_keys = obj.data.shape_keys.key_blocks
     members = data["members"]
+    individuals = data["ga_individuals"]
 
     # create file
     filename = directory + "index.html"
     file = open(filename, 'w')
-    members_len = (len(members))
-    gene_len = len(members["0"][force_type])
+    len_chromosome = len(shape_keys)-1 # without basic
+    len_individuals = len(individuals)
 
     # create matrix with length of col and row
-    result_matrix = create_matrix(11, members_len)
+    result_matrix = create_matrix(len_chromosome+1, len_individuals)
 
     # fill matrix with, result_matrix, forcetype, max_diff and absolute
-    result_matrix, highest, lowest = fill_matrix_pos(result_matrix, force_type, frame, max_diff)
+    result_matrix, highest, lowest, weakest, best = fill_matrix_chromosomes(result_matrix, len_chromosome)
 
     # append start
     append_head(file, "chromosomes")
 
-    names = list(range(0,11)) # positions
+    names = list(range(len_chromosome)) # genes
+    names.append("fitness") # plus fitness
     append_headlines(file, names, 3)
 
-    # append matrix with or without max_diff
-    append_matrix_members(file, result_matrix, frame, highest, lowest, max_diff)
+    # append matrix
+    append_matrix_chromosomes(file, result_matrix, highest, lowest, weakest, best)
 
     append_end(file)
 
@@ -702,11 +803,20 @@ def report_tree(directory):
     svg_individuals.generation_size = environment["generation_size"]
     svg_individuals.generation_amount = environment["generation_amount"]
 
+    # sort by fitness
+    list_result = []
+    for name, individual in individuals.items():
+        list_result.append([name, individual["chromosome"], individual["fitness"]])
+
+    sorted_list = sorted(list_result, key = lambda x: x[2])
+    svg_individuals.fitness_best = sorted_list[0][2]
+    svg_individuals.fitness_weakest = sorted_list[len(sorted_list)-1][2]
+
     append_head(file, "tree")
     svg_individuals.setup()
     svg_individuals.start(file)
     svg_individuals.initial_generation(file)
     svg_individuals.other_generations(file)
-    svg_individuals.draw_bgs(file)
-    svg_individuals.draw_vgs(file)
+    svg_individuals.loop_bgs(file)
+    svg_individuals.loop_vgs(file)
     svg_individuals.end(file)

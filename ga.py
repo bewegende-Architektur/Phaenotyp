@@ -183,7 +183,9 @@ def bruteforce(chromosomes):
         bpy.context.scene.frame_current = frame
         bpy.context.view_layer.update()
 
-        create_indivdual(chromosome) # and change frame to shape key
+        # no parents in bruteforce
+        parent_1, parent_2 = [None, None]
+        create_indivdual(chromosome, parent_1, parent_2 ) # and change frame to shape key
 
         # calculate new properties for each member
         geometry.update_members_pre()
@@ -481,7 +483,8 @@ def goto_indivual():
     ranking_pos = phaenotyp.ga_ranking
 
     data = scene["<Phaenotyp>"]
-    data["process"]["genetetic_mutation_update_post"] = False # turns ga off, if user interrupted
+    # turns ga off, if user interrupted the process
+    data["process"]["genetetic_mutation_update_post"] = False
 
     environment = data["ga_environment"]
     individuals = data["ga_individuals"]
