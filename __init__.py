@@ -703,6 +703,9 @@ class WM_OT_calculate_animation(Operator):
         calculation.fea_jobs_done.value = 0
         calculation.fea_jobs = []
 
+        # to limit amount of started threads
+        started = 0
+
         for frame in range(start, end):
             # update scene
             bpy.context.scene.frame_current = frame
@@ -713,6 +716,13 @@ class WM_OT_calculate_animation(Operator):
 
             # create on single job
             calculation.start_job()
+            started += 1
+
+            # only start 24 threads
+            if started > 24:
+                calculation.join_jobs()
+                calculation.fea_jobs = []
+                started = 0
 
         # wait for it and interweave results to data
         calculation.join_jobs()

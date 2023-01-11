@@ -178,6 +178,8 @@ def bruteforce(chromosomes):
     environment = data["ga_environment"]
     individuals = data["ga_individuals"]
 
+    # to limit amount of started threads
+    started = 0
     for frame, chromosome in enumerate(chromosomes):
         # update scene
         bpy.context.scene.frame_current = frame
@@ -192,6 +194,12 @@ def bruteforce(chromosomes):
 
         # create on single job
         calculation.start_job()
+
+        # only start 24 threads
+        if started > 24:
+            calculation.join_jobs()
+            calculation.fea_jobs = []
+            started = 0
 
     # wait for jobs to be done and intervewave into data
     calculation.join_jobs()
