@@ -118,9 +118,9 @@ def prepare_fea():
     loads_e = data["loads_e"]
     for id, load in loads_e.items():
         name = "member_" + str(id)
-        truss.add_member_dist_load(name, 'FX', load[0], load[0])
-        truss.add_member_dist_load(name, 'FY', load[1], load[1])
-        truss.add_member_dist_load(name, 'FZ', load[2], load[2])
+        truss.add_member_dist_load(name, 'FX', load[0]*0.01, load[0]*0.01) # m to cm
+        truss.add_member_dist_load(name, 'FY', load[1]*0.01, load[1]*0.01) # m to cm
+        truss.add_member_dist_load(name, 'FZ', load[2]*0.01, load[2]*0.01) # m to cm
 
     loads_f = data["loads_f"]
     for id, load in loads_f.items():
@@ -132,7 +132,6 @@ def prepare_fea():
         # like suggested here by Gorgious and CodeManX:
         # https://blender.stackexchange.com/questions/6155/how-to-convert-coordinates-from-vertex-to-world-space
         normal = mat @ org_normal
-        print(org_normal, normal)
 
         edge_keys = face.edge_keys
         area = face.area
@@ -189,22 +188,21 @@ def prepare_fea():
         edge_load_projected = []
         edge_load_area_z = []
 
+        ratio = 1 / len(edge_keys)
         for edge_id, dist in enumerate(distances):
-            ratio = 1 / perimeter * dist
-
             # load_normal
             area_load = load_normal * area
-            edge_load = area_load * ratio
+            edge_load = area_load * ratio / dist * 0.01 # m to cm
             edge_load_normal.append(edge_load)
 
             # load projected
             area_load = load_projected * area_projected
-            edge_load = area_load * ratio
+            edge_load = area_load * ratio / dist * 0.01 # m to cm
             edge_load_projected.append(edge_load)
 
             # load projected
             area_load = load_area_z * area
-            edge_load = area_load * ratio
+            edge_load = area_load * ratio / dist * 0.01 # m to cm
             edge_load_area_z.append(edge_load)
 
         # i is the id within the class (0, 1, 3 and maybe more)
