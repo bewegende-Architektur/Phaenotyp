@@ -661,18 +661,21 @@ class WM_OT_calculate_single_frame(Operator):
         members = scene["<Phaenotyp>"]["members"]
         frame = bpy.context.scene.frame_current
 
-        # handle process
-        calculation.fea_jobs_amount = 1
-        calculation.fea_jobs_done.value = 0
-        calculation.fea_jobs = []
+        # create list of trusses
+        trusses = {}
 
         # calculate new properties for each member
         geometry.update_members_pre()
 
-        # create on single job, wait for it and interweave results to data
-        calculation.start_job()
-        calculation.join_jobs()
-        calculation.interweave_results()
+        # created a truss object of PyNite and add to dict
+        truss = calculation.prepare_fea()
+        trusses[frame] = truss
+
+        # run mp and get results
+        feas = calculation.run_mp(trusses)
+
+        # wait for it and interweave results to data
+        calculation.interweave_results(feas, members)
 
         # calculate new visualization-mesh
         geometry.update_members_post()
@@ -694,18 +697,13 @@ class WM_OT_calculate_animation(Operator):
         phaenotyp = scene.phaenotyp
         data = scene["<Phaenotyp>"]
         members = scene["<Phaenotyp>"]["members"]
-        frame = scene.frame_current
+        frame = bpy.context.scene.frame_current
 
         start = bpy.context.scene.frame_start
         end = bpy.context.scene.frame_end + 1 # to render also last frame
 
-        calculation.fea_jobs_amount = end - start
-        calculation.fea_jobs_done.value = 0
-        calculation.fea_jobs = []
-
-        # to limit amount of started threads
-        started = 0
-
+        # create list of trusses
+        trusses = {}
         for frame in range(start, end):
             # update scene
             bpy.context.scene.frame_current = frame
@@ -714,24 +712,23 @@ class WM_OT_calculate_animation(Operator):
             # calculate new properties for each member
             geometry.update_members_pre()
 
-            # create on single job
-            calculation.start_job()
-            started += 1
+            # created a truss object of PyNite and add to dict
+            truss = calculation.prepare_fea()
+            trusses[frame] = truss
 
-            # only start 24 threads
-            if started > 24:
-                calculation.join_jobs()
-                calculation.fea_jobs = []
-                started = 0
+        # run mp and get results
+        feas = calculation.run_mp(trusses)
 
         # wait for it and interweave results to data
-        calculation.join_jobs()
-        calculation.interweave_results()
+        calculation.interweave_results(feas, members)
 
         # calculate new visualization-mesh
         geometry.update_members_post()
 
         basics.view_vertex_colors()
+
+        # activate calculation in update_post
+        data["process"]["done"] = True
 
         return {"FINISHED"}
 
@@ -741,22 +738,40 @@ class WM_OT_optimize_1(Operator):
     bl_description = "Simple sectional performance"
 
     def execute(self, context):
+        scene = context.scene
+        phaenotyp = scene.phaenotyp
+        data = scene["<Phaenotyp>"]
+        members = scene["<Phaenotyp>"]["members"]
+        frame = bpy.context.scene.frame_current
+
         print_data("optimization 1 - simple sectional performance")
 
-        # handle process
-        calculation.fea_jobs_amount = 1
-        calculation.fea_jobs_done.value = 0
-        calculation.fea_jobs = []
-
         calculation.simple_sectional()
+        # created a truss object of PyNite and add to dict
+
+        # create list of trusses
+        trusses = {}
+
+        # calculate new properties for each member
         geometry.update_members_pre()
 
-        # create on single job, wait for it and interweave results to data
-        calculation.start_job()
-        calculation.join_jobs()
-        calculation.interweave_results()
+        # created a truss object of PyNite and add to dict
+        truss = calculation.prepare_fea()
+        trusses[frame] = truss
 
+        # run mp and get results
+        feas = calculation.run_mp(trusses)
+
+        # wait for it and interweave results to data
+        calculation.interweave_results(feas, members)
+
+        # calculate new visualization-mesh
         geometry.update_members_post()
+
+        basics.view_vertex_colors()
+
+        # activate calculation in update_post
+        data["process"]["done"] = True
 
         return {"FINISHED"}
 
@@ -766,22 +781,39 @@ class WM_OT_optimize_2(Operator):
     bl_description = "Complex sectional performance"
 
     def execute(self, context):
+        scene = context.scene
+        phaenotyp = scene.phaenotyp
+        data = scene["<Phaenotyp>"]
+        members = scene["<Phaenotyp>"]["members"]
+        frame = bpy.context.scene.frame_current
+
         print_data("optimization 2 - complex sectional performance")
 
-        # handle process
-        calculation.fea_jobs_amount = 1
-        calculation.fea_jobs_done.value = 0
-        calculation.fea_jobs = []
-
         calculation.complex_sectional()
+
+        # create list of trusses
+        trusses = {}
+
+        # calculate new properties for each member
         geometry.update_members_pre()
 
-        # create on single job, wait for it and interweave results to data
-        calculation.start_job()
-        calculation.join_jobs()
-        calculation.interweave_results()
+        # created a truss object of PyNite and add to dict
+        truss = calculation.prepare_fea()
+        trusses[frame] = truss
 
+        # run mp and get results
+        feas = calculation.run_mp(trusses)
+
+        # wait for it and interweave results to data
+        calculation.interweave_results(feas, members)
+
+        # calculate new visualization-mesh
         geometry.update_members_post()
+
+        basics.view_vertex_colors()
+
+        # activate calculation in update_post
+        data["process"]["done"] = True
 
         return {"FINISHED"}
 
@@ -839,14 +871,6 @@ class WM_OT_ga_start(Operator):
             bpy.context.scene.frame_start = start
             # set frame_end to first size of inital generation
             bpy.context.scene.frame_end = end
-
-            # handle process
-            job_amount = generation_size + (new_generation_size * generation_amount)
-            calculation.fea_jobs_amount = job_amount
-            if phaenotyp.ga_optimization in ["simple", "complex"]:
-                calculation.fea_jobs_amount = job_amount * 2
-            calculation.fea_jobs = []
-            calculation.fea_jobs_done.value = 0
 
             # create initial generation
             # the first generation contains 20 individuals (standard value is 20)
@@ -1275,12 +1299,6 @@ class WM_OT_reset(Operator):
 
         # switch to object-mode
         bpy.ops.object.mode_set(mode="OBJECT")
-
-        # reset mp
-        calculation.feas.clear()
-        calculation.fea_jobs = []
-        calculation.fea_jobs_amount = 0
-        calculation.fea_jobs_done.value = 0
 
         return {"FINISHED"}
 

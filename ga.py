@@ -216,6 +216,9 @@ def create_initial_individuals(start, end):
     environment = data["ga_environment"]
     individuals = data["ga_individuals"]
 
+    # create list of trusses
+    trusses = {}
+
     for frame in range(start, end):
         # create chromosome with set of shapekeys (random for first generation)
         chromosome = []
@@ -232,12 +235,15 @@ def create_initial_individuals(start, end):
         # calculate new properties for each member
         geometry.update_members_pre()
 
-        # create on single job
-        calculation.start_job()
+        # created a truss object of PyNite and add to dict
+        truss = calculation.prepare_fea()
+        trusses[frame] = truss
 
-    # wait for jobs to be done and intervewave into data
-    calculation.join_jobs()
-    calculation.interweave_results()
+    # run mp and get results
+    feas = calculation.run_mp(trusses)
+
+    # wait for it and interweave results to data
+    calculation.interweave_results(feas, members)
 
 def sectional_optimization(start, end):
     scene = bpy.context.scene
@@ -252,6 +258,9 @@ def sectional_optimization(start, end):
 
     new_generation_size = environment["new_generation_size"]
     generation_id = environment["generation_id"]
+
+    # create list of trusses
+    trusses = {}
 
     for frame in range(start, end):
         # update scene
@@ -273,12 +282,15 @@ def sectional_optimization(start, end):
         # calculate new properties for each member
         geometry.update_members_pre()
 
-        # create on single job
-        calculation.start_job()
+        # created a truss object of PyNite and add to dict
+        truss = calculation.prepare_fea()
+        trusses[frame] = truss
 
-    # wait for jobs to be done and intervewave into data
-    calculation.join_jobs()
-    calculation.interweave_results()
+    # run mp and get results
+    feas = calculation.run_mp(trusses)
+
+    # wait for it and interweave results to data
+    calculation.interweave_results(feas, members)
 
 def populate_initial_generation():
     scene = bpy.context.scene
@@ -401,7 +413,10 @@ def create_new_individuals(start, end):
     generation_id = environment["generation_id"]
 
     old_generation = environment["generations"][str(generation_id-1)]
-    print()
+
+    # create list of trusses
+    trusses = {}
+
     for frame in range(start, end):
         # pair best 50 % of the previous generation
         # sample is used to avoid same random numbers
@@ -424,12 +439,15 @@ def create_new_individuals(start, end):
         # calculate new properties for each member
         geometry.update_members_pre()
 
-        # create on single job
-        calculation.start_job()
+        # created a truss object of PyNite and add to dict
+        truss = calculation.prepare_fea()
+        trusses[frame] = truss
 
-    # wait for jobs to be done and intervewave into data
-    calculation.join_jobs()
-    calculation.interweave_results()
+    # run mp and get results
+    feas = calculation.run_mp(trusses)
+
+    # wait for it and interweave results to data
+    calculation.interweave_results(feas, members)
 
 def populate_new_generation(start, end):
     scene = bpy.context.scene
