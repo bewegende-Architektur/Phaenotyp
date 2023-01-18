@@ -926,13 +926,6 @@ class WM_OT_ga_start(Operator):
             # set frame_end to first size of inital generation
             bpy.context.scene.frame_end = end
 
-            # handle process
-            calculation.fea_jobs_amount = end - start
-            if phaenotyp.ga_optimization in ["simple", "complex"]:
-                calculation.fea_jobs_amount = (end - start)*2
-            calculation.fea_jobs = []
-            calculation.fea_jobs_done.value = 0
-
             # pair with bruteforce
             ga.bruteforce(chromosomes)
             if phaenotyp.ga_optimization in ["simple", "complex"]:

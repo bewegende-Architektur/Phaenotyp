@@ -178,8 +178,9 @@ def bruteforce(chromosomes):
     environment = data["ga_environment"]
     individuals = data["ga_individuals"]
 
-    # to limit amount of started threads
-    started = 0
+    # create list of trusses
+    trusses = {}
+
     for frame, chromosome in enumerate(chromosomes):
         # update scene
         bpy.context.scene.frame_current = frame
@@ -189,21 +190,20 @@ def bruteforce(chromosomes):
         parent_1, parent_2 = [None, None]
         create_indivdual(chromosome, parent_1, parent_2 ) # and change frame to shape key
 
+        create_indivdual(chromosome, None, None) # and change frame to shape key
+
         # calculate new properties for each member
         geometry.update_members_pre()
 
-        # create on single job
-        calculation.start_job()
+        # created a truss object of PyNite and add to dict
+        truss = calculation.prepare_fea()
+        trusses[frame] = truss
 
-        # only start 24 threads
-        if started > 24:
-            calculation.join_jobs()
-            calculation.fea_jobs = []
-            started = 0
+    # run mp and get results
+    feas = calculation.run_mp(trusses)
 
-    # wait for jobs to be done and intervewave into data
-    calculation.join_jobs()
-    calculation.interweave_results()
+    # wait for it and interweave results to data
+    calculation.interweave_results(feas, members)
 
 def create_initial_individuals(start, end):
     scene = bpy.context.scene
