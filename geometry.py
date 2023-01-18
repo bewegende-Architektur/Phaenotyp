@@ -293,8 +293,6 @@ def update_members_pre():
     radius_group = mesh_for_viz.vertex_groups.get("radius")
     attribute = mesh_for_viz.data.attributes.get("force")
 
-    bpy.ops.object.mode_set(mode="OBJECT")
-
     for id, member in members.items():
         id = int(id)
 
@@ -319,7 +317,7 @@ def update_members_post():
     members = data["members"]
     structure_obj_vertices = data["structure"]
     frame = bpy.context.scene.frame_current
-    mesh_for_viz = bpy.data.objects["<Phaenotyp>member"] # <------------------------- oder in data speichern?
+    mesh_for_viz = bpy.data.objects["<Phaenotyp>member"]
     vertices = mesh_for_viz.data.vertices
 
     radius_group = mesh_for_viz.vertex_groups.get("radius")
