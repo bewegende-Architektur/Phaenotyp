@@ -1290,9 +1290,6 @@ class WM_OT_reset(Operator):
         # delete collection
         basics.delete_col_if_existing("<Phaenotyp>")
 
-        # switch to object-mode
-        bpy.ops.object.mode_set(mode="OBJECT")
-
         return {"FINISHED"}
 
 class OBJECT_PT_Phaenotyp(Panel):
@@ -1463,120 +1460,125 @@ class OBJECT_PT_Phaenotyp(Panel):
 
                     box_load.operator("wm.set_load", text="Set")
 
-                    # Analysis
-                    box_analysis = layout.box()
-                    box_analysis.label(text="Analysis:")
-                    box_analysis.operator("wm.calculate_single_frame", text="Single Frame")
-                    box_analysis.operator("wm.calculate_animation", text="Animation")
+                    if not bpy.data.is_saved:
+                        box_file = layout.box()
+                        box_file.label(text="Please save Blender-File first")
 
-                    # Optimization
-                    box_opt = layout.box()
-                    box_opt.label(text="Optimization:")
-                    if data["process"]["done"]:
-                        box_opt.operator("wm.optimize_1", text="Simple - sectional performance")
-                        box_opt.operator("wm.optimize_2", text="Complex - sectional performance")
                     else:
-                        box_opt.label(text="Run single analysis first.")
+                        # Analysis
+                        box_analysis = layout.box()
+                        box_analysis.label(text="Analysis:")
+                        box_analysis.operator("wm.calculate_single_frame", text="Single Frame")
+                        box_analysis.operator("wm.calculate_animation", text="Animation")
 
-                    # Topology
-                    box_opt = layout.box()
-                    box_opt.label(text="Topology:")
-                    if data["process"]["done"]:
-                        box_opt.operator("wm.topolgy_1", text="Decimate - topological performance")
-                    else:
-                        box_opt.label(text="Run single analysis first.")
-
-                    shape_key = data["structure"].data.shape_keys
-                    if shape_key:
-                        # Genetic Mutation:
-                        box_ga = layout.box()
-                        box_ga.label(text="Genetic Mutation:")
-                        if phaenotyp.mate_type in ["direct", "morph"]:
-                            box_ga.prop(phaenotyp, "generation_size", text="Size of generation for GA")
-                            box_ga.prop(phaenotyp, "elitism", text="Size of elitism for GA")
-                            box_ga.prop(phaenotyp, "generation_amount", text="Amount of generations")
-                        box_ga.prop(phaenotyp, "fitness_function", text="Fitness function")
-                        box_ga.prop(phaenotyp, "mate_type", text="Type of mating")
-                        box_ga.prop(phaenotyp, "ga_optimization", text="Sectional optimization")
-
-                        for keyblock in shape_key.key_blocks:
-                            name = keyblock.name
-                            box_ga.label(text=name)
-
-                        # check generation_size and elitism
-                        if phaenotyp.generation_size*0.5 > phaenotyp.elitism:
-                            box_ga.operator("wm.ga_start", text="Start")
+                        # Optimization
+                        box_opt = layout.box()
+                        box_opt.label(text="Optimization:")
+                        if data["process"]["done"]:
+                            box_opt.operator("wm.optimize_1", text="Simple - sectional performance")
+                            box_opt.operator("wm.optimize_2", text="Complex - sectional performance")
                         else:
-                            box_ga.label(text="Elitism should be smaller than 50% of generation size.")
+                            box_opt.label(text="Run single analysis first.")
 
-                        if len(data["ga_individuals"]) > 0 and not bpy.context.screen.is_animation_playing:
-                            box_ga.label(text="Select individual by fitness:")
-                            box_ga.prop(phaenotyp, "ga_ranking", text="Result sorted by fitness.")
-                            if phaenotyp.ga_ranking >= len(data["ga_individuals"]):
-                                text = "Only " + str(len(data["ga_individuals"])) + " available."
-                                box_ga.label(text=text)
+                        # Topology
+                        box_opt = layout.box()
+                        box_opt.label(text="Topology:")
+                        if data["process"]["done"]:
+                            box_opt.operator("wm.topolgy_1", text="Decimate - topological performance")
+                        else:
+                            box_opt.label(text="Run single analysis first.")
+
+                        shape_key = data["structure"].data.shape_keys
+                        if shape_key:
+                            # Genetic Mutation:
+                            box_ga = layout.box()
+                            box_ga.label(text="Genetic Mutation:")
+                            if phaenotyp.mate_type in ["direct", "morph"]:
+                                box_ga.prop(phaenotyp, "generation_size", text="Size of generation for GA")
+                                box_ga.prop(phaenotyp, "elitism", text="Size of elitism for GA")
+                                box_ga.prop(phaenotyp, "generation_amount", text="Amount of generations")
+                            box_ga.prop(phaenotyp, "fitness_function", text="Fitness function")
+                            box_ga.prop(phaenotyp, "mate_type", text="Type of mating")
+                            box_ga.prop(phaenotyp, "ga_optimization", text="Sectional optimization")
+
+                            for keyblock in shape_key.key_blocks:
+                                name = keyblock.name
+                                box_ga.label(text=name)
+
+                            # check generation_size and elitism
+                            if phaenotyp.generation_size*0.5 > phaenotyp.elitism:
+                                box_ga.operator("wm.ga_start", text="Start")
                             else:
-                                # show
-                                box_ga.operator("wm.ga_ranking", text="Generate")
+                                box_ga.label(text="Elitism should be smaller than 50% of generation size.")
 
-                            box_ga.label(text="Render sorted indiviuals:")
-                            box_ga.operator("wm.ga_render_animation", text="Generate")
-
-                    # Visualization
-                    if data["process"]["done"]:
-                        # hide previous boxes
-                        # (to avoid confusion, if user is changing the setup
-                        # the setup and the result would not match
-                        # new setup needs new calculation by pressing reset)
-                        box_support.enabled = False
-                        box_profile.enabled = False
-                        box_load.enabled = False
-
-                        try:
-                            box_scipy.enabled = False
-                        except:
-                            pass
-
-                        box_viz = layout.box()
-                        box_viz.label(text="Vizualisation:")
-                        box_viz.prop(phaenotyp, "forces", text="Force")
-
-                        # sliders to scale forces and deflection
-                        box_viz.prop(phaenotyp, "viz_scale", text="scale", slider=True)
-                        box_viz.prop(phaenotyp, "viz_deflection", text="deflected / original", slider=True)
-
-                        # Text
-                        box_text = layout.box()
-                        box_text.label(text="Result:")
-
-                        selected_objects = bpy.context.selected_objects
-                        if len(selected_objects) > 1:
-                            box_text.label(text="Please select the vizualisation object only - too many objects")
-
-                        elif len(selected_objects) == 0:
-                                box_text.label(text="Please select the vizualisation object - no object selected")
-
-                        elif selected_objects[0].name_full != "<Phaenotyp>member":
-                                box_text.label(text="Please select the vizualisation object - wrong object selected")
-
-                        else:
-                            if context.active_object.mode == 'EDIT':
-                                vert_sel = bpy.context.active_object.data.total_vert_sel
-                                if vert_sel != 1:
-                                    box_text.label(text="Select one vertex only")
-
+                            if len(data["ga_individuals"]) > 0 and not bpy.context.screen.is_animation_playing:
+                                box_ga.label(text="Select individual by fitness:")
+                                box_ga.prop(phaenotyp, "ga_ranking", text="Result sorted by fitness.")
+                                if phaenotyp.ga_ranking >= len(data["ga_individuals"]):
+                                    text = "Only " + str(len(data["ga_individuals"])) + " available."
+                                    box_ga.label(text=text)
                                 else:
-                                    box_text.operator("wm.text", text="Generate")
-                                    if len(data["texts"]) > 0:
-                                        for text in data["texts"]:
-                                            box_text.label(text=text)
-                            else:
-                                box_text.label(text="Switch to edit-mode")
+                                    # show
+                                    box_ga.operator("wm.ga_ranking", text="Generate")
 
-                        # Report
-                        box_report = layout.box()
-                        box_report.label(text="Report:")
-                        if bpy.data.is_saved:
+                                box_ga.label(text="Render sorted indiviuals:")
+                                box_ga.operator("wm.ga_render_animation", text="Generate")
+
+                        # Visualization
+                        if data["process"]["done"]:
+                            # hide previous boxes
+                            # (to avoid confusion, if user is changing the setup
+                            # the setup and the result would not match
+                            # new setup needs new calculation by pressing reset)
+                            box_support.enabled = False
+                            box_profile.enabled = False
+                            box_load.enabled = False
+
+                            try:
+                                box_scipy.enabled = False
+                            except:
+                                pass
+
+                            box_viz = layout.box()
+                            box_viz.label(text="Vizualisation:")
+                            box_viz.prop(phaenotyp, "forces", text="Force")
+
+                            # sliders to scale forces and deflection
+                            box_viz.prop(phaenotyp, "viz_scale", text="scale", slider=True)
+                            box_viz.prop(phaenotyp, "viz_deflection", text="deflected / original", slider=True)
+
+                            # Text
+                            box_text = layout.box()
+                            box_text.label(text="Result:")
+
+                            selected_objects = bpy.context.selected_objects
+                            if len(selected_objects) > 1:
+                                box_text.label(text="Please select the vizualisation object only - too many objects")
+
+                            elif len(selected_objects) == 0:
+                                    box_text.label(text="Please select the vizualisation object - no object selected")
+
+                            elif selected_objects[0].name_full != "<Phaenotyp>member":
+                                    box_text.label(text="Please select the vizualisation object - wrong object selected")
+
+                            else:
+                                if context.active_object.mode == 'EDIT':
+                                    vert_sel = bpy.context.active_object.data.total_vert_sel
+                                    if vert_sel != 1:
+                                        box_text.label(text="Select one vertex only")
+
+                                    else:
+                                        box_text.operator("wm.text", text="Generate")
+                                        if len(data["texts"]) > 0:
+                                            for text in data["texts"]:
+                                                box_text.label(text=text)
+                                else:
+                                    box_text.label(text="Switch to edit-mode")
+
+                            # Report
+                            box_report = layout.box()
+                            box_report.label(text="Report:")
+
                             box_report.operator("wm.report_members", text="members")
                             box_report.operator("wm.report_frames", text="frames")
 
@@ -1585,9 +1587,6 @@ class OBJECT_PT_Phaenotyp(Panel):
                             if ga_available:
                                 box_report.operator("wm.report_chromosomes", text="chromosomes")
                                 box_report.operator("wm.report_tree", text="tree")
-
-                        else:
-                            box_report.label(text="Please save Blender-File first")
 
 
         box_reset = layout.box()
