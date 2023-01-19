@@ -486,7 +486,6 @@ class WM_OT_set_profile(Operator):
 
                 # results
                 member["axial"] = {}
-                member["axial"] = {}
                 member["moment_y"] = {}
                 member["moment_z"] = {}
                 member["shear_y"] = {}

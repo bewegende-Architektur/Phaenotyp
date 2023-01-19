@@ -339,7 +339,7 @@ def fill_matrix_members(matrix, result_type, frame, max_diff):
         # apply every single pos
         if max_diff:
             for pos_id, force in enumerate(forces):
-                matrix[int(member_id)][int(pos_id)-1] = force
+                matrix[int(member_id)][int(pos_id)] = force
 
                 # find highest
                 if force > highest:
@@ -353,7 +353,7 @@ def fill_matrix_members(matrix, result_type, frame, max_diff):
         else:
             force = forces
             for pos_id in range(11):
-                matrix[int(member_id)][int(pos_id)-1] = force
+                matrix[int(member_id)][int(pos_id)] = force
 
                 # find highest
                 if force > highest:
@@ -462,7 +462,8 @@ def append_head(file, report_type):
         file.write("<a href='moment_z.html'>moment_z</a> |\n")
         file.write("<a href='shear_y.html'>shear_y</a> |\n")
         file.write("<a href='shear_z.html'>shear_z</a> |\n")
-        file.write("<a href='torque.html'>torque</a>\n")
+        file.write("<a href='torque.html'>torque</a> |\n")
+        file.write("<a href='sigma.html'>sigma</a>\n")
         file.write("<br>\n")
 
         file.write("<a href='max_long_stress.html'>max_long_stress</a> |\n")
@@ -671,6 +672,7 @@ def report_members(directory, frame):
     force_types["shear_y"] = True
     force_types["shear_z"] = True
     force_types["torque"] = True
+    force_types["sigma"] = True
 
     force_types["max_long_stress"] = False
     force_types["max_tau_shear"] = False
@@ -719,6 +721,7 @@ def report_frames(directory, start, end):
     force_types["shear_y"] = True
     force_types["shear_z"] = True
     force_types["torque"] = True
+    force_types["sigma"] = True
 
     force_types["max_long_stress"] = False
     force_types["max_tau_shear"] = False
