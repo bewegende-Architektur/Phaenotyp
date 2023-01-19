@@ -969,6 +969,9 @@ class WM_OT_ga_render_animation(Operator):
         bpy.context.scene.display.shading.light = 'FLAT'
         bpy.context.scene.display.shading.color_type = 'VERTEX'
 
+        # set background to transparent
+        bpy.context.scene.render.film_transparent = True
+
         # use stamp
         bpy.context.scene.render.use_stamp = True
         bpy.context.scene.render.use_stamp_note = True
@@ -983,20 +986,27 @@ class WM_OT_ga_render_animation(Operator):
         image_id = 0 # to sort images by fitness in filemanager
         amount_of_digts = len(str(len(individuals))) # write in format 01, 001 or 0001 ...
 
-        for frame, individual in individuals.items():
+        # sort by fitness
+        list_result = []
+        for name, individual in individuals.items():
+            list_result.append([name, individual["chromosome"], individual["fitness"]])
+
+        sorted_list = sorted(list_result, key = lambda x: x[2])
+
+        for frame, chromosome, fitness in sorted_list:
             str_image_id = str(image_id).zfill(amount_of_digts)
             filename = directory + "/Phaenotyp-ga_animation/image_id_" + str_image_id + "-individual_" + str(frame)
 
             # get text from chromosome
             str_chromosome = "["
-            for gene in individual["chromosome"]:
+            for gene in chromosome:
                 str_chromosome += str(round(gene, 3))
                 str_chromosome += ", "
             str_chromosome[-1]
             str_chromosome += "]"
 
             # set note
-            text = filename + " -> " + str_chromosome + " fitness " + str(individual["fitness"])
+            text = filename + " -> " + str_chromosome + " fitness " + str(fitness)
             bpy.context.scene.render.stamp_note_text = text
 
             # set path and render
