@@ -29,12 +29,16 @@ https://youtu.be/F5ilsBDoIkY
 
 ## Installation
 * download Phaenotyp.zip
-* go to blender Preferences
-* go to Add-ons
-* go to Install ...
-* check Phänotyp
+* start Blender 3D
+* go to Edit / Preferences
+* switch tab to Add-ons
+* click Install ...
+* navigate to Phaenotyp.zip
+* click Install Add-on
+* check the box Phänotyp
 
 ## Update
-* go to blender Preferences and remove the old version
+* go to blender Edit / Preferences
+* remove the old version
 * restart blender
 * follow steps from Installation
