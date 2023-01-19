@@ -18,7 +18,7 @@ Material properties are taken from:
 https://www.johannes-strommer.com/formeln/flaechentraegheitsmoment-widerstandsmoment/  
 https://www.maschinenbau-wissen.de/skript3/mechanik/festigkeitslehre/134-knicken-euler
 
-Sorttable by Stuart Langridge is used to organize the results:
+Sorttable by Stuart Langridge is used to organize the results:  
 https://www.kryogenix.org/code/browser/sorttable/
 
 ## Getting started
