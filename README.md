@@ -26,3 +26,15 @@ You can find three quick tutorials on Youtube:
 https://youtu.be/shloSw9HjVI  
 https://youtu.be/i-5duKyuBiU  
 https://youtu.be/F5ilsBDoIkY
+
+## Installation
+* download Phaenotyp.zip
+* go to blender Preferences
+* go to Add-ons
+* go to Install ...
+* check Phänotyp
+
+## Update
+* go to blender Preferences and remove the old version
+* restart blender
+* follow steps from Installation
