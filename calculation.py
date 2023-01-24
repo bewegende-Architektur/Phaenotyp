@@ -522,6 +522,26 @@ def simple_sectional():
             member["Di"][str(frame)] = 0.001
             member["Do"][str(frame)] = member["Di"][str(frame)] * Do_Di_ratio
 
+def utilization_sectional():
+    scene = bpy.context.scene
+    phaenotyp = scene.phaenotyp
+    data = scene["<Phaenotyp>"]
+    members = data["members"]
+    frame = bpy.context.scene.frame_current
+
+    for id, member in members.items():
+        ang = abs(member["max_long_stress"][str(frame)] / member["acceptable_sigma_buckling"][str(frame)]) # Ausnutzungsgrad
+        faktor_d = sqrt(abs(ang))
+        Do_Di_ratio = member["Do"][str(frame)]/member["Di"][str(frame)]
+        member["Do"][str(frame)] = member["Do"][str(frame)] * faktor_d
+        member["Di"][str(frame)] = member["Di"][str(frame)] * faktor_d
+
+        # set miminum size of Do and Di to avoid division by zero
+        Do_Di_ratio = member["Do"][str(frame)]/member["Di"][str(frame)]
+        if member["Di"][str(frame)] < 0.001:
+            member["Di"][str(frame)] = 0.001
+            member["Do"][str(frame)] = member["Di"][str(frame)] * Do_Di_ratio
+
 def complex_sectional():
     scene = bpy.context.scene
     phaenotyp = scene.phaenotyp

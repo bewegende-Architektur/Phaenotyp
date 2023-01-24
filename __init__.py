@@ -293,6 +293,7 @@ class phaenotyp_properties(PropertyGroup):
         items=[
                 ("none", "None", ""),
                 ("simple", "Simple", ""),
+                ("utilization", "utilization", ""),
                 ("complex", "Complex", "")
                ]
         )
@@ -777,6 +778,49 @@ class WM_OT_optimize_1(Operator):
 class WM_OT_optimize_2(Operator):
     bl_label = "optimize_2"
     bl_idname = "wm.optimize_2"
+    bl_description = "utilization sectional performance"
+
+    def execute(self, context):
+        scene = context.scene
+        phaenotyp = scene.phaenotyp
+        data = scene["<Phaenotyp>"]
+        members = scene["<Phaenotyp>"]["members"]
+        frame = bpy.context.scene.frame_current
+
+        print_data("optimization 2 - utilization sectional performance")
+
+        calculation.utilization_sectional()
+        # created a truss object of PyNite and add to dict
+
+        # create list of trusses
+        trusses = {}
+
+        # calculate new properties for each member
+        geometry.update_members_pre()
+
+        # created a truss object of PyNite and add to dict
+        truss = calculation.prepare_fea()
+        trusses[frame] = truss
+
+        # run mp and get results
+        feas = calculation.run_mp(trusses)
+
+        # wait for it and interweave results to data
+        calculation.interweave_results(feas, members)
+
+        # calculate new visualization-mesh
+        geometry.update_members_post()
+
+        basics.view_vertex_colors()
+
+        # activate calculation in update_post
+        data["process"]["done"] = True
+
+        return {"FINISHED"}
+
+class WM_OT_optimize_3(Operator):
+    bl_label = "optimize_3"
+    bl_idname = "wm.optimize_3"
     bl_description = "Complex sectional performance"
 
     def execute(self, context):
@@ -786,7 +830,7 @@ class WM_OT_optimize_2(Operator):
         members = scene["<Phaenotyp>"]["members"]
         frame = bpy.context.scene.frame_current
 
-        print_data("optimization 2 - complex sectional performance")
+        print_data("optimization 3 - complex sectional performance")
 
         calculation.complex_sectional()
 
@@ -878,7 +922,7 @@ class WM_OT_ga_start(Operator):
             ga.create_initial_individuals(start, end)
 
             # optimize if sectional performance if activated
-            if phaenotyp.ga_optimization in ["simple", "complex"]:
+            if phaenotyp.ga_optimization in ["simple", "utilization", "complex"]:
                 ga.sectional_optimization(start, end)
 
             ga.calculate_fitness(start, end)
@@ -899,7 +943,7 @@ class WM_OT_ga_start(Operator):
 
                 # create 18 new individuals (standard value of 20 - 10 % elitism)
                 ga.create_new_individuals(start, end)
-                if phaenotyp.ga_optimization in ["simple", "complex"]:
+                if phaenotyp.ga_optimization in ["simple", "utilization", "complex"]:
                     ga.sectional_optimization(start, end)
                 ga.calculate_fitness(start, end)
                 ga.populate_new_generation(start, end)
@@ -927,7 +971,7 @@ class WM_OT_ga_start(Operator):
 
             # pair with bruteforce
             ga.bruteforce(chromosomes)
-            if phaenotyp.ga_optimization in ["simple", "complex"]:
+            if phaenotyp.ga_optimization in ["simple", "utilization", "complex"]:
                 ga.sectional_optimization(start, end)
             ga.calculate_fitness(start, end)
 
@@ -1485,7 +1529,8 @@ class OBJECT_PT_Phaenotyp(Panel):
                         box_opt.label(text="Optimization:")
                         if data["process"]["done"]:
                             box_opt.operator("wm.optimize_1", text="Simple - sectional performance")
-                            box_opt.operator("wm.optimize_2", text="Complex - sectional performance")
+                            box_opt.operator("wm.optimize_2", text="Utilization - sectional performance")
+                            box_opt.operator("wm.optimize_3", text="Complex - sectional performance")
                         else:
                             box_opt.label(text="Run single analysis first.")
 
@@ -1613,6 +1658,7 @@ classes = (
 
     WM_OT_optimize_1,
     WM_OT_optimize_2,
+    WM_OT_optimize_3,
     WM_OT_topology_1,
 
     WM_OT_ga_start,

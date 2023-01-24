@@ -270,6 +270,9 @@ def sectional_optimization(start, end):
         if phaenotyp.ga_optimization == "simple":
             calculation.simple_sectional()
 
+        if phaenotyp.ga_optimization == "utilization":
+            calculation.utilization_sectional()
+
         if phaenotyp.ga_optimization == "complex":
             calculation.complex_sectional()
 
