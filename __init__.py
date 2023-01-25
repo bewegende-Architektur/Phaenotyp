@@ -264,7 +264,7 @@ class phaenotyp_properties(PropertyGroup):
         min = 1,
         max = 100
         )
-    
+
     fitness_average_sigma: FloatProperty(
         name = "average signa",
         description = "Average sigma of all members.",
@@ -272,7 +272,7 @@ class phaenotyp_properties(PropertyGroup):
         min = -0,
         max = 1.0
         )
-    
+
     fitness_member_sigma: FloatProperty(
         name = "member sigma",
         description = "Highest / Lowest sigma of all members.",
@@ -280,7 +280,7 @@ class phaenotyp_properties(PropertyGroup):
         min = -0,
         max = 1.0
         )
-    
+
     fitness_volume: FloatProperty(
         name = "volume",
         description = "Volume of the enclosed parts of the structure.",
@@ -288,7 +288,7 @@ class phaenotyp_properties(PropertyGroup):
         min = -0,
         max = 1.0
         )
-    
+
     mate_type: EnumProperty(
         name="mate_type:",
         description="Type of mating",
@@ -901,7 +901,6 @@ class WM_OT_ga_start(Operator):
         data["ga_environment"]["elitism"] = phaenotyp.elitism
         data["ga_environment"]["generation_amount"] = phaenotyp.generation_amount
         data["ga_environment"]["new_generation_size"] = phaenotyp.generation_size - phaenotyp.elitism
-        data["ga_environment"]["fitness_function"] = phaenotyp.fitness_function
 
         # clear to restart
         data["ga_environment"]["generations"] = {}
@@ -914,15 +913,24 @@ class WM_OT_ga_start(Operator):
         elitism = data["ga_environment"]["elitism"]
         generation_amount = data["ga_environment"]["generation_amount"]
         new_generation_size = data["ga_environment"]["new_generation_size"]
-        fitness_function = data["ga_environment"]["fitness_function"]
         generation_id = data["ga_environment"]["generation_id"]
+        individuals = data["ga_individuals"]
+
+        # generate an individual as basis at frame 0
+        # this individual has choromosome with all genes equals 0
+        # the fitness of this chromosome is the basis for all others
+        ga.generate_basis()
+        if phaenotyp.ga_optimization in ["simple", "utilization", "complex"]:
+            ga.sectional_optimization(0, 1)
+        ga.calculate_fitness(0, 1)
+        individuals["0"]["fitness"]["weighted"] = 1
 
         if phaenotyp.mate_type in ["direct", "morph"]:
             # create start and end of calculation and create individuals
-            start = 0
+            start = 1
             end = generation_size
 
-            # set frame_start to 0
+            # set frame_start to 1
             bpy.context.scene.frame_start = start
             # set frame_end to first size of inital generation
             bpy.context.scene.frame_end = end
@@ -971,15 +979,16 @@ class WM_OT_ga_start(Operator):
                 matrix.append(genes)
 
             chromosomes = list(itertools.product(*matrix))
+            chromosomes.pop(0) # delete the basis individual, is allready calculated
 
             # create start and end of calculation and create individuals
-            start = 0
-            end = len(chromosomes)
+            start = 1 # basis indiviual is allready created and optimized
+            end = len(chromosomes)+1
 
-            # set frame_start to 0
-            bpy.context.scene.frame_start = start
+            # set frame_start to 1
+            bpy.context.scene.frame_start = 0
             # set frame_end to first size of inital generation
-            bpy.context.scene.frame_end = end
+            bpy.context.scene.frame_end = end-1
 
             # pair with bruteforce
             ga.bruteforce(chromosomes)
@@ -1559,18 +1568,18 @@ class OBJECT_PT_Phaenotyp(Panel):
                             # Genetic Mutation:
                             box_ga = layout.box()
                             box_ga.label(text="Genetic Mutation:")
+                            box_ga.prop(phaenotyp, "mate_type", text="Type of mating")
+                            box_ga.prop(phaenotyp, "ga_optimization", text="Sectional optimization")
+
                             if phaenotyp.mate_type in ["direct", "morph"]:
                                 box_ga.prop(phaenotyp, "generation_size", text="Size of generation for GA")
                                 box_ga.prop(phaenotyp, "elitism", text="Size of elitism for GA")
                                 box_ga.prop(phaenotyp, "generation_amount", text="Amount of generations")
-                                
-                                box_ga.label(text="Fitness function:")
-                                box_ga.prop(phaenotyp, "fitness_average_sigma", text="average sigma")
-                                box_ga.prop(phaenotyp, "fitness_member_sigma", text="member sigma")
-                                box_ga.prop(phaenotyp, "fitness_volume", text="volume")
-                            
-                            box_ga.prop(phaenotyp, "mate_type", text="Type of mating")
-                            box_ga.prop(phaenotyp, "ga_optimization", text="Sectional optimization")
+
+                            box_ga.label(text="Fitness function:")
+                            box_ga.prop(phaenotyp, "fitness_average_sigma", text="average sigma")
+                            box_ga.prop(phaenotyp, "fitness_member_sigma", text="member sigma")
+                            box_ga.prop(phaenotyp, "fitness_volume", text="volume")
 
                             for keyblock in shape_key.key_blocks:
                                 name = keyblock.name

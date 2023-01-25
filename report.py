@@ -82,7 +82,7 @@ class svg_individuals:
         row_id, col_id = [0, 0]
         for name, individual in generation.items():
             chromosome = individual["chromosome"]
-            fitness = individual["fitness"]
+            fitness = individual["fitness"]["weighted"]
             origins = None
             new_individual = svg_individuals(name, chromosome, fitness, row_id, col_id, origins)
             row_id += 1
@@ -107,7 +107,7 @@ class svg_individuals:
             row_id = 0
             for name, individual in generation.items():
                 chromosome = individual["chromosome"]
-                fitness = individual["fitness"]
+                fitness = individual["fitness"]["weighted"]
                 parent_1 = individual["parent_1"]
                 parent_2 = individual["parent_2"]
 
@@ -432,7 +432,7 @@ def fill_matrix_chromosomes(matrix, len_chromosome):
 
     # append fitness
     for name, individual in individuals.items():
-        fitness = individual["fitness"]
+        fitness = individual["fitness"]["weighted"]
         matrix[int(name)][int(len_chromosome)] = fitness
 
         # find highest
@@ -809,7 +809,7 @@ def report_tree(directory):
     # sort by fitness
     list_result = []
     for name, individual in individuals.items():
-        list_result.append([name, individual["chromosome"], individual["fitness"]])
+        list_result.append([name, individual["chromosome"], individual["fitness"]["weighted"]])
 
     sorted_list = sorted(list_result, key = lambda x: x[2])
     svg_individuals.fitness_best = sorted_list[0][2]
