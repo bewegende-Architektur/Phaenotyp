@@ -521,8 +521,8 @@ def simple_sectional():
 
         # set miminum size of Do and Di to avoid division by zero
         Do_Di_ratio = member["Do"][str(frame)]/member["Di"][str(frame)]
-        if member["Di"][str(frame)] < 0.001:
-            member["Di"][str(frame)] = 0.001
+        if member["Di"][str(frame)] < 0.1:
+            member["Di"][str(frame)] = 0.1
             member["Do"][str(frame)] = member["Di"][str(frame)] * Do_Di_ratio
 
 def utilization_sectional():
@@ -541,8 +541,8 @@ def utilization_sectional():
 
         # set miminum size of Do and Di to avoid division by zero
         Do_Di_ratio = member["Do"][str(frame)]/member["Di"][str(frame)]
-        if member["Di"][str(frame)] < 0.001:
-            member["Di"][str(frame)] = 0.001
+        if member["Di"][str(frame)] < 0.1:
+            member["Di"][str(frame)] = 0.1
             member["Do"][str(frame)] = member["Di"][str(frame)] * Do_Di_ratio
 
 def complex_sectional():
@@ -568,8 +568,8 @@ def complex_sectional():
 
         # set miminum size of Do and Di to avoid division by zero
         Do_Di_ratio = member["Do"][str(frame)]/member["Di"][str(frame)]
-        if member["Di"][str(frame)] < 0.001:
-            member["Di"][str(frame)] = 0.001
+        if member["Di"][str(frame)] < 0.1:
+            member["Di"][str(frame)] = 0.1
             member["Do"][str(frame)] = member["Di"][str(frame)] * Do_Di_ratio
 
 def decimate_topology():
