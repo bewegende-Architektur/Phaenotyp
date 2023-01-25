@@ -528,6 +528,7 @@ class WM_OT_set_profile(Operator):
                 member["initial_positions"] = {}
                 member["deflection"] = {}
                 member["overstress"] = {}
+                member["utilization"] = {}
 
                 data["members"][str(id)] = member
 

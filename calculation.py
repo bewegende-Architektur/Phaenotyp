@@ -444,6 +444,9 @@ def interweave_results(feas, members):
             member["lever_arm"][str(frame)] = lever_arm
             member["max_lever_arm"][str(frame)] = max(lever_arm)
 
+            # Ausnutzungsgrad
+            member["utilization"][str(frame)] = abs(member["max_long_stress"][str(frame)] / member["acceptable_sigma_buckling"][str(frame)])
+
             # deflection
             deflection = []
 
@@ -530,7 +533,7 @@ def utilization_sectional():
     frame = bpy.context.scene.frame_current
 
     for id, member in members.items():
-        ang = abs(member["max_long_stress"][str(frame)] / member["acceptable_sigma_buckling"][str(frame)]) # Ausnutzungsgrad
+        ang = member["utilization"][str(frame)]
         faktor_d = sqrt(abs(ang))
         Do_Di_ratio = member["Do"][str(frame)]/member["Di"][str(frame)]
         member["Do"][str(frame)] = member["Do"][str(frame)] * faktor_d

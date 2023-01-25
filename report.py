@@ -471,7 +471,8 @@ def append_head(file, report_type):
         file.write("<a href='max_tau_torsion.html'>max_tau_torsion</a> |\n")
         file.write("<a href='max_sum_tau.html'>max_sum_tau</a> |\n")
         file.write("<a href='max_sigmav.html'>max_sigmav</a> |\n")
-        file.write("<a href='max_sigma.html'>max_sigma</a>\n")
+        file.write("<a href='max_sigma.html'>max_sigma</a>|\n")
+        file.write("<a href='utilization.html'>utilization</a>\n")
 
         file.write("<br>\n")
         file.write("<br>\n")
@@ -680,6 +681,7 @@ def report_members(directory, frame):
     force_types["max_sum_tau"] = False
     force_types["max_sigmav"] = False
     force_types["max_sigma"] = False
+    force_types["utilization"] = False
 
     for force_type, max_diff in force_types.items():
 
@@ -729,6 +731,7 @@ def report_frames(directory, start, end):
     force_types["max_sum_tau"] = False
     force_types["max_sigmav"] = False
     force_types["max_sigma"] = False
+    force_types["utilization"] = False
 
     for force_type, max_diff in force_types.items():
         # create file
