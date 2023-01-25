@@ -264,19 +264,31 @@ class phaenotyp_properties(PropertyGroup):
         min = 1,
         max = 100
         )
-
-    fitness_function: EnumProperty(
-        name = "fitness_function",
-        description = "Fitness function",
-        items=[
-                ("average_sigma", "Average sigma", ""),
-                ("member_sigma", "Member sigma", ""),
-                ("volume", "Volume", ""),
-                ("lever_arm_truss", "Lever arm for normal forces", ""),
-                ("lever_arm_bending", "Lever arm for moment forces", "")
-               ]
+    
+    fitness_average_sigma: FloatProperty(
+        name = "average signa",
+        description = "Average sigma of all members.",
+        default = 1.0,
+        min = -0,
+        max = 1.0
         )
-
+    
+    fitness_member_sigma: FloatProperty(
+        name = "member sigma",
+        description = "Highest / Lowest sigma of all members.",
+        default = 0,
+        min = -0,
+        max = 1.0
+        )
+    
+    fitness_volume: FloatProperty(
+        name = "volume",
+        description = "Volume of the enclosed parts of the structure.",
+        default = 0,
+        min = -0,
+        max = 1.0
+        )
+    
     mate_type: EnumProperty(
         name="mate_type:",
         description="Type of mating",
@@ -1551,7 +1563,12 @@ class OBJECT_PT_Phaenotyp(Panel):
                                 box_ga.prop(phaenotyp, "generation_size", text="Size of generation for GA")
                                 box_ga.prop(phaenotyp, "elitism", text="Size of elitism for GA")
                                 box_ga.prop(phaenotyp, "generation_amount", text="Amount of generations")
-                            box_ga.prop(phaenotyp, "fitness_function", text="Fitness function")
+                                
+                                box_ga.label(text="Fitness function:")
+                                box_ga.prop(phaenotyp, "fitness_average_sigma", text="average sigma")
+                                box_ga.prop(phaenotyp, "fitness_member_sigma", text="member sigma")
+                                box_ga.prop(phaenotyp, "fitness_volume", text="volume")
+                            
                             box_ga.prop(phaenotyp, "mate_type", text="Type of mating")
                             box_ga.prop(phaenotyp, "ga_optimization", text="Sectional optimization")
 

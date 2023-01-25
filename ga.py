@@ -55,45 +55,40 @@ def calculate_fitness(start, end):
         environment = data["ga_environment"]
         individuals = data["ga_individuals"]
 
-        if environment["fitness_function"] == "average_sigma":
-            forces = []
-            for id, member in members.items():
-                force = member["max_sigma"][str(frame)]
-                forces.append(force)
+        # average_sigma
+        forces = []
+        for id, member in members.items():
+            force = member["max_sigma"][str(frame)]
+            forces.append(force)
 
-            # average
-            sum_forces = 0
-            for force in forces:
-                sum_forces = sum_forces + abs(force)
+        sum_forces = 0
+        for force in forces:
+            sum_forces = sum_forces + abs(force)
 
-            fitness = sum_forces / len(forces)
+        fitness = sum_forces / len(forces)
+        individual["fitness"]["average_sigma"] = fitness
 
-        if environment["fitness_function"] == "member_sigma":
-            forces = []
-            for id, member in members.items():
-                force = member["max_sigma"][str(frame)]
-                forces.append(force)
+        # member_sigma
+        fitness = return_max_diff_to_zero(forces)
+        fitness = abs(fitness)
+        individual["fitness"]["member_sigma"] = fitness
+        
+        
+        # volume
+        dg = bpy.context.evaluated_depsgraph_get()
+        obj = scene["<Phaenotyp>"]["structure"].evaluated_get(dg)
+        mesh = obj.to_mesh(preserve_all_data_layers=True, depsgraph=dg)
 
-            fitness = return_max_diff_to_zero(forces)
-            fitness = abs(fitness)
+        bm = bmesh.new()
+        bm.from_mesh(mesh)
 
-        if environment["fitness_function"] == "volume":
-            dg = bpy.context.evaluated_depsgraph_get()
-            obj = scene["<Phaenotyp>"]["structure"].evaluated_get(dg)
-            mesh = obj.to_mesh(preserve_all_data_layers=True, depsgraph=dg)
-
-            bm = bmesh.new()
-            bm.from_mesh(mesh)
-
-            volume = bm.calc_volume()
-            negative_volume = volume * (-1) # in order to make the highest volume the best fitness
-            fitness = negative_volume
-
-        if environment["fitness_function"] == "weight":
-            for id, member in members.items():
-                force = member["max_sigma"][str(frame)]
-                forces.append(force)
-
+        volume = bm.calc_volume()
+        negative_volume = volume * (-1) # in order to make the highest volume the best fitness
+        fitness = negative_volume
+        individual["fitness"]["volume"] = fitness
+        
+        
+        '''
         if environment["fitness_function"] == "lever_arm_truss":
             forces = []
             for id, member in members.items():
@@ -117,8 +112,9 @@ def calculate_fitness(start, end):
                 sum_forces = sum_forces + abs(force)
 
             fitness = sum_forces
-
-
+        '''
+        
+        # average
         individual["fitness"] = fitness
 
 def mate_chromosomes(chromosome_1, chromosome_2):
