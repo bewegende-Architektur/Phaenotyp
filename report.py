@@ -325,7 +325,7 @@ def create_matrix(col, row):
 
     return matrix
 
-def fill_matrix_members(matrix, result_type, frame, max_diff):
+def fill_matrix_members(matrix, result_type, frame, length):
     scene = bpy.context.scene
     phaenotyp = scene.phaenotyp
     data = scene["<Phaenotyp>"]
@@ -335,9 +335,8 @@ def fill_matrix_members(matrix, result_type, frame, max_diff):
     lowest = 0
     for member_id, member in members.items():
         forces = member[result_type][str(frame)]
-
-        # apply every single pos
-        if max_diff:
+        
+        if length > 1:
             for pos_id, force in enumerate(forces):
                 matrix[int(member_id)][int(pos_id)] = force
 
@@ -348,24 +347,22 @@ def fill_matrix_members(matrix, result_type, frame, max_diff):
                 # find highest
                 if force < lowest:
                     lowest = force
-
-        # if only one value
+        
         else:
-            force = forces
-            for pos_id in range(11):
-                matrix[int(member_id)][int(pos_id)] = force
+            force = forces # only one
+            matrix[int(member_id)] = force
 
-                # find highest
-                if force > highest:
-                    highest = force
+            # find highest
+            if force > highest:
+                highest = force
 
-                # find highest
-                if force < lowest:
-                    lowest = force
-
+            # find highest
+            if force < lowest:
+                lowest = force
+    
     return matrix, highest, lowest
 
-def fill_matrix_frames(matrix, result_type, max_diff):
+def fill_matrix_frames(matrix, result_type, length):
     scene = bpy.context.scene
     phaenotyp = scene.phaenotyp
     data = scene["<Phaenotyp>"]
@@ -383,7 +380,7 @@ def fill_matrix_frames(matrix, result_type, max_diff):
         # if the user is changing the start of the animation
         for matrix_frame, frame_id in enumerate(sorted_frames):
             force = member[result_type][str(frame_id)]
-            if max_diff:
+            if length > 1:
                 list = []
                 for force_pos in force:
                     list.append(force_pos)
@@ -472,7 +469,11 @@ def append_head(file, report_type):
         file.write("<a href='max_sum_tau.html'>max_sum_tau</a> |\n")
         file.write("<a href='max_sigmav.html'>max_sigmav</a> |\n")
         file.write("<a href='max_sigma.html'>max_sigma</a>|\n")
-        file.write("<a href='utilization.html'>utilization</a>\n")
+        file.write("<a href='utilization.html'>utilization</a>|\n")
+        
+        file.write("<a href='normalkraft_energie.html'>normalkraft_energie</a>|\n")
+        file.write("<a href='moment_energie.html'>moment_energie</a>|\n")
+        file.write("<a href='verzerrungsenergie.html'>verzerrungsenergie</a>\n")
 
         file.write("<br>\n")
         file.write("<br>\n")
@@ -543,7 +544,7 @@ def append_headlines(file, names, fill):
 
     file.write('</tr>')
 
-def append_matrix_members(file, matrix, frame, highest, lowest, max_diff):
+def append_matrix_members(file, matrix, frame, highest, lowest, length):
     for member_id, member_entry in enumerate(matrix):
         # start row
         file.write('<tr class="item">')
@@ -552,8 +553,8 @@ def append_matrix_members(file, matrix, frame, highest, lowest, max_diff):
         text = '<td height="20" width="20" align="left">' + str(member_id).zfill(3) + '</td>\n'
         file.write(text)
 
-        if max_diff:
-            # at all positions of member
+        # at all positions of member
+        if length > 1:
             for force in member_entry:
                 if force > 0:
                     value = int(basics.avoid_div_zero(255, highest) * force)
@@ -569,30 +570,28 @@ def append_matrix_members(file, matrix, frame, highest, lowest, max_diff):
 
                 text = '<td height="20" width="20" align="right" bgcolor=' + color + '>' +str(round(force,3)) + '</td>\n'
                 file.write(text)
-
-        # otherwiese take first pos only
+        
         else:
-            force = member_entry[0] # all entries are the same
-            for i in range(11):
-                if force > 0:
-                    value = int(basics.avoid_div_zero(255, highest) * force)
-                    color = rgb_to_hex((255, 255-value, 255-value))
+            force = member_entry # only one
+            if force > 0:
+                value = int(basics.avoid_div_zero(255, highest) * force)
+                color = rgb_to_hex((255, 255-value, 255-value))
 
-                elif force == 0:
-                    value = int(basics.avoid_div_zero(255, highest) * force)
-                    color = rgb_to_hex((255, 255-value, 255-value))
+            elif force == 0:
+                value = int(basics.avoid_div_zero(255, highest) * force)
+                color = rgb_to_hex((255, 255-value, 255-value))
 
-                else:
-                    value = int(basics.avoid_div_zero(255, lowest) * force)
-                    color = rgb_to_hex((255-value, 255-value, 255))
+            else:
+                value = int(basics.avoid_div_zero(255, lowest) * force)
+                color = rgb_to_hex((255-value, 255-value, 255))
 
-                text = '<td height="20" width="20" align="right" bgcolor=' + color + '>' +str(round(force,3)) + '</td>\n'
-                file.write(text)
+            text = '<td height="20" width="20" align="right" bgcolor=' + color + '>' +str(round(force,3)) + '</td>\n'
+            file.write(text)
 
         # end row
         file.write("</tr>\n")
 
-def append_matrix_frames(file, matrix, highest, lowest, max_diff):
+def append_matrix_frames(file, matrix, highest, lowest, length):
     for member_id, member_entry in enumerate(matrix):
         # start row
         file.write('<tr class="item">')
@@ -602,8 +601,7 @@ def append_matrix_frames(file, matrix, highest, lowest, max_diff):
         file.write(text)
 
         for force in member_entry:
-            if max_diff:
-                value = abs(int(basics.avoid_div_zero(255, highest) * force))
+            value = abs(int(basics.avoid_div_zero(255, highest) * force))
 
             if force > 0:
                 value = int(basics.avoid_div_zero(255, highest) * force)
@@ -666,24 +664,29 @@ def report_members(directory, frame):
 
     force_types = {}
 
-    # force type with setting max_diff
-    force_types["axial"] = True
-    force_types["moment_y"] = True
-    force_types["moment_z"] = True
-    force_types["shear_y"] = True
-    force_types["shear_z"] = True
-    force_types["torque"] = True
-    force_types["sigma"] = True
+    # force type with length of entry
+    force_types["axial"] = 11
+    force_types["moment_y"] = 11
+    force_types["moment_z"] = 11
+    force_types["shear_y"] = 11
+    force_types["shear_z"] = 11
+    force_types["torque"] = 11
+    force_types["sigma"] = 11
 
-    force_types["max_long_stress"] = False
-    force_types["max_tau_shear"] = False
-    force_types["max_tau_torsion"] = False
-    force_types["max_sum_tau"] = False
-    force_types["max_sigmav"] = False
-    force_types["max_sigma"] = False
-    force_types["utilization"] = False
+    force_types["max_long_stress"] = 1
+    force_types["max_tau_shear"] = 1
+    force_types["max_tau_torsion"] = 1
+    force_types["max_sum_tau"] = 1
+    force_types["max_sigmav"] = 1
+    force_types["max_sigma"] = 1
+    
+    force_types["utilization"] = 1
+    
+    force_types["normalkraft_energie"] = 10
+    force_types["moment_energie"] = 10
+    force_types["verzerrungsenergie"] = 10
 
-    for force_type, max_diff in force_types.items():
+    for force_type, length in force_types.items():
 
         # create file
         filename = directory + str(force_type) + ".html"
@@ -692,19 +695,19 @@ def report_members(directory, frame):
         frames_len = len(members["0"][force_type]) # Was wenn start wo anders?
 
         # create matrix with length of col and row
-        result_matrix = create_matrix(11, len_members)
+        result_matrix = create_matrix(length, len_members)
 
-        # fill matrix with, result_matrix, forcetype, max_diff and absolute
-        result_matrix, highest, lowest = fill_matrix_members(result_matrix, force_type, frame, max_diff)
+        # fill matrix with, result_matrix, forcetype, length and absolute
+        result_matrix, highest, lowest = fill_matrix_members(result_matrix, force_type, frame, length)
 
         # append start
         append_head(file, "members")
 
-        names = list(range(0,11)) # positions
+        names = list(range(0,length)) # positions
         append_headlines(file, names, 3)
 
-        # append matrix with or without max_diff
-        append_matrix_members(file, result_matrix, frame, highest, lowest, max_diff)
+        # append matrix with or without length
+        append_matrix_members(file, result_matrix, frame, highest, lowest, length)
 
         append_end(file)
 
@@ -716,24 +719,29 @@ def report_frames(directory, start, end):
 
     force_types = {}
 
-    # force type with setting max_diff
-    force_types["axial"] = True
-    force_types["moment_y"] = True
-    force_types["moment_z"] = True
-    force_types["shear_y"] = True
-    force_types["shear_z"] = True
-    force_types["torque"] = True
-    force_types["sigma"] = True
+    # force type with setting length
+    force_types["axial"] = 11
+    force_types["moment_y"] = 11
+    force_types["moment_z"] = 11
+    force_types["shear_y"] = 11
+    force_types["shear_z"] = 11
+    force_types["torque"] = 11
+    force_types["sigma"] = 11
 
-    force_types["max_long_stress"] = False
-    force_types["max_tau_shear"] = False
-    force_types["max_tau_torsion"] = False
-    force_types["max_sum_tau"] = False
-    force_types["max_sigmav"] = False
-    force_types["max_sigma"] = False
-    force_types["utilization"] = False
+    force_types["max_long_stress"] = 1
+    force_types["max_tau_shear"] = 1
+    force_types["max_tau_torsion"] = 1
+    force_types["max_sum_tau"] = 1
+    force_types["max_sigmav"] = 1
+    force_types["max_sigma"] = 1
+    
+    force_types["utilization"] = 1
 
-    for force_type, max_diff in force_types.items():
+    force_types["normalkraft_energie"] = 10
+    force_types["moment_energie"] = 10
+    force_types["verzerrungsenergie"] = 10
+    
+    for force_type, length in force_types.items():
         # create file
         filename = directory + str(force_type) + ".html"
         file = open(filename, 'w')
@@ -743,8 +751,8 @@ def report_frames(directory, start, end):
         # create matrix with length of col and row
         result_matrix = create_matrix(frames_len, len_members)
 
-        # fill matrix with, result_matrix, forcetype, max_diff and absolute
-        result_matrix, highest, lowest = fill_matrix_frames(result_matrix, force_type, max_diff)
+        # fill matrix with, result_matrix, forcetype, length and absolute
+        result_matrix, highest, lowest = fill_matrix_frames(result_matrix, force_type, length)
 
         # append start
         append_head(file, "frames")
@@ -752,8 +760,8 @@ def report_frames(directory, start, end):
         names = list(range(start, end+1))
         append_headlines(file, names, 3)
 
-        # append matrix with or without max_diff
-        append_matrix_frames(file, result_matrix, highest, lowest, max_diff)
+        # append matrix with or without
+        append_matrix_frames(file, result_matrix, highest, lowest, length)
 
         append_end(file)
 
@@ -775,7 +783,7 @@ def report_chromosomes(directory):
     # create matrix with length of col and row
     result_matrix = create_matrix(len_chromosome+1, len_individuals)
 
-    # fill matrix with, result_matrix, forcetype, max_diff and absolute
+    # fill matrix with, result_matrix, forcetype, length and absolute
     result_matrix, highest, lowest, weakest, best = fill_matrix_chromosomes(result_matrix, len_chromosome)
 
     # append start

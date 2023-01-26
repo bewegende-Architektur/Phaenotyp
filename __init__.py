@@ -529,6 +529,10 @@ class WM_OT_set_profile(Operator):
                 member["deflection"] = {}
                 member["overstress"] = {}
                 member["utilization"] = {}
+                
+                member["normalkraft_energie"] = {}
+                member["moment_energie"] = {}
+                member["verzerrungsenergie"] = {}
 
                 data["members"][str(id)] = member
 
