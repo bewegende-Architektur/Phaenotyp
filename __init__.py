@@ -266,7 +266,7 @@ class phaenotyp_properties(PropertyGroup):
         )
 
     fitness_average_sigma: FloatProperty(
-        name = "average signa",
+        name = "average sigma",
         description = "Average sigma of all members.",
         default = 1.0,
         min = -0,
