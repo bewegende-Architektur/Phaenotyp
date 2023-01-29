@@ -702,9 +702,14 @@ def report_members(directory, frame):
 
         # append start
         append_head(file, "members")
-
-        names = list(range(0,length)) # positions
-        append_headlines(file, names, 3)
+        
+        # create headlines
+        if length > 1:
+            names = list(range(0,length)) # positions
+            append_headlines(file, names, 3)
+            
+        else:
+            append_headlines(file, ["max"], False)
 
         # append matrix with or without length
         append_matrix_members(file, result_matrix, frame, highest, lowest, length)
