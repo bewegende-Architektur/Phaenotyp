@@ -469,6 +469,11 @@ def append_head(file, report_type):
         file.write("<a href='max_sum_tau.html'>max_sum_tau</a> |\n")
         file.write("<a href='max_sigmav.html'>max_sigmav</a> |\n")
         file.write("<a href='max_sigma.html'>max_sigma</a>|\n")
+        file.write("<br>\n")
+        
+        file.write("<a href='Do.html'>Do</a>|\n")
+        file.write("<a href='Di.html'>Di</a>|\n")
+        file.write("<a href='A.html'>A</a>|\n")
         file.write("<a href='utilization.html'>utilization</a>|\n")
         
         file.write("<a href='normalkraft_energie.html'>normalkraft_energie</a>|\n")
@@ -680,6 +685,9 @@ def report_members(directory, frame):
     force_types["max_sigmav"] = 1
     force_types["max_sigma"] = 1
     
+    force_types["Do"] = 1
+    force_types["Di"] = 1
+    force_types["A"] = 1
     force_types["utilization"] = 1
     
     force_types["normalkraft_energie"] = 10
@@ -740,6 +748,9 @@ def report_frames(directory, start, end):
     force_types["max_sigmav"] = 1
     force_types["max_sigma"] = 1
     
+    force_types["Do"] = 1
+    force_types["Di"] = 1
+    force_types["A"] = 1
     force_types["utilization"] = 1
 
     force_types["normalkraft_energie"] = 10

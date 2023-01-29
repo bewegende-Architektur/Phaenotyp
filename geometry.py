@@ -267,8 +267,8 @@ def create_members(structure_obj, members):
         # copy Do and Di if not set by optimization
         # or the user changed the frame during optimization
         if str(frame) not in member["Do"]:
-            member["Do"][str(frame)] = member["Do"]["first"]
-            member["Di"][str(frame)] = member["Di"]["first"]
+            member["Do"][str(frame)] = member["Do_first"]
+            member["Di"][str(frame)] = member["Di_first"]
 
         radius = member["Do"][str(frame)]*0.01
         radius_group.add(vertex_ids, radius, 'REPLACE')
@@ -299,8 +299,8 @@ def update_members_pre():
         # copy properties if not set by optimization
         # or the user changed the frame during optimization
         if str(frame) not in member["Do"]:
-            member["Do"][str(frame)] = member["Do"]["first"]
-            member["Di"][str(frame)] = member["Di"]["first"]
+            member["Do"][str(frame)] = member["Do_first"]
+            member["Di"][str(frame)] = member["Di_first"]
 
         # update material (like updated when passed from gui in material.py)
         member["Iy"][str(frame)] = pi * (member["Do"][str(frame)]**4 - member["Di"][str(frame)]**4)/64

@@ -480,8 +480,8 @@ class WM_OT_set_profile(Operator):
                 member["Do"] = {}
                 member["Di"] = {}
 
-                member["Do"]["first"] = material.current["Do"] # from gui
-                member["Di"]["first"] = material.current["Di"] # from fui
+                member["Do_first"] = material.current["Do"] # from gui
+                member["Di_first"] = material.current["Di"] # from fui
 
                 member["Iy"] = {}
                 member["Iz"] = {}
@@ -490,12 +490,12 @@ class WM_OT_set_profile(Operator):
                 member["kg"] = {}
                 member["ir"] = {}
 
-                member["Iy"]["first"] = material.current["Iy"] # from gui
-                member["Iz"]["first"] = material.current["Iz"] # from gui
-                member["J"]["first"] = material.current["J"] # from gui
-                member["A"]["first"] = material.current["A"] # from gui
-                member["kg"]["first"] = material.current["kg"] # from gui
-                member["ir"]["first"] = material.current["ir"] # from gui
+                member["Iy_first"] = material.current["Iy"] # from gui
+                member["Iz_first"] = material.current["Iz"] # from gui
+                member["J_first"] = material.current["J"] # from gui
+                member["A_first"] = material.current["A"] # from gui
+                member["kg_first"] = material.current["kg"] # from gui
+                member["ir_first"] = material.current["ir"] # from gui
 
                 # results
                 member["axial"] = {}
