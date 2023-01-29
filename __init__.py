@@ -310,6 +310,14 @@ class phaenotyp_properties(PropertyGroup):
                ]
         )
 
+    ga_optimization_amount: IntProperty(
+        name = "ga_optimization_amount",
+        description="Amount of optimization to run for each member",
+        default = 3,
+        min = 1,
+        max = 10
+        )
+
     ga_ranking: IntProperty(
         name = "ga_ranking",
         description="Show results from best to worth fitness.",
@@ -933,7 +941,9 @@ class WM_OT_ga_start(Operator):
         # the fitness of this chromosome is the basis for all others
         ga.generate_basis()
         if phaenotyp.ga_optimization in ["simple", "utilization", "complex"]:
-            ga.sectional_optimization(0, 1)
+            for i in range(phaenotyp.ga_optimization_amount):
+                ga.sectional_optimization(0, 1)
+        
         ga.calculate_fitness(0, 1)
         individuals["0"]["fitness"]["weighted"] = 1
 
@@ -955,7 +965,8 @@ class WM_OT_ga_start(Operator):
 
             # optimize if sectional performance if activated
             if phaenotyp.ga_optimization in ["simple", "utilization", "complex"]:
-                ga.sectional_optimization(start, end)
+                for i in range(phaenotyp.ga_optimization_amount):
+                    ga.sectional_optimization(start, end)
 
             ga.calculate_fitness(start, end)
             ga.populate_initial_generation()
@@ -976,7 +987,8 @@ class WM_OT_ga_start(Operator):
                 # create 18 new individuals (standard value of 20 - 10 % elitism)
                 ga.create_new_individuals(start, end)
                 if phaenotyp.ga_optimization in ["simple", "utilization", "complex"]:
-                    ga.sectional_optimization(start, end)
+                    for i in range(phaenotyp.ga_optimization_amount):
+                        ga.sectional_optimization(start, end)
                 ga.calculate_fitness(start, end)
                 ga.populate_new_generation(start, end)
 
@@ -1005,7 +1017,8 @@ class WM_OT_ga_start(Operator):
             # pair with bruteforce
             ga.bruteforce(chromosomes)
             if phaenotyp.ga_optimization in ["simple", "utilization", "complex"]:
-                ga.sectional_optimization(start, end)
+                for i in range(phaenotyp.ga_optimization_amount):
+                    ga.sectional_optimization(start, end)
             ga.calculate_fitness(start, end)
 
         basics.view_vertex_colors()
@@ -1582,6 +1595,8 @@ class OBJECT_PT_Phaenotyp(Panel):
                             box_ga.label(text="Genetic Mutation:")
                             box_ga.prop(phaenotyp, "mate_type", text="Type of mating")
                             box_ga.prop(phaenotyp, "ga_optimization", text="Sectional optimization")
+                            if phaenotyp.ga_optimization != "none":
+                                box_ga.prop(phaenotyp, "ga_optimization_amount", text="Amount of sectional optimization")
 
                             if phaenotyp.mate_type in ["direct", "morph"]:
                                 box_ga.prop(phaenotyp, "generation_size", text="Size of generation for GA")
