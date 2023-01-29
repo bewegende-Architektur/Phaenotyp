@@ -258,12 +258,10 @@ def prepare_fea():
             truss.add_member_dist_load(name, 'FZ', z, z)
     
     # store frame based data
-    data["frames"][str(frame)]["volumes"] = frame_volume
+    data["frames"][str(frame)]["volume"] = frame_volume
     data["frames"][str(frame)]["area"] = frame_area
     data["frames"][str(frame)]["length"] = frame_length
     data["frames"][str(frame)]["kg"] = frame_kg
-    
-    print(frame_volume, frame_area, frame_length, frame_kg)
     
     return truss
 

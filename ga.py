@@ -114,16 +114,19 @@ def calculate_fitness(start, end):
         fitness_average_strain_energy = sum_forces / len(forces)
 
         # volume
-        dg = bpy.context.evaluated_depsgraph_get()
-        obj = scene["<Phaenotyp>"]["structure"].evaluated_get(dg)
-        mesh = obj.to_mesh(preserve_all_data_layers=True, depsgraph=dg)
-
-        bm = bmesh.new()
-        bm.from_mesh(mesh)
-
-        volume = bm.calc_volume()
+        volume = data["frames"][str(frame)]["volume"]
         negative_volume = volume * (-1) # in order to make the highest volume the best fitness
         fitness_volume = negative_volume
+        
+        # area
+        area = data["frames"][str(frame)]["area"]
+        negative_area = area * (-1) # just like volume
+        fitness_area = negative_area
+        
+        # kg
+        kg = data["frames"][str(frame)]["kg"]
+        negative_kg = kg * (-1) # just like volume
+        fitness_kg = negative_kg
         
 
         '''
@@ -156,6 +159,9 @@ def calculate_fitness(start, end):
         individual["fitness"]["average_sigma"] = fitness_average_sigma
         individual["fitness"]["average_strain_energy"] = fitness_average_strain_energy
         individual["fitness"]["volume"] = fitness_volume
+        individual["fitness"]["area"] = fitness_area
+        individual["fitness"]["kg"] = fitness_kg
+        
 
         if frame != 0:
             # get from basis
@@ -165,9 +171,15 @@ def calculate_fitness(start, end):
             weighted = basics.avoid_div_zero(1, basis_fitness["average_sigma"]) * fitness_average_sigma * phaenotyp.fitness_average_sigma
             weighted += basics.avoid_div_zero(1, basis_fitness["average_strain_energy"]) * fitness_average_strain_energy * phaenotyp.fitness_average_strain_energy
             weighted += basics.avoid_div_zero(1, basis_fitness["volume"]) * fitness_volume * phaenotyp.fitness_volume
-
-            # if all sliders are set to one, the weight is 3 (with three fitness sliders)
-            weight = phaenotyp.fitness_average_sigma +  phaenotyp.fitness_average_strain_energy +  phaenotyp.fitness_volume
+            weighted += basics.avoid_div_zero(1, basis_fitness["area"]) * fitness_volume * phaenotyp.fitness_area
+            weighted += basics.avoid_div_zero(1, basis_fitness["kg"]) * fitness_volume * phaenotyp.fitness_kg
+            
+            # if all sliders are set to one, the weight is 5 (with 5 fitness sliders)
+            weight = phaenotyp.fitness_average_sigma
+            weight += phaenotyp.fitness_average_strain_energy
+            weight += phaenotyp.fitness_volume
+            weight += phaenotyp.fitness_area
+            weight += phaenotyp.fitness_kg
 
             # the over all weighted-value is always 1 for the basis individual
             individual["fitness"]["weighted"] = basics.avoid_div_zero(weighted, weight)

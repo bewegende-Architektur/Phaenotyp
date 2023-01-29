@@ -271,7 +271,7 @@ class phaenotyp_properties(PropertyGroup):
         name = "average sigma",
         description = "Average sigma of all members.",
         default = 1.0,
-        min = -0,
+        min = 0,
         max = 1.0
         )
 
@@ -279,7 +279,7 @@ class phaenotyp_properties(PropertyGroup):
         name = "average strain energy",
         description = "Average strain energy of all members.",
         default = 0,
-        min = -0,
+        min = 0,
         max = 1.0
         )
 
@@ -287,10 +287,26 @@ class phaenotyp_properties(PropertyGroup):
         name = "volume",
         description = "Volume of the enclosed parts of the structure.",
         default = 0,
-        min = -0,
+        min = 0,
         max = 1.0
         )
 
+    fitness_area: FloatProperty(
+        name = "area",
+        description = "Area of all faces of the structure.",
+        default = 0,
+        min = 0,
+        max = 1.0
+        )
+
+    fitness_kg: FloatProperty(
+        name = "kg",
+        description = "Weight the structure (without loads).",
+        default = 0,
+        min = 0,
+        max = 1.0
+        )
+    
     mate_type: EnumProperty(
         name="mate_type:",
         description="Type of mating",
@@ -1609,6 +1625,8 @@ class OBJECT_PT_Phaenotyp(Panel):
                             box_ga.prop(phaenotyp, "fitness_average_sigma", text="Sigma")
                             box_ga.prop(phaenotyp, "fitness_average_strain_energy", text="Strain energy")
                             box_ga.prop(phaenotyp, "fitness_volume", text="Volume")
+                            box_ga.prop(phaenotyp, "fitness_area", text="Area")
+                            box_ga.prop(phaenotyp, "fitness_kg", text="Kg")
 
                             for keyblock in shape_key.key_blocks:
                                 name = keyblock.name
