@@ -273,9 +273,9 @@ class phaenotyp_properties(PropertyGroup):
         max = 1.0
         )
 
-    fitness_member_sigma: FloatProperty(
-        name = "member sigma",
-        description = "Highest / Lowest sigma of all members.",
+    fitness_average_strain_energy: FloatProperty(
+        name = "average strain energy",
+        description = "Average strain energy of all members.",
         default = 0,
         min = -0,
         max = 1.0
@@ -305,7 +305,7 @@ class phaenotyp_properties(PropertyGroup):
         items=[
                 ("none", "None", ""),
                 ("simple", "Simple", ""),
-                ("utilization", "utilization", ""),
+                ("utilization", "Utilization", ""),
                 ("complex", "Complex", "")
                ]
         )
@@ -329,7 +329,7 @@ class phaenotyp_properties(PropertyGroup):
                 ("shear_y", "Shear Y", ""),
                 ("shear_z", "Shear_y", ""),
                 ("torque", "Torque", ""),
-                ("utilization", "utilization", ""),
+                ("utilization", "Utilization", ""),
                 ("normal_energy", "Normal energy", ""),
                 ("moment_energy", "Moment energy", ""),
                 ("strain_energy", "Strain energy", "")
@@ -1589,9 +1589,9 @@ class OBJECT_PT_Phaenotyp(Panel):
                                 box_ga.prop(phaenotyp, "generation_amount", text="Amount of generations")
 
                             box_ga.label(text="Fitness function:")
-                            box_ga.prop(phaenotyp, "fitness_average_sigma", text="average sigma")
-                            box_ga.prop(phaenotyp, "fitness_member_sigma", text="member sigma")
-                            box_ga.prop(phaenotyp, "fitness_volume", text="volume")
+                            box_ga.prop(phaenotyp, "fitness_average_sigma", text="Sigma")
+                            box_ga.prop(phaenotyp, "fitness_average_strain_energy", text="Strain energy")
+                            box_ga.prop(phaenotyp, "fitness_volume", text="Volume")
 
                             for keyblock in shape_key.key_blocks:
                                 name = keyblock.name

@@ -98,10 +98,20 @@ def calculate_fitness(start, end):
 
         fitness_average_sigma = sum_forces / len(forces)
 
-        # member_sigma
-        fitness = basics.return_max_diff_to_zero(forces)
-        fitness_member_sigma = abs(fitness)
+        # average_strain_energy
+        forces = []
+        for id, member in members.items():
+            values = []
+            for value in member["strain_energy"][str(frame)]:
+                values.append(value)
+            force = basics.return_max_diff_to_zero(values)
+            forces.append(force)
+        
+        sum_forces = 0
+        for force in forces:
+            sum_forces = sum_forces + abs(force)
 
+        fitness_average_strain_energy = sum_forces / len(forces)
 
         # volume
         dg = bpy.context.evaluated_depsgraph_get()
@@ -144,7 +154,7 @@ def calculate_fitness(start, end):
 
         # pass to individual
         individual["fitness"]["average_sigma"] = fitness_average_sigma
-        individual["fitness"]["member_sigma"] = fitness_member_sigma
+        individual["fitness"]["average_strain_energy"] = fitness_average_strain_energy
         individual["fitness"]["volume"] = fitness_volume
 
         if frame != 0:
@@ -153,11 +163,11 @@ def calculate_fitness(start, end):
 
             # the values of weighted at basis is 1, all other frames are weighted to this value
             weighted = basics.avoid_div_zero(1, basis_fitness["average_sigma"]) * fitness_average_sigma * phaenotyp.fitness_average_sigma
-            weighted += basics.avoid_div_zero(1, basis_fitness["member_sigma"]) * fitness_member_sigma * phaenotyp.fitness_member_sigma
+            weighted += basics.avoid_div_zero(1, basis_fitness["average_strain_energy"]) * fitness_average_strain_energy * phaenotyp.fitness_average_strain_energy
             weighted += basics.avoid_div_zero(1, basis_fitness["volume"]) * fitness_volume * phaenotyp.fitness_volume
 
             # if all sliders are set to one, the weight is 3 (with three fitness sliders)
-            weight = phaenotyp.fitness_average_sigma +  phaenotyp.fitness_member_sigma +  phaenotyp.fitness_volume
+            weight = phaenotyp.fitness_average_sigma +  phaenotyp.fitness_average_strain_energy +  phaenotyp.fitness_volume
 
             # the over all weighted-value is always 1 for the basis individual
             individual["fitness"]["weighted"] = basics.avoid_div_zero(weighted, weight)
