@@ -757,9 +757,9 @@ def report_members(directory, frame):
     force_types["A"] = 1
     force_types["utilization"] = 1
     
-    force_types["normalkraft_energie"] = 10
-    force_types["moment_energie"] = 10
-    force_types["verzerrungsenergie"] = 10
+    force_types["normal_energy"] = 10
+    force_types["moment_energy"] = 10
+    force_types["strain_energy"] = 10
 
     for force_type, length in force_types.items():
 
@@ -820,9 +820,9 @@ def report_frames(directory, start, end):
     force_types["A"] = 1
     force_types["utilization"] = 1
 
-    force_types["normalkraft_energie"] = 10
-    force_types["moment_energie"] = 10
-    force_types["verzerrungsenergie"] = 10
+    force_types["normal_energy"] = 10
+    force_types["moment_energy"] = 10
+    force_types["strain_energy"] = 10
     
     for force_type, length in force_types.items():
         # create file

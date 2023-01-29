@@ -448,28 +448,28 @@ def interweave_results(feas, members):
             member["utilization"][str(frame)] = abs(member["max_long_stress"][str(frame)] / member["acceptable_sigma_buckling"][str(frame)])
             
             # Einführung in die Technische Mechanik - Festigkeitslehre, H.Balke, Springer 2010
-            # Berechnung der Verzerrungsenergie für Normalkraft
+            # Berechnung der strain_energy für Normalkraft
 
             normalkraft_energie=[]
             for i in range(10): # get the energie at 10 positions for 10 section
                 ne = (axial[i]**2)*(L/10)/(2*member["E"]*member["A"][str(frame)])
                 normalkraft_energie.append(ne)
-            member["normalkraft_energie"][str(frame)] = normalkraft_energie
+            member["normal_energy"][str(frame)] = normalkraft_energie
 
-            # Berechnung der Verzerrungsenergie für Moment
+            # Berechnung der strain_energy für Moment
             moment_energie=[]
             for i in range(10): # get the energie at 10 positions for 10 section
                 moment_hq = moment_y[i]**2+moment_z[i]**2
                 me = (moment_hq * L/10) / (member["E"] * member["Wy"][str(frame)] * member["Do"][str(frame)])
                 moment_energie.append(me)
-            member["moment_energie"][str(frame)] = moment_energie
+            member["moment_energy"][str(frame)] = moment_energie
 
             # Summe von Normalkraft und Moment-Verzerrunsenergie
-            verzerrungsenergie = []
+            strain_energy = []
             for i in range(10):
                 value = normalkraft_energie[i] + moment_energie[i]
-                verzerrungsenergie.append(value)
-            member["verzerrungsenergie"][str(frame)] = verzerrungsenergie
+                strain_energy.append(value)
+            member["strain_energy"][str(frame)] = strain_energy
             
             # deflection
             deflection = []

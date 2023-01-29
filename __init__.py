@@ -330,9 +330,9 @@ class phaenotyp_properties(PropertyGroup):
                 ("shear_z", "Shear_y", ""),
                 ("torque", "Torque", ""),
                 ("utilization", "utilization", ""),
-                ("normalkraft_energie", "normalkraft_energie", ""),
-                ("moment_energie", "moment_energie", ""),
-                ("verzerrungsenergie", "verzerrungsenergie", "")
+                ("normal_energy", "Normal energy", ""),
+                ("moment_energy", "Moment energy", ""),
+                ("strain_energy", "Strain energy", "")
                ],
         update=viz_update
         )
@@ -537,9 +537,9 @@ class WM_OT_set_profile(Operator):
                 member["overstress"] = {}
                 member["utilization"] = {}
                 
-                member["normalkraft_energie"] = {}
-                member["moment_energie"] = {}
-                member["verzerrungsenergie"] = {}
+                member["normal_energy"] = {}
+                member["moment_energy"] = {}
+                member["strain_energy"] = {}
 
                 data["members"][str(id)] = member
 
