@@ -386,7 +386,7 @@ def fill_matrix_frames(matrix, result_type, length):
                     list.append(force_pos)
 
                 force = basics.return_max_diff_to_zero(list)
-
+            
             matrix[int(member_id)][int(matrix_frame)] = force
 
             # find highest

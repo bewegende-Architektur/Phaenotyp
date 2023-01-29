@@ -344,21 +344,50 @@ def update_members_post():
             y = position[1]*(1-f) + member["initial_positions"][str(frame)][10-i][1]*f
             z = position[2]*(1-f) + member["initial_positions"][str(frame)][10-i][2]*f
             vertices[mesh_vertex_ids[i]].co = (x,y,z)
+            
+            # if utilization in viz
+            if phaenotyp.forces == "utilization":
+                # red or blue?
+                force = result[str(frame)] - 1
+                if force > 0:
+                    h = 0
+                else:
+                    h = 0.666
 
-            # red or blue?
-            if result[str(frame)][i] > 0:
-                h = 0
+                # define s
+                s = 1 * abs(force) * phaenotyp.viz_scale * 0.01
+
+                # define v
+                if member["overstress"][str(frame)] == True:
+                    v = 0.1
+                else:
+                    v = 1.0
+            
+            # for 11 entries
             else:
-                h = 0.666
+                # for all forces with 10 entries
+                # 10th value is the same like 11th entrie
+                # it should be ok for the viz only
+                # report is showing all entries
+                if len(result[str(frame)]) < 11 and i == 10:
+                    force = result[str(frame)][9]
+                else:
+                    force = result[str(frame)][i]
+                
+                # red or blue?
+                if force > 0:
+                    h = 0
+                else:
+                    h = 0.666
 
-            # define s
-            s = 1 * abs(result[str(frame)][i]) * phaenotyp.viz_scale * 0.01
+                # define s
+                s = 1 * abs(force) * phaenotyp.viz_scale * 0.01
 
-            # define v
-            if member["overstress"][str(frame)] == True:
-                v = 0.1
-            else:
-                v = 1.0
+                # define v
+                if member["overstress"][str(frame)] == True:
+                    v = 0.1
+                else:
+                    v = 1.0
 
             c.hsv = h,s,v
             attribute.data[mesh_vertex_ids[i]].color = [c.r, c.g, c.b, 1.0]

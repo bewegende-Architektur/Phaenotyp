@@ -328,7 +328,11 @@ class phaenotyp_properties(PropertyGroup):
                 ("moment_z", "Moment Z", ""),
                 ("shear_y", "Shear Y", ""),
                 ("shear_z", "Shear_y", ""),
-                ("torque", "Torque", "")
+                ("torque", "Torque", ""),
+                ("utilization", "utilization", ""),
+                ("normalkraft_energie", "normalkraft_energie", ""),
+                ("moment_energie", "moment_energie", ""),
+                ("verzerrungsenergie", "verzerrungsenergie", "")
                ],
         update=viz_update
         )
