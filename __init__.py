@@ -936,6 +936,9 @@ class WM_OT_ga_start(Operator):
         generation_id = data["ga_environment"]["generation_id"]
         individuals = data["ga_individuals"]
 
+        # set frame_start
+        bpy.context.scene.frame_start = 0
+        
         # generate an individual as basis at frame 0
         # this individual has choromosome with all genes equals 0
         # the fitness of this chromosome is the basis for all others
@@ -952,8 +955,6 @@ class WM_OT_ga_start(Operator):
             start = 1
             end = generation_size
 
-            # set frame_start to 1
-            bpy.context.scene.frame_start = start
             # set frame_end to first size of inital generation
             bpy.context.scene.frame_end = end
 
@@ -1009,8 +1010,6 @@ class WM_OT_ga_start(Operator):
             start = 1 # basis indiviual is allready created and optimized
             end = len(chromosomes)+1
 
-            # set frame_start to 1
-            bpy.context.scene.frame_start = 0
             # set frame_end to first size of inital generation
             bpy.context.scene.frame_end = end-1
 
