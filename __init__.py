@@ -325,7 +325,10 @@ class phaenotyp_properties(PropertyGroup):
                 ("sigma", "Sigma", ""),
                 ("axial", "Axial", ""),
                 ("moment_y", "Moment Y", ""),
-                ("moment_z", "Moment Z", "")
+                ("moment_z", "Moment Z", ""),
+                ("shear_y", "Shear Y", ""),
+                ("shear_z", "Shear_y", ""),
+                ("torque", "Torque", "")
                ],
         update=viz_update
         )
