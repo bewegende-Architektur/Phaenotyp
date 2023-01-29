@@ -124,7 +124,7 @@ def calculate_fitness(start, end):
         volume = bm.calc_volume()
         negative_volume = volume * (-1) # in order to make the highest volume the best fitness
         fitness_volume = negative_volume
-
+        
 
         '''
         if environment["fitness_function"] == "lever_arm_truss":

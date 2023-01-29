@@ -1,4 +1,5 @@
 import bpy
+import bmesh
 from PyNite import FEModel3D
 from numpy import array, empty, append, poly1d, polyfit
 from phaenotyp import basics, material
@@ -51,7 +52,25 @@ def prepare_fea():
     # like suggested here by Gorgious and CodeManX:
     # https://blender.stackexchange.com/questions/6155/how-to-convert-coordinates-from-vertex-to-world-space
     mat = obj.matrix_world
-
+    
+    # to be collected:
+    data["frames"][str(frame)] = {}
+    frame_volume = 0
+    frame_area = 0
+    frame_length = 0
+    frame_kg = 0
+    
+    # get volume of this frame
+    bm = bmesh.new()
+    bm.from_mesh(mesh)
+    frame_volume = bm.calc_volume()
+    
+    # get area of the frame
+    # overall sum of faces
+    # user can delete faces to influence this as fitness in ga
+    for face in faces:
+        frame_area += face.area
+    
     # add nodes from vertices
     for vertex in vertices:
         vertex_id = vertex.index
@@ -101,11 +120,18 @@ def prepare_fea():
         truss.add_member(name, node_0, node_1, member["E"], member["G"], member["Iy"][str(frame)], member["Iz"][str(frame)], member["J"][str(frame)], member["A"][str(frame)])
 
         # add self weight
-        kN = member["kg"][str(frame)] * -0.0000981
+        kg = member["kg"][str(frame)]
+        kN = kg * -0.0000981
 
-        # add self weight
+        # add self weight as distributed load
         truss.add_member_dist_load(name, "FZ", kN, kN)
-
+        
+        # calculate lenght of parts (maybe usefull later ...)
+        length = (v_0 - v_1).length
+        frame_length += length
+        
+        # calculate and add weight to overall weight of structure
+        frame_kg += length*kg
 
     # add loads
     loads_v = data["loads_v"]
@@ -230,7 +256,15 @@ def prepare_fea():
             # edge_load_area_z
             z = edge_load_area_z[i]
             truss.add_member_dist_load(name, 'FZ', z, z)
-
+    
+    # store frame based data
+    data["frames"][str(frame)]["volumes"] = frame_volume
+    data["frames"][str(frame)]["area"] = frame_area
+    data["frames"][str(frame)]["length"] = frame_length
+    data["frames"][str(frame)]["kg"] = frame_kg
+    
+    print(frame_volume, frame_area, frame_length, frame_kg)
+    
     return truss
 
 def run_mp(trusses):

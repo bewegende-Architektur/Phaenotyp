@@ -30,6 +30,7 @@ def create_data():
             "structure":{},
             "supports":{},
             "members":{},
+            "frame":{},
             "loads_v":{},
             "loads_e":{},
             "loads_f":{},
@@ -42,6 +43,7 @@ def create_data():
         data["structure"] = None
         data["supports"] = {}
         data["members"] = {}
+        data["frame"] = {}
         data["loads_v"] = {}
         data["loads_e"] = {}
         data["loads_f"] = {}
@@ -1366,6 +1368,7 @@ class WM_OT_reset(Operator):
         data["structure"] = None
         data["supports"] = {}
         data["members"] = {}
+        data["frames"] = {}
         data["loads_v"] = {}
         data["loads_e"] = {}
         data["loads_f"] = {}
