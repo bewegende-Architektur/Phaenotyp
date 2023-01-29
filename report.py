@@ -2,6 +2,8 @@ import bpy
 from phaenotyp import basics
 import shutil
 import os.path
+from mathutils import Color, Vector
+c = Color()
 
 class svg_individuals:
     instances = []
@@ -338,7 +340,10 @@ def fill_matrix_members(matrix, result_type, frame, length):
         
         if length > 1:
             for pos_id, force in enumerate(forces):
-                matrix[int(member_id)][int(pos_id)] = force
+                # force, overstress and utilization
+                overstress = member["overstress"][str(frame)]
+                utilization = False # utilization is always one value
+                matrix[int(member_id)][int(pos_id)] = [force, overstress, utilization]
 
                 # find highest
                 if force > highest:
@@ -350,7 +355,13 @@ def fill_matrix_members(matrix, result_type, frame, length):
         
         else:
             force = forces # only one
-            matrix[int(member_id)] = force
+            # force, overstress and utilization
+            overstress = member["overstress"][str(frame)]
+            if result_type == "utilization":
+                utilization = True
+            else:
+                utilization = False
+            matrix[int(member_id)] = [force, overstress, utilization]
 
             # find highest
             if force > highest:
@@ -387,7 +398,13 @@ def fill_matrix_frames(matrix, result_type, length):
 
                 force = basics.return_max_diff_to_zero(list)
             
-            matrix[int(member_id)][int(matrix_frame)] = force
+            # force, overstress and utilization
+            overstress = member["overstress"][str(frame_id)]
+            if result_type == "utilization":
+                utilization = True
+            else:
+                utilization = False
+            matrix[int(member_id)][int(matrix_frame)] = [force, overstress, utilization]
 
             # find highest
             if force > highest:
@@ -560,36 +577,69 @@ def append_matrix_members(file, matrix, frame, highest, lowest, length):
 
         # at all positions of member
         if length > 1:
-            for force in member_entry:
-                if force > 0:
-                    value = int(basics.avoid_div_zero(255, highest) * force)
-                    color = rgb_to_hex((255, 255-value, 255-value))
+            for entry in member_entry:
+                force, overstress, utilization = entry
+                value = force
 
-                elif force == 0:
-                    value = int(basics.avoid_div_zero(255, highest) * force)
-                    color = rgb_to_hex((255, 255-value, 255-value))
-
+                # red or blue?
+                if value > 0:
+                    h = 0
                 else:
-                    value = int(basics.avoid_div_zero(255, lowest) * force)
-                    color = rgb_to_hex((255-value, 255-value, 255))
+                    h = 0.666
+
+                # saturation
+                max_diff = basics.return_max_diff_to_zero([lowest, highest])
+                s = abs(basics.avoid_div_zero(1, max_diff) * value)
+                
+                # define v
+                if overstress:
+                    # like in update_post put not so strong
+                    # to make it readable in html
+                    v = 0.75
+                else:
+                    v = 1.0
+
+                c.hsv = h,s,v
+                r = int(c.r*255)
+                g = int(c.g*255)
+                b = int(c.b*255)
+                color = rgb_to_hex((r,g,b))
 
                 text = '<td height="20" width="20" align="right" bgcolor=' + color + '>' +str(round(force,3)) + '</td>\n'
                 file.write(text)
         
         else:
-            force = member_entry # only one
-            if force > 0:
-                value = int(basics.avoid_div_zero(255, highest) * force)
-                color = rgb_to_hex((255, 255-value, 255-value))
-
-            elif force == 0:
-                value = int(basics.avoid_div_zero(255, highest) * force)
-                color = rgb_to_hex((255, 255-value, 255-value))
-
+            force, overstress, utilization = member_entry
+            # -1 to show utilization in blue and red
+            # utilization is always one
+            if utilization:
+                value = force -1
             else:
-                value = int(basics.avoid_div_zero(255, lowest) * force)
-                color = rgb_to_hex((255-value, 255-value, 255))
+                value = force
 
+            # red or blue?
+            if value > 0:
+                h = 0
+            else:
+                h = 0.666
+            
+            # saturation
+            max_diff = basics.return_max_diff_to_zero([lowest, highest])
+            s = abs(basics.avoid_div_zero(1, max_diff) * value)
+
+            # define v
+            if overstress:
+                # like in update_post put not so strong
+                # to make it readable in html
+                v = 0.75
+            else:
+                v = 1.0
+
+            c.hsv = h,s,v
+            r = int(c.r*255)
+            g = int(c.g*255)
+            b = int(c.b*255)
+            color = rgb_to_hex((r,g,b))
             text = '<td height="20" width="20" align="right" bgcolor=' + color + '>' +str(round(force,3)) + '</td>\n'
             file.write(text)
 
@@ -605,21 +655,38 @@ def append_matrix_frames(file, matrix, highest, lowest, length):
         text = '<td height="20" width="20" align="left">' + str(member_id).zfill(3) + '</td>\n'
         file.write(text)
 
-        for force in member_entry:
-            value = abs(int(basics.avoid_div_zero(255, highest) * force))
-
-            if force > 0:
-                value = int(basics.avoid_div_zero(255, highest) * force)
-                color = rgb_to_hex((255, 255-value, 255-value))
-
-            elif force == 0:
-                value = int(basics.avoid_div_zero(255, highest) * force)
-                color = rgb_to_hex((255, 255-value, 255-value))
-
+        for entry in member_entry:
+            force, overstress, utilization = entry
+            
+            if utilization:
+                value = force-1
+                
             else:
-                value = int(basics.avoid_div_zero(255, lowest) * force)
-                color = rgb_to_hex((255-value, 255-value, 255))
+                value = force
 
+            # red or blue?
+            if value > 0:
+                h = 0
+            else:
+                h = 0.666
+
+            # saturation
+            max_diff = basics.return_max_diff_to_zero([lowest, highest])
+            s = abs(basics.avoid_div_zero(1, max_diff) * value)
+            
+            # define v
+            if overstress:
+                # like in update_post put not so strong
+                # to make it readable in html
+                v = 0.75
+            else:
+                v = 1.0
+
+            c.hsv = h,s,v
+            r = int(c.r*255)
+            g = int(c.g*255)
+            b = int(c.b*255)
+            color = rgb_to_hex((r,g,b))
             text = '<td height="20" width="20" align="right" bgcolor=' + color + '>' +str(round(force,3)) + '</td>\n'
             file.write(text)
 

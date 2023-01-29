@@ -359,7 +359,7 @@ def update_members_post():
 
                 # define v
                 if member["overstress"][str(frame)] == True:
-                    v = 0.1
+                    v = 0.25
                 else:
                     v = 1.0
             
@@ -385,7 +385,7 @@ def update_members_post():
 
                 # define v
                 if member["overstress"][str(frame)] == True:
-                    v = 0.1
+                    v = 0.25
                 else:
                     v = 1.0
 
