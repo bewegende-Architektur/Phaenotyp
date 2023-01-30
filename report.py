@@ -493,9 +493,9 @@ def append_head(file, report_type):
         file.write("<a href='A.html'>A</a>|\n")
         file.write("<a href='utilization.html'>utilization</a>|\n")
         
-        file.write("<a href='normalkraft_energie.html'>normalkraft_energie</a>|\n")
-        file.write("<a href='moment_energie.html'>moment_energie</a>|\n")
-        file.write("<a href='verzerrungsenergie.html'>verzerrungsenergie</a>\n")
+        file.write("<a href='normal_energy.html'>normal_energy</a>|\n")
+        file.write("<a href='moment_energy.html'>moment_energy</a>|\n")
+        file.write("<a href='strain_energy.html'>strain_energy</a>\n")
 
         file.write("<br>\n")
         file.write("<br>\n")

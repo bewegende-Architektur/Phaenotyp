@@ -30,7 +30,7 @@ def create_data():
             "structure":{},
             "supports":{},
             "members":{},
-            "frame":{},
+            "frames":{},
             "loads_v":{},
             "loads_e":{},
             "loads_f":{},
@@ -43,7 +43,7 @@ def create_data():
         data["structure"] = None
         data["supports"] = {}
         data["members"] = {}
-        data["frame"] = {}
+        data["frames"] = {}
         data["loads_v"] = {}
         data["loads_e"] = {}
         data["loads_f"] = {}
