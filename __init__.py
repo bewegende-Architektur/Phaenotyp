@@ -571,7 +571,7 @@ class WM_OT_set_profile(Operator):
 
                 member["kg"] = {}
                 member["length"] = {}
-                
+
                 data["members"][str(id)] = member
 
         # delete obj if existing
@@ -1429,6 +1429,7 @@ class OBJECT_PT_Phaenotyp(Panel):
         layout = self.layout
         scene = context.scene
         phaenotyp = scene.phaenotyp
+        frame = bpy.context.scene.frame_current
 
         # start with defining a structure
         box_structure = layout.box()
@@ -1682,6 +1683,10 @@ class OBJECT_PT_Phaenotyp(Panel):
                             # Text
                             box_text = layout.box()
                             box_text.label(text="Result:")
+                            box_text.label(text="Volume: "+str(round(data["frames"][str(frame)]["volume"],3)) + " m³")
+                            box_text.label(text="Area: "+str(round(data["frames"][str(frame)]["area"],3)) + " m²")
+                            box_text.label(text="Length: "+str(round(data["frames"][str(frame)]["length"],3)) + " m")
+                            box_text.label(text="Kg: "+str(round(data["frames"][str(frame)]["kg"],3)) + " kg")
 
                             selected_objects = bpy.context.selected_objects
                             if len(selected_objects) > 1:
