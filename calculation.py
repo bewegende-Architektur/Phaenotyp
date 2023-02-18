@@ -120,9 +120,8 @@ def prepare_fea():
         truss.add_member(name, node_0, node_1, member["E"], member["G"], member["Iy"][str(frame)], member["Iz"][str(frame)], member["J"][str(frame)], member["A"][str(frame)])
 
         # add self weight
-        kg = member["kg_A"][str(frame)]
-        kN = kg * -0.0000981
-        member["kg"][str(frame)] = kg
+        kg_A = member["kg_A"][str(frame)]
+        kN = kg_A * -0.0000981
 
         # add self weight as distributed load
         truss.add_member_dist_load(name, "FZ", kN, kN)
@@ -130,11 +129,16 @@ def prepare_fea():
         # calculate lenght of parts (maybe usefull later ...)
         length = (v_0 - v_1).length
         frame_length += length
-        member["length"][str(frame)] = length
+
 
         # calculate and add weight to overall weight of structure
-        frame_kg += length*kg
+        kg = length * kg_A
+        frame_kg += kg
 
+        # store in member
+        member["kg"][str(frame)] = kg
+        member["length"][str(frame)] = length
+        
     # add loads
     loads_v = data["loads_v"]
     for id, load in loads_v.items():
