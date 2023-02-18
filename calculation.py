@@ -433,20 +433,22 @@ def interweave_results(feas, members):
             member["overstress"][str(frame)] = False
 
             # for example ["steel_S235", "steel S235", 21000, 8100, 7.85, 16.0, 9.5, 10.5, 23.5, knick_model235],
-            if abs(member["max_sigma"][str(frame)]) > member["acceptable_sigma"]:
+            #if abs(member["max_sigma"][str(frame)]) > member["acceptable_sigma"]:
+            #    member["overstress"][str(frame)] = True
+
+            # check overstress and add 1.05 savety factor
+            safety_factor = 1.05
+            if abs(member["max_tau_shear"][str(frame)]) > safety_factor*member["acceptable_shear"]:
                 member["overstress"][str(frame)] = True
 
-            if abs(member["max_tau_shear"][str(frame)]) > member["acceptable_shear"]:
+            if abs(member["max_tau_torsion"][str(frame)]) > safety_factor*member["acceptable_torsion"]:
                 member["overstress"][str(frame)] = True
 
-            if abs(member["max_tau_torsion"][str(frame)]) > member["acceptable_torsion"]:
-                member["overstress"][str(frame)] = True
-
-            if abs(member["max_sigmav"][str(frame)]) > member["acceptable_sigmav"]:
+            if abs(member["max_sigmav"][str(frame)]) > safety_factor*member["acceptable_sigmav"]:
                 member["overstress"][str(frame)] = True
 
             # buckling
-            if member["axial"][str(frame)][0] < 0: # nur für Druckstäbe - axial ist überall im Stab gleich?
+            if member["axial"][str(frame)][0] < 0: # nur für Druckstäbe, axial kann nicht flippen?
                 member["lamda"][str(frame)] = L*0.5/member["ir"][str(frame)] # für eingespannte Stäbe ist die Knicklänge 0.5 der Stablänge L, Stablänge muss in cm sein !
                 if member["lamda"][str(frame)] > 20: # für lamda < 20 (kurze Träger) gelten die default-Werte)
                     kn = member["knick_model"]
@@ -454,7 +456,7 @@ def interweave_results(feas, members):
                     member["acceptable_sigma_buckling"][str(frame)] = function_to_run(member["lamda"][str(frame)])
                     if member["lamda"][str(frame)] > 250: # Schlankheit zu schlank
                         member["overstress"][str(frame)] = True
-                    if abs(member["acceptable_sigma_buckling"][str(frame)]) > abs(member["max_sigma"][str(frame)]): # Sigma
+                    if safety_factor*abs(member["acceptable_sigma_buckling"][str(frame)]) > abs(member["max_sigma"][str(frame)]): # Sigma
                         member["overstress"][str(frame)] = True
 
                 else:
@@ -464,6 +466,10 @@ def interweave_results(feas, members):
             else:
                 member["acceptable_sigma_buckling"][str(frame)] = member["acceptable_sigma"]
                 member["lamda"][str(frame)] = None # to avoid missing KeyError
+
+
+            if abs(member["max_sigma"][str(frame)]) > safety_factor*member["acceptable_sigma"]:
+                member["overstress"][str(frame)] = True
 
             # lever_arm
             lever_arm = []
