@@ -1041,7 +1041,7 @@ class WM_OT_ga_start(Operator):
 
         # join progress
         progress.http.active = False
-        
+
         return {"FINISHED"}
 
 class WM_OT_ga_ranking(Operator):
@@ -1412,7 +1412,7 @@ class WM_OT_reset(Operator):
         return {"FINISHED"}
 
 class OBJECT_PT_Phaenotyp(Panel):
-    bl_label = "Phänotyp 0.1.2"
+    bl_label = "Phänotyp 0.1.3"
     bl_idname = "OBJECT_PT_custom_panel"
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
