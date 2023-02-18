@@ -740,11 +740,14 @@ def report_members(directory, frame):
     force_types["axial"] = 11
     force_types["moment_y"] = 11
     force_types["moment_z"] = 11
+    force_types["moment_h"] = 11
     force_types["shear_y"] = 11
     force_types["shear_z"] = 11
+    force_types["shear_h"] = 11
     force_types["torque"] = 11
     force_types["sigma"] = 11
 
+    '''
     force_types["max_long_stress"] = 1
     force_types["max_tau_shear"] = 1
     force_types["max_tau_torsion"] = 1
@@ -756,6 +759,7 @@ def report_members(directory, frame):
     force_types["Di"] = 1
     force_types["A"] = 1
     force_types["utilization"] = 1
+    '''
     
     force_types["normal_energy"] = 10
     force_types["moment_energy"] = 10

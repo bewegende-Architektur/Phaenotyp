@@ -534,8 +534,10 @@ class WM_OT_set_profile(Operator):
                 member["axial"] = {}
                 member["moment_y"] = {}
                 member["moment_z"] = {}
+                member["moment_h"] = {}
                 member["shear_y"] = {}
                 member["shear_z"] = {}
+                member["shear_h"] = {}
                 member["torque"] = {}
                 member["sigma"] = {}
 

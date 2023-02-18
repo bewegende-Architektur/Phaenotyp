@@ -373,10 +373,16 @@ def interweave_results(feas, members):
             # calculation of the shear stresses from shear force
             # (always positive)
             tau_shear = []
+            shear_h = []
             for i in range(11): # get the stresses at 11 positions and
-                shear_h = sqrt(shear_y[i]**2+shear_z[i]**2)
-                tau = 1.333 * shear_h/member["A"][str(frame)] # for pipes
+                # shear_h
+                s_h = sqrt(shear_y[i]**2+shear_z[i]**2)
+                shear_h.append(s_h)
+
+                tau = 1.333 * s_h/member["A"][str(frame)] # for pipes
                 tau_shear.append(tau)
+            
+            member["shear_h"][str(frame)] = shear_h
 
             # get max shear stress of shear force of the beam
             # shear stress is mostly small compared to longitudinal
@@ -461,18 +467,22 @@ def interweave_results(feas, members):
 
             # lever_arm
             lever_arm = []
+            moment_h = []
             for i in range(11):
-                moment_h = sqrt(moment_y[i]**2+moment_z[i]**2)
+                # moment_h
+                m_h = sqrt(moment_y[i]**2+moment_z[i]**2)
+                moment_h.append(m_h)
 
                 # to avoid division by zero
                 if member["axial"][str(frame)][i] < 0.1:
-                    lv = moment_h / 0.1
+                    lv = m_h / 0.1
                 else:
-                    lv = moment_h / member["axial"][str(frame)][i]
+                    lv = m_h / member["axial"][str(frame)][i]
 
                 lv = abs(lv) # absolute highest value within member
                 lever_arm.append(lv)
-
+            
+            member["moment_h"][str(frame)] = moment_h
             member["lever_arm"][str(frame)] = lever_arm
             member["max_lever_arm"][str(frame)] = max(lever_arm)
 
