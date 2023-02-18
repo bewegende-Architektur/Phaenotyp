@@ -526,10 +526,6 @@ def append_head(file, report_type):
         file.write("<a href='acceptable_sigma_buckling.html'>acceptable_sigma_buckling</a>\n")
         file.write("<br>\n")
 
-        file.write("<a href='normal_energy.html'>normal_energy</a>|\n")
-        file.write("<a href='moment_energy.html'>moment_energy</a>|\n")
-        file.write("<a href='strain_energy.html'>strain_energy</a>\n")
-
         file.write("<br>\n")
         file.write("<br>\n")
         file.write("<br>\n")
@@ -832,10 +828,6 @@ def report_frames(directory, start, end):
     force_types["Di"] = 1
     force_types["utilization"] = 1
     force_types["acceptable_sigma_buckling"] = 1
-
-    force_types["normal_energy"] = 10
-    force_types["moment_energy"] = 10
-    force_types["strain_energy"] = 10
     
     for force_type, length in force_types.items():
         # create file
