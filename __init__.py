@@ -1296,7 +1296,7 @@ class WM_OT_report_frames(Operator):
         report.report_frames(directory, start, end)
 
         # open file
-        file_to_open = directory + "/axial.html"
+        file_to_open = directory + "/max_sigma.html"
         webbrowser.open(file_to_open)
 
         return {"FINISHED"}

@@ -470,29 +470,62 @@ def append_head(file, report_type):
     file.write("Phaenotyp | Report <br>\n")
     file.write("<br>\n")
 
-    if report_type in ["frames", "members"]:
+    if report_type == "members":
         file.write("<a href='axial.html'>axial</a> |\n")
         file.write("<a href='moment_y.html'>moment_y</a> |\n")
         file.write("<a href='moment_z.html'>moment_z</a> |\n")
+        file.write("<a href='moment_h.html'>moment_h</a> |\n")
         file.write("<a href='shear_y.html'>shear_y</a> |\n")
         file.write("<a href='shear_z.html'>shear_z</a> |\n")
+        file.write("<a href='shear_h.html'>shear_h</a> |\n")
         file.write("<a href='torque.html'>torque</a> |\n")
         file.write("<a href='sigma.html'>sigma</a>\n")
         file.write("<br>\n")
+        
+        file.write("<a href='normal_energy.html'>normal_energy</a>|\n")
+        file.write("<a href='moment_energy.html'>moment_energy</a>|\n")
+        file.write("<a href='strain_energy.html'>strain_energy</a>\n")
 
-        file.write("<a href='max_long_stress.html'>max_long_stress</a> |\n")
+        file.write("<br>\n")
+        file.write("<br>\n")
+        file.write("<br>\n")
+        file.write("</head>\n")
+
+        file.write("\n")
+        file.write("<style>\n")
+        file.write("* {font-family: sans-serif;}\n")
+        file.write("a:link {color: rgb(0, 0, 0); background-color: transparent; text-decoration: none;}\n")
+        file.write("a:visited {color: rgb(0,0,0); background-color: transparent; text-decoration: none;}\n")
+        file.write("a:hover {color: rgb(0,0,0); background-color: transparent; text-decoration: underline;}\n")
+        file.write("a:active {color: rgb(0,0,0); background-color: transparent; text-decoration: underline;}\n")
+        file.write("</style>\n")
+
+        # from https://www.kryogenix.org/
+        # as suggested by smilyface
+        # https://stackoverflow.com/questions/10683712/html-table-sort
+        file.write('<script src="sorttable.js"></script>')
+
+        file.write('<table class="sortable">')
+        file.write('<tr class="item">')
+
+        # empty part in the top-left
+        text = '<td height="20" width="20" bgcolor="FFFFFF">Member</td>'
+        file.write(text)
+
+    elif report_type == "frames":
+        file.write("<a href='max_sigma.html'>max_sigma</a> |\n")
         file.write("<a href='max_tau_shear.html'>max_tau_shear</a> |\n")
         file.write("<a href='max_tau_torsion.html'>max_tau_torsion</a> |\n")
         file.write("<a href='max_sum_tau.html'>max_sum_tau</a> |\n")
-        file.write("<a href='max_sigmav.html'>max_sigmav</a> |\n")
-        file.write("<a href='max_sigma.html'>max_sigma</a>|\n")
+        file.write("<a href='max_sigmav.html'>max_sigmav</a>\n")
         file.write("<br>\n")
-        
-        file.write("<a href='Do.html'>Do</a>|\n")
-        file.write("<a href='Di.html'>Di</a>|\n")
-        file.write("<a href='A.html'>A</a>|\n")
-        file.write("<a href='utilization.html'>utilization</a>|\n")
-        
+
+        file.write("<a href='Do.html'>Do</a> |\n")
+        file.write("<a href='Di.html'>Di</a> |\n")
+        file.write("<a href='utilization.html'>utilization</a> |\n")
+        file.write("<a href='acceptable_sigma_buckling.html'>acceptable_sigma_buckling</a>\n")
+        file.write("<br>\n")
+
         file.write("<a href='normal_energy.html'>normal_energy</a>|\n")
         file.write("<a href='moment_energy.html'>moment_energy</a>|\n")
         file.write("<a href='strain_energy.html'>strain_energy</a>\n")
@@ -746,20 +779,6 @@ def report_members(directory, frame):
     force_types["shear_h"] = 11
     force_types["torque"] = 11
     force_types["sigma"] = 11
-
-    '''
-    force_types["max_long_stress"] = 1
-    force_types["max_tau_shear"] = 1
-    force_types["max_tau_torsion"] = 1
-    force_types["max_sum_tau"] = 1
-    force_types["max_sigmav"] = 1
-    force_types["max_sigma"] = 1
-    
-    force_types["Do"] = 1
-    force_types["Di"] = 1
-    force_types["A"] = 1
-    force_types["utilization"] = 1
-    '''
     
     force_types["normal_energy"] = 10
     force_types["moment_energy"] = 10
@@ -803,26 +822,16 @@ def report_frames(directory, start, end):
 
     force_types = {}
 
-    # force type with setting length
-    force_types["axial"] = 11
-    force_types["moment_y"] = 11
-    force_types["moment_z"] = 11
-    force_types["shear_y"] = 11
-    force_types["shear_z"] = 11
-    force_types["torque"] = 11
-    force_types["sigma"] = 11
-
-    force_types["max_long_stress"] = 1
+    force_types["max_sigma"] = 1
     force_types["max_tau_shear"] = 1
     force_types["max_tau_torsion"] = 1
     force_types["max_sum_tau"] = 1
     force_types["max_sigmav"] = 1
-    force_types["max_sigma"] = 1
     
     force_types["Do"] = 1
     force_types["Di"] = 1
-    force_types["A"] = 1
     force_types["utilization"] = 1
+    force_types["acceptable_sigma_buckling"] = 1
 
     force_types["normal_energy"] = 10
     force_types["moment_energy"] = 10
