@@ -130,7 +130,6 @@ def prepare_fea():
         length = (v_0 - v_1).length
         frame_length += length
 
-
         # calculate and add weight to overall weight of structure
         kg = length * kg_A
         frame_kg += kg
