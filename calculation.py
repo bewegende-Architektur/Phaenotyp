@@ -265,6 +265,22 @@ def prepare_fea():
     
     return truss
 
+# run a singlethread calculation
+def run_st(truss, frame):
+    # scipy_available to pass forward
+    if bpy.context.scene["<Phaenotyp>"]["scipy_available"]:
+        truss.analyze(check_statics=False, sparse=True)
+    else:
+        truss.analyze(check_statics=False, sparse=False)
+    
+    feas = {}
+    feas[str(frame)] = truss
+
+    text = "singlethread job for frame " + str(frame) + " done"
+    print_data(text)
+
+    return feas
+
 def run_mp(trusses):
     # get pathes
     path_addons = os.path.dirname(__file__) # path to the folder of addons

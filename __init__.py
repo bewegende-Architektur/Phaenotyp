@@ -713,18 +713,14 @@ class WM_OT_calculate_single_frame(Operator):
         members = scene["<Phaenotyp>"]["members"]
         frame = bpy.context.scene.frame_current
 
-        # create list of trusses
-        trusses = {}
-
         # calculate new properties for each member
         geometry.update_members_pre()
 
         # created a truss object of PyNite and add to dict
         truss = calculation.prepare_fea()
-        trusses[frame] = truss
 
-        # run mp and get results
-        feas = calculation.run_mp(trusses)
+        # run singlethread and get results
+        feas = calculation.run_st(truss, frame)
 
         # wait for it and interweave results to data
         calculation.interweave_results(feas, members)
@@ -799,20 +795,15 @@ class WM_OT_optimize_1(Operator):
         print_data("optimization 1 - simple sectional performance")
 
         calculation.simple_sectional()
-        # created a truss object of PyNite and add to dict
-
-        # create list of trusses
-        trusses = {}
 
         # calculate new properties for each member
         geometry.update_members_pre()
 
         # created a truss object of PyNite and add to dict
         truss = calculation.prepare_fea()
-        trusses[frame] = truss
 
-        # run mp and get results
-        feas = calculation.run_mp(trusses)
+        # run singlethread and get results
+        feas = calculation.run_st(truss, frame)
 
         # wait for it and interweave results to data
         calculation.interweave_results(feas, members)
@@ -842,20 +833,15 @@ class WM_OT_optimize_2(Operator):
         print_data("optimization 2 - utilization sectional performance")
 
         calculation.utilization_sectional()
-        # created a truss object of PyNite and add to dict
-
-        # create list of trusses
-        trusses = {}
 
         # calculate new properties for each member
         geometry.update_members_pre()
 
         # created a truss object of PyNite and add to dict
         truss = calculation.prepare_fea()
-        trusses[frame] = truss
 
-        # run mp and get results
-        feas = calculation.run_mp(trusses)
+        # run singlethread and get results
+        feas = calculation.run_st(truss, frame)
 
         # wait for it and interweave results to data
         calculation.interweave_results(feas, members)
@@ -886,18 +872,14 @@ class WM_OT_optimize_3(Operator):
 
         calculation.complex_sectional()
 
-        # create list of trusses
-        trusses = {}
-
         # calculate new properties for each member
         geometry.update_members_pre()
 
         # created a truss object of PyNite and add to dict
         truss = calculation.prepare_fea()
-        trusses[frame] = truss
 
-        # run mp and get results
-        feas = calculation.run_mp(trusses)
+        # run singlethread and get results
+        feas = calculation.run_st(truss, frame)
 
         # wait for it and interweave results to data
         calculation.interweave_results(feas, members)
