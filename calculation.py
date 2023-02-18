@@ -2,7 +2,7 @@ import bpy
 import bmesh
 from PyNite import FEModel3D
 from numpy import array, empty, append, poly1d, polyfit
-from phaenotyp import basics, material
+from phaenotyp import basics, material, progress
 from math import sqrt
 from math import tanh
 
@@ -302,8 +302,22 @@ def run_mp(trusses):
     else:
         scipy_available = "False" # as string
 
-    p = Popen([path_python, path_script, directory_blend, scipy_available])
-    p.wait()
+    task = [path_python, path_script, directory_blend, scipy_available]
+    # feedback from python like suggested from Markus Amalthea Magnuson and user3759376 here
+    # https://stackoverflow.com/questions/4417546/constantly-print-subprocess-output-while-process-is-running
+    p = Popen(task, stdout=PIPE, bufsize=1)
+    c = bpy.context.scene.frame_start
+    end = bpy.context.scene.frame_end
+
+    lines_iterator = iter(p.stdout.readline, b"")
+    while p.poll() is None:
+        for line in lines_iterator:
+            nline = line.rstrip()
+            print(nline.decode("utf8"), end = "\r\n",flush =True) # yield line
+            progress.http.c = [c, end]
+            c = c+1
+
+    print("done")
 
     # get trusses back from mp
     path_import = directory_blend + "/Phaenotyp-return_mp.p"
@@ -317,6 +331,8 @@ def interweave_results(feas, members):
     scene = bpy.context.scene
     data = scene["<Phaenotyp>"]
     members = scene["<Phaenotyp>"]["members"]
+
+    end = bpy.context.scene.frame_end
 
     for frame, truss in feas.items():
         for id, member in members.items():
@@ -590,6 +606,9 @@ def interweave_results(feas, members):
                 deflection.append([x,y,z])
 
             member["deflection"][str(frame)] = deflection
+    
+        # update progress
+        progress.http.i = [int(frame), end]
 
 def simple_sectional():
     scene = bpy.context.scene

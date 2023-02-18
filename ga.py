@@ -1,7 +1,7 @@
 import bpy
 import bmesh
 import random
-from phaenotyp import basics, geometry, calculation
+from phaenotyp import basics, geometry, calculation, progress
 
 def print_data(text):
     print("Phaenotyp |", text)
@@ -244,6 +244,9 @@ def bruteforce(chromosomes):
     # create list of trusses
     trusses = {}
 
+    # for progress
+    end = bpy.context.scene.frame_end
+
     for i, chromosome in enumerate(chromosomes):
         # update scene
         frame = i+1  # exclude basis indivual
@@ -262,6 +265,9 @@ def bruteforce(chromosomes):
         # created a truss object of PyNite and add to dict
         truss = calculation.prepare_fea()
         trusses[frame] = truss
+
+        # update progress
+        progress.http.p = [frame, end]
 
     # run mp and get results
     feas = calculation.run_mp(trusses)
@@ -302,6 +308,9 @@ def create_initial_individuals(start, end):
         # created a truss object of PyNite and add to dict
         truss = calculation.prepare_fea()
         trusses[frame] = truss
+
+        # update progress
+        progress.http.p = [frame, end]
 
     # run mp and get results
     feas = calculation.run_mp(trusses)
@@ -352,6 +361,9 @@ def sectional_optimization(start, end):
         # created a truss object of PyNite and add to dict
         truss = calculation.prepare_fea()
         trusses[frame] = truss
+
+        # update progress
+        progress.http.c = [p, end]
 
     # run mp and get results
     feas = calculation.run_mp(trusses)
@@ -509,6 +521,9 @@ def create_new_individuals(start, end):
         # created a truss object of PyNite and add to dict
         truss = calculation.prepare_fea()
         trusses[frame] = truss
+
+        # update progress
+        progress.http.p = [frame, end]
 
     # run mp and get results
     feas = calculation.run_mp(trusses)

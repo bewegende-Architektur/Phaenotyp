@@ -20,7 +20,7 @@ from bpy.app.handlers import persistent
 import os
 import webbrowser
 
-from phaenotyp import basics, material, geometry, calculation, ga, report
+from phaenotyp import basics, material, geometry, calculation, ga, report, progress
 import itertools
 
 def create_data():
@@ -750,6 +750,9 @@ class WM_OT_calculate_animation(Operator):
         start = bpy.context.scene.frame_start
         end = bpy.context.scene.frame_end + 1 # to render also last frame
 
+        # start progress
+        progress.run()
+
         # create list of trusses
         trusses = {}
         for frame in range(start, end):
@@ -764,6 +767,9 @@ class WM_OT_calculate_animation(Operator):
             truss = calculation.prepare_fea()
             trusses[frame] = truss
 
+            # update progress
+            progress.http.p = [frame, end-1]
+
         # run mp and get results
         feas = calculation.run_mp(trusses)
 
@@ -777,6 +783,9 @@ class WM_OT_calculate_animation(Operator):
 
         # activate calculation in update_post
         data["process"]["done"] = True
+
+        # join progress
+        progress.http.active = False
 
         return {"FINISHED"}
 
@@ -938,6 +947,9 @@ class WM_OT_ga_start(Operator):
         generation_id = data["ga_environment"]["generation_id"]
         individuals = data["ga_individuals"]
 
+        # start progress
+        progress.run()
+
         # set frame_start
         bpy.context.scene.frame_start = 0
         
@@ -995,6 +1007,9 @@ class WM_OT_ga_start(Operator):
                 ga.calculate_fitness(start, end)
                 ga.populate_new_generation(start, end)
 
+                # update progress
+                progress.http.g = [i, generation_amount]
+
         if phaenotyp.mate_type == "bruteforce":
             data = scene["<Phaenotyp>"]
             shape_keys = obj.data.shape_keys.key_blocks
@@ -1024,6 +1039,9 @@ class WM_OT_ga_start(Operator):
 
         basics.view_vertex_colors()
 
+        # join progress
+        progress.http.active = False
+        
         return {"FINISHED"}
 
 class WM_OT_ga_ranking(Operator):

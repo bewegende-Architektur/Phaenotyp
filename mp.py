@@ -18,6 +18,7 @@ from PyNite import FEModel3D
 
 import pickle
 
+
 def print_data(text):
     print("Phaenotyp |", text)
 
@@ -54,6 +55,7 @@ def run_fea(scipy_available, feas, truss, frame):
 
     text = "multiprocessing job for frame " + str(frame) + " done"
     print_data(text)
+    sys.stdout.flush()
 
 def mp_pool():
     global scipy_available
@@ -62,8 +64,10 @@ def mp_pool():
     feas = manager.dict() # is saving all calculations by frame
 
     cores = cpu_count()
+    '''
     text = "rendering with " + str(cores) + " cores."
     print_data(text)
+    '''
 
     pool = Pool(processes=cores)
     for frame, truss in imported_trusses.items():
@@ -87,9 +91,13 @@ if __name__ == "__main__":
     export_trusses()
     # give feedback to user
     end_time = time()
+
+    # print only frames to make progress.http work correctly
+    '''
     elapsed_time = end_time - start_time
     text = "time elapsed: " + str(elapsed_time) + " s"
     print_data(text)
+    '''
 
     # exit
     sys.exit()
