@@ -307,7 +307,7 @@ def update_members_pre():
         member["Iz"][str(frame)] = member["Iy"][str(frame)]
         member["J"][str(frame)]  = pi * (member["Do"][str(frame)]**4 - member["Di"][str(frame)]**4)/(32)
         member["A"][str(frame)]  = ((pi * (member["Do"][str(frame)]*0.5)**2) - (pi * (member["Di"][str(frame)]*0.5)**2))
-        member["kg"][str(frame)] =  member["A"][str(frame)]*member["d"] * 0.1
+        member["kg_A"][str(frame)] =  member["A"][str(frame)]*member["d"] * 0.1
         member["ir"][str(frame)] = sqrt(member["Iy"][str(frame)]/member["A"][str(frame)])
 
 def update_members_post():
@@ -344,7 +344,7 @@ def update_members_post():
             y = position[1]*(1-f) + member["initial_positions"][str(frame)][10-i][1]*f
             z = position[2]*(1-f) + member["initial_positions"][str(frame)][10-i][2]*f
             vertices[mesh_vertex_ids[i]].co = (x,y,z)
-            
+
             # if utilization in viz
             if phaenotyp.forces == "utilization":
                 # red or blue?
@@ -362,7 +362,7 @@ def update_members_post():
                     v = 0.25
                 else:
                     v = 1.0
-            
+
             # for 11 entries
             else:
                 # for all forces with 10 entries
@@ -373,7 +373,7 @@ def update_members_post():
                     force = result[str(frame)][9]
                 else:
                     force = result[str(frame)][i]
-                
+
                 # red or blue?
                 if force > 0:
                     h = 0

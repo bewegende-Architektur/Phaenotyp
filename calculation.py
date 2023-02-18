@@ -52,25 +52,25 @@ def prepare_fea():
     # like suggested here by Gorgious and CodeManX:
     # https://blender.stackexchange.com/questions/6155/how-to-convert-coordinates-from-vertex-to-world-space
     mat = obj.matrix_world
-    
+
     # to be collected:
     data["frames"][str(frame)] = {}
     frame_volume = 0
     frame_area = 0
     frame_length = 0
     frame_kg = 0
-    
+
     # get volume of this frame
     bm = bmesh.new()
     bm.from_mesh(mesh)
     frame_volume = bm.calc_volume()
-    
+
     # get area of the frame
     # overall sum of faces
     # user can delete faces to influence this as fitness in ga
     for face in faces:
         frame_area += face.area
-    
+
     # add nodes from vertices
     for vertex in vertices:
         vertex_id = vertex.index
@@ -120,16 +120,18 @@ def prepare_fea():
         truss.add_member(name, node_0, node_1, member["E"], member["G"], member["Iy"][str(frame)], member["Iz"][str(frame)], member["J"][str(frame)], member["A"][str(frame)])
 
         # add self weight
-        kg = member["kg"][str(frame)]
+        kg = member["kg_A"][str(frame)]
         kN = kg * -0.0000981
+        member["kg"][str(frame)] = kg
 
         # add self weight as distributed load
         truss.add_member_dist_load(name, "FZ", kN, kN)
-        
+
         # calculate lenght of parts (maybe usefull later ...)
         length = (v_0 - v_1).length
         frame_length += length
-        
+        member["length"][str(frame)] = length
+
         # calculate and add weight to overall weight of structure
         frame_kg += length*kg
 
@@ -256,13 +258,13 @@ def prepare_fea():
             # edge_load_area_z
             z = edge_load_area_z[i]
             truss.add_member_dist_load(name, 'FZ', z, z)
-    
+
     # store frame based data
     data["frames"][str(frame)]["volume"] = frame_volume
     data["frames"][str(frame)]["area"] = frame_area
     data["frames"][str(frame)]["length"] = frame_length
     data["frames"][str(frame)]["kg"] = frame_kg
-    
+
     return truss
 
 # run a singlethread calculation
@@ -272,7 +274,7 @@ def run_st(truss, frame):
         truss.analyze(check_statics=False, sparse=True)
     else:
         truss.analyze(check_statics=False, sparse=False)
-    
+
     feas = {}
     feas[str(frame)] = truss
 
@@ -413,7 +415,7 @@ def interweave_results(feas, members):
 
                 tau = 1.333 * s_h/member["A"][str(frame)] # for pipes
                 tau_shear.append(tau)
-            
+
             member["shear_h"][str(frame)] = shear_h
 
             # get max shear stress of shear force of the beam
@@ -519,14 +521,14 @@ def interweave_results(feas, members):
 
                 lv = abs(lv) # absolute highest value within member
                 lever_arm.append(lv)
-            
+
             member["moment_h"][str(frame)] = moment_h
             member["lever_arm"][str(frame)] = lever_arm
             member["max_lever_arm"][str(frame)] = max(lever_arm)
 
             # Ausnutzungsgrad
             member["utilization"][str(frame)] = abs(member["max_long_stress"][str(frame)] / member["acceptable_sigma_buckling"][str(frame)])
-            
+
             # Einführung in die Technische Mechanik - Festigkeitslehre, H.Balke, Springer 2010
             # Berechnung der strain_energy für Normalkraft
 
@@ -550,7 +552,7 @@ def interweave_results(feas, members):
                 value = normalkraft_energie[i] + moment_energie[i]
                 strain_energy.append(value)
             member["strain_energy"][str(frame)] = strain_energy
-            
+
             # deflection
             deflection = []
 
@@ -606,7 +608,7 @@ def interweave_results(feas, members):
                 deflection.append([x,y,z])
 
             member["deflection"][str(frame)] = deflection
-    
+
         # update progress
         progress.http.i = [int(frame), end]
 
@@ -644,7 +646,7 @@ def utilization_sectional():
 
         # bei Fachwerkstäben
         #faktor_d = sqrt(abs(ang))
-        
+
         # bei Biegestäben
         faktor_d= (abs(ang))**(1/3)
 

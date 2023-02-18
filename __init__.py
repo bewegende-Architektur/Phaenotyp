@@ -306,7 +306,7 @@ class phaenotyp_properties(PropertyGroup):
         min = 0,
         max = 1.0
         )
-    
+
     mate_type: EnumProperty(
         name="mate_type:",
         description="Type of mating",
@@ -520,14 +520,14 @@ class WM_OT_set_profile(Operator):
                 member["Iz"] = {}
                 member["J"] = {}
                 member["A"] = {}
-                member["kg"] = {}
+                member["kg_A"] = {}
                 member["ir"] = {}
 
                 member["Iy_first"] = material.current["Iy"] # from gui
                 member["Iz_first"] = material.current["Iz"] # from gui
                 member["J_first"] = material.current["J"] # from gui
                 member["A_first"] = material.current["A"] # from gui
-                member["kg_first"] = material.current["kg"] # from gui
+                member["kg_first"] = material.current["kg_A"] # from gui
                 member["ir_first"] = material.current["ir"] # from gui
 
                 # results
@@ -564,11 +564,14 @@ class WM_OT_set_profile(Operator):
                 member["deflection"] = {}
                 member["overstress"] = {}
                 member["utilization"] = {}
-                
+
                 member["normal_energy"] = {}
                 member["moment_energy"] = {}
                 member["strain_energy"] = {}
 
+                member["kg"] = {}
+                member["length"] = {}
+                
                 data["members"][str(id)] = member
 
         # delete obj if existing
@@ -952,7 +955,7 @@ class WM_OT_ga_start(Operator):
 
         # set frame_start
         bpy.context.scene.frame_start = 0
-        
+
         # generate an individual as basis at frame 0
         # this individual has choromosome with all genes equals 0
         # the fitness of this chromosome is the basis for all others
@@ -960,7 +963,7 @@ class WM_OT_ga_start(Operator):
         if phaenotyp.ga_optimization in ["simple", "utilization", "complex"]:
             for i in range(phaenotyp.ga_optimization_amount):
                 ga.sectional_optimization(0, 1)
-        
+
         ga.calculate_fitness(0, 1)
         individuals["0"]["fitness"]["weighted"] = 1
 
@@ -1556,7 +1559,7 @@ class OBJECT_PT_Phaenotyp(Panel):
                 box_profile.label(text="Iz = " + str(round(material.current["Iz"], 4)) + " cm⁴")
                 box_profile.label(text="J = " + str(round(material.current["J"], 4)) + " cm⁴")
                 box_profile.label(text="A = " + str(round(material.current["A"], 4)) + " cm²")
-                box_profile.label(text="kg = " + str(round(material.current["kg"], 4)) + " kg/m")
+                box_profile.label(text="kg = " + str(round(material.current["kg_A"], 4)) + " kg/m")
 
                 box_profile.operator("wm.set_profile", text="Set")
 
