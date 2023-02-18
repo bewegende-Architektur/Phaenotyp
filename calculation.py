@@ -590,7 +590,13 @@ def utilization_sectional():
 
     for id, member in members.items():
         ang = member["utilization"][str(frame)]
-        faktor_d = sqrt(abs(ang))
+
+        # bei Fachwerkstäben
+        #faktor_d = sqrt(abs(ang))
+        
+        # bei Biegestäben
+        faktor_d= (abs(ang))**(1/3)
+
         Do_Di_ratio = member["Do"][str(frame)]/member["Di"][str(frame)]
         member["Do"][str(frame)] = member["Do"][str(frame)] * faktor_d
         member["Di"][str(frame)] = member["Di"][str(frame)] * faktor_d
@@ -618,7 +624,12 @@ def complex_sectional():
         else:
             faktor_a = 0.5 + 0.6*(tanh((abs(member["max_long_stress"][str(frame)])/member["acceptable_sigma_buckling"][str(frame)] -0.5)*2.4))
 
-        faktor_d = sqrt(abs(faktor_a))
+        # bei Fachwerkstäben
+        #faktor_d = sqrt(abs(faktor_a))
+
+        # bei Biegestäben
+        faktor_d = (abs(faktor_a))**(1/3)
+
         member["Do"][str(frame)] = member["Do"][str(frame)]*faktor_d
         member["Di"][str(frame)] = member["Di"][str(frame)]*faktor_d
 
