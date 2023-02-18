@@ -155,6 +155,16 @@ class http:
         client_connection.sendall(http.style)
         client_connection.sendall(http.headline)
 
+        # tables
+        client_connection.sendall(http.table_text("started:", http.started_text))
+
+        # https://stackoverflow.com/questions/27779677/how-to-format-elapsed-time-from-seconds-to-hours-minutes-seconds-and-milliseco
+        hours, rem = divmod(time() - http.started, 3600)
+        minutes, seconds = divmod(rem, 60)
+        elapsed = "{:0>2}:{:0>2}:{:0>2}".format(int(hours), int(minutes), int(seconds))
+        client_connection.sendall(http.table_text("elapsed:", elapsed))
+        client_connection.sendall(b"<br>")
+        
         http_response = b"""\
         done
         </html>
