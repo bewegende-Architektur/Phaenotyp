@@ -164,6 +164,10 @@ class http:
 
 def run():
     http.active = True
+    http.p = [0,0]
+    http.c = [0,0]
+    http.i = [0,0]
+    http.g = [0,0]
 
     Thread_hosting = Thread(target=http.hosting)
     Thread_hosting.start()
