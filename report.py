@@ -524,7 +524,6 @@ def append_head(file, report_type):
         file.write("<a href='Di.html'>Di</a> |\n")
         file.write("<a href='utilization.html'>utilization</a> |\n")
         file.write("<a href='acceptable_sigma_buckling.html'>acceptable_sigma_buckling</a>\n")
-        file.write("<br>\n")
 
         file.write("<br>\n")
         file.write("<br>\n")
