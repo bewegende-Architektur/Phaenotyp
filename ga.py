@@ -116,17 +116,17 @@ def calculate_fitness(start, end):
         # volume
         volume = data["frames"][str(frame)]["volume"]
         negative_volume = volume * (-1) # in order to make the highest volume the best fitness
-        #fitness_volume = negative_volume # solved by value
+        fitness_volume = negative_volume # solved by value
         
         # area
         area = data["frames"][str(frame)]["area"]
         negative_area = area * (-1) # just like volume
-        #fitness_area = negative_area # solved by value
+        fitness_area = negative_area # solved by value
         
         # kg
         kg = data["frames"][str(frame)]["kg"]
         negative_kg = kg * (-1) # just like volume
-        #fitness_kg = negative_kg # solved by value
+        fitness_kg = negative_kg # solved by value
         
 
         '''

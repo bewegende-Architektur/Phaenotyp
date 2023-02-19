@@ -1101,7 +1101,7 @@ class WM_OT_ga_render_animation(Operator):
         # sort by fitness
         list_result = []
         for name, individual in individuals.items():
-            list_result.append([name, individual["chromosome"], individual["fitness"]])
+            list_result.append([name, individual["chromosome"], individual["fitness"]["weighted"]])
 
         sorted_list = sorted(list_result, key = lambda x: x[2])
 
