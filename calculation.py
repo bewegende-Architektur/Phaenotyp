@@ -137,7 +137,7 @@ def prepare_fea():
         # store in member
         member["kg"][str(frame)] = kg
         member["length"][str(frame)] = length
-        
+
     # add loads
     loads_v = data["loads_v"]
     for id, load in loads_v.items():
@@ -335,7 +335,6 @@ def run_mp(trusses):
 def interweave_results(feas, members):
     scene = bpy.context.scene
     data = scene["<Phaenotyp>"]
-    members = scene["<Phaenotyp>"]["members"]
 
     end = bpy.context.scene.frame_end
 
