@@ -377,37 +377,42 @@ def interweave_results(feas, members):
                 torque_pos = truss_member.torque(x)
                 torque.append(torque_pos)
 
-            member["axial"][str(frame)] = axial
-            member["moment_y"][str(frame)] = moment_y
-            member["moment_z"][str(frame)] = moment_z
-            member["shear_y"][str(frame)] = shear_y
-            member["shear_z"][str(frame)] = shear_z
-            member["torque"][str(frame)] = torque
+            member["axial"][frame] = axial
+            member["moment_y"][frame] = moment_y
+            member["moment_z"][frame] = moment_z
+            member["shear_y"][frame] = shear_y
+            member["shear_z"][frame] = shear_z
+            member["torque"][frame] = torque
+
+            # shorten and accessing once
+            A = member["A"][frame]
+            J = member["J"][frame]
+            Do = member["Do"][frame]
 
             # buckling
-            member["ir"][str(frame)] = sqrt(member["J"][str(frame)]/member["A"][str(frame)]) # für runde Querschnitte in  cm
+            member["ir"][frame] = sqrt(J/A) # für runde Querschnitte in  cm
 
             # modulus from the moments of area
             #(Wy and Wz are the same within a pipe)
-            member["Wy"][str(frame)] = member["Iy"][str(frame)]/(member["Do"][str(frame)]/2)
+            member["Wy"][frame] = member["Iy"][frame]/(Do/2)
 
             # polar modulus of torsion
-            member["WJ"][str(frame)] = member["J"][str(frame)]/(member["Do"][str(frame)]/2)
+            member["WJ"][frame] = J/(Do/2)
 
             # calculation of the longitudinal stresses
             long_stress = []
             for i in range(11): # get the stresses at 11 positions and
                 moment_h = sqrt(moment_y[i]**2+moment_z[i]**2)
                 if axial[i] > 0:
-                    s = axial[i]/member["A"][str(frame)] + moment_h/member["Wy"][str(frame)]
+                    s = axial[i]/A + moment_h/member["Wy"][frame]
                 else:
-                    s = axial[i]/member["A"][str(frame)] - moment_h/member["Wy"][str(frame)]
+                    s = axial[i]/A - moment_h/member["Wy"][frame]
                 long_stress.append(s)
 
             # get max stress of the beam
             # (can be positive or negative)
-            member["long_stress"][str(frame)] = long_stress
-            member["max_long_stress"][str(frame)] = basics.return_max_diff_to_zero(long_stress) #  -> is working as fitness
+            member["long_stress"][frame] = long_stress
+            member["max_long_stress"][frame] = basics.return_max_diff_to_zero(long_stress) #  -> is working as fitness
 
             # calculation of the shear stresses from shear force
             # (always positive)
@@ -418,27 +423,27 @@ def interweave_results(feas, members):
                 s_h = sqrt(shear_y[i]**2+shear_z[i]**2)
                 shear_h.append(s_h)
 
-                tau = 1.333 * s_h/member["A"][str(frame)] # for pipes
+                tau = 1.333 * s_h/A # for pipes
                 tau_shear.append(tau)
 
-            member["shear_h"][str(frame)] = shear_h
+            member["shear_h"][frame] = shear_h
 
             # get max shear stress of shear force of the beam
             # shear stress is mostly small compared to longitudinal
             # in common architectural usage and only importand with short beam lenght
-            member["tau_shear"][str(frame)] = tau_shear
-            member["max_tau_shear"][str(frame)] = max(tau_shear)
+            member["tau_shear"][frame] = tau_shear
+            member["max_tau_shear"][frame] = max(tau_shear)
 
             # Calculation of the torsion stresses
             # (always positiv)
             tau_torsion = []
             for i in range(11): # get the stresses at 11 positions and
-                tau = abs(torque[i]/member["WJ"][str(frame)])
+                tau = abs(torque[i]/member["WJ"][frame])
                 tau_torsion.append(tau)
 
             # get max torsion stress of the beam
-            member["tau_torsion"][str(frame)] = tau_torsion
-            member["max_tau_torsion"][str(frame)] = max(tau_torsion)
+            member["tau_torsion"][frame] = tau_torsion
+            member["max_tau_torsion"][frame] = max(tau_torsion)
 
             # torsion stress is mostly small compared to longitudinal
             # in common architectural usage
@@ -450,8 +455,8 @@ def interweave_results(feas, members):
                 tau = tau_shear[0] + tau_torsion[0]
                 sum_tau.append(tau)
 
-            member["sum_tau"][str(frame)] = sum_tau
-            member["max_sum_tau"][str(frame)] = max(sum_tau)
+            member["sum_tau"][frame] = sum_tau
+            member["max_sum_tau"][frame] = max(sum_tau)
 
             # combine shear and torque
             sigmav = []
@@ -459,50 +464,50 @@ def interweave_results(feas, members):
                 sv = sqrt(long_stress[0]**2 + 3*sum_tau[0]**2)
                 sigmav.append(sv)
 
-            member["sigmav"][str(frame)] = sigmav
-            member["max_sigmav"][str(frame)] = max(sigmav)
+            member["sigmav"][frame] = sigmav
+            member["max_sigmav"][frame] = max(sigmav)
             # check out: http://www.bs-wiki.de/mediawiki/index.php?title=Festigkeitsberechnung
 
-            member["sigma"][str(frame)] = member["long_stress"][str(frame)]
-            member["max_sigma"][str(frame)] = member["max_long_stress"][str(frame)]
+            member["sigma"][frame] = member["long_stress"][frame]
+            member["max_sigma"][frame] = member["max_long_stress"][frame]
 
             # overstress
-            member["overstress"][str(frame)] = False
+            member["overstress"][frame] = False
 
             # check overstress and add 1.05 savety factor
             safety_factor = 1.05
-            if abs(member["max_tau_shear"][str(frame)]) > safety_factor*member["acceptable_shear"]:
-                member["overstress"][str(frame)] = True
+            if abs(member["max_tau_shear"][frame]) > safety_factor*member["acceptable_shear"]:
+                member["overstress"][frame] = True
 
-            if abs(member["max_tau_torsion"][str(frame)]) > safety_factor*member["acceptable_torsion"]:
-                member["overstress"][str(frame)] = True
+            if abs(member["max_tau_torsion"][frame]) > safety_factor*member["acceptable_torsion"]:
+                member["overstress"][frame] = True
 
-            if abs(member["max_sigmav"][str(frame)]) > safety_factor*member["acceptable_sigmav"]:
-                member["overstress"][str(frame)] = True
+            if abs(member["max_sigmav"][frame]) > safety_factor*member["acceptable_sigmav"]:
+                member["overstress"][frame] = True
 
             # buckling
-            if member["axial"][str(frame)][0] < 0: # nur für Druckstäbe, axial kann nicht flippen?
-                member["lamda"][str(frame)] = L*0.5/member["ir"][str(frame)] # für eingespannte Stäbe ist die Knicklänge 0.5 der Stablänge L, Stablänge muss in cm sein !
-                if member["lamda"][str(frame)] > 20: # für lamda < 20 (kurze Träger) gelten die default-Werte)
+            if member["axial"][frame][0] < 0: # nur für Druckstäbe, axial kann nicht flippen?
+                member["lamda"][frame] = L*0.5/member["ir"][frame] # für eingespannte Stäbe ist die Knicklänge 0.5 der Stablänge L, Stablänge muss in cm sein !
+                if member["lamda"][frame] > 20: # für lamda < 20 (kurze Träger) gelten die default-Werte)
                     kn = member["knick_model"]
                     function_to_run = poly1d(polyfit(material.kn_lamda, kn, 6))
-                    member["acceptable_sigma_buckling"][str(frame)] = function_to_run(member["lamda"][str(frame)])
-                    if member["lamda"][str(frame)] > 250: # Schlankheit zu schlank
-                        member["overstress"][str(frame)] = True
-                    if safety_factor*abs(member["acceptable_sigma_buckling"][str(frame)]) > abs(member["max_sigma"][str(frame)]): # Sigma
-                        member["overstress"][str(frame)] = True
+                    member["acceptable_sigma_buckling"][frame] = function_to_run(member["lamda"][frame])
+                    if member["lamda"][frame] > 250: # Schlankheit zu schlank
+                        member["overstress"][frame] = True
+                    if safety_factor*abs(member["acceptable_sigma_buckling"][frame]) > abs(member["max_sigma"][frame]): # Sigma
+                        member["overstress"][frame] = True
 
                 else:
-                    member["acceptable_sigma_buckling"][str(frame)] = member["acceptable_sigma"]
+                    member["acceptable_sigma_buckling"][frame] = member["acceptable_sigma"]
 
             # without buckling
             else:
-                member["acceptable_sigma_buckling"][str(frame)] = member["acceptable_sigma"]
-                member["lamda"][str(frame)] = None # to avoid missing KeyError
+                member["acceptable_sigma_buckling"][frame] = member["acceptable_sigma"]
+                member["lamda"][frame] = None # to avoid missing KeyError
 
 
-            if abs(member["max_sigma"][str(frame)]) > safety_factor*member["acceptable_sigma"]:
-                member["overstress"][str(frame)] = True
+            if abs(member["max_sigma"][frame]) > safety_factor*member["acceptable_sigma"]:
+                member["overstress"][frame] = True
 
             # lever_arm
             lever_arm = []
@@ -513,20 +518,20 @@ def interweave_results(feas, members):
                 moment_h.append(m_h)
 
                 # to avoid division by zero
-                if member["axial"][str(frame)][i] < 0.1:
+                if member["axial"][frame][i] < 0.1:
                     lv = m_h / 0.1
                 else:
-                    lv = m_h / member["axial"][str(frame)][i]
+                    lv = m_h / member["axial"][frame][i]
 
                 lv = abs(lv) # absolute highest value within member
                 lever_arm.append(lv)
 
-            member["moment_h"][str(frame)] = moment_h
-            member["lever_arm"][str(frame)] = lever_arm
-            member["max_lever_arm"][str(frame)] = max(lever_arm)
+            member["moment_h"][frame] = moment_h
+            member["lever_arm"][frame] = lever_arm
+            member["max_lever_arm"][frame] = max(lever_arm)
 
             # Ausnutzungsgrad
-            member["utilization"][str(frame)] = abs(member["max_long_stress"][str(frame)] / member["acceptable_sigma_buckling"][str(frame)])
+            member["utilization"][frame] = abs(member["max_long_stress"][frame] / member["acceptable_sigma_buckling"][frame])
 
             # Einführung in die Technische Mechanik - Festigkeitslehre, H.Balke, Springer 2010
             normalkraft_energie=[]
@@ -535,21 +540,21 @@ def interweave_results(feas, members):
 
             for i in range(10): # get the energie at 10 positions for 10 section
                 # Berechnung der strain_energy für Normalkraft
-                ne = (axial[i]**2)*(L/10)/(2*member["E"]*member["A"][str(frame)])
+                ne = (axial[i]**2)*(L/10)/(2*member["E"]*A)
                 normalkraft_energie.append(ne)
 
                 # Berechnung der strain_energy für Moment
                 moment_hq = moment_y[i]**2+moment_z[i]**2
-                me = (moment_hq * L/10) / (member["E"] * member["Wy"][str(frame)] * member["Do"][str(frame)])
+                me = (moment_hq * L/10) / (member["E"] * member["Wy"][frame] * Do)
                 moment_energie.append(me)
 
                 # Summe von Normalkraft und Moment-Verzerrunsenergie
                 value = ne + me
                 strain_energy.append(value)
 
-            member["strain_energy"][str(frame)] = strain_energy
-            member["normal_energy"][str(frame)] = normalkraft_energie
-            member["moment_energy"][str(frame)] = moment_energie
+            member["strain_energy"][frame] = strain_energy
+            member["normal_energy"][frame] = normalkraft_energie
+            member["moment_energy"][frame] = moment_energie
 
             # deflection
             deflection = []
@@ -604,7 +609,7 @@ def interweave_results(feas, members):
 
                 deflection.append([x,y,z])
 
-            member["deflection"][str(frame)] = deflection
+            member["deflection"][frame] = deflection
 
         # update progress
         progress.http.i = [int(frame), end]
