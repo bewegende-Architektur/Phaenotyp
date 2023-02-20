@@ -338,51 +338,54 @@ def interweave_results(feas, members):
 
     end = bpy.context.scene.frame_end
 
+    from time import time
+
+    start = time()
+
     for frame, truss in feas.items():
         for id, member in members.items():
             name = "member_" + str(id)
-            L = truss.Members[name].L() # Member length
-            T = truss.Members[name].T() # Member local transformation matrix
+            truss_member = truss.Members[name]
+            L = truss_member.L() # Member length
+            T = truss_member.T() # Member local transformation matrix
 
             axial = []
+            moment_y = []
+            moment_z = []
+            shear_y = []
+            shear_z = []
+            torque = []
+
             for i in range(11): # get the forces at 11 positions and
-                axial_pos = truss.Members[name].axial(x=L/10*i)
-                axial_pos = axial_pos * (-1) # Druckkraft gleich minus
+                x = L/10*i
+
+                axial_pos = truss_member.axial(x) * (-1) # Druckkraft minus
                 axial.append(axial_pos)
+
+                moment_y_pos = truss_member.moment("My", x)
+                moment_y.append(moment_y_pos)
+
+                moment_z_pos = truss_member.moment("Mz", x)
+                moment_z.append(moment_z_pos)
+
+                shear_y_pos = truss_member.shear("Fy", x)
+                shear_y.append(shear_y_pos)
+
+                shear_z_pos = truss_member.shear("Fz", x)
+                shear_z.append(shear_z_pos)
+
+                torque_pos = truss_member.torque(x)
+                torque.append(torque_pos)
+
             member["axial"][str(frame)] = axial
+            member["moment_y"][str(frame)] = moment_y
+            member["moment_z"][str(frame)] = moment_z
+            member["shear_y"][str(frame)] = shear_y
+            member["shear_z"][str(frame)] = shear_z
+            member["torque"][str(frame)] = torque
 
             # buckling
             member["ir"][str(frame)] = sqrt(member["J"][str(frame)]/member["A"][str(frame)]) # für runde Querschnitte in  cm
-
-            moment_y = []
-            for i in range(11): # get the forces at 11 positions and
-                moment_y_pos = truss.Members[name].moment("My", x=L/10*i)
-                moment_y.append(moment_y_pos)
-            member["moment_y"][str(frame)] = moment_y
-
-            moment_z = []
-            for i in range(11): # get the forces at 11 positions and
-                moment_z_pos = truss.Members[name].moment("Mz", x=L/10*i)
-                moment_z.append(moment_z_pos)
-            member["moment_z"][str(frame)] = moment_z
-
-            shear_y = []
-            for i in range(11): # get the forces at 11 positions and
-                shear_y_pos = truss.Members[name].shear("Fy", x=L/10*i)
-                shear_y.append(shear_y_pos)
-            member["shear_y"][str(frame)] = shear_y
-
-            shear_z = []
-            for i in range(11): # get the forces at 11 positions and
-                shear_z_pos = truss.Members[name].shear("Fz", x=L/10*i)
-                shear_z.append(shear_z_pos)
-            member["shear_z"][str(frame)] = shear_z
-
-            torque = []
-            for i in range(11): # get the forces at 11 positions and
-                torque_pos = truss.Members[name].torque(x=L/10*i)
-                torque.append(torque_pos)
-            member["torque"][str(frame)] = torque
 
             # modulus from the moments of area
             #(Wy and Wz are the same within a pipe)
@@ -463,14 +466,8 @@ def interweave_results(feas, members):
             member["sigma"][str(frame)] = member["long_stress"][str(frame)]
             member["max_sigma"][str(frame)] = member["max_long_stress"][str(frame)]
 
-            # for the definition of the fitness criteria prepared
-            # max longitudinal stress for steel St360 in kN/cm²
-            # tensile strength: 36 kN/cm², yield point 23.5 kN/cm²
+            # overstress
             member["overstress"][str(frame)] = False
-
-            # for example ["steel_S235", "steel S235", 21000, 8100, 7.85, 16.0, 9.5, 10.5, 23.5, knick_model235],
-            #if abs(member["max_sigma"][str(frame)]) > member["acceptable_sigma"]:
-            #    member["overstress"][str(frame)] = True
 
             # check overstress and add 1.05 savety factor
             safety_factor = 1.05
@@ -532,28 +529,27 @@ def interweave_results(feas, members):
             member["utilization"][str(frame)] = abs(member["max_long_stress"][str(frame)] / member["acceptable_sigma_buckling"][str(frame)])
 
             # Einführung in die Technische Mechanik - Festigkeitslehre, H.Balke, Springer 2010
-            # Berechnung der strain_energy für Normalkraft
-
             normalkraft_energie=[]
+            moment_energie=[]
+            strain_energy = []
+
             for i in range(10): # get the energie at 10 positions for 10 section
+                # Berechnung der strain_energy für Normalkraft
                 ne = (axial[i]**2)*(L/10)/(2*member["E"]*member["A"][str(frame)])
                 normalkraft_energie.append(ne)
-            member["normal_energy"][str(frame)] = normalkraft_energie
 
-            # Berechnung der strain_energy für Moment
-            moment_energie=[]
-            for i in range(10): # get the energie at 10 positions for 10 section
+                # Berechnung der strain_energy für Moment
                 moment_hq = moment_y[i]**2+moment_z[i]**2
                 me = (moment_hq * L/10) / (member["E"] * member["Wy"][str(frame)] * member["Do"][str(frame)])
                 moment_energie.append(me)
-            member["moment_energy"][str(frame)] = moment_energie
 
-            # Summe von Normalkraft und Moment-Verzerrunsenergie
-            strain_energy = []
-            for i in range(10):
-                value = normalkraft_energie[i] + moment_energie[i]
+                # Summe von Normalkraft und Moment-Verzerrunsenergie
+                value = ne + me
                 strain_energy.append(value)
+
             member["strain_energy"][str(frame)] = strain_energy
+            member["normal_energy"][str(frame)] = normalkraft_energie
+            member["moment_energy"][str(frame)] = moment_energie
 
             # deflection
             deflection = []
@@ -566,18 +562,17 @@ def interweave_results(feas, members):
             cos_z = array([T[2,0:3]]) # Direction cosines of local z-axis
 
             DY_plot = empty((0, 3))
+            DZ_plot = empty((0, 3))
+
             for i in range(11):
                 # Calculate the local y-direction displacement
-                dy_tot = truss.Members[name].deflection('dy', L/10*i)
+                dy_tot = truss_member.deflection('dy', L/10*i)
 
                 # Calculate the scaled displacement in global coordinates
                 DY_plot = append(DY_plot, dy_tot*cos_y*scale_factor, axis=0)
 
-            # Calculate the local z-axis displacements at 20 points along the member's length
-            DZ_plot = empty((0, 3))
-            for i in range(11):
                 # Calculate the local z-direction displacement
-                dz_tot = truss.Members[name].deflection('dz', L/10*i)
+                dz_tot = truss_member.deflection('dz', L/10*i)
 
                 # Calculate the scaled displacement in global coordinates
                 DZ_plot = append(DZ_plot, dz_tot*cos_z*scale_factor, axis=0)
@@ -585,13 +580,13 @@ def interweave_results(feas, members):
             # Calculate the local x-axis displacements at 20 points along the member's length
             DX_plot = empty((0, 3))
 
-            Xi = truss.Members[name].i_node.X
-            Yi = truss.Members[name].i_node.Y
-            Zi = truss.Members[name].i_node.Z
+            Xi = truss_member.i_node.X
+            Yi = truss_member.i_node.Y
+            Zi = truss_member.i_node.Z
 
             for i in range(11):
                 # Displacements in local coordinates
-                dx_tot = [[Xi, Yi, Zi]] + (L/10*i + truss.Members[name].deflection('dx', L/10*i)*scale_factor)*cos_x
+                dx_tot = [[Xi, Yi, Zi]] + (L/10*i + truss_member.deflection('dx', L/10*i)*scale_factor)*cos_x
 
                 # Magnified displacements in global coordinates
                 DX_plot = append(DX_plot, dx_tot, axis=0)
@@ -613,6 +608,9 @@ def interweave_results(feas, members):
 
         # update progress
         progress.http.i = [int(frame), end]
+
+    end = time()
+    print(end - start)
 
 def simple_sectional():
     scene = bpy.context.scene
