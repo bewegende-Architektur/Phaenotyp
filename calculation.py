@@ -339,8 +339,10 @@ def interweave_results(feas, members):
     end = bpy.context.scene.frame_end
 
     for frame, truss in feas.items():
-        for id, member in members.items():
-            name = "member_" + str(id)
+        for id in members:
+            member = members[id]
+            name = member["name"]
+
             truss_member = truss.Members[name]
             L = truss_member.L() # Member length
             T = truss_member.T() # Member local transformation matrix

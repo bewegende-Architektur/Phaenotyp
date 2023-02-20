@@ -492,7 +492,7 @@ class WM_OT_set_profile(Operator):
                 member = {}
 
                 # this variables are always fix
-                member["name"] = "Member_" + str(id) # equals edge-id
+                member["name"] = "member_" + str(id) # equals edge-id
                 member["vertex_0_id"] = vertex_0_id # equals id of vertex
                 member["vertex_1_id"] = vertex_1_id # equals id of vertex
 
