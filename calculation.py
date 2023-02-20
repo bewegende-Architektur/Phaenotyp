@@ -338,10 +338,6 @@ def interweave_results(feas, members):
 
     end = bpy.context.scene.frame_end
 
-    from time import time
-
-    start = time()
-
     for frame, truss in feas.items():
         for id, member in members.items():
             name = "member_" + str(id)
@@ -613,9 +609,6 @@ def interweave_results(feas, members):
 
         # update progress
         progress.http.i = [int(frame), end]
-
-    end = time()
-    print(end - start)
 
 def simple_sectional():
     scene = bpy.context.scene
