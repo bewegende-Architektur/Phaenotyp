@@ -17,7 +17,8 @@ sys.path.insert(0, parentdir)
 from PyNite import FEModel3D
 
 import pickle
-
+import gc
+gc.disable()
 
 def print_data(text):
     print("Phaenotyp |", text)
