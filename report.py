@@ -337,7 +337,7 @@ def fill_matrix_members(matrix, result_type, frame, length):
     lowest = 0
     for member_id, member in members.items():
         forces = member[result_type][str(frame)]
-        
+
         if length > 1:
             for pos_id, force in enumerate(forces):
                 # force, overstress and utilization
@@ -352,7 +352,7 @@ def fill_matrix_members(matrix, result_type, frame, length):
                 # find highest
                 if force < lowest:
                     lowest = force
-        
+
         else:
             force = forces # only one
             # force, overstress and utilization
@@ -370,7 +370,7 @@ def fill_matrix_members(matrix, result_type, frame, length):
             # find highest
             if force < lowest:
                 lowest = force
-    
+
     return matrix, highest, lowest
 
 def fill_matrix_frames(matrix, result_type, length):
@@ -397,7 +397,7 @@ def fill_matrix_frames(matrix, result_type, length):
                     list.append(force_pos)
 
                 force = basics.return_max_diff_to_zero(list)
-            
+
             # force, overstress and utilization
             overstress = member["overstress"][str(frame_id)]
             if result_type == "utilization":
@@ -445,17 +445,21 @@ def fill_matrix_chromosomes(matrix, len_chromosome):
     best = 0
 
     # append fitness
-    for name, individual in individuals.items():
-        fitness = individual["fitness"]["weighted"]
-        matrix[int(name)][int(len_chromosome)] = fitness
+    fitness_types = ["average_sigma", "average_strain_energy", "volume",
+        "area", "kg", "weighted"]
 
-        # find highest
-        if fitness > weakest:
-            weakest = fitness
+    for fitness_id, fitness_type in enumerate(fitness_types):
+        for name, individual in individuals.items():
+            fitness = individual["fitness"][fitness_type]
+            matrix[int(name)][int(len_chromosome)+fitness_id] = fitness
 
-        # find highest
-        if fitness < weakest:
-            best = fitness
+            # find highest
+            if fitness > weakest:
+                weakest = fitness
+
+            # find highest
+            if fitness < weakest:
+                best = fitness
 
     return matrix, highest, lowest, weakest, best
 
@@ -481,7 +485,7 @@ def append_head(file, report_type):
         file.write("<a href='torque.html'>torque</a> |\n")
         file.write("<a href='sigma.html'>sigma</a>\n")
         file.write("<br>\n")
-        
+
         file.write("<a href='normal_energy.html'>normal_energy</a>|\n")
         file.write("<a href='moment_energy.html'>moment_energy</a>|\n")
         file.write("<a href='strain_energy.html'>strain_energy</a>\n")
@@ -620,7 +624,7 @@ def append_matrix_members(file, matrix, frame, highest, lowest, length):
                 # saturation
                 max_diff = basics.return_max_diff_to_zero([lowest, highest])
                 s = abs(basics.avoid_div_zero(1, max_diff) * value)
-                
+
                 # define v
                 if overstress:
                     # like in update_post put not so strong
@@ -637,7 +641,7 @@ def append_matrix_members(file, matrix, frame, highest, lowest, length):
 
                 text = '<td height="20" width="20" align="right" bgcolor=' + color + '>' +str(round(force,3)) + '</td>\n'
                 file.write(text)
-        
+
         else:
             force, overstress, utilization = member_entry
             # -1 to show utilization in blue and red
@@ -652,7 +656,7 @@ def append_matrix_members(file, matrix, frame, highest, lowest, length):
                 h = 0
             else:
                 h = 0.666
-            
+
             # saturation
             max_diff = basics.return_max_diff_to_zero([lowest, highest])
             s = abs(basics.avoid_div_zero(1, max_diff) * value)
@@ -687,10 +691,10 @@ def append_matrix_frames(file, matrix, highest, lowest, length):
 
         for entry in member_entry:
             force, overstress, utilization = entry
-            
+
             if utilization:
                 value = force-1
-                
+
             else:
                 value = force
 
@@ -703,7 +707,7 @@ def append_matrix_frames(file, matrix, highest, lowest, length):
             # saturation
             max_diff = basics.return_max_diff_to_zero([lowest, highest])
             s = abs(basics.avoid_div_zero(1, max_diff) * value)
-            
+
             # define v
             if overstress:
                 # like in update_post put not so strong
@@ -734,8 +738,8 @@ def append_matrix_chromosomes(file, matrix, highest, lowest, weakest, best):
 
         len_entries = len(individual_entry) # to check if gene
         for id, entry in enumerate(individual_entry):
-            # if gene
-            if id < len_entries-1:
+            # if gene - amount of fitness_functions
+            if id < len_entries-6:
                 value = int(basics.avoid_div_zero(255, highest) * entry)
                 color = rgb_to_hex((255, 255-value, 255-value))
 
@@ -744,8 +748,9 @@ def append_matrix_chromosomes(file, matrix, highest, lowest, weakest, best):
 
             # if fitness
             else:
-                value = int(basics.avoid_div_zero(255, weakest) * entry)
-                color = rgb_to_hex((value, value, 255))
+                #value = int(basics.avoid_div_zero(255, weakest) * entry)
+                #color = rgb_to_hex((value, value, 255))
+                color = rgb_to_hex((255, 255, 255)) # always white?
 
                 text = '<td height="20" width="20" align="right" bgcolor=' + color + '>' +str(round(entry,3)) + '</td>\n'
                 file.write(text)
@@ -776,7 +781,7 @@ def report_members(directory, frame):
     force_types["shear_h"] = 11
     force_types["torque"] = 11
     force_types["sigma"] = 11
-    
+
     force_types["normal_energy"] = 10
     force_types["moment_energy"] = 10
     force_types["strain_energy"] = 10
@@ -797,12 +802,12 @@ def report_members(directory, frame):
 
         # append start
         append_head(file, "members")
-        
+
         # create headlines
         if length > 1:
             names = list(range(0,length)) # positions
             append_headlines(file, names, 3)
-            
+
         else:
             append_headlines(file, ["max"], False)
 
@@ -824,7 +829,7 @@ def report_frames(directory, start, end):
     force_types["max_tau_torsion"] = 1
     force_types["max_sum_tau"] = 1
     force_types["max_sigmav"] = 1
-    
+
     force_types["Do"] = 1
     force_types["Di"] = 1
     force_types["utilization"] = 1
@@ -832,7 +837,7 @@ def report_frames(directory, start, end):
 
     force_types["kg"] = 1
     force_types["length"] = 1
-    
+
     for force_type, length in force_types.items():
         # create file
         filename = directory + str(force_type) + ".html"
@@ -873,7 +878,8 @@ def report_chromosomes(directory):
     len_individuals = len(individuals)
 
     # create matrix with length of col and row
-    result_matrix = create_matrix(len_chromosome+1, len_individuals)
+    # len = genes + amount of fitness
+    result_matrix = create_matrix(len_chromosome+6, len_individuals)
 
     # fill matrix with, result_matrix, forcetype, length and absolute
     result_matrix, highest, lowest, weakest, best = fill_matrix_chromosomes(result_matrix, len_chromosome)
@@ -881,8 +887,17 @@ def report_chromosomes(directory):
     # append start
     append_head(file, "chromosomes")
 
-    names = list(range(len_chromosome)) # genes
-    names.append("fitness") # plus fitness
+    # genes
+    names = list(range(len_chromosome))
+
+    # plus fitness
+    names.append("average_sigma")
+    names.append("average_strain_energy")
+    names.append("volume")
+    names.append("area")
+    names.append("kg")
+    names.append("weighted")
+
     append_headlines(file, names, 3)
 
     # append matrix
