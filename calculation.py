@@ -485,7 +485,7 @@ def interweave_results(feas, members):
             member["overstress"][frame] = overstress
 
             # lever_arm
-            lever_arm = [abs(moment_h[i] / 0.1) if moment_h[i] / 0.1 else abs(m_h / axial[i]) for i in r_0_11]
+            lever_arm = [abs(moment_h[i] / 0.1) if moment_h[i] / 0.1 else abs(moment_h[i] / axial[i]) for i in r_0_11]
 
             member["moment_h"][frame] = moment_h
             member["lever_arm"][frame] = lever_arm
