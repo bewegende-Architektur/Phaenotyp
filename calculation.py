@@ -334,15 +334,6 @@ def run_mp(trusses):
 
     return imported_trusses
 
-force_list = [
-    "axial", "moment_y", "moment_z", "moment_h", "shear_y", "shear_z", "shear_h",
-    "torque", "sigma", "Wy", "WJ", "long_stress", "tau_shear", "tau_torsion",
-    "sum_tau", "sigmav", "sigma", "max_long_stress", "max_tau_shear", "max_tau_torsion",
-    "max_sum_tau", "max_sigmav", "max_sigma", "acceptable_sigma_buckling", "lamda",
-    "lever_arm", "max_lever_arm", "initial_positions", "deflection", "overstress",
-    "utilization", "normal_energy", "moment_energy", "strain_energy"
-    ]
-
 def interweave_results(feas, members):
     scene = bpy.context.scene
     data = scene["<Phaenotyp>"]
