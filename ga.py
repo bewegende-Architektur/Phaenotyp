@@ -106,7 +106,7 @@ def calculate_fitness(start, end):
                 values.append(value)
             force = basics.return_max_diff_to_zero(values)
             forces.append(force)
-        
+
         sum_forces = 0
         for force in forces:
             sum_forces = sum_forces + abs(force)
@@ -117,17 +117,17 @@ def calculate_fitness(start, end):
         volume = data["frames"][str(frame)]["volume"]
         negative_volume = volume * (-1) # in order to make the highest volume the best fitness
         fitness_volume = negative_volume # solved by value
-        
+
         # area
         area = data["frames"][str(frame)]["area"]
         negative_area = area * (-1) # just like volume
         fitness_area = negative_area # solved by value
-        
+
         # kg
         kg = data["frames"][str(frame)]["kg"]
         negative_kg = kg * (-1) # just like volume
         fitness_kg = negative_kg # solved by value
-        
+
 
         '''
         if environment["fitness_function"] == "lever_arm_truss":
@@ -161,7 +161,7 @@ def calculate_fitness(start, end):
         individual["fitness"]["volume"] = fitness_volume
         individual["fitness"]["area"] = fitness_area
         individual["fitness"]["kg"] = fitness_kg
-        
+
 
         if frame != 0:
             # get from basis
@@ -173,7 +173,7 @@ def calculate_fitness(start, end):
             weighted += basics.avoid_div_zero(1, basis_fitness["volume"]) * fitness_volume * phaenotyp.fitness_volume
             weighted += basics.avoid_div_zero(1, basis_fitness["area"]) * fitness_volume * phaenotyp.fitness_area
             weighted += basics.avoid_div_zero(1, basis_fitness["kg"]) * fitness_volume * phaenotyp.fitness_kg
-            
+
             # if all sliders are set to one, the weight is 5 (with 5 fitness sliders)
             weight = phaenotyp.fitness_average_sigma
             weight += phaenotyp.fitness_average_strain_energy
@@ -266,9 +266,6 @@ def bruteforce(chromosomes):
         truss = calculation.prepare_fea()
         trusses[frame] = truss
 
-        # update progress
-        progress.http.p = [frame, end]
-
     # run mp and get results
     feas = calculation.run_mp(trusses)
 
@@ -308,9 +305,6 @@ def create_initial_individuals(start, end):
         # created a truss object of PyNite and add to dict
         truss = calculation.prepare_fea()
         trusses[frame] = truss
-
-        # update progress
-        progress.http.p = [frame, end]
 
     # run mp and get results
     feas = calculation.run_mp(trusses)
@@ -361,9 +355,6 @@ def sectional_optimization(start, end):
         # created a truss object of PyNite and add to dict
         truss = calculation.prepare_fea()
         trusses[frame] = truss
-
-        # update progress
-        progress.http.c = [p, end]
 
     # run mp and get results
     feas = calculation.run_mp(trusses)
@@ -521,9 +512,6 @@ def create_new_individuals(start, end):
         # created a truss object of PyNite and add to dict
         truss = calculation.prepare_fea()
         trusses[frame] = truss
-
-        # update progress
-        progress.http.p = [frame, end]
 
     # run mp and get results
     feas = calculation.run_mp(trusses)

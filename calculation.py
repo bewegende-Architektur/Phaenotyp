@@ -270,6 +270,7 @@ def prepare_fea():
     data["frames"][str(frame)]["length"] = frame_length
     data["frames"][str(frame)]["kg"] = frame_kg
 
+    progress.http.update_p()
     return truss
 
 # run a singlethread calculation
@@ -313,16 +314,12 @@ def run_mp(trusses):
     # feedback from python like suggested from Markus Amalthea Magnuson and user3759376 here
     # https://stackoverflow.com/questions/4417546/constantly-print-subprocess-output-while-process-is-running
     p = Popen(task, stdout=PIPE, bufsize=1)
-    c = bpy.context.scene.frame_start
-    end = bpy.context.scene.frame_end
-
     lines_iterator = iter(p.stdout.readline, b"")
     while p.poll() is None:
         for line in lines_iterator:
             nline = line.rstrip()
             print(nline.decode("utf8"), end = "\r\n",flush =True) # yield line
-            progress.http.c = [c, end]
-            c = c+1
+            progress.http.update_c()
 
     print("done")
 
@@ -337,8 +334,6 @@ def run_mp(trusses):
 def interweave_results(feas, members):
     scene = bpy.context.scene
     data = scene["<Phaenotyp>"]
-
-    end = bpy.context.scene.frame_end
 
     for frame, truss in feas.items():
         for id in members:
@@ -563,7 +558,7 @@ def interweave_results(feas, members):
             member["deflection"][frame] = deflection
 
         # update progress
-        progress.http.i = [int(frame), end]
+        progress.http.update_i()
 
 def simple_sectional():
     scene = bpy.context.scene

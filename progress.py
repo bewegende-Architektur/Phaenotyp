@@ -7,6 +7,7 @@ import webbrowser
 
 class http:
     active = True
+    Thread_hosting = None
 
     started = None
     started_text = None
@@ -46,6 +47,28 @@ class http:
     '''
 
     @staticmethod
+    def update_p():
+        http.p[0] += 1
+
+    @staticmethod
+    def update_c():
+        http.c[0] += 1
+
+    @staticmethod
+    def update_i():
+        http.i[0] += 1
+
+    @staticmethod
+    def update_g():
+        http.g[0] += 1
+
+    @staticmethod
+    def reset_pci(end):
+        http.p = [0, end]
+        http.c = [0, end]
+        http.i = [0, end]
+
+    @staticmethod
     def table_text(first, third):
         text = '<table>'
         text += '<tr>'
@@ -82,7 +105,7 @@ class http:
 
         # second
         output = ""
-        if n_of_x[0] != 0:
+        if n_of_x[1] != 0:
             amount = int(10/n_of_x[1]*n_of_x[0])
             for i in range(amount):
                 output += "&#9608;"
@@ -164,21 +187,23 @@ class http:
         elapsed = "{:0>2}:{:0>2}:{:0>2}".format(int(hours), int(minutes), int(seconds))
         client_connection.sendall(http.table_text("elapsed:", elapsed))
         client_connection.sendall(b"<br>")
-        
+
         http_response = b"""\
         done
         </html>
         """
         client_connection.sendall(http_response)
         client_connection.close()
+        sleep(0.1)
 
 def run():
     http.active = True
-    http.p = [0,0]
-    http.c = [0,0]
-    http.i = [0,0]
-    http.g = [0,0]
+    http.p = [0, 0]
+    http.c = [0, 0]
+    http.i = [0, 0]
+    http.g = [0, 0]
 
     Thread_hosting = Thread(target=http.hosting)
+    http.Thread_hosting = Thread_hosting
     Thread_hosting.start()
     webbrowser.open("http://127.0.0.1:8888/")

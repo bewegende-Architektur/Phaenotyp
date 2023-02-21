@@ -755,9 +755,11 @@ class WM_OT_calculate_animation(Operator):
 
         # start progress
         progress.run()
+        progress.http.reset_pci(end-start)
 
         # create list of trusses
         trusses = {}
+
         for frame in range(start, end):
             # update scene
             bpy.context.scene.frame_current = frame
@@ -769,9 +771,6 @@ class WM_OT_calculate_animation(Operator):
             # created a truss object of PyNite and add to dict
             truss = calculation.prepare_fea()
             trusses[frame] = truss
-
-            # update progress
-            progress.http.p = [frame, end-1]
 
         # run mp and get results
         feas = calculation.run_mp(trusses)
@@ -789,6 +788,7 @@ class WM_OT_calculate_animation(Operator):
 
         # join progress
         progress.http.active = False
+        progress.http.Thread_hosting.join()
 
         return {"FINISHED"}
 
@@ -952,6 +952,7 @@ class WM_OT_ga_start(Operator):
 
         # start progress
         progress.run()
+        progress.http.reset_pci(1)
 
         # set frame_start
         bpy.context.scene.frame_start = 0
@@ -960,10 +961,13 @@ class WM_OT_ga_start(Operator):
         # this individual has choromosome with all genes equals 0
         # the fitness of this chromosome is the basis for all others
         ga.generate_basis()
+
         if phaenotyp.ga_optimization in ["simple", "utilization", "complex"]:
             for i in range(phaenotyp.ga_optimization_amount):
+                progress.http.reset_pci(1)
                 ga.sectional_optimization(0, 1)
 
+        progress.http.reset_pci(1)
         ga.calculate_fitness(0, 1)
         individuals["0"]["fitness"]["weighted"] = 1
 
@@ -975,6 +979,10 @@ class WM_OT_ga_start(Operator):
             # set frame_end to first size of inital generation
             bpy.context.scene.frame_end = end
 
+            # progress
+            progress.http.reset_pci(end-start)
+            progress.http.g = [0, generation_amount]
+
             # create initial generation
             # the first generation contains 20 individuals (standard value is 20)
             # the indiviuals are created with random genes
@@ -984,8 +992,10 @@ class WM_OT_ga_start(Operator):
             # optimize if sectional performance if activated
             if phaenotyp.ga_optimization in ["simple", "utilization", "complex"]:
                 for i in range(phaenotyp.ga_optimization_amount):
+                    progress.http.reset_pci(end-start)
                     ga.sectional_optimization(start, end)
 
+            progress.http.reset_pci(end-start)
             ga.calculate_fitness(start, end)
             ga.populate_initial_generation()
 
@@ -1003,15 +1013,19 @@ class WM_OT_ga_start(Operator):
                 ga.do_elitism()
 
                 # create 18 new individuals (standard value of 20 - 10 % elitism)
+                progress.http.reset_pci(end-start)
                 ga.create_new_individuals(start, end)
+
                 if phaenotyp.ga_optimization in ["simple", "utilization", "complex"]:
                     for i in range(phaenotyp.ga_optimization_amount):
+                        progress.http.reset_pci(end-start)
                         ga.sectional_optimization(start, end)
+
                 ga.calculate_fitness(start, end)
                 ga.populate_new_generation(start, end)
 
                 # update progress
-                progress.http.g = [i, generation_amount]
+                progress.http.update_g()
 
         if phaenotyp.mate_type == "bruteforce":
             data = scene["<Phaenotyp>"]
@@ -1033,17 +1047,24 @@ class WM_OT_ga_start(Operator):
             # set frame_end to first size of inital generation
             bpy.context.scene.frame_end = end-1
 
+            # progress
+            progress.http.reset_pci(end-start)
+            progress.http.g = [0,1]
+
             # pair with bruteforce
             ga.bruteforce(chromosomes)
             if phaenotyp.ga_optimization in ["simple", "utilization", "complex"]:
                 for i in range(phaenotyp.ga_optimization_amount):
+                    progress.http.reset_pci(end-start)
                     ga.sectional_optimization(start, end)
+
             ga.calculate_fitness(start, end)
 
         basics.view_vertex_colors()
 
         # join progress
         progress.http.active = False
+        progress.http.Thread_hosting.join()
 
         return {"FINISHED"}
 
