@@ -340,7 +340,7 @@ def interweave_results(feas, members):
     # get ranges
     r_0_11 = [i for i in range(11)]
     r_0_10 = [i for i in range(10)]
-    
+
     for frame, truss in feas.items():
         for id in members:
             member = members[id]
@@ -351,7 +351,7 @@ def interweave_results(feas, members):
             T = truss_member.T() # Member local transformation matrix
 
             # get pos in L
-            L_x = [L/10*i for i in range(11)]
+            L_x = [L/10*i for i in r_0_11]
 
             # get forces
             axial = [truss_member.axial(x)*(-1) for x in L_x]
