@@ -639,7 +639,7 @@ def append_matrix_members(file, matrix, frame, highest, lowest, length):
                 b = int(c.b*255)
                 color = rgb_to_hex((r,g,b))
 
-                text = '<td height="20" width="20" align="right" bgcolor=' + color + '>' +str(round(force,3)) + '</td>\n'
+                text = '<td height="20" width="20" align="right" bgcolor=' + color + '>' + "{:10.3f}".format(force) + '</td>\n'
                 file.write(text)
 
         else:
@@ -674,7 +674,7 @@ def append_matrix_members(file, matrix, frame, highest, lowest, length):
             g = int(c.g*255)
             b = int(c.b*255)
             color = rgb_to_hex((r,g,b))
-            text = '<td height="20" width="20" align="right" bgcolor=' + color + '>' +str(round(force,3)) + '</td>\n'
+            text = '<td height="20" width="20" align="right" bgcolor=' + color + '>' + "{:10.3f}".format(force) + '</td>\n'
             file.write(text)
 
         # end row
@@ -721,7 +721,7 @@ def append_matrix_frames(file, matrix, highest, lowest, length):
             g = int(c.g*255)
             b = int(c.b*255)
             color = rgb_to_hex((r,g,b))
-            text = '<td height="20" width="20" align="right" bgcolor=' + color + '>' +str(round(force,3)) + '</td>\n'
+            text = '<td height="20" width="20" align="right" bgcolor=' + color + '>' + "{:10.3f}".format(force) + '</td>\n'
             file.write(text)
 
         # end row
@@ -743,7 +743,7 @@ def append_matrix_chromosomes(file, matrix, highest, lowest, weakest, best):
                 value = int(basics.avoid_div_zero(255, highest) * entry)
                 color = rgb_to_hex((255, 255-value, 255-value))
 
-                text = '<td height="20" width="20" align="right" bgcolor=' + color + '>' +str(round(entry,3)) + '</td>\n'
+                text = '<td height="20" width="20" align="right" bgcolor=' + color + '>' + "{:10.3f}".format(entry) + '</td>\n'
                 file.write(text)
 
             # if fitness
@@ -752,7 +752,7 @@ def append_matrix_chromosomes(file, matrix, highest, lowest, weakest, best):
                 #color = rgb_to_hex((value, value, 255))
                 color = rgb_to_hex((255, 255, 255)) # always white?
 
-                text = '<td height="20" width="20" align="right" bgcolor=' + color + '>' +str(round(entry,3)) + '</td>\n'
+                text = '<td height="20" width="20" align="right" bgcolor=' + color + '>' + "{:10.3f}".format(entry)  + '</td>\n'
                 file.write(text)
 
         # end row
