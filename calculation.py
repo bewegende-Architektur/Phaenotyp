@@ -349,33 +349,20 @@ def interweave_results(feas, members):
             L = truss_member.L() # Member length
             T = truss_member.T() # Member local transformation matrix
 
-            axial = []
-            moment_y = []
-            moment_z = []
-            shear_y = []
-            shear_z = []
-            torque = []
+            # get pos in L
+            L_x = [L/10*i for i in range(11)]
 
-            for i in range(11): # get the forces at 11 positions and
-                x = L/10*i
+            # get ranges
+            r_0_11 = [i for i in range(11)]
+            r_0_10 = [i for i in range(10)]
 
-                axial_pos = truss_member.axial(x) * (-1) # Druckkraft minus
-                axial.append(axial_pos)
-
-                moment_y_pos = truss_member.moment("My", x)
-                moment_y.append(moment_y_pos)
-
-                moment_z_pos = truss_member.moment("Mz", x)
-                moment_z.append(moment_z_pos)
-
-                shear_y_pos = truss_member.shear("Fy", x)
-                shear_y.append(shear_y_pos)
-
-                shear_z_pos = truss_member.shear("Fz", x)
-                shear_z.append(shear_z_pos)
-
-                torque_pos = truss_member.torque(x)
-                torque.append(torque_pos)
+            # get forces
+            axial = [truss_member.axial(x)*(-1) for x in L_x]
+            moment_y = [truss_member.moment("My", x) for x in L_x]
+            moment_z = [truss_member.moment("Mz", x) for x in L_x]
+            shear_y = [truss_member.shear("Fy", x) for x in L_x]
+            shear_z = [truss_member.shear("Fz", x) for x in L_x]
+            torque = [truss_member.torque(x) for x in L_x]
 
             member["axial"][frame] = axial
             member["moment_y"][frame] = moment_y
@@ -390,167 +377,131 @@ def interweave_results(feas, members):
             Do = member["Do"][frame]
 
             # buckling
-            member["ir"][frame] = sqrt(J/A) # für runde Querschnitte in  cm
+            ir = sqrt(J/A) # für runde Querschnitte in  cm
+            member["ir"][frame] = ir
 
             # modulus from the moments of area
             #(Wy and Wz are the same within a pipe)
-            member["Wy"][frame] = member["Iy"][frame]/(Do/2)
+            Wy = member["Iy"][frame]/(Do/2)
+            member["Wy"][frame] = Wy
 
             # polar modulus of torsion
-            member["WJ"][frame] = J/(Do/2)
+            WJ = J/(Do/2)
+            member["WJ"][frame] = WJ
 
             # calculation of the longitudinal stresses
-            long_stress = []
-            for i in range(11): # get the stresses at 11 positions and
-                moment_h = sqrt(moment_y[i]**2+moment_z[i]**2)
-                if axial[i] > 0:
-                    s = axial[i]/A + moment_h/member["Wy"][frame]
-                else:
-                    s = axial[i]/A - moment_h/member["Wy"][frame]
-                long_stress.append(s)
+            moment_h = [sqrt(moment_y[i]**2+moment_z[i]**2) for i in r_0_11]
+            long_stress = [axial[i]/A+moment_h[i]/Wy if axial[i] > 0 else axial[i]/A-moment_h[i]/Wy for i in r_0_11]
 
             # get max stress of the beam
             # (can be positive or negative)
             member["long_stress"][frame] = long_stress
-            member["max_long_stress"][frame] = basics.return_max_diff_to_zero(long_stress) #  -> is working as fitness
+            max_long_stress = basics.return_max_diff_to_zero(long_stress) #  -> is working as fitness
+            member["max_long_stress"][frame] = max_long_stress
 
             # calculation of the shear stresses from shear force
             # (always positive)
-            tau_shear = []
-            shear_h = []
-            for i in range(11): # get the stresses at 11 positions and
-                # shear_h
-                s_h = sqrt(shear_y[i]**2+shear_z[i]**2)
-                shear_h.append(s_h)
-
-                tau = 1.333 * s_h/A # for pipes
-                tau_shear.append(tau)
-
+            shear_h = [sqrt(shear_y[i]**2+shear_z[i]**2) for i in r_0_11]
+            tau_shear = [1.333 * shear_h[i]/A for i in r_0_11]
             member["shear_h"][frame] = shear_h
 
             # get max shear stress of shear force of the beam
             # shear stress is mostly small compared to longitudinal
             # in common architectural usage and only importand with short beam lenght
             member["tau_shear"][frame] = tau_shear
-            member["max_tau_shear"][frame] = max(tau_shear)
+            max_tau_shear = max(tau_shear)
+            member["max_tau_shear"][frame] = max_tau_shear
 
             # Calculation of the torsion stresses
             # (always positiv)
-            tau_torsion = []
-            for i in range(11): # get the stresses at 11 positions and
-                tau = abs(torque[i]/member["WJ"][frame])
-                tau_torsion.append(tau)
+            tau_torsion = [abs(torque[i]/WJ) for i in r_0_11]
 
             # get max torsion stress of the beam
             member["tau_torsion"][frame] = tau_torsion
-            member["max_tau_torsion"][frame] = max(tau_torsion)
+            max_tau_torsion = max(tau_torsion)
+            member["max_tau_torsion"][frame] = max_tau_torsion
 
             # torsion stress is mostly small compared to longitudinal
             # in common architectural usage
-
             # calculation of the shear stresses form shear force and torsion
             # (always positiv)
-            sum_tau = []
-            for i in range(11): # get the stresses at 11 positions and
-                tau = tau_shear[0] + tau_torsion[0]
-                sum_tau.append(tau)
-
+            sum_tau = [tau_shear[0] + tau_torsion[0] for i in r_0_11]
             member["sum_tau"][frame] = sum_tau
             member["max_sum_tau"][frame] = max(sum_tau)
 
             # combine shear and torque
-            sigmav = []
-            for i in range(11): # get the stresses at 11 positions and
-                sv = sqrt(long_stress[0]**2 + 3*sum_tau[0]**2)
-                sigmav.append(sv)
-
+            sigmav = [sqrt(long_stress[0]**2 + 3*sum_tau[0]**2) for i in r_0_11]
             member["sigmav"][frame] = sigmav
-            member["max_sigmav"][frame] = max(sigmav)
+            max_sigmav = max(sigmav)
+            member["max_sigmav"][frame] = max_sigmav
             # check out: http://www.bs-wiki.de/mediawiki/index.php?title=Festigkeitsberechnung
 
-            member["sigma"][frame] = member["long_stress"][frame]
-            member["max_sigma"][frame] = member["max_long_stress"][frame]
+            member["sigma"][frame] = long_stress
+            max_sigma = max_long_stress
+            member["max_sigma"][frame] = max_sigma
 
             # overstress
-            member["overstress"][frame] = False
+            overstress = False
 
             # check overstress and add 1.05 savety factor
+            acceptable_shear = member["acceptable_shear"]
+            acceptable_torsion = member["acceptable_torsion"]
+            acceptable_sigma = member["acceptable_torsion"]
+            acceptable_sigmav = member["acceptable_sigmav"]
+
             safety_factor = 1.05
-            if abs(member["max_tau_shear"][frame]) > safety_factor*member["acceptable_shear"]:
-                member["overstress"][frame] = True
+            if abs(max_tau_shear) > safety_factor * acceptable_shear:
+                overstress = True
 
-            if abs(member["max_tau_torsion"][frame]) > safety_factor*member["acceptable_torsion"]:
-                member["overstress"][frame] = True
+            if abs(max_tau_torsion) > safety_factor * acceptable_torsion:
+                overstress = True
 
-            if abs(member["max_sigmav"][frame]) > safety_factor*member["acceptable_sigmav"]:
-                member["overstress"][frame] = True
+            if abs(max_sigmav) > safety_factor * acceptable_sigmav:
+                overstress = True
 
             # buckling
-            if member["axial"][frame][0] < 0: # nur für Druckstäbe, axial kann nicht flippen?
-                member["lamda"][frame] = L*0.5/member["ir"][frame] # für eingespannte Stäbe ist die Knicklänge 0.5 der Stablänge L, Stablänge muss in cm sein !
-                if member["lamda"][frame] > 20: # für lamda < 20 (kurze Träger) gelten die default-Werte)
+            if axial[0] < 0: # nur für Druckstäbe, axial kann nicht flippen?
+                lamda = L*0.5/ir # für eingespannte Stäbe ist die Knicklänge 0.5 der Stablänge L, Stablänge muss in cm sein !
+                if lamda > 20: # für lamda < 20 (kurze Träger) gelten die default-Werte)
                     kn = member["knick_model"]
                     function_to_run = poly1d(polyfit(material.kn_lamda, kn, 6))
-                    member["acceptable_sigma_buckling"][frame] = function_to_run(member["lamda"][frame])
-                    if member["lamda"][frame] > 250: # Schlankheit zu schlank
-                        member["overstress"][frame] = True
-                    if safety_factor*abs(member["acceptable_sigma_buckling"][frame]) > abs(member["max_sigma"][frame]): # Sigma
-                        member["overstress"][frame] = True
+                    acceptable_sigma_buckling = function_to_run(lamda)
+                    if lamda > 250: # Schlankheit zu schlank
+                        overstress = True
+                    if safety_factor*abs(acceptable_sigma_buckling) > abs(max_sigma): # Sigma
+                        overstress = True
 
                 else:
-                    member["acceptable_sigma_buckling"][frame] = member["acceptable_sigma"]
+                    acceptable_sigma_buckling = acceptable_sigma
+
+                member["lamda"][frame] = lamda
 
             # without buckling
             else:
-                member["acceptable_sigma_buckling"][frame] = member["acceptable_sigma"]
+                acceptable_sigma_buckling = acceptable_sigma
                 member["lamda"][frame] = None # to avoid missing KeyError
 
+            if abs(max_sigma) > safety_factor * acceptable_sigma:
+                overstress = True
 
-            if abs(member["max_sigma"][frame]) > safety_factor*member["acceptable_sigma"]:
-                member["overstress"][frame] = True
+            member["acceptable_sigma_buckling"][frame] = acceptable_sigma_buckling
+            member["overstress"][frame] = overstress
 
             # lever_arm
-            lever_arm = []
-            moment_h = []
-            for i in range(11):
-                # moment_h
-                m_h = sqrt(moment_y[i]**2+moment_z[i]**2)
-                moment_h.append(m_h)
-
-                # to avoid division by zero
-                if member["axial"][frame][i] < 0.1:
-                    lv = m_h / 0.1
-                else:
-                    lv = m_h / member["axial"][frame][i]
-
-                lv = abs(lv) # absolute highest value within member
-                lever_arm.append(lv)
+            lever_arm = [abs(moment_h[i] / 0.1) if moment_h[i] / 0.1 else abs(m_h / axial[i]) for i in r_0_11]
 
             member["moment_h"][frame] = moment_h
             member["lever_arm"][frame] = lever_arm
             member["max_lever_arm"][frame] = max(lever_arm)
 
             # Ausnutzungsgrad
-            member["utilization"][frame] = abs(member["max_long_stress"][frame] / member["acceptable_sigma_buckling"][frame])
+            member["utilization"][frame] = abs(max_long_stress / acceptable_sigma_buckling)
 
             # Einführung in die Technische Mechanik - Festigkeitslehre, H.Balke, Springer 2010
-            normalkraft_energie=[]
-            moment_energie=[]
-            strain_energy = []
-
-            for i in range(10): # get the energie at 10 positions for 10 section
-                # Berechnung der strain_energy für Normalkraft
-                ne = (axial[i]**2)*(L/10)/(2*member["E"]*A)
-                normalkraft_energie.append(ne)
-
-                # Berechnung der strain_energy für Moment
-                moment_hq = moment_y[i]**2+moment_z[i]**2
-                me = (moment_hq * L/10) / (member["E"] * member["Wy"][frame] * Do)
-                moment_energie.append(me)
-
-                # Summe von Normalkraft und Moment-Verzerrunsenergie
-                value = ne + me
-                strain_energy.append(value)
+            moment_hq = [moment_y[i]**2+moment_z[i]**2 for i in r_0_10]
+            normalkraft_energie = [(axial[i]**2)*(L/10)/(2*member["E"]*A) for i in r_0_10]
+            moment_energie = [(moment_hq[i] * L/10) / (member["E"] * Wy * Do) for i in r_0_10]
+            strain_energy = [normalkraft_energie[i] + moment_energie[i] for i in r_0_10]
 
             member["strain_energy"][frame] = strain_energy
             member["normal_energy"][frame] = normalkraft_energie
