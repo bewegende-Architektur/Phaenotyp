@@ -950,9 +950,12 @@ class WM_OT_ga_start(Operator):
         generation_id = data["ga_environment"]["generation_id"]
         individuals = data["ga_individuals"]
 
+        ga_optimization_amount = phaenotyp.ga_optimization_amount
+
         # start progress
         progress.run()
         progress.http.reset_pci(1)
+        progress.http.reset_o(ga_optimization_amount)
 
         # set frame_start
         bpy.context.scene.frame_start = 0
@@ -963,9 +966,10 @@ class WM_OT_ga_start(Operator):
         ga.generate_basis()
 
         if phaenotyp.ga_optimization in ["simple", "utilization", "complex"]:
-            for i in range(phaenotyp.ga_optimization_amount):
+            for i in range(ga_optimization_amount):
                 progress.http.reset_pci(1)
                 ga.sectional_optimization(0, 1)
+                progress.http.update_o()
 
         progress.http.reset_pci(1)
         ga.calculate_fitness(0, 1)
@@ -982,6 +986,7 @@ class WM_OT_ga_start(Operator):
             # progress
             progress.http.reset_pci(end-start)
             progress.http.g = [0, generation_amount]
+            progress.http.reset_o(ga_optimization_amount)
 
             # create initial generation
             # the first generation contains 20 individuals (standard value is 20)
@@ -994,6 +999,7 @@ class WM_OT_ga_start(Operator):
                 for i in range(phaenotyp.ga_optimization_amount):
                     progress.http.reset_pci(end-start)
                     ga.sectional_optimization(start, end)
+                    progress.http.update_o()
 
             progress.http.reset_pci(end-start)
             ga.calculate_fitness(start, end)
@@ -1014,12 +1020,15 @@ class WM_OT_ga_start(Operator):
 
                 # create 18 new individuals (standard value of 20 - 10 % elitism)
                 progress.http.reset_pci(end-start)
+                progress.http.reset_o(ga_optimization_amount)
+
                 ga.create_new_individuals(start, end)
 
                 if phaenotyp.ga_optimization in ["simple", "utilization", "complex"]:
                     for i in range(phaenotyp.ga_optimization_amount):
                         progress.http.reset_pci(end-start)
                         ga.sectional_optimization(start, end)
+                        progress.http.update_o()
 
                 ga.calculate_fitness(start, end)
                 ga.populate_new_generation(start, end)
@@ -1049,6 +1058,7 @@ class WM_OT_ga_start(Operator):
 
             # progress
             progress.http.reset_pci(end-start)
+            progress.http.reset_o(ga_optimization_amount)
             progress.http.g = [0,1]
 
             # pair with bruteforce
@@ -1057,6 +1067,7 @@ class WM_OT_ga_start(Operator):
                 for i in range(phaenotyp.ga_optimization_amount):
                     progress.http.reset_pci(end-start)
                     ga.sectional_optimization(start, end)
+                    progress.http.update_o()
 
             ga.calculate_fitness(start, end)
 

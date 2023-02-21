@@ -287,6 +287,8 @@ def run_st(truss, frame):
     text = "singlethread job for frame " + str(frame) + " done"
     print_data(text)
 
+    progress.http.update_c()
+
     return feas
 
 def run_mp(trusses):

@@ -12,7 +12,7 @@ class http:
     started = None
     started_text = None
 
-    p, c, i, g = [0,0], [0,0], [0,0], [0,0]
+    p, c, i, g, o = [0,0], [0,0], [0,0], [0,0], [0,0]
 
     start = b'''\
     HTTP/1.1 200 OK
@@ -59,6 +59,10 @@ class http:
         http.i[0] += 1
 
     @staticmethod
+    def update_o():
+        http.o[0] += 1
+
+    @staticmethod
     def update_g():
         http.g[0] += 1
 
@@ -67,6 +71,10 @@ class http:
         http.p = [0, end]
         http.c = [0, end]
         http.i = [0, end]
+
+    @staticmethod
+    def reset_o(end):
+        http.o = [0, end]
 
     @staticmethod
     def table_text(first, third):
@@ -164,6 +172,9 @@ class http:
             client_connection.sendall(http.table_http("interweave:", http.i))
 
             client_connection.send(b'<br>')
+            client_connection.sendall(http.table_http("optimization:", http.o))
+
+            client_connection.send(b'<br>')
             client_connection.sendall(http.table_http("generation:", http.g))
 
             client_connection.close()
@@ -201,6 +212,8 @@ def run():
     http.p = [0, 0]
     http.c = [0, 0]
     http.i = [0, 0]
+
+    http.o = [0, 0]
     http.g = [0, 0]
 
     Thread_hosting = Thread(target=http.hosting)
