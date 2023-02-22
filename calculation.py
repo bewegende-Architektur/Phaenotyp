@@ -533,9 +533,8 @@ def interweave_results(feas, members):
             # Calculate the local x-axis displacements at 20 points along the member's length
             DX_plot = empty((0, 3))
 
-            Xi = truss_member.i_node.X
-            Yi = truss_member.i_node.Y
-            Zi = truss_member.i_node.Z
+            node = truss_member.i_node
+            Xi, Yi, Zi= node.X, node.Y, node.Z
 
             for i in range(11):
                 # Displacements in local coordinates
