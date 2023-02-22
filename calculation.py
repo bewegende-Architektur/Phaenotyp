@@ -451,7 +451,7 @@ def interweave_results(feas, members):
             # (always positiv)
             sum_tau = []
             for i in range(11): # get the stresses at 11 positions and
-                tau = tau_shear[0] + tau_torsion[0]
+                tau = tau_shear[i] + tau_torsion[i]
                 sum_tau.append(tau)
 
             member["sum_tau"][frame] = sum_tau
@@ -460,7 +460,7 @@ def interweave_results(feas, members):
             # combine shear and torque
             sigmav = []
             for i in range(11): # get the stresses at 11 positions and
-                sv = sqrt(long_stress[0]**2 + 3*sum_tau[0]**2)
+                sv = sqrt(long_stress[i]**2 + 3*sum_tau[i]**2)
                 sigmav.append(sv)
 
             member["sigmav"][frame] = sigmav
