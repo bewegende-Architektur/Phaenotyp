@@ -549,13 +549,7 @@ def interweave_results(feas, members):
             # <-- taken from pyNite VisDeformedMember: https://github.com/JWock82/PyNite
 
             # add to results
-            for i in range(11):
-                x = D_plot[i, 0] * 0.01
-                y = D_plot[i, 1] * 0.01
-                z = D_plot[i, 2] * 0.01
-
-                deflection.append([x,y,z])
-
+            deflection = [[D_plot[i, 0] * 0.01, D_plot[i, 1] * 0.01, D_plot[i, 2] * 0.01] for i in r_0_11]
             member["deflection"][frame] = deflection
 
         # update progress
