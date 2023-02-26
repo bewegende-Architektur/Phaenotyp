@@ -271,7 +271,7 @@ class phaenotyp_properties(PropertyGroup):
         name = "average sigma",
         description = "Average sigma of all members.",
         default = 1.0,
-        min = -1.0,
+        min = 0.0,
         max = 1.0
         )
 
@@ -279,15 +279,15 @@ class phaenotyp_properties(PropertyGroup):
         name = "average strain energy",
         description = "Average strain energy of all members.",
         default = 0,
-        min = -1.0,
+        min = 0.0,
         max = 1.0
         )
 
     fitness_volume: FloatProperty(
         name = "volume",
         description = "Volume of the enclosed parts of the structure.",
-        default = -1.0,
-        min = -1.0,
+        default = 0.0,
+        min = 0.0,
         max = 1.0
         )
 
@@ -295,7 +295,7 @@ class phaenotyp_properties(PropertyGroup):
         name = "area",
         description = "Area of all faces of the structure.",
         default = 0,
-        min = -1.0,
+        min = 0.0,
         max = 1.0
         )
 
@@ -303,7 +303,7 @@ class phaenotyp_properties(PropertyGroup):
         name = "kg",
         description = "Weight the structure (without loads).",
         default = 0,
-        min = -1.0,
+        min = 0.0,
         max = 1.0
         )
 
