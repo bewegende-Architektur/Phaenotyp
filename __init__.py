@@ -2,7 +2,7 @@ bl_info = {
     "name": "Phänotyp",
     "description": "Genetic optimization of architectural structures",
     "author": "bewegende Architektur e.U. and Karl Deix",
-    "version": (0, 1, 3),
+    "version": (0, 1, 4),
     "blender": (3, 4, 1),
     "location": "3D View > Tools",
 }
@@ -267,26 +267,10 @@ class phaenotyp_properties(PropertyGroup):
         max = 100
         )
 
-    fitness_average_sigma: FloatProperty(
-        name = "average sigma",
-        description = "Average sigma of all members.",
-        default = 0,
-        min = 0.0,
-        max = 1.0
-        )
-
-    fitness_average_strain_energy: FloatProperty(
-        name = "average strain energy",
-        description = "Average strain energy of all members.",
-        default = 0,
-        min = 0.0,
-        max = 1.0
-        )
-
     fitness_volume: FloatProperty(
         name = "volume",
         description = "Volume of the enclosed parts of the structure.",
-        default = 0,
+        default = 1.0,
         min = 0.0,
         max = 1.0
         )
@@ -294,7 +278,7 @@ class phaenotyp_properties(PropertyGroup):
     fitness_area: FloatProperty(
         name = "area",
         description = "Area of all faces of the structure.",
-        default = 0,
+        default = 0.0,
         min = 0.0,
         max = 1.0
         )
@@ -302,7 +286,31 @@ class phaenotyp_properties(PropertyGroup):
     fitness_kg: FloatProperty(
         name = "kg",
         description = "Weight the structure (without loads).",
-        default = 0,
+        default = 0.0,
+        min = 0.0,
+        max = 1.0
+        )
+
+    fitness_rise: FloatProperty(
+        name = "rise",
+        description = "Rise of the structure (distances between lowest and highest vertex).",
+        default = 0.0,
+        min = 0.0,
+        max = 1.0
+        )
+
+    fitness_average_sigma: FloatProperty(
+        name = "average sigma",
+        description = "Average sigma of all members.",
+        default = 0.0,
+        min = 0.0,
+        max = 1.0
+        )
+
+    fitness_average_strain_energy: FloatProperty(
+        name = "average strain energy",
+        description = "Average strain energy of all members.",
+        default = 1.0,
         min = 0.0,
         max = 1.0
         )
@@ -1446,7 +1454,7 @@ class WM_OT_reset(Operator):
         return {"FINISHED"}
 
 class OBJECT_PT_Phaenotyp(Panel):
-    bl_label = "Phänotyp 0.1.3"
+    bl_label = "Phänotyp 0.1.4"
     bl_idname = "OBJECT_PT_custom_panel"
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
@@ -1659,11 +1667,12 @@ class OBJECT_PT_Phaenotyp(Panel):
                                 box_ga.prop(phaenotyp, "generation_amount", text="Amount of generations")
 
                             box_ga.label(text="Fitness function:")
-                            box_ga.prop(phaenotyp, "fitness_average_sigma", text="Sigma")
-                            box_ga.prop(phaenotyp, "fitness_average_strain_energy", text="Strain energy")
                             box_ga.prop(phaenotyp, "fitness_volume", text="Volume")
                             box_ga.prop(phaenotyp, "fitness_area", text="Area")
                             box_ga.prop(phaenotyp, "fitness_kg", text="Kg")
+                            box_ga.prop(phaenotyp, "fitness_rise", text="Rise")
+                            box_ga.prop(phaenotyp, "fitness_average_sigma", text="Sigma")
+                            box_ga.prop(phaenotyp, "fitness_average_strain_energy", text="Strain energy")
 
                             for keyblock in shape_key.key_blocks:
                                 name = keyblock.name
@@ -1718,6 +1727,7 @@ class OBJECT_PT_Phaenotyp(Panel):
                             box_text.label(text="Area: "+str(round(data["frames"][str(frame)]["area"],3)) + " m²")
                             box_text.label(text="Length: "+str(round(data["frames"][str(frame)]["length"],3)) + " m")
                             box_text.label(text="Kg: "+str(round(data["frames"][str(frame)]["kg"],3)) + " kg")
+                            box_text.label(text="Rise: "+str(round(data["frames"][str(frame)]["rise"],3)) + " m")
 
                             selected_objects = bpy.context.selected_objects
                             if len(selected_objects) > 1:

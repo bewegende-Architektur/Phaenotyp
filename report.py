@@ -445,8 +445,8 @@ def fill_matrix_chromosomes(matrix, len_chromosome):
     best = 0
 
     # append fitness
-    fitness_types = ["average_sigma", "average_strain_energy", "volume",
-        "area", "kg", "weighted"]
+    fitness_types = ["volume", "area", "kg", "rise",
+    "average_sigma", "average_strain_energy", "weighted"]
 
     for fitness_id, fitness_type in enumerate(fitness_types):
         for name, individual in individuals.items():
@@ -879,7 +879,7 @@ def report_chromosomes(directory):
 
     # create matrix with length of col and row
     # len = genes + amount of fitness
-    result_matrix = create_matrix(len_chromosome+6, len_individuals)
+    result_matrix = create_matrix(len_chromosome+7, len_individuals)
 
     # fill matrix with, result_matrix, forcetype, length and absolute
     result_matrix, highest, lowest, weakest, best = fill_matrix_chromosomes(result_matrix, len_chromosome)
@@ -891,11 +891,12 @@ def report_chromosomes(directory):
     names = list(range(len_chromosome))
 
     # plus fitness
-    names.append("average_sigma")
-    names.append("average_strain_energy")
     names.append("volume")
     names.append("area")
     names.append("kg")
+    names.append("rise")
+    names.append("average_sigma")
+    names.append("average_strain_energy")
     names.append("weighted")
 
     append_headlines(file, names, 3)
