@@ -2,7 +2,7 @@ bl_info = {
     "name": "Phänotyp",
     "description": "Genetic optimization of architectural structures",
     "author": "bewegende Architektur e.U. and Karl Deix",
-    "version": (0, 1, 3),
+    "version": (0, 1, 4),
     "blender": (3, 4, 1),
     "location": "3D View > Tools",
 }
@@ -267,10 +267,66 @@ class phaenotyp_properties(PropertyGroup):
         max = 100
         )
 
+    fitness_volume: FloatProperty(
+        name = "volume",
+        description = "Volume of the enclosed parts of the structure.",
+        default = 1.0,
+        min = 0.0,
+        max = 1.0
+        )
+
+    fitness_volume_invert: BoolProperty(
+        name='volume invert',
+        description = "Activate to maximize the volume.",
+        default=False
+    )
+
+    fitness_area: FloatProperty(
+        name = "area",
+        description = "Area of all faces of the structure.",
+        default = 0.0,
+        min = 0.0,
+        max = 1.0
+        )
+
+    fitness_area_invert: BoolProperty(
+        name='area invert',
+        description = "Activate to maximize the area.",
+        default=False
+    )
+
+    fitness_kg: FloatProperty(
+        name = "kg",
+        description = "Weight the structure (without loads).",
+        default = 0.0,
+        min = 0.0,
+        max = 1.0
+        )
+
+    fitness_kg_invert: BoolProperty(
+        name='kg invert',
+        description = "Activate to maximize the kg.",
+        default=False
+    )
+
+    fitness_rise: FloatProperty(
+        name = "rise",
+        description = "Rise of the structure (distances between lowest and highest vertex).",
+        default = 0.0,
+        min = 0.0,
+        max = 1.0
+        )
+
+    fitness_rise_invert: BoolProperty(
+        name='rise invert',
+        description = "Activate to maximize the rise.",
+        default=False
+    )
+
     fitness_average_sigma: FloatProperty(
         name = "average sigma",
         description = "Average sigma of all members.",
-        default = 1.0,
+        default = 0.0,
         min = 0.0,
         max = 1.0
         )
@@ -278,31 +334,7 @@ class phaenotyp_properties(PropertyGroup):
     fitness_average_strain_energy: FloatProperty(
         name = "average strain energy",
         description = "Average strain energy of all members.",
-        default = 0,
-        min = 0.0,
-        max = 1.0
-        )
-
-    fitness_volume: FloatProperty(
-        name = "volume",
-        description = "Volume of the enclosed parts of the structure.",
-        default = 0.0,
-        min = 0.0,
-        max = 1.0
-        )
-
-    fitness_area: FloatProperty(
-        name = "area",
-        description = "Area of all faces of the structure.",
-        default = 0,
-        min = 0.0,
-        max = 1.0
-        )
-
-    fitness_kg: FloatProperty(
-        name = "kg",
-        description = "Weight the structure (without loads).",
-        default = 0,
+        default = 1.0,
         min = 0.0,
         max = 1.0
         )
@@ -1446,7 +1478,7 @@ class WM_OT_reset(Operator):
         return {"FINISHED"}
 
 class OBJECT_PT_Phaenotyp(Panel):
-    bl_label = "Phänotyp 0.1.3"
+    bl_label = "Phänotyp 0.1.4"
     bl_idname = "OBJECT_PT_custom_panel"
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
@@ -1537,6 +1569,8 @@ class OBJECT_PT_Phaenotyp(Panel):
                 # (because a property can not be set in gui)
                 material.current["Do"] = phaenotyp.Do * 0.1
                 material.current["Di"] = phaenotyp.Di * 0.1
+
+                box_profile.separator()
 
                 box_profile.label(text="Material:")
                 box_profile.prop(phaenotyp, "material", text="Type")
@@ -1658,13 +1692,39 @@ class OBJECT_PT_Phaenotyp(Panel):
                                 box_ga.prop(phaenotyp, "elitism", text="Size of elitism for GA")
                                 box_ga.prop(phaenotyp, "generation_amount", text="Amount of generations")
 
+                            box_ga.separator()
+
+                            # fitness headline
                             box_ga.label(text="Fitness function:")
+
+                            # architectural fitness
+                            col = box_ga.column()
+                            split = col.split()
+                            split.prop(phaenotyp, "fitness_volume", text="Volume")
+                            split.prop(phaenotyp, "fitness_volume_invert", text="Invert")
+
+                            col = box_ga.column()
+                            split = col.split()
+                            split.prop(phaenotyp, "fitness_area", text="Area")
+                            split.prop(phaenotyp, "fitness_area_invert", text="Invert")
+
+                            col = box_ga.column()
+                            split = col.split()
+                            split.prop(phaenotyp, "fitness_kg", text="Kg")
+                            split.prop(phaenotyp, "fitness_kg_invert", text="Invert")
+
+                            col = box_ga.column()
+                            split = col.split()
+                            split.prop(phaenotyp, "fitness_rise", text="Rise")
+                            split.prop(phaenotyp, "fitness_rise_invert", text="Invert")
+
+                            # structural fitness
                             box_ga.prop(phaenotyp, "fitness_average_sigma", text="Sigma")
                             box_ga.prop(phaenotyp, "fitness_average_strain_energy", text="Strain energy")
-                            box_ga.prop(phaenotyp, "fitness_volume", text="Volume")
-                            box_ga.prop(phaenotyp, "fitness_area", text="Area")
-                            box_ga.prop(phaenotyp, "fitness_kg", text="Kg")
 
+                            box_ga.separator()
+
+                            box_ga.label(text="Shape keys:")
                             for keyblock in shape_key.key_blocks:
                                 name = keyblock.name
                                 box_ga.label(text=name)
@@ -1675,6 +1735,8 @@ class OBJECT_PT_Phaenotyp(Panel):
                             else:
                                 box_ga.label(text="Elitism should be smaller than 50% of generation size.")
 
+                            box_ga.separator()
+
                             if len(data["ga_individuals"]) > 0 and not bpy.context.screen.is_animation_playing:
                                 box_ga.label(text="Select individual by fitness:")
                                 box_ga.prop(phaenotyp, "ga_ranking", text="Result sorted by fitness.")
@@ -1684,6 +1746,8 @@ class OBJECT_PT_Phaenotyp(Panel):
                                 else:
                                     # show
                                     box_ga.operator("wm.ga_ranking", text="Generate")
+
+                                box_ga.separator()
 
                                 box_ga.label(text="Render sorted indiviuals:")
                                 box_ga.operator("wm.ga_render_animation", text="Generate")
@@ -1718,6 +1782,9 @@ class OBJECT_PT_Phaenotyp(Panel):
                             box_text.label(text="Area: "+str(round(data["frames"][str(frame)]["area"],3)) + " m²")
                             box_text.label(text="Length: "+str(round(data["frames"][str(frame)]["length"],3)) + " m")
                             box_text.label(text="Kg: "+str(round(data["frames"][str(frame)]["kg"],3)) + " kg")
+                            box_text.label(text="Rise: "+str(round(data["frames"][str(frame)]["rise"],3)) + " m")
+
+                            box_text.separator()
 
                             selected_objects = bpy.context.selected_objects
                             if len(selected_objects) > 1:
