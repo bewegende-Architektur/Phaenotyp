@@ -88,23 +88,27 @@ def calculate_fitness(start, end):
 
         # volume
         volume = data["frames"][str(frame)]["volume"]
-        negative_volume = volume * (-1) # in order to make the highest volume the best fitness
-        fitness_volume = negative_volume # solved by value
+        if phaenotyp.fitness_volume_invert:
+            volume = volume * (-1)
+        fitness_volume = volume
 
         # area
         area = data["frames"][str(frame)]["area"]
-        negative_area = area * (-1) # just like volume
-        fitness_area = negative_area # solved by value
+        if phaenotyp.fitness_area_invert:
+            area = area * (-1)
+        fitness_area = area
 
         # kg
         kg = data["frames"][str(frame)]["kg"]
-        negative_kg = kg * (-1) # just like volume
-        fitness_kg = negative_kg # solved by value
+        if phaenotyp.fitness_kg_invert:
+            kg = kg * (-1)
+        fitness_kg = kg
 
         # rise
         rise = data["frames"][str(frame)]["rise"]
-        negative_rise = rise * (-1) # just like volume
-        fitness_rise = negative_rise # solved by value
+        if phaenotyp.fitness_rise_invert:
+            rise = rise * (-1)
+        fitness_rise = rise
 
         # average_sigma
         forces = []

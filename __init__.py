@@ -275,6 +275,12 @@ class phaenotyp_properties(PropertyGroup):
         max = 1.0
         )
 
+    fitness_volume_invert: BoolProperty(
+        name='volume invert',
+        description = "Activate to maximize the volume.",
+        default=False
+    )
+
     fitness_area: FloatProperty(
         name = "area",
         description = "Area of all faces of the structure.",
@@ -282,6 +288,12 @@ class phaenotyp_properties(PropertyGroup):
         min = 0.0,
         max = 1.0
         )
+
+    fitness_area_invert: BoolProperty(
+        name='area invert',
+        description = "Activate to maximize the area.",
+        default=False
+    )
 
     fitness_kg: FloatProperty(
         name = "kg",
@@ -291,6 +303,12 @@ class phaenotyp_properties(PropertyGroup):
         max = 1.0
         )
 
+    fitness_kg_invert: BoolProperty(
+        name='kg invert',
+        description = "Activate to maximize the kg.",
+        default=False
+    )
+
     fitness_rise: FloatProperty(
         name = "rise",
         description = "Rise of the structure (distances between lowest and highest vertex).",
@@ -298,6 +316,12 @@ class phaenotyp_properties(PropertyGroup):
         min = 0.0,
         max = 1.0
         )
+
+    fitness_rise_invert: BoolProperty(
+        name='rise invert',
+        description = "Activate to maximize the rise.",
+        default=False
+    )
 
     fitness_average_sigma: FloatProperty(
         name = "average sigma",
@@ -1666,11 +1690,32 @@ class OBJECT_PT_Phaenotyp(Panel):
                                 box_ga.prop(phaenotyp, "elitism", text="Size of elitism for GA")
                                 box_ga.prop(phaenotyp, "generation_amount", text="Amount of generations")
 
+                            # fitness headline
                             box_ga.label(text="Fitness function:")
-                            box_ga.prop(phaenotyp, "fitness_volume", text="Volume")
-                            box_ga.prop(phaenotyp, "fitness_area", text="Area")
-                            box_ga.prop(phaenotyp, "fitness_kg", text="Kg")
-                            box_ga.prop(phaenotyp, "fitness_rise", text="Rise")
+
+                            # architectural fitness
+                            col = box_ga.column()
+                            split = col.split()
+                            split.prop(phaenotyp, "fitness_volume", text="Volume")
+                            split.prop(phaenotyp, "fitness_volume_invert", text="Invert")
+
+                            col = box_ga.column()
+                            split = col.split()
+                            split.prop(phaenotyp, "fitness_area", text="Area")
+                            split.prop(phaenotyp, "fitness_area_invert", text="Invert")
+
+                            col = box_ga.column()
+                            split = col.split()
+                            split.prop(phaenotyp, "fitness_kg", text="Kg")
+                            split.prop(phaenotyp, "fitness_kg_invert", text="Invert")
+
+                            col = box_ga.column()
+                            split = col.split()
+                            split.prop(phaenotyp, "fitness_rise", text="Rise")
+                            split.prop(phaenotyp, "fitness_rise_invert", text="Invert")
+
+
+                            # structural fitness
                             box_ga.prop(phaenotyp, "fitness_average_sigma", text="Sigma")
                             box_ga.prop(phaenotyp, "fitness_average_strain_energy", text="Strain energy")
 
