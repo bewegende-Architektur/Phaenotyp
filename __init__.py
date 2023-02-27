@@ -1570,6 +1570,8 @@ class OBJECT_PT_Phaenotyp(Panel):
                 material.current["Do"] = phaenotyp.Do * 0.1
                 material.current["Di"] = phaenotyp.Di * 0.1
 
+                box_profile.separator()
+
                 box_profile.label(text="Material:")
                 box_profile.prop(phaenotyp, "material", text="Type")
                 if phaenotyp.material == "custom":
@@ -1690,6 +1692,8 @@ class OBJECT_PT_Phaenotyp(Panel):
                                 box_ga.prop(phaenotyp, "elitism", text="Size of elitism for GA")
                                 box_ga.prop(phaenotyp, "generation_amount", text="Amount of generations")
 
+                            box_ga.separator()
+
                             # fitness headline
                             box_ga.label(text="Fitness function:")
 
@@ -1714,11 +1718,13 @@ class OBJECT_PT_Phaenotyp(Panel):
                             split.prop(phaenotyp, "fitness_rise", text="Rise")
                             split.prop(phaenotyp, "fitness_rise_invert", text="Invert")
 
-
                             # structural fitness
                             box_ga.prop(phaenotyp, "fitness_average_sigma", text="Sigma")
                             box_ga.prop(phaenotyp, "fitness_average_strain_energy", text="Strain energy")
 
+                            box_ga.separator()
+
+                            box_ga.label(text="Shape keys:")
                             for keyblock in shape_key.key_blocks:
                                 name = keyblock.name
                                 box_ga.label(text=name)
@@ -1729,6 +1735,8 @@ class OBJECT_PT_Phaenotyp(Panel):
                             else:
                                 box_ga.label(text="Elitism should be smaller than 50% of generation size.")
 
+                            box_ga.separator()
+
                             if len(data["ga_individuals"]) > 0 and not bpy.context.screen.is_animation_playing:
                                 box_ga.label(text="Select individual by fitness:")
                                 box_ga.prop(phaenotyp, "ga_ranking", text="Result sorted by fitness.")
@@ -1738,6 +1746,8 @@ class OBJECT_PT_Phaenotyp(Panel):
                                 else:
                                     # show
                                     box_ga.operator("wm.ga_ranking", text="Generate")
+
+                                box_ga.separator()
 
                                 box_ga.label(text="Render sorted indiviuals:")
                                 box_ga.operator("wm.ga_render_animation", text="Generate")
@@ -1773,6 +1783,8 @@ class OBJECT_PT_Phaenotyp(Panel):
                             box_text.label(text="Length: "+str(round(data["frames"][str(frame)]["length"],3)) + " m")
                             box_text.label(text="Kg: "+str(round(data["frames"][str(frame)]["kg"],3)) + " kg")
                             box_text.label(text="Rise: "+str(round(data["frames"][str(frame)]["rise"],3)) + " m")
+
+                            box_text.separator()
 
                             selected_objects = bpy.context.selected_objects
                             if len(selected_objects) > 1:
