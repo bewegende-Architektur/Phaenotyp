@@ -61,6 +61,7 @@ def prepare_fea():
     frame_area = 0
     frame_length = 0
     frame_kg = 0
+    frame_rise = 0
 
     # get volume of this frame
     bm = bmesh.new()
@@ -264,11 +265,29 @@ def prepare_fea():
             z = edge_load_area_z[i]
             truss.add_member_dist_load(name, 'FZ', z, z)
 
+    # get rise of frame
+    highest = 0
+    lowest = 0
+
+    for vertex in vertices:
+        z = vertex.co[2]
+
+        # find highest
+        if z > highest:
+            highest = z
+
+        # find highest
+        if z < lowest:
+            lowest = z
+
+    frame_rise = highest-lowest
+
     # store frame based data
     data["frames"][str(frame)]["volume"] = frame_volume
     data["frames"][str(frame)]["area"] = frame_area
     data["frames"][str(frame)]["length"] = frame_length
     data["frames"][str(frame)]["kg"] = frame_kg
+    data["frames"][str(frame)]["rise"] = frame_rise
 
     progress.http.update_p()
     return truss

@@ -86,6 +86,30 @@ def calculate_fitness(start, end):
     for frame in range(start, end):
         individual = individuals[str(frame)]
 
+        # volume
+        volume = data["frames"][str(frame)]["volume"]
+        if phaenotyp.fitness_volume_invert:
+            volume = volume * (-1)
+        fitness_volume = volume
+
+        # area
+        area = data["frames"][str(frame)]["area"]
+        if phaenotyp.fitness_area_invert:
+            area = area * (-1)
+        fitness_area = area
+
+        # kg
+        kg = data["frames"][str(frame)]["kg"]
+        if phaenotyp.fitness_kg_invert:
+            kg = kg * (-1)
+        fitness_kg = kg
+
+        # rise
+        rise = data["frames"][str(frame)]["rise"]
+        if phaenotyp.fitness_rise_invert:
+            rise = rise * (-1)
+        fitness_rise = rise
+
         # average_sigma
         forces = []
         for id, member in members.items():
@@ -112,22 +136,6 @@ def calculate_fitness(start, end):
             sum_forces = sum_forces + abs(force)
 
         fitness_average_strain_energy = sum_forces / len(forces)
-
-        # volume
-        volume = data["frames"][str(frame)]["volume"]
-        negative_volume = volume * (-1) # in order to make the highest volume the best fitness
-        fitness_volume = negative_volume # solved by value
-
-        # area
-        area = data["frames"][str(frame)]["area"]
-        negative_area = area * (-1) # just like volume
-        fitness_area = negative_area # solved by value
-
-        # kg
-        kg = data["frames"][str(frame)]["kg"]
-        negative_kg = kg * (-1) # just like volume
-        fitness_kg = negative_kg # solved by value
-
 
         '''
         if environment["fitness_function"] == "lever_arm_truss":
@@ -156,32 +164,34 @@ def calculate_fitness(start, end):
         '''
 
         # pass to individual
-        individual["fitness"]["average_sigma"] = fitness_average_sigma
-        individual["fitness"]["average_strain_energy"] = fitness_average_strain_energy
         individual["fitness"]["volume"] = fitness_volume
         individual["fitness"]["area"] = fitness_area
         individual["fitness"]["kg"] = fitness_kg
-
+        individual["fitness"]["rise"] = fitness_rise
+        individual["fitness"]["average_sigma"] = fitness_average_sigma
+        individual["fitness"]["average_strain_energy"] = fitness_average_strain_energy
 
         if frame != 0:
             # get from basis
             basis_fitness = individuals["0"]["fitness"]
 
             # the values of weighted at basis is 1, all other frames are weighted to this value
-            weighted = basics.avoid_div_zero(1, basis_fitness["average_sigma"]) * fitness_average_sigma * phaenotyp.fitness_average_sigma
-            weighted += basics.avoid_div_zero(1, basis_fitness["average_strain_energy"]) * fitness_average_strain_energy * phaenotyp.fitness_average_strain_energy
-            weighted += basics.avoid_div_zero(1, basis_fitness["volume"]) * fitness_volume * phaenotyp.fitness_volume
+            weighted = basics.avoid_div_zero(1, basis_fitness["volume"]) * fitness_volume * phaenotyp.fitness_volume
             weighted += basics.avoid_div_zero(1, basis_fitness["area"]) * fitness_volume * phaenotyp.fitness_area
             weighted += basics.avoid_div_zero(1, basis_fitness["kg"]) * fitness_volume * phaenotyp.fitness_kg
+            weighted += basics.avoid_div_zero(1, basis_fitness["rise"]) * fitness_volume * phaenotyp.fitness_rise
+            weighted += basics.avoid_div_zero(1, basis_fitness["average_sigma"]) * fitness_average_sigma * phaenotyp.fitness_average_sigma
+            weighted += basics.avoid_div_zero(1, basis_fitness["average_strain_energy"]) * fitness_average_strain_energy * phaenotyp.fitness_average_strain_energy
 
-            # if all sliders are set to one, the weight is 5 (with 5 fitness sliders)
-            weight = phaenotyp.fitness_average_sigma
-            weight += phaenotyp.fitness_average_strain_energy
-            weight += phaenotyp.fitness_volume
+            # if all sliders are set to one, the weight is 6 (with 6 fitness sliders)
+            weight = phaenotyp.fitness_volume
             weight += phaenotyp.fitness_area
             weight += phaenotyp.fitness_kg
+            weight += phaenotyp.fitness_rise
+            weight += phaenotyp.fitness_average_sigma
+            weight += phaenotyp.fitness_average_strain_energy
 
-            # the over all weighted-value is always 1 for the basis individual
+            # the overall weighted-value is always 1 for the basis individual
             individual["fitness"]["weighted"] = basics.avoid_div_zero(weighted, weight)
 
 def mate_chromosomes(chromosome_1, chromosome_2):
