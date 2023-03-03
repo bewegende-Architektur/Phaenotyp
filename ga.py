@@ -88,26 +88,18 @@ def calculate_fitness(start, end):
 
         # volume
         volume = data["frames"][str(frame)]["volume"]
-        if phaenotyp.fitness_volume_invert:
-            volume = volume * (-1)
         fitness_volume = volume
 
         # area
         area = data["frames"][str(frame)]["area"]
-        if phaenotyp.fitness_area_invert:
-            area = area * (-1)
         fitness_area = area
 
         # kg
         kg = data["frames"][str(frame)]["kg"]
-        if phaenotyp.fitness_kg_invert:
-            kg = kg * (-1)
         fitness_kg = kg
 
         # rise
         rise = data["frames"][str(frame)]["rise"]
-        if phaenotyp.fitness_rise_invert:
-            rise = rise * (-1)
         fitness_rise = rise
 
         # average_sigma
@@ -175,13 +167,31 @@ def calculate_fitness(start, end):
             # get from basis
             basis_fitness = individuals["0"]["fitness"]
 
+            # flipped values
+            if phaenotyp.fitness_volume_invert:
+                weighted = basics.avoid_div_zero(1, fitness_volume) * basis_fitness["volume"] * phaenotyp.fitness_volume
             # the values of weighted at basis is 1, all other frames are weighted to this value
-            weighted = basics.avoid_div_zero(1, basis_fitness["volume"]) * fitness_volume * phaenotyp.fitness_volume
-            weighted += basics.avoid_div_zero(1, basis_fitness["area"]) * fitness_area * phaenotyp.fitness_area
-            weighted += basics.avoid_div_zero(1, basis_fitness["kg"]) * fitness_kg * phaenotyp.fitness_kg
-            weighted += basics.avoid_div_zero(1, basis_fitness["rise"]) * fitness_rise * phaenotyp.fitness_rise
+            else:
+                weighted = basics.avoid_div_zero(1, basis_fitness["volume"]) * fitness_volume * phaenotyp.fitness_volume
+
+            if phaenotyp.fitness_area_invert:
+                weighted += basics.avoid_div_zero(1, fitness_area) * basis_fitness["area"] * phaenotyp.fitness_area
+            else:
+                weighted += basics.avoid_div_zero(1, basis_fitness["area"]) * fitness_area * phaenotyp.fitness_area
+
+            if phaenotyp.fitness_kg_invert:
+                weighted += basics.avoid_div_zero(1, fitness_kg) * basis_fitness["kg"] * phaenotyp.fitness_kg
+            else:
+                weighted += basics.avoid_div_zero(1, basis_fitness["kg"]) * fitness_kg * phaenotyp.fitness_kg
+
+            if phaenotyp.fitness_rise_invert:
+                weighted += basics.avoid_div_zero(1, fitness_rise) * basis_fitness["rise"] * phaenotyp.fitness_rise
+            else:
+                weighted += basics.avoid_div_zero(1, basis_fitness["rise"]) * fitness_rise * phaenotyp.fitness_rise
+
             weighted += basics.avoid_div_zero(1, basis_fitness["average_sigma"]) * fitness_average_sigma * phaenotyp.fitness_average_sigma
             weighted += basics.avoid_div_zero(1, basis_fitness["average_strain_energy"]) * fitness_average_strain_energy * phaenotyp.fitness_average_strain_energy
+
 
             # if all sliders are set to one, the weight is 6 (with 6 fitness sliders)
             weight = phaenotyp.fitness_volume

@@ -269,7 +269,7 @@ class phaenotyp_properties(PropertyGroup):
 
     fitness_volume: FloatProperty(
         name = "volume",
-        description = "Volume of the enclosed parts of the structure.",
+        description = "Volume of the enclosed parts of the structure",
         default = 1.0,
         min = 0.0,
         max = 1.0
@@ -277,13 +277,13 @@ class phaenotyp_properties(PropertyGroup):
 
     fitness_volume_invert: BoolProperty(
         name='volume invert',
-        description = "Activate to maximize the volume.",
+        description = "Activate to maximize the volume",
         default=False
     )
 
     fitness_area: FloatProperty(
         name = "area",
-        description = "Area of all faces of the structure.",
+        description = "Area of all faces of the structure",
         default = 0.0,
         min = 0.0,
         max = 1.0
@@ -291,7 +291,7 @@ class phaenotyp_properties(PropertyGroup):
 
     fitness_area_invert: BoolProperty(
         name='area invert',
-        description = "Activate to maximize the area.",
+        description = "Activate to maximize the area",
         default=False
     )
 

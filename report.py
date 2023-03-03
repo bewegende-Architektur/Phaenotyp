@@ -739,7 +739,7 @@ def append_matrix_chromosomes(file, matrix, highest, lowest, weakest, best):
         len_entries = len(individual_entry) # to check if gene
         for id, entry in enumerate(individual_entry):
             # if gene - amount of fitness_functions
-            if id < len_entries-6:
+            if id < len_entries-7:
                 value = int(basics.avoid_div_zero(255, highest) * entry)
                 color = rgb_to_hex((255, 255-value, 255-value))
 
