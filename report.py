@@ -445,8 +445,13 @@ def fill_matrix_chromosomes(matrix, len_chromosome):
     best = 0
 
     # append fitness
-    fitness_types = ["volume", "area", "kg", "rise",
-    "average_sigma", "average_strain_energy", "weighted"]
+    fitness_types = ["volume", "area", "kg", "rise"]
+
+    if phaenotyp.calculation_type != "geometrical":
+        fitness_types.append("average_sigma")
+        fitness_types.append("average_strain_energy")
+
+    fitness_types.append("weighted")
 
     for fitness_id, fitness_type in enumerate(fitness_types):
         for name, individual in individuals.items():
@@ -727,7 +732,7 @@ def append_matrix_frames(file, matrix, highest, lowest, length):
         # end row
         file.write("</tr>\n")
 
-def append_matrix_chromosomes(file, matrix, highest, lowest, weakest, best):
+def append_matrix_chromosomes(file, matrix, highest, lowest, weakest, best, len_fitness_functions):
     for name, individual_entry in enumerate(matrix):
         # start row
         file.write('<tr class="item">')
@@ -739,7 +744,7 @@ def append_matrix_chromosomes(file, matrix, highest, lowest, weakest, best):
         len_entries = len(individual_entry) # to check if gene
         for id, entry in enumerate(individual_entry):
             # if gene - amount of fitness_functions
-            if id < len_entries-7:
+            if id < len_entries - len_fitness_functions:
                 value = int(basics.avoid_div_zero(255, highest) * entry)
                 color = rgb_to_hex((255, 255-value, 255-value))
 
@@ -877,9 +882,15 @@ def report_chromosomes(directory):
     len_chromosome = len(shape_keys)-1 # without basic
     len_individuals = len(individuals)
 
+    # len_fitness_functions
+    if phaenotyp.calculation_type != "geometrical":
+        len_fitness_functions = 7
+    else:
+        len_fitness_functions = 5
+
     # create matrix with length of col and row
     # len = genes + amount of fitness
-    result_matrix = create_matrix(len_chromosome+7, len_individuals)
+    result_matrix = create_matrix(len_chromosome+len_fitness_functions, len_individuals)
 
     # fill matrix with, result_matrix, forcetype, length and absolute
     result_matrix, highest, lowest, weakest, best = fill_matrix_chromosomes(result_matrix, len_chromosome)
@@ -895,14 +906,16 @@ def report_chromosomes(directory):
     names.append("area")
     names.append("kg")
     names.append("rise")
-    names.append("average_sigma")
-    names.append("average_strain_energy")
+
+    if phaenotyp.calculation_type != "geometrical":
+        names.append("average_sigma")
+        names.append("average_strain_energy")
     names.append("weighted")
 
     append_headlines(file, names, 3)
 
     # append matrix
-    append_matrix_chromosomes(file, result_matrix, highest, lowest, weakest, best)
+    append_matrix_chromosomes(file, result_matrix, highest, lowest, weakest, best, len_fitness_functions)
 
     append_end(file)
 

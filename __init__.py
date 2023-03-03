@@ -75,6 +75,7 @@ class phaenotyp_properties(PropertyGroup):
         name="calculation_type:",
         description="Calculation types",
         items=[
+                ("geometrical", "Geometrical", ""),
                 ("first_order", "First order", ""),
                 ("first_order_linear", "First order linear", ""),
                 ("second_order", "Second order", "")
@@ -997,6 +998,10 @@ class WM_OT_ga_start(Operator):
         else:
             ga_optimization_amount = 0
 
+        # skip ga_optimization if geometrical only
+        if phaenotyp.calculation_type != "geometrical":
+            ga_optimization_amount = 0
+
         # start progress
         progress.run()
         progress.http.reset_pci(1)
@@ -1112,11 +1117,14 @@ class WM_OT_ga_start(Operator):
 
             ga.calculate_fitness(start, end)
 
-        basics.view_vertex_colors()
+        if phaenotyp.calculation_type != "geometrical":
+            basics.view_vertex_colors()
 
         # join progress
         progress.http.active = False
         progress.http.Thread_hosting.join()
+
+        data["process"]["done"] = True
 
         return {"FINISHED"}
 
@@ -1663,109 +1671,112 @@ class OBJECT_PT_Phaenotyp(Panel):
 
                     box_load.operator("wm.set_load", text="Set")
 
-                    if not bpy.data.is_saved:
-                        box_file = layout.box()
-                        box_file.label(text="Please save Blender-File first")
+                    if phaenotyp.calculation_type != "geometrical":
+                        if not bpy.data.is_saved:
+                            box_file = layout.box()
+                            box_file.label(text="Please save Blender-File first")
 
-                    else:
-                        # Analysis
-                        box_analysis = layout.box()
-                        box_analysis.label(text="Analysis:")
-                        box_analysis.operator("wm.calculate_single_frame", text="Single Frame")
-                        box_analysis.operator("wm.calculate_animation", text="Animation")
-
-                        # Optimization
-                        box_opt = layout.box()
-                        box_opt.label(text="Optimization:")
-                        if data["process"]["done"]:
-                            box_opt.operator("wm.optimize_1", text="Simple - sectional performance")
-                            box_opt.operator("wm.optimize_2", text="Utilization - sectional performance")
-                            box_opt.operator("wm.optimize_3", text="Complex - sectional performance")
                         else:
-                            box_opt.label(text="Run single analysis first.")
+                            # Analysis
+                            box_analysis = layout.box()
+                            box_analysis.label(text="Analysis:")
+                            box_analysis.operator("wm.calculate_single_frame", text="Single Frame")
+                            box_analysis.operator("wm.calculate_animation", text="Animation")
 
-                        # Topology
-                        box_opt = layout.box()
-                        box_opt.label(text="Topology:")
-                        if data["process"]["done"]:
-                            box_opt.operator("wm.topolgy_1", text="Decimate - topological performance")
-                        else:
-                            box_opt.label(text="Run single analysis first.")
+                            # Optimization
+                            box_opt = layout.box()
+                            box_opt.label(text="Optimization:")
+                            if data["process"]["done"]:
+                                box_opt.operator("wm.optimize_1", text="Simple - sectional performance")
+                                box_opt.operator("wm.optimize_2", text="Utilization - sectional performance")
+                                box_opt.operator("wm.optimize_3", text="Complex - sectional performance")
+                            else:
+                                box_opt.label(text="Run single analysis first.")
 
-                        shape_key = data["structure"].data.shape_keys
-                        if shape_key:
-                            # Genetic Mutation:
-                            box_ga = layout.box()
-                            box_ga.label(text="Genetic Mutation:")
-                            box_ga.prop(phaenotyp, "mate_type", text="Type of mating")
+                            # Topology
+                            box_opt = layout.box()
+                            box_opt.label(text="Topology:")
+                            if data["process"]["done"]:
+                                box_opt.operator("wm.topolgy_1", text="Decimate - topological performance")
+                            else:
+                                box_opt.label(text="Run single analysis first.")
+
+                    shape_key = data["structure"].data.shape_keys
+                    if shape_key:
+                        # Genetic Mutation:
+                        box_ga = layout.box()
+                        box_ga.label(text="Genetic Mutation:")
+                        box_ga.prop(phaenotyp, "mate_type", text="Type of mating")
+                        if phaenotyp.calculation_type != "geometrical":
                             box_ga.prop(phaenotyp, "ga_optimization", text="Sectional optimization")
                             if phaenotyp.ga_optimization != "none":
                                 box_ga.prop(phaenotyp, "ga_optimization_amount", text="Amount of sectional optimization")
 
-                            if phaenotyp.mate_type in ["direct", "morph"]:
-                                box_ga.prop(phaenotyp, "generation_size", text="Size of generation for GA")
-                                box_ga.prop(phaenotyp, "elitism", text="Size of elitism for GA")
-                                box_ga.prop(phaenotyp, "generation_amount", text="Amount of generations")
+                        if phaenotyp.mate_type in ["direct", "morph"]:
+                            box_ga.prop(phaenotyp, "generation_size", text="Size of generation for GA")
+                            box_ga.prop(phaenotyp, "elitism", text="Size of elitism for GA")
+                            box_ga.prop(phaenotyp, "generation_amount", text="Amount of generations")
 
-                            box_ga.separator()
+                        box_ga.separator()
 
-                            # fitness headline
-                            box_ga.label(text="Fitness function:")
+                        # fitness headline
+                        box_ga.label(text="Fitness function:")
 
-                            # architectural fitness
-                            col = box_ga.column()
-                            split = col.split()
-                            split.prop(phaenotyp, "fitness_volume", text="Volume")
-                            split.prop(phaenotyp, "fitness_volume_invert", text="Invert")
+                        # architectural fitness
+                        col = box_ga.column()
+                        split = col.split()
+                        split.prop(phaenotyp, "fitness_volume", text="Volume")
+                        split.prop(phaenotyp, "fitness_volume_invert", text="Invert")
 
-                            col = box_ga.column()
-                            split = col.split()
-                            split.prop(phaenotyp, "fitness_area", text="Area")
-                            split.prop(phaenotyp, "fitness_area_invert", text="Invert")
+                        col = box_ga.column()
+                        split = col.split()
+                        split.prop(phaenotyp, "fitness_area", text="Area")
+                        split.prop(phaenotyp, "fitness_area_invert", text="Invert")
 
-                            col = box_ga.column()
-                            split = col.split()
-                            split.prop(phaenotyp, "fitness_kg", text="Kg")
-                            split.prop(phaenotyp, "fitness_kg_invert", text="Invert")
+                        col = box_ga.column()
+                        split = col.split()
+                        split.prop(phaenotyp, "fitness_kg", text="Kg")
+                        split.prop(phaenotyp, "fitness_kg_invert", text="Invert")
 
-                            col = box_ga.column()
-                            split = col.split()
-                            split.prop(phaenotyp, "fitness_rise", text="Rise")
-                            split.prop(phaenotyp, "fitness_rise_invert", text="Invert")
+                        col = box_ga.column()
+                        split = col.split()
+                        split.prop(phaenotyp, "fitness_rise", text="Rise")
+                        split.prop(phaenotyp, "fitness_rise_invert", text="Invert")
 
-                            # structural fitness
+                        # structural fitness
+                        if phaenotyp.calculation_type != "geometrical":
                             box_ga.prop(phaenotyp, "fitness_average_sigma", text="Sigma")
                             box_ga.prop(phaenotyp, "fitness_average_strain_energy", text="Strain energy")
 
-                            box_ga.separator()
+                        box_ga.separator()
 
-                            box_ga.label(text="Shape keys:")
-                            for keyblock in shape_key.key_blocks:
-                                name = keyblock.name
-                                box_ga.label(text=name)
+                        box_ga.label(text="Shape keys:")
+                        for keyblock in shape_key.key_blocks:
+                            name = keyblock.name
+                            box_ga.label(text=name)
 
-                            # check generation_size and elitism
-                            if phaenotyp.generation_size*0.5 > phaenotyp.elitism:
-                                box_ga.operator("wm.ga_start", text="Start")
+                        # check generation_size and elitism
+                        if phaenotyp.generation_size*0.5 > phaenotyp.elitism:
+                            box_ga.operator("wm.ga_start", text="Start")
+                        else:
+                            box_ga.label(text="Elitism should be smaller than 50% of generation size.")
+
+                        box_ga.separator()
+
+                        if len(data["ga_individuals"]) > 0 and not bpy.context.screen.is_animation_playing:
+                            box_ga.label(text="Select individual by fitness:")
+                            box_ga.prop(phaenotyp, "ga_ranking", text="Result sorted by fitness.")
+                            if phaenotyp.ga_ranking >= len(data["ga_individuals"]):
+                                text = "Only " + str(len(data["ga_individuals"])) + " available."
+                                box_ga.label(text=text)
                             else:
-                                box_ga.label(text="Elitism should be smaller than 50% of generation size.")
+                                # show
+                                box_ga.operator("wm.ga_ranking", text="Generate")
 
                             box_ga.separator()
 
-                            if len(data["ga_individuals"]) > 0 and not bpy.context.screen.is_animation_playing:
-                                box_ga.label(text="Select individual by fitness:")
-                                box_ga.prop(phaenotyp, "ga_ranking", text="Result sorted by fitness.")
-                                if phaenotyp.ga_ranking >= len(data["ga_individuals"]):
-                                    text = "Only " + str(len(data["ga_individuals"])) + " available."
-                                    box_ga.label(text=text)
-                                else:
-                                    # show
-                                    box_ga.operator("wm.ga_ranking", text="Generate")
-
-                                box_ga.separator()
-
-                                box_ga.label(text="Render sorted indiviuals:")
-                                box_ga.operator("wm.ga_render_animation", text="Generate")
+                            box_ga.label(text="Render sorted indiviuals:")
+                            box_ga.operator("wm.ga_render_animation", text="Generate")
 
                         # Visualization
                         if data["process"]["done"]:

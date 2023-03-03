@@ -39,11 +39,12 @@ def generate_basis():
     truss = calculation.prepare_fea()
     trusses[0] = truss
 
-    # run mp and get results
-    feas = calculation.run_mp(trusses)
+    if phaenotyp.calculation_type != "geometrical":
+        # run mp and get results
+        feas = calculation.run_mp(trusses)
 
-    # wait for it and interweave results to data
-    calculation.interweave_results(feas, members)
+        # wait for it and interweave results to data
+        calculation.interweave_results(feas, members)
 
 def create_indivdual(chromosome, parent_1, parent_2):
     scene = bpy.context.scene
@@ -102,66 +103,68 @@ def calculate_fitness(start, end):
         rise = data["frames"][str(frame)]["rise"]
         fitness_rise = rise
 
-        # average_sigma
-        forces = []
-        for id, member in members.items():
-            force = member["max_sigma"][str(frame)]
-            forces.append(force)
-
-        sum_forces = 0
-        for force in forces:
-            sum_forces = sum_forces + abs(force)
-
-        fitness_average_sigma = sum_forces / len(forces)
-
-        # average_strain_energy
-        forces = []
-        for id, member in members.items():
-            values = []
-            for value in member["strain_energy"][str(frame)]:
-                values.append(value)
-            force = basics.return_max_diff_to_zero(values)
-            forces.append(force)
-
-        sum_forces = 0
-        for force in forces:
-            sum_forces = sum_forces + abs(force)
-
-        fitness_average_strain_energy = sum_forces / len(forces)
-
-        '''
-        if environment["fitness_function"] == "lever_arm_truss":
+        if phaenotyp.calculation_type != "geometrical":
+            # average_sigma
             forces = []
             for id, member in members.items():
-                force = member["max_lever_arm"][str(frame)]
+                force = member["max_sigma"][str(frame)]
                 forces.append(force)
 
             sum_forces = 0
             for force in forces:
                 sum_forces = sum_forces + abs(force)
 
-            fitness = sum_forces *(-1)
+            fitness_average_sigma = sum_forces / len(forces)
 
-        if environment["fitness_function"] == "lever_arm_bending":
+            # average_strain_energy
             forces = []
             for id, member in members.items():
-                force = member["max_lever_arm"][str(frame)]
+                values = []
+                for value in member["strain_energy"][str(frame)]:
+                    values.append(value)
+                force = basics.return_max_diff_to_zero(values)
                 forces.append(force)
 
             sum_forces = 0
             for force in forces:
                 sum_forces = sum_forces + abs(force)
 
-            fitness = sum_forces
-        '''
+            fitness_average_strain_energy = sum_forces / len(forces)
+
+            '''
+            if environment["fitness_function"] == "lever_arm_truss":
+                forces = []
+                for id, member in members.items():
+                    force = member["max_lever_arm"][str(frame)]
+                    forces.append(force)
+
+                sum_forces = 0
+                for force in forces:
+                    sum_forces = sum_forces + abs(force)
+
+                fitness = sum_forces *(-1)
+
+            if environment["fitness_function"] == "lever_arm_bending":
+                forces = []
+                for id, member in members.items():
+                    force = member["max_lever_arm"][str(frame)]
+                    forces.append(force)
+
+                sum_forces = 0
+                for force in forces:
+                    sum_forces = sum_forces + abs(force)
+
+                fitness = sum_forces
+            '''
 
         # pass to individual
         individual["fitness"]["volume"] = fitness_volume
         individual["fitness"]["area"] = fitness_area
         individual["fitness"]["kg"] = fitness_kg
         individual["fitness"]["rise"] = fitness_rise
-        individual["fitness"]["average_sigma"] = fitness_average_sigma
-        individual["fitness"]["average_strain_energy"] = fitness_average_strain_energy
+        if phaenotyp.calculation_type != "geometrical":
+            individual["fitness"]["average_sigma"] = fitness_average_sigma
+            individual["fitness"]["average_strain_energy"] = fitness_average_strain_energy
 
         if frame != 0:
             # get from basis
@@ -189,8 +192,9 @@ def calculate_fitness(start, end):
             else:
                 weighted += basics.avoid_div_zero(1, basis_fitness["rise"]) * fitness_rise * phaenotyp.fitness_rise
 
-            weighted += basics.avoid_div_zero(1, basis_fitness["average_sigma"]) * fitness_average_sigma * phaenotyp.fitness_average_sigma
-            weighted += basics.avoid_div_zero(1, basis_fitness["average_strain_energy"]) * fitness_average_strain_energy * phaenotyp.fitness_average_strain_energy
+            if phaenotyp.calculation_type != "geometrical":
+                weighted += basics.avoid_div_zero(1, basis_fitness["average_sigma"]) * fitness_average_sigma * phaenotyp.fitness_average_sigma
+                weighted += basics.avoid_div_zero(1, basis_fitness["average_strain_energy"]) * fitness_average_strain_energy * phaenotyp.fitness_average_strain_energy
 
 
             # if all sliders are set to one, the weight is 6 (with 6 fitness sliders)
@@ -198,8 +202,9 @@ def calculate_fitness(start, end):
             weight += phaenotyp.fitness_area
             weight += phaenotyp.fitness_kg
             weight += phaenotyp.fitness_rise
-            weight += phaenotyp.fitness_average_sigma
-            weight += phaenotyp.fitness_average_strain_energy
+            if phaenotyp.calculation_type != "geometrical":
+                weight += phaenotyp.fitness_average_sigma
+                weight += phaenotyp.fitness_average_strain_energy
 
             # the overall weighted-value is always 1 for the basis individual
             individual["fitness"]["weighted"] = basics.avoid_div_zero(weighted, weight)
@@ -286,11 +291,12 @@ def bruteforce(chromosomes):
         truss = calculation.prepare_fea()
         trusses[frame] = truss
 
-    # run mp and get results
-    feas = calculation.run_mp(trusses)
+    if phaenotyp.calculation_type != "geometrical":
+        # run mp and get results
+        feas = calculation.run_mp(trusses)
 
-    # wait for it and interweave results to data
-    calculation.interweave_results(feas, members)
+        # wait for it and interweave results to data
+        calculation.interweave_results(feas, members)
 
 def create_initial_individuals(start, end):
     scene = bpy.context.scene
@@ -326,11 +332,12 @@ def create_initial_individuals(start, end):
         truss = calculation.prepare_fea()
         trusses[frame] = truss
 
-    # run mp and get results
-    feas = calculation.run_mp(trusses)
+    if phaenotyp.calculation_type != "geometrical":
+        # run mp and get results
+        feas = calculation.run_mp(trusses)
 
-    # wait for it and interweave results to data
-    calculation.interweave_results(feas, members)
+        # wait for it and interweave results to data
+        calculation.interweave_results(feas, members)
 
 def sectional_optimization(start, end):
     scene = bpy.context.scene
@@ -533,11 +540,12 @@ def create_new_individuals(start, end):
         truss = calculation.prepare_fea()
         trusses[frame] = truss
 
-    # run mp and get results
-    feas = calculation.run_mp(trusses)
+    if phaenotyp.calculation_type != "geometrical":
+        # run mp and get results
+        feas = calculation.run_mp(trusses)
 
-    # wait for it and interweave results to data
-    calculation.interweave_results(feas, members)
+        # wait for it and interweave results to data
+        calculation.interweave_results(feas, members)
 
 def populate_new_generation(start, end):
     scene = bpy.context.scene
