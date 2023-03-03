@@ -1778,40 +1778,41 @@ class OBJECT_PT_Phaenotyp(Panel):
                             box_ga.label(text="Render sorted indiviuals:")
                             box_ga.operator("wm.ga_render_animation", text="Generate")
 
-                        # Visualization
-                        if data["process"]["done"]:
-                            # hide previous boxes
-                            # (to avoid confusion, if user is changing the setup
-                            # the setup and the result would not match
-                            # new setup needs new calculation by pressing reset)
-                            box_support.enabled = False
-                            box_profile.enabled = False
-                            box_load.enabled = False
+                    # Visualization
+                    if data["process"]["done"]:
+                        # hide previous boxes
+                        # (to avoid confusion, if user is changing the setup
+                        # the setup and the result would not match
+                        # new setup needs new calculation by pressing reset)
+                        box_support.enabled = False
+                        box_profile.enabled = False
+                        box_load.enabled = False
 
-                            try:
-                                box_scipy.enabled = False
-                            except:
-                                pass
+                        try:
+                            box_scipy.enabled = False
+                        except:
+                            pass
 
-                            box_viz = layout.box()
-                            box_viz.label(text="Vizualisation:")
-                            box_viz.prop(phaenotyp, "forces", text="Force")
+                        box_viz = layout.box()
+                        box_viz.label(text="Vizualisation:")
+                        box_viz.prop(phaenotyp, "forces", text="Force")
 
-                            # sliders to scale forces and deflection
-                            box_viz.prop(phaenotyp, "viz_scale", text="scale", slider=True)
-                            box_viz.prop(phaenotyp, "viz_deflection", text="deflected / original", slider=True)
+                        # sliders to scale forces and deflection
+                        box_viz.prop(phaenotyp, "viz_scale", text="scale", slider=True)
+                        box_viz.prop(phaenotyp, "viz_deflection", text="deflected / original", slider=True)
 
-                            # Text
-                            box_text = layout.box()
-                            box_text.label(text="Result:")
-                            box_text.label(text="Volume: "+str(round(data["frames"][str(frame)]["volume"],3)) + " m³")
-                            box_text.label(text="Area: "+str(round(data["frames"][str(frame)]["area"],3)) + " m²")
-                            box_text.label(text="Length: "+str(round(data["frames"][str(frame)]["length"],3)) + " m")
-                            box_text.label(text="Kg: "+str(round(data["frames"][str(frame)]["kg"],3)) + " kg")
-                            box_text.label(text="Rise: "+str(round(data["frames"][str(frame)]["rise"],3)) + " m")
+                        # Text
+                        box_text = layout.box()
+                        box_text.label(text="Result:")
+                        box_text.label(text="Volume: "+str(round(data["frames"][str(frame)]["volume"],3)) + " m³")
+                        box_text.label(text="Area: "+str(round(data["frames"][str(frame)]["area"],3)) + " m²")
+                        box_text.label(text="Length: "+str(round(data["frames"][str(frame)]["length"],3)) + " m")
+                        box_text.label(text="Kg: "+str(round(data["frames"][str(frame)]["kg"],3)) + " kg")
+                        box_text.label(text="Rise: "+str(round(data["frames"][str(frame)]["rise"],3)) + " m")
 
-                            box_text.separator()
+                        box_text.separator()
 
+                        if phaenotyp.calculation_type != "geometrical":
                             selected_objects = bpy.context.selected_objects
                             if len(selected_objects) > 1:
                                 box_text.label(text="Please select the vizualisation object only - too many objects")
@@ -1836,18 +1837,21 @@ class OBJECT_PT_Phaenotyp(Panel):
                                 else:
                                     box_text.label(text="Switch to edit-mode")
 
-                            # Report
-                            box_report = layout.box()
-                            box_report.label(text="Report:")
+                        # Report
+                        box_report = layout.box()
+                        box_report.label(text="Report:")
 
+                        if phaenotyp.calculation_type != "geometrical":
                             box_report.operator("wm.report_members", text="members")
                             box_report.operator("wm.report_frames", text="frames")
+                        else:
+                            box_report.label(text="No report for members or frames available in geometrical mode.")
 
-                            # if ga
-                            ga_available = data.get("ga_environment")
-                            if ga_available:
-                                box_report.operator("wm.report_chromosomes", text="chromosomes")
-                                box_report.operator("wm.report_tree", text="tree")
+                        # if ga
+                        ga_available = data.get("ga_environment")
+                        if ga_available:
+                            box_report.operator("wm.report_chromosomes", text="chromosomes")
+                            box_report.operator("wm.report_tree", text="tree")
 
 
         box_reset = layout.box()
