@@ -27,6 +27,7 @@ def print_data(text):
 directory_blend = sys.argv[1]
 path_import = directory_blend + "/Phaenotyp-export_mp.p"
 scipy_available = sys.argv[2]
+calculation_type = sys.argv[3]
 
 # start timer
 start_time = time()
@@ -40,7 +41,7 @@ def import_trusses():
     return imported_trusses
 
 # run one single fea and save result into feas (multiprocessing manager dict)
-def run_fea(scipy_available, feas, truss, frame):
+def run_fea(scipy_available, calculation_type, feas, truss, frame):
     # the variables truss, and frame are passed to mp
     # this variables can not be returned with multiprocessing
     # instead of this a dict with multiprocessing.Manager is created
@@ -48,13 +49,28 @@ def run_fea(scipy_available, feas, truss, frame):
     # the dict fea is created temporarily in run_fea and is wirrten to feas
     # analyze the model
     if scipy_available == "True":
-        truss.analyze(check_statics=False, sparse=True)
+        if calculation_type == "first_order":
+            truss.analyze(check_statics=False, sparse=True)
+
+        elif calculation_type == "first_order_linear":
+            truss.analyze_linear(check_statics=False, sparse=True)
+
+        else:
+            truss.analyze_PDelta(check_stability=False, sparse=True)
+
     if scipy_available == "False":
-        truss.analyze(check_statics=False, sparse=False)
+        if calculation_type == "first_order":
+            truss.analyze(check_statics=False, sparse=False)
+
+        elif calculation_type == "first_order_linear":
+            truss.analyze_linear(check_statics=False, sparse=False)
+
+        else:
+            truss.analyze_PDelta(check_stability=False, sparse=False)
 
     feas[str(frame)] = truss
 
-    text = "multiprocessing job for frame " + str(frame) + " done"
+    text = calculation_type + " multiprocessing job for frame " + str(frame) + " done"
     print_data(text)
     sys.stdout.flush()
 
@@ -72,7 +88,7 @@ def mp_pool():
 
     pool = Pool(processes=cores)
     for frame, truss in imported_trusses.items():
-        pool.apply_async(run_fea, args=(scipy_available, feas, truss, frame,))
+        pool.apply_async(run_fea, args=(scipy_available, calculation_type, feas, truss, frame,))
 
     pool.close()
     pool.join()

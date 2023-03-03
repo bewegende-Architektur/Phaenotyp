@@ -71,6 +71,16 @@ class phaenotyp_properties(PropertyGroup):
         default=True
     )
 
+    calculation_type: EnumProperty(
+        name="calculation_type:",
+        description="Calculation types",
+        items=[
+                ("first_order", "First order", ""),
+                ("first_order_linear", "First order linear", ""),
+                ("second_order", "Second order", "")
+               ]
+        )
+
     Do: FloatProperty(
         name = "Do",
         description = "Diameter of pipe outside in mm",
@@ -1532,7 +1542,12 @@ class OBJECT_PT_Phaenotyp(Panel):
             if data["scipy_available"]:
                 box_scipy = layout.box()
                 box_scipy.label(text = "Scipy is available.")
-                box_scipy.prop(phaenotyp, "use_scipy", text="use scipy")
+                box_scipy.prop(phaenotyp, "use_scipy", text="Use scipy")
+
+            # calculaton type
+            box_scipy = layout.box()
+            box_scipy.label(text = "Calculation type.")
+            box_scipy.prop(phaenotyp, "calculation_type", text="Calculation type")
 
             # define support
             box_support = layout.box()

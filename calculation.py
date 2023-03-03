@@ -294,16 +294,26 @@ def prepare_fea():
 
 # run a singlethread calculation
 def run_st(truss, frame):
+    scene = bpy.context.scene
+    scipy_available = scene["<Phaenotyp>"]["scipy_available"]
+
+    phaenotyp = scene.phaenotyp
+    calculation_type = phaenotyp.calculation_type
+
     # scipy_available to pass forward
-    if bpy.context.scene["<Phaenotyp>"]["scipy_available"]:
-        truss.analyze(check_statics=False, sparse=True)
+    if calculation_type == "first_order":
+        truss.analyze(check_statics=False, sparse=scipy_available)
+
+    elif calculation_type == "first_order_linear":
+        truss.analyze_linear(check_statics=False, sparse=scipy_available)
+
     else:
-        truss.analyze(check_statics=False, sparse=False)
+        truss.analyze_PDelta(check_stability=False, sparse=scipy_available)
 
     feas = {}
     feas[str(frame)] = truss
 
-    text = "singlethread job for frame " + str(frame) + " done"
+    text = calculation_type + " singlethread job for frame " + str(frame) + " done"
     print_data(text)
 
     progress.http.update_c()
@@ -331,7 +341,12 @@ def run_mp(trusses):
     else:
         scipy_available = "False" # as string
 
-    task = [path_python, path_script, directory_blend, scipy_available]
+    # calculation_type
+    scene = bpy.context.scene
+    phaenotyp = scene.phaenotyp
+    calculation_type = phaenotyp.calculation_type
+
+    task = [path_python, path_script, directory_blend, scipy_available, calculation_type]
     # feedback from python like suggested from Markus Amalthea Magnuson and user3759376 here
     # https://stackoverflow.com/questions/4417546/constantly-print-subprocess-output-while-process-is-running
     p = Popen(task, stdout=PIPE, bufsize=1)
