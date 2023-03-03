@@ -177,9 +177,9 @@ def calculate_fitness(start, end):
 
             # the values of weighted at basis is 1, all other frames are weighted to this value
             weighted = basics.avoid_div_zero(1, basis_fitness["volume"]) * fitness_volume * phaenotyp.fitness_volume
-            weighted += basics.avoid_div_zero(1, basis_fitness["area"]) * fitness_volume * phaenotyp.fitness_area
-            weighted += basics.avoid_div_zero(1, basis_fitness["kg"]) * fitness_volume * phaenotyp.fitness_kg
-            weighted += basics.avoid_div_zero(1, basis_fitness["rise"]) * fitness_volume * phaenotyp.fitness_rise
+            weighted += basics.avoid_div_zero(1, basis_fitness["area"]) * fitness_area * phaenotyp.fitness_area
+            weighted += basics.avoid_div_zero(1, basis_fitness["kg"]) * fitness_kg * phaenotyp.fitness_kg
+            weighted += basics.avoid_div_zero(1, basis_fitness["rise"]) * fitness_rise * phaenotyp.fitness_rise
             weighted += basics.avoid_div_zero(1, basis_fitness["average_sigma"]) * fitness_average_sigma * phaenotyp.fitness_average_sigma
             weighted += basics.avoid_div_zero(1, basis_fitness["average_strain_energy"]) * fitness_average_strain_energy * phaenotyp.fitness_average_strain_energy
 
