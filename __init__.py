@@ -1549,12 +1549,12 @@ class OBJECT_PT_Phaenotyp(Panel):
             # check or uncheck scipy if available
             if data["scipy_available"]:
                 box_scipy = layout.box()
-                box_scipy.label(text = "Scipy is available.")
+                box_scipy.label(text = "Sparse matrix:")
                 box_scipy.prop(phaenotyp, "use_scipy", text="Use scipy")
 
             # calculaton type
             box_scipy = layout.box()
-            box_scipy.label(text = "Calculation type.")
+            box_scipy.label(text = "Calculation type:")
             box_scipy.prop(phaenotyp, "calculation_type", text="Calculation type")
 
             # define support
