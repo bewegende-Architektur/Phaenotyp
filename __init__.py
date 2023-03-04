@@ -79,7 +79,8 @@ class phaenotyp_properties(PropertyGroup):
                 ("first_order", "First order", ""),
                 ("first_order_linear", "First order linear", ""),
                 ("second_order", "Second order", "")
-               ]
+               ],
+        default = "first_order",
         )
 
     Do: FloatProperty(
