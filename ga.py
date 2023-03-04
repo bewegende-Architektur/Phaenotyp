@@ -511,6 +511,13 @@ def create_new_individuals(start, end):
 
     old_generation = environment["generations"][str(generation_id-1)]
 
+    # sort current generation according to fitness
+    list_result = []
+    for name, individual in old_generation.items():
+        list_result.append([name, individual["chromosome"], individual["fitness"]["weighted"]])
+
+    sorted_list = sorted(list_result, key = lambda x: x[2])
+
     # create list of trusses
     trusses = {}
 
@@ -518,8 +525,8 @@ def create_new_individuals(start, end):
         # pair best 50 % of the previous generation
         # sample is used to avoid same random numbers
         random_numbers = random.sample(range(int(new_generation_size*0.5)), 2)
-        parent_1_name = list(old_generation.keys())[random_numbers[0]]
-        parent_2_name = list(old_generation.keys())[random_numbers[1]]
+        parent_1_name = sorted_list[random_numbers[0]][0]
+        parent_2_name = sorted_list[random_numbers[1]][0]
 
         parent_1 = individuals[parent_1_name]
         parent_2 = individuals[parent_2_name]
