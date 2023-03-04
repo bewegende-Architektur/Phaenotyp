@@ -35,6 +35,7 @@ def create_data():
             "loads_e":{},
             "loads_f":{},
             "process":{},
+            "done":{},
             "ga_environment":{},
             "ga_individuals":{},
             "texts":{}
@@ -49,7 +50,7 @@ def create_data():
         data["loads_f"] = {}
 
         data["process"]["scipy_available"] = False
-        data["process"]["done"] = False
+        data["done"] = {}
 
         data["ga_environment"] = {}
         data["ga_individuals"] = {}
@@ -534,9 +535,6 @@ class WM_OT_set_support(Operator):
         bpy.context.view_layer.objects.active = obj
         bpy.ops.object.mode_set(mode="EDIT")
 
-        # if user is changing the setup, the visualization is disabled
-        data["process"]["done"] = False
-
         return {"FINISHED"}
 
 class WM_OT_set_profile(Operator):
@@ -668,10 +666,8 @@ class WM_OT_set_profile(Operator):
                     if space.type == 'VIEW_3D':
                         space.shading.type = 'WIREFRAME'
 
-        # if user is changing the setup, the visualization is disabled
-        data["process"]["calculate_update_post"] = False
-        data["process"]["genetetic_mutation_update_post"] = False
-        data["process"]["done"] = False
+        # to avoid key-error in optimization
+        data["done"][str(frame)] = False
 
         return {"FINISHED"}
 
@@ -770,9 +766,6 @@ class WM_OT_set_load(Operator):
         # run one function for all loads
         geometry.create_loads(obj, data["loads_v"], data["loads_e"], data["loads_f"])
 
-        # if user is changing the setup, the visualization is disabled
-        data["process"]["done"] = False
-
         bpy.ops.object.mode_set(mode="EDIT")
         return {"FINISHED"}
 
@@ -804,9 +797,6 @@ class WM_OT_calculate_single_frame(Operator):
         geometry.update_members_post()
 
         basics.view_vertex_colors()
-
-        # activate calculation in update_post
-        data["process"]["done"] = True
 
         return {"FINISHED"}
 
@@ -855,9 +845,6 @@ class WM_OT_calculate_animation(Operator):
 
         basics.view_vertex_colors()
 
-        # activate calculation in update_post
-        data["process"]["done"] = True
-
         # join progress
         progress.http.active = False
         progress.http.Thread_hosting.join()
@@ -897,9 +884,6 @@ class WM_OT_optimize_1(Operator):
 
         basics.view_vertex_colors()
 
-        # activate calculation in update_post
-        data["process"]["done"] = True
-
         return {"FINISHED"}
 
 class WM_OT_optimize_2(Operator):
@@ -935,9 +919,6 @@ class WM_OT_optimize_2(Operator):
 
         basics.view_vertex_colors()
 
-        # activate calculation in update_post
-        data["process"]["done"] = True
-
         return {"FINISHED"}
 
 class WM_OT_optimize_3(Operator):
@@ -972,9 +953,6 @@ class WM_OT_optimize_3(Operator):
         geometry.update_members_post()
 
         basics.view_vertex_colors()
-
-        # activate calculation in update_post
-        data["process"]["done"] = True
 
         return {"FINISHED"}
 
@@ -1152,8 +1130,6 @@ class WM_OT_ga_start(Operator):
         # join progress
         progress.http.active = False
         progress.http.Thread_hosting.join()
-
-        data["process"]["done"] = True
 
         return {"FINISHED"}
 
@@ -1505,7 +1481,7 @@ class WM_OT_reset(Operator):
         data["loads_f"] = {}
 
         data["process"]["scipy_available"] = False
-        data["process"]["done"] = False
+        data["done"] = {}
 
         data["ga_environment"] = {}
         data["ga_individuals"] = {}
@@ -1715,7 +1691,9 @@ class OBJECT_PT_Phaenotyp(Panel):
                             # Optimization
                             box_opt = layout.box()
                             box_opt.label(text="Optimization:")
-                            if data["process"]["done"]:
+
+                            result = data["done"].get(str(frame))
+                            if result:
                                 box_opt.operator("wm.optimize_1", text="Simple - sectional performance")
                                 box_opt.operator("wm.optimize_2", text="Utilization - sectional performance")
                                 box_opt.operator("wm.optimize_3", text="Complex - sectional performance")
@@ -1725,7 +1703,9 @@ class OBJECT_PT_Phaenotyp(Panel):
                             # Topology
                             box_opt = layout.box()
                             box_opt.label(text="Topology:")
-                            if data["process"]["done"]:
+
+                            result = data["done"].get(str(frame))
+                            if result:
                                 box_opt.operator("wm.topolgy_1", text="Decimate - topological performance")
                             else:
                                 box_opt.label(text="Run single analysis first.")
@@ -1817,7 +1797,8 @@ class OBJECT_PT_Phaenotyp(Panel):
                             box_ga.operator("wm.ga_render_animation", text="Generate")
 
                     # Visualization
-                    if data["process"]["done"]:
+                    result = data["done"].get(str(frame))
+                    if result:
                         # hide previous boxes
                         # (to avoid confusion, if user is changing the setup
                         # the setup and the result would not match
@@ -1940,19 +1921,9 @@ def update_post(scene):
             members = data["members"]
             frame = scene.frame_current
 
-            # check if a result is available for the first member
-            result_available = members[str(0)].get("axial")
-            if result_available:
-                # check if a result is available for the first member at frame
-                result_at_frame = result_available.get(str(frame))
-                if result_at_frame:
-                    geometry.update_members_post()
-                    data["process"]["done"] = True
-
-                else:
-                    # the process ist not done for this frame
-                    # some functions will be grayed out like optimization
-                    data["process"]["done"] = False
+            result = data["done"].get(str(frame))
+            if result:
+                geometry.update_members_post()
 
         # apply chromosome if available
         individuals = data.get("ga_individuals")

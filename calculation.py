@@ -41,7 +41,7 @@ def prepare_fea():
             key.value = v
     except:
         pass
-    
+
     # get absolute position of vertex (when using shape-keys, animation et cetera)
     dg = bpy.context.evaluated_depsgraph_get()
     obj = data["structure"].evaluated_get(dg)
@@ -404,8 +404,6 @@ def run_mp(trusses):
             print(nline.decode("utf8"), end = "\r\n",flush =True) # yield line
             progress.http.update_c()
 
-    print("done")
-
     # get trusses back from mp
     path_import = directory_blend + "/Phaenotyp-return_mp.p"
     file = open(path_import, 'rb')
@@ -693,6 +691,8 @@ def interweave_results(feas, members):
 
         # update progress
         progress.http.update_i()
+
+        data["done"][str(frame)] = True
 
 def simple_sectional():
     scene = bpy.context.scene
