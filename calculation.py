@@ -35,13 +35,14 @@ def prepare_fea():
     truss = FEModel3D()
 
     # apply chromosome if available
+    '''
     try:
         for id, key in enumerate(data.shape_keys):
             v = data.chromosome[str(frame)][id]
             key.value = v
     except:
         pass
-    
+    '''
     # get absolute position of vertex (when using shape-keys, animation et cetera)
     dg = bpy.context.evaluated_depsgraph_get()
     obj = data["structure"].evaluated_get(dg)
@@ -367,6 +368,7 @@ def run_st(truss, frame):
 
     return feas
 
+# run a multiprocessing calculation
 def run_mp(trusses):
     # get pathes
     path_addons = os.path.dirname(__file__) # path to the folder of addons
@@ -690,6 +692,9 @@ def interweave_results(feas, members):
                 deflection.append([x,y,z])
 
             member["deflection"][frame] = deflection
+
+        # activate calculation in update_post
+        data["done"][str(frame)] = True
 
         # update progress
         progress.http.update_i()

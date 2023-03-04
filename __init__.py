@@ -20,11 +20,12 @@ from bpy.app.handlers import persistent
 import os
 import webbrowser
 
-from phaenotyp import basics, material, geometry, calculation, ga, report, progress
+from phaenotyp import basics, material, geometry, calculation, ga, report, progress, panels
 import itertools
 
 def create_data():
-    data = bpy.context.scene.get("<Phaenotyp>")
+    scene = bpy.context.scene
+    data = scene.get("<Phaenotyp>")
     if not data:
         data = bpy.context.scene["<Phaenotyp>"] = {
             "structure":{},
@@ -35,6 +36,8 @@ def create_data():
             "loads_e":{},
             "loads_f":{},
             "process":{},
+            "done":{},
+            "gui":{},
             "ga_environment":{},
             "ga_individuals":{},
             "texts":{}
@@ -49,7 +52,9 @@ def create_data():
         data["loads_f"] = {}
 
         data["process"]["scipy_available"] = False
-        data["process"]["done"] = False
+        data["gui"] = {}
+
+        data["done"] = {}
 
         data["ga_environment"] = {}
         data["ga_individuals"] = {}
@@ -79,7 +84,8 @@ class phaenotyp_properties(PropertyGroup):
                 ("first_order", "First order", ""),
                 ("first_order_linear", "First order linear", ""),
                 ("second_order", "Second order", "")
-               ]
+               ],
+        default = "first_order",
         )
 
     Do: FloatProperty(
@@ -475,6 +481,19 @@ class WM_OT_set_structure(Operator):
         # check for scipy
         calculation.check_scipy()
 
+        # change gui
+        data["gui"]["scipy"] = True
+        data["gui"]["calculation_type"] = True
+        data["gui"]["support"] = True
+        data["gui"]["profile"] = False
+        data["gui"]["load"] = False
+        data["gui"]["analysis"] = False
+        data["gui"]["optimization"] = False
+        data["gui"]["ga"] = False
+        data["gui"]["viz"] = False
+        data["gui"]["report"] = False
+        data["gui"]["reset"] = True
+
         return {"FINISHED"}
 
 class WM_OT_set_support(Operator):
@@ -533,8 +552,7 @@ class WM_OT_set_support(Operator):
         bpy.context.view_layer.objects.active = obj
         bpy.ops.object.mode_set(mode="EDIT")
 
-        # if user is changing the setup, the visualization is disabled
-        data["process"]["done"] = False
+        data["gui"]["profile"] = True
 
         return {"FINISHED"}
 
@@ -667,10 +685,13 @@ class WM_OT_set_profile(Operator):
                     if space.type == 'VIEW_3D':
                         space.shading.type = 'WIREFRAME'
 
-        # if user is changing the setup, the visualization is disabled
-        data["process"]["calculate_update_post"] = False
-        data["process"]["genetetic_mutation_update_post"] = False
-        data["process"]["done"] = False
+
+        # if all edges are defined as member
+        if len(data["structure"].data.edges) == len(data["members"]):
+            data["gui"]["load"] = True
+            data["gui"]["analysis"] = True
+            data["gui"]["optimization"] = True
+            data["gui"]["ga"] = True
 
         return {"FINISHED"}
 
@@ -769,10 +790,8 @@ class WM_OT_set_load(Operator):
         # run one function for all loads
         geometry.create_loads(obj, data["loads_v"], data["loads_e"], data["loads_f"])
 
-        # if user is changing the setup, the visualization is disabled
-        data["process"]["done"] = False
-
         bpy.ops.object.mode_set(mode="EDIT")
+
         return {"FINISHED"}
 
 class WM_OT_calculate_single_frame(Operator):
@@ -804,8 +823,8 @@ class WM_OT_calculate_single_frame(Operator):
 
         basics.view_vertex_colors()
 
-        # activate calculation in update_post
-        data["process"]["done"] = True
+        data["gui"]["viz"] = True
+        data["gui"]["report"] = True
 
         return {"FINISHED"}
 
@@ -854,8 +873,8 @@ class WM_OT_calculate_animation(Operator):
 
         basics.view_vertex_colors()
 
-        # activate calculation in update_post
-        data["process"]["done"] = True
+        data["gui"]["viz"] = True
+        data["gui"]["report"] = True
 
         # join progress
         progress.http.active = False
@@ -896,9 +915,6 @@ class WM_OT_optimize_1(Operator):
 
         basics.view_vertex_colors()
 
-        # activate calculation in update_post
-        data["process"]["done"] = True
-
         return {"FINISHED"}
 
 class WM_OT_optimize_2(Operator):
@@ -934,9 +950,6 @@ class WM_OT_optimize_2(Operator):
 
         basics.view_vertex_colors()
 
-        # activate calculation in update_post
-        data["process"]["done"] = True
-
         return {"FINISHED"}
 
 class WM_OT_optimize_3(Operator):
@@ -971,9 +984,6 @@ class WM_OT_optimize_3(Operator):
         geometry.update_members_post()
 
         basics.view_vertex_colors()
-
-        # activate calculation in update_post
-        data["process"]["done"] = True
 
         return {"FINISHED"}
 
@@ -1152,7 +1162,8 @@ class WM_OT_ga_start(Operator):
         progress.http.active = False
         progress.http.Thread_hosting.join()
 
-        data["process"]["done"] = True
+        data["gui"]["viz"] = True
+        data["gui"]["report"] = True
 
         return {"FINISHED"}
 
@@ -1504,7 +1515,19 @@ class WM_OT_reset(Operator):
         data["loads_f"] = {}
 
         data["process"]["scipy_available"] = False
-        data["process"]["done"] = False
+        data["done"] = {}
+
+        data["gui"]["scipy"] = False
+        data["gui"]["calculation_type"] = False
+        data["gui"]["support"] = False
+        data["gui"]["profile"] = False
+        data["gui"]["load"] = False
+        data["gui"]["analysis"] = False
+        data["gui"]["optimization"] = False
+        data["gui"]["ga"] = False
+        data["gui"]["viz"] = False
+        data["gui"]["report"] = False
+        data["gui"]["reset"] = False
 
         data["ga_environment"] = {}
         data["ga_individuals"] = {}
@@ -1523,379 +1546,243 @@ class WM_OT_reset(Operator):
 
         return {"FINISHED"}
 
-class OBJECT_PT_Phaenotyp(Panel):
-    bl_label = "Phänotyp 0.1.4"
+class OBJECT_PT_Phaenotyp:
+    bl_label = "Phänotyp"
     bl_idname = "OBJECT_PT_custom_panel"
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
     bl_category = "Phänotyp"
 
-    @classmethod
-    def poll(self,context):
-        return context.object is not None
+class OBJECT_PT_Phaenotyp_structure(OBJECT_PT_Phaenotyp, bpy.types.Panel):
+    bl_idname = "OBJECT_PT_Phaenotyp_structure"
+    bl_label = "Structure"
 
     def draw(self, context):
+        scene = bpy.context.scene
         layout = self.layout
-        scene = context.scene
         phaenotyp = scene.phaenotyp
-        frame = bpy.context.scene.frame_current
+        frame = scene.frame_current
+        panels.structure(layout, phaenotyp, frame)
 
-        # start with defining a structure
-        box_structure = layout.box()
+class OBJECT_PT_Phaenotyp_scipy(OBJECT_PT_Phaenotyp, bpy.types.Panel):
+    bl_idname = "OBJECT_PT_Phaenotyp_scipy"
+    bl_label = "Sparse matrix"
+
+    @classmethod
+    def poll(cls, context):
         data = bpy.context.scene.get("<Phaenotyp>")
-
-        # check if phaenotyp created data allready
-        ready_to_go = True
-
-        if not data:
-            ready_to_go = False
-
+        if data:
+            return data["gui"]["scipy"]
         else:
-            structure = data.get("structure")
+            return False
 
-            # is the obj defined? Maybe someone deleted the structure after calc ...
-            if not structure:
-                ready_to_go = False
+    def draw(self, context):
+        scene = bpy.context.scene
+        data = scene.get("<Phaenotyp>")
+        layout = self.layout
+        phaenotyp = scene.phaenotyp
+        frame = scene.frame_current
+        panels.scipy(data, layout, phaenotyp, frame)
 
-            else:
-                # Phaenotyp started, but no structure defined by user
-                if structure == None:
-                    ready_to_go = False
+class OBJECT_PT_Phaenotyp_calculation_type(OBJECT_PT_Phaenotyp, bpy.types.Panel):
+    bl_idname = "OBJECT_PT_Phaenotyp_calculation_type"
+    bl_label = "Calculation"
 
-        # user needs to define a structure
-        if not ready_to_go:
-            box_structure.label(text="Structure:")
-            box_structure.operator("wm.set_structure", text="Set")
-
+    @classmethod
+    def poll(cls, context):
+        data = bpy.context.scene.get("<Phaenotyp>")
+        if data:
+            return data["gui"]["calculation_type"]
         else:
-             # disable previous box
-            box_structure.enabled = False
-
-            obj = data["structure"]
-            box_structure.label(text = obj.name_full + " is defined as structure")
-
-            # check or uncheck scipy if available
-            if data["scipy_available"]:
-                box_scipy = layout.box()
-                box_scipy.label(text = "Sparse matrix:")
-                box_scipy.prop(phaenotyp, "use_scipy", text="Use scipy")
-
-            # calculaton type
-            box_scipy = layout.box()
-            box_scipy.label(text = "Calculation type:")
-            box_scipy.prop(phaenotyp, "calculation_type", text="Calculation type")
-
-            # define support
-            box_support = layout.box()
-            box_support.label(text="Support:")
-
-            col = box_support.column()
-            split = col.split()
-            split.prop(phaenotyp, "loc_x", text="loc x")
-            split.prop(phaenotyp, "rot_x", text="rot x")
-
-            col = box_support.column()
-            split = col.split()
-            split.prop(phaenotyp, "loc_y", text="loc y")
-            split.prop(phaenotyp, "rot_y", text="rot y")
-
-            col = box_support.column()
-            split = col.split()
-            split.prop(phaenotyp, "loc_z", text="loc z")
-            split.prop(phaenotyp, "rot_z", text="rot z")
-
-            box_support.operator("wm.set_support", text="Set")
-
-            if len(data["supports"]) > 0:
-                box_support.label(text = str(len(data["supports"])) + " vertices defined as support")
-
-                # define material and geometry
-                box_profile = layout.box()
-                box_profile.label(text="Profile:")
-
-                box_profile.prop(phaenotyp, "Do", text="Diameter outside")
-                box_profile.prop(phaenotyp, "Di", text="Diameter inside")
-
-                # current setting passed from gui
-                # (because a property can not be set in gui)
-                material.current["Do"] = phaenotyp.Do * 0.1
-                material.current["Di"] = phaenotyp.Di * 0.1
-
-                box_profile.separator()
-
-                box_profile.label(text="Material:")
-                box_profile.prop(phaenotyp, "material", text="Type")
-                if phaenotyp.material == "custom":
-                    box_profile.prop(phaenotyp, "E", text="Modulus of elasticity")
-                    box_profile.prop(phaenotyp, "G", text="Shear modulus")
-                    box_profile.prop(phaenotyp, "d", text="Density")
-
-                    box_profile.prop(phaenotyp, "acceptable_sigma", text="Acceptable sigma")
-                    box_profile.prop(phaenotyp, "acceptable_shear", text="Acceptable shear")
-                    box_profile.prop(phaenotyp, "acceptable_torsion", text="Acceptable torsion")
-                    box_profile.prop(phaenotyp, "acceptable_sigmav", text="Acceptable sigmav")
-                    box_profile.prop(phaenotyp, "ir", text="Ir")
-
-                    material.current["E"] = phaenotyp.E
-                    material.current["G"] = phaenotyp.G
-                    material.current["d"] = phaenotyp.d
-
-                    material.current["acceptable_sigma"] = phaenotyp.acceptable_sigma
-                    material.current["acceptable_shear"] = phaenotyp.acceptable_shear
-                    material.current["acceptable_torsion"] = phaenotyp.acceptable_torsion
-                    material.current["acceptable_sigmav"] = phaenotyp.acceptable_sigmav
-
-                else:
-                    # pass input form library to data
-                    for mat in material.library:
-                        if phaenotyp.material == mat[0]: # select correct material
-                            # current setting passed from gui
-                            # (because a property can not be set in gui)
-                            material.current["E"] = mat[2]
-                            material.current["G"] = mat[3]
-                            material.current["d"] = mat[4]
-
-                            material.current["acceptable_sigma"] = mat[5]
-                            material.current["acceptable_shear"] = mat[6]
-                            material.current["acceptable_torsion"] = mat[7]
-                            material.current["acceptable_sigmav"] = mat[8]
-                            material.current["knick_model"] = mat[9]
-
-
-                    box_profile.label(text="E = " + str(material.current["E"]) + " kN/cm²")
-                    box_profile.label(text="G = " + str(material.current["G"]) + " kN/cm²")
-                    box_profile.label(text="d = " + str(material.current["d"]) + " g/cm3")
-
-                    box_profile.label(text="Acceptable sigma = " + str(material.current["acceptable_sigma"]))
-                    box_profile.label(text="Acceptable shear = " + str(material.current["acceptable_shear"]))
-                    box_profile.label(text="Acceptable torsion = " + str(material.current["acceptable_torsion"]))
-                    box_profile.label(text="Acceptable sigmav = " + str(material.current["acceptable_sigmav"]))
-
-                material.update() # calculate Iy, Iz, J, A, kg
-                box_profile.label(text="Iy = " + str(round(material.current["Iy"], 4)) + " cm⁴")
-                box_profile.label(text="Iz = " + str(round(material.current["Iz"], 4)) + " cm⁴")
-                box_profile.label(text="J = " + str(round(material.current["J"], 4)) + " cm⁴")
-                box_profile.label(text="A = " + str(round(material.current["A"], 4)) + " cm²")
-                box_profile.label(text="kg = " + str(round(material.current["kg_A"], 4)) + " kg/m")
-
-                box_profile.operator("wm.set_profile", text="Set")
-
-                # if all edges are defined as member
-                if len(data["structure"].data.edges) == len(data["members"]):
-                    # Define loads
-                    box_load = layout.box()
-                    box_load.label(text="Loads:")
-                    box_load.prop(phaenotyp, "load_type", text="Type")
-
-                    if phaenotyp.load_type == "faces": # if faces
-                        box_load.prop(phaenotyp, "load_normal", text="normal (like wind)")
-                        box_load.prop(phaenotyp, "load_projected", text="projected (like snow)")
-                        box_load.prop(phaenotyp, "load_area_z", text="area z (like weight of facade)")
-
-                    else: # if vertices or edges
-                        box_load.prop(phaenotyp, "load_x", text="x")
-                        box_load.prop(phaenotyp, "load_y", text="y")
-                        box_load.prop(phaenotyp, "load_z", text="z")
-
-                    box_load.operator("wm.set_load", text="Set")
-
-                    if phaenotyp.calculation_type != "geometrical":
-                        if not bpy.data.is_saved:
-                            box_file = layout.box()
-                            box_file.label(text="Please save Blender-File first")
-
-                        else:
-                            # Analysis
-                            box_analysis = layout.box()
-                            box_analysis.label(text="Analysis:")
-                            box_analysis.operator("wm.calculate_single_frame", text="Single Frame")
-                            box_analysis.operator("wm.calculate_animation", text="Animation")
-
-                            # Optimization
-                            box_opt = layout.box()
-                            box_opt.label(text="Optimization:")
-                            if data["process"]["done"]:
-                                box_opt.operator("wm.optimize_1", text="Simple - sectional performance")
-                                box_opt.operator("wm.optimize_2", text="Utilization - sectional performance")
-                                box_opt.operator("wm.optimize_3", text="Complex - sectional performance")
-                            else:
-                                box_opt.label(text="Run single analysis first.")
-
-                            # Topology
-                            box_opt = layout.box()
-                            box_opt.label(text="Topology:")
-                            if data["process"]["done"]:
-                                box_opt.operator("wm.topolgy_1", text="Decimate - topological performance")
-                            else:
-                                box_opt.label(text="Run single analysis first.")
-
-                    shape_key = data["structure"].data.shape_keys
-                    if shape_key:
-                        # Genetic Mutation:
-                        box_ga = layout.box()
-                        box_ga.label(text="Genetic Mutation:")
-                        box_ga.prop(phaenotyp, "mate_type", text="Type of mating")
-                        if phaenotyp.calculation_type != "geometrical":
-                            box_ga.prop(phaenotyp, "ga_optimization", text="Sectional optimization")
-                            if phaenotyp.ga_optimization != "none":
-                                box_ga.prop(phaenotyp, "ga_optimization_amount", text="Amount of sectional optimization")
-
-                        if phaenotyp.mate_type in ["direct", "morph"]:
-                            box_ga.prop(phaenotyp, "generation_size", text="Size of generation for GA")
-                            box_ga.prop(phaenotyp, "elitism", text="Size of elitism for GA")
-                            box_ga.prop(phaenotyp, "generation_amount", text="Amount of generations")
-
-                        box_ga.separator()
-
-                        # fitness headline
-                        box_ga.label(text="Fitness function:")
-
-                        # architectural fitness
-                        col = box_ga.column()
-                        split = col.split()
-                        split.prop(phaenotyp, "fitness_volume", text="Volume")
-                        split.prop(phaenotyp, "fitness_volume_invert", text="Invert")
-
-                        col = box_ga.column()
-                        split = col.split()
-                        split.prop(phaenotyp, "fitness_area", text="Area")
-                        split.prop(phaenotyp, "fitness_area_invert", text="Invert")
-
-                        col = box_ga.column()
-                        split = col.split()
-                        split.prop(phaenotyp, "fitness_kg", text="Kg")
-                        split.prop(phaenotyp, "fitness_kg_invert", text="Invert")
-
-                        col = box_ga.column()
-                        split = col.split()
-                        split.prop(phaenotyp, "fitness_rise", text="Rise")
-                        split.prop(phaenotyp, "fitness_rise_invert", text="Invert")
-
-                        col = box_ga.column()
-                        split = col.split()
-                        split.prop(phaenotyp, "fitness_span", text="Span")
-                        split.prop(phaenotyp, "fitness_span_invert", text="Invert")
-
-                        col = box_ga.column()
-                        split = col.split()
-                        split.prop(phaenotyp, "fitness_cantilever", text="Cantilever")
-                        split.prop(phaenotyp, "fitness_cantilever_invert", text="Invert")
-
-                        # structural fitness
-                        if phaenotyp.calculation_type != "geometrical":
-                            box_ga.prop(phaenotyp, "fitness_average_sigma", text="Sigma")
-                            box_ga.prop(phaenotyp, "fitness_average_strain_energy", text="Strain energy")
-
-                        box_ga.separator()
-
-                        box_ga.label(text="Shape keys:")
-                        for keyblock in shape_key.key_blocks:
-                            name = keyblock.name
-                            box_ga.label(text=name)
-
-                        # check generation_size and elitism
-                        if phaenotyp.generation_size*0.5 > phaenotyp.elitism:
-                            box_ga.operator("wm.ga_start", text="Start")
-                        else:
-                            box_ga.label(text="Elitism should be smaller than 50% of generation size.")
-
-                        box_ga.separator()
-
-                        if len(data["ga_individuals"]) > 0 and not bpy.context.screen.is_animation_playing:
-                            box_ga.label(text="Select individual by fitness:")
-                            box_ga.prop(phaenotyp, "ga_ranking", text="Result sorted by fitness.")
-                            if phaenotyp.ga_ranking >= len(data["ga_individuals"]):
-                                text = "Only " + str(len(data["ga_individuals"])) + " available."
-                                box_ga.label(text=text)
-                            else:
-                                # show
-                                box_ga.operator("wm.ga_ranking", text="Generate")
-
-                            box_ga.separator()
-
-                            box_ga.label(text="Render sorted indiviuals:")
-                            box_ga.operator("wm.ga_render_animation", text="Generate")
-
-                    # Visualization
-                    if data["process"]["done"]:
-                        # hide previous boxes
-                        # (to avoid confusion, if user is changing the setup
-                        # the setup and the result would not match
-                        # new setup needs new calculation by pressing reset)
-                        box_support.enabled = False
-                        box_profile.enabled = False
-                        box_load.enabled = False
-
-                        try:
-                            box_scipy.enabled = False
-                        except:
-                            pass
-
-                        box_viz = layout.box()
-                        box_viz.label(text="Vizualisation:")
-                        box_viz.prop(phaenotyp, "forces", text="Force")
-
-                        # sliders to scale forces and deflection
-                        box_viz.prop(phaenotyp, "viz_scale", text="scale", slider=True)
-                        box_viz.prop(phaenotyp, "viz_deflection", text="deflected / original", slider=True)
-
-                        # Text
-                        box_text = layout.box()
-                        box_text.label(text="Result:")
-                        box_text.label(text="Volume: "+str(round(data["frames"][str(frame)]["volume"],3)) + " m³")
-                        box_text.label(text="Area: "+str(round(data["frames"][str(frame)]["area"],3)) + " m²")
-                        box_text.label(text="Length: "+str(round(data["frames"][str(frame)]["length"],3)) + " m")
-                        box_text.label(text="Kg: "+str(round(data["frames"][str(frame)]["kg"],3)) + " kg")
-                        box_text.label(text="Rise: "+str(round(data["frames"][str(frame)]["rise"],3)) + " m")
-                        box_text.label(text="Span: "+str(round(data["frames"][str(frame)]["span"],3)) + " m")
-                        box_text.label(text="Cantilever: "+str(round(data["frames"][str(frame)]["cantilever"],3)) + " m")
-
-                        box_text.separator()
-
-                        if phaenotyp.calculation_type != "geometrical":
-                            selected_objects = bpy.context.selected_objects
-                            if len(selected_objects) > 1:
-                                box_text.label(text="Please select the vizualisation object only - too many objects")
-
-                            elif len(selected_objects) == 0:
-                                    box_text.label(text="Please select the vizualisation object - no object selected")
-
-                            elif selected_objects[0].name_full != "<Phaenotyp>member":
-                                    box_text.label(text="Please select the vizualisation object - wrong object selected")
-
-                            else:
-                                if context.active_object.mode == 'EDIT':
-                                    vert_sel = bpy.context.active_object.data.total_vert_sel
-                                    if vert_sel != 1:
-                                        box_text.label(text="Select one vertex only")
-
-                                    else:
-                                        box_text.operator("wm.text", text="Generate")
-                                        if len(data["texts"]) > 0:
-                                            for text in data["texts"]:
-                                                box_text.label(text=text)
-                                else:
-                                    box_text.label(text="Switch to edit-mode")
-
-                        # Report
-                        box_report = layout.box()
-                        box_report.label(text="Report:")
-
-                        if phaenotyp.calculation_type != "geometrical":
-                            box_report.operator("wm.report_members", text="members")
-                            box_report.operator("wm.report_frames", text="frames")
-                        else:
-                            box_report.label(text="No report for members or frames available in geometrical mode.")
-
-                        # if ga
-                        ga_available = data.get("ga_environment")
-                        if ga_available:
-                            box_report.operator("wm.report_chromosomes", text="chromosomes")
-                            box_report.operator("wm.report_tree", text="tree")
-
-
-        box_reset = layout.box()
-        box_reset.operator("wm.reset", text="Reset")
+            return False
+
+    def draw(self, context):
+        scene = bpy.context.scene
+        data = scene.get("<Phaenotyp>")
+        layout = self.layout
+        phaenotyp = scene.phaenotyp
+        frame = scene.frame_current
+        panels.calculation_type(data, layout, phaenotyp, frame)
+
+class OBJECT_PT_Phaenotyp_support(OBJECT_PT_Phaenotyp, bpy.types.Panel):
+    bl_idname = "OBJECT_PT_Phaenotyp_support"
+    bl_label = "Support"
+
+    @classmethod
+    def poll(cls, context):
+        data = bpy.context.scene.get("<Phaenotyp>")
+        if data:
+            return data["gui"]["support"]
+        else:
+            return False
+
+    def draw(self, context):
+        scene = bpy.context.scene
+        data = scene.get("<Phaenotyp>")
+        layout = self.layout
+        phaenotyp = scene.phaenotyp
+        frame = scene.frame_current
+        panels.support(data, layout, phaenotyp, frame)
+
+class OBJECT_PT_Phaenotyp_profile(OBJECT_PT_Phaenotyp, bpy.types.Panel):
+    bl_idname = "OBJECT_PT_Phaenotyp_profile"
+    bl_label = "Profile"
+
+    @classmethod
+    def poll(cls, context):
+        data = bpy.context.scene.get("<Phaenotyp>")
+        if data:
+            return data["gui"]["profile"]
+        else:
+            return False
+
+    def draw(self, context):
+        scene = bpy.context.scene
+        data = scene.get("<Phaenotyp>")
+        layout = self.layout
+        phaenotyp = scene.phaenotyp
+        frame = scene.frame_current
+        panels.profile(data, layout, phaenotyp, frame)
+
+class OBJECT_PT_Phaenotyp_load(OBJECT_PT_Phaenotyp, bpy.types.Panel):
+    bl_idname = "OBJECT_PT_Phaenotyp_load"
+    bl_label = "Load"
+
+    @classmethod
+    def poll(cls, context):
+        data = bpy.context.scene.get("<Phaenotyp>")
+        if data:
+            return data["gui"]["load"]
+        else:
+            return False
+
+    def draw(self, context):
+        scene = bpy.context.scene
+        data = scene.get("<Phaenotyp>")
+        layout = self.layout
+        phaenotyp = scene.phaenotyp
+        frame = scene.frame_current
+        panels.load(data, layout, phaenotyp, frame)
+
+class OBJECT_PT_Phaenotyp_analysis(OBJECT_PT_Phaenotyp, bpy.types.Panel):
+    bl_idname = "OBJECT_PT_Phaenotyp_analysis"
+    bl_label = "Analysis"
+
+    @classmethod
+    def poll(cls, context):
+        data = bpy.context.scene.get("<Phaenotyp>")
+        if data:
+            return data["gui"]["analysis"]
+        else:
+            return False
+
+    def draw(self, context):
+        scene = bpy.context.scene
+        data = scene.get("<Phaenotyp>")
+        layout = self.layout
+        phaenotyp = scene.phaenotyp
+        frame = scene.frame_current
+        panels.analysis(data, layout, phaenotyp, frame)
+
+class OBJECT_PT_Phaenotyp_optimization(OBJECT_PT_Phaenotyp, bpy.types.Panel):
+    bl_idname = "OBJECT_PT_Phaenotyp_optimization"
+    bl_label = "Optimization"
+
+    @classmethod
+    def poll(cls, context):
+        data = bpy.context.scene.get("<Phaenotyp>")
+        if data:
+            return data["gui"]["optimization"]
+        else:
+            return False
+
+    def draw(self, context):
+        scene = bpy.context.scene
+        data = scene.get("<Phaenotyp>")
+        layout = self.layout
+        phaenotyp = scene.phaenotyp
+        frame = scene.frame_current
+        panels.optimization(data, layout, phaenotyp, frame)
+
+class OBJECT_PT_Phaenotyp_ga(OBJECT_PT_Phaenotyp, bpy.types.Panel):
+    bl_idname = "OBJECT_PT_Phaenotyp_ga"
+    bl_label = "Genetic algorithm"
+
+    @classmethod
+    def poll(cls, context):
+        data = bpy.context.scene.get("<Phaenotyp>")
+        if data:
+            return data["gui"]["ga"]
+        else:
+            return False
+
+    def draw(self, context):
+        scene = bpy.context.scene
+        data = scene.get("<Phaenotyp>")
+        layout = self.layout
+        phaenotyp = scene.phaenotyp
+        frame = scene.frame_current
+        panels.ga(data, layout, phaenotyp, frame)
+
+class OBJECT_PT_Phaenotyp_viz(OBJECT_PT_Phaenotyp, bpy.types.Panel):
+    bl_idname = "OBJECT_PT_Phaenotyp_viz"
+    bl_label = "Visualization"
+
+    @classmethod
+    def poll(cls, context):
+        data = bpy.context.scene.get("<Phaenotyp>")
+        if data:
+            return data["gui"]["viz"]
+        else:
+            return False
+
+    def draw(self, context):
+        scene = bpy.context.scene
+        data = scene.get("<Phaenotyp>")
+        layout = self.layout
+        phaenotyp = scene.phaenotyp
+        frame = scene.frame_current
+        panels.viz(data, layout, phaenotyp, frame)
+
+class OBJECT_PT_Phaenotyp_report(OBJECT_PT_Phaenotyp, bpy.types.Panel):
+    bl_idname = "OBJECT_PT_Phaenotyp_report"
+    bl_label = "Report"
+
+    @classmethod
+    def poll(cls, context):
+        data = bpy.context.scene.get("<Phaenotyp>")
+        if data:
+            return data["gui"]["report"]
+        else:
+            return False
+
+    def draw(self, context):
+        scene = bpy.context.scene
+        data = scene.get("<Phaenotyp>")
+        layout = self.layout
+        phaenotyp = scene.phaenotyp
+        frame = scene.frame_current
+        panels.report(data, layout, phaenotyp, frame)
+
+class OBJECT_PT_Phaenotyp_reset(OBJECT_PT_Phaenotyp, bpy.types.Panel):
+    bl_idname = "OBJECT_PT_Phaenotyp_reset"
+    bl_label = "Reset"
+
+    @classmethod
+    def poll(cls, context):
+        data = bpy.context.scene.get("<Phaenotyp>")
+        if data:
+            return data["gui"]["reset"]
+        else:
+            return False
+
+    def draw(self, context):
+        scene = bpy.context.scene
+        data = scene.get("<Phaenotyp>")
+        layout = self.layout
+        phaenotyp = scene.phaenotyp
+        frame = scene.frame_current
+        panels.reset(data, layout, phaenotyp, frame)
 
 classes = (
     phaenotyp_properties,
@@ -1923,7 +1810,19 @@ classes = (
     WM_OT_report_tree,
 
     WM_OT_reset,
-    OBJECT_PT_Phaenotyp
+
+    OBJECT_PT_Phaenotyp_structure,
+    OBJECT_PT_Phaenotyp_scipy,
+    OBJECT_PT_Phaenotyp_calculation_type,
+    OBJECT_PT_Phaenotyp_support,
+    OBJECT_PT_Phaenotyp_profile,
+    OBJECT_PT_Phaenotyp_load,
+    OBJECT_PT_Phaenotyp_analysis,
+    OBJECT_PT_Phaenotyp_optimization,
+    OBJECT_PT_Phaenotyp_ga,
+    OBJECT_PT_Phaenotyp_viz,
+    OBJECT_PT_Phaenotyp_report,
+    OBJECT_PT_Phaenotyp_reset
 )
 
 @persistent
@@ -1946,14 +1845,8 @@ def update_post(scene):
             if result_available:
                 # check if a result is available for the first member at frame
                 result_at_frame = result_available.get(str(frame))
-                if result_at_frame:
+                if data["done"][str(frame)]:
                     geometry.update_members_post()
-                    data["process"]["done"] = True
-
-                else:
-                    # the process ist not done for this frame
-                    # some functions will be grayed out like optimization
-                    data["process"]["done"] = False
 
         # apply chromosome if available
         individuals = data.get("ga_individuals")
