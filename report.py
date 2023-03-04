@@ -445,7 +445,7 @@ def fill_matrix_chromosomes(matrix, len_chromosome):
     best = 0
 
     # append fitness
-    fitness_types = ["volume", "area", "kg", "rise"]
+    fitness_types = ["volume", "area", "kg", "rise", "span", "cantilever"]
 
     if phaenotyp.calculation_type != "geometrical":
         fitness_types.append("average_sigma")
@@ -884,7 +884,7 @@ def report_chromosomes(directory):
 
     # len_fitness_functions
     if phaenotyp.calculation_type != "geometrical":
-        len_fitness_functions = 7
+        len_fitness_functions = 9
     else:
         len_fitness_functions = 5
 
@@ -906,6 +906,8 @@ def report_chromosomes(directory):
     names.append("area")
     names.append("kg")
     names.append("rise")
+    names.append("span")
+    names.append("cantilever")
 
     if phaenotyp.calculation_type != "geometrical":
         names.append("average_sigma")

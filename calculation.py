@@ -34,14 +34,6 @@ def prepare_fea():
     frame = bpy.context.scene.frame_current
     truss = FEModel3D()
 
-    # apply chromosome if available
-    try:
-        for id, key in enumerate(data.shape_keys):
-            v = data.chromosome[str(frame)][id]
-            key.value = v
-    except:
-        pass
-
     # get absolute position of vertex (when using shape-keys, animation et cetera)
     dg = bpy.context.evaluated_depsgraph_get()
     obj = data["structure"].evaluated_get(dg)
@@ -62,6 +54,8 @@ def prepare_fea():
     frame_length = 0
     frame_kg = 0
     frame_rise = 0
+    frame_span = 0
+    frane_cantilever = 0
 
     # get volume of this frame
     bm = bmesh.new()
@@ -276,11 +270,54 @@ def prepare_fea():
         if z > highest:
             highest = z
 
-        # find highest
+        # find lowest
         if z < lowest:
             lowest = z
 
     frame_rise = highest-lowest
+
+    # get span of frame
+    # (highest distance between supports)
+    highest = 0
+
+    for current in supports:
+        for other in supports:
+            if current != other:
+                current_co = vertices[int(current)].co
+                other_co = vertices[int(other)].co
+
+                dist_v = other_co - current_co
+                dist = dist_v.length
+
+                # find highest
+                if dist > highest:
+                    highest = dist
+
+    frame_span = highest
+
+    # get cantilever of frame
+    # (lowest distance from all vertices to all supports)
+    highest = 0
+
+    for vertex in vertices:
+        to_closest_support = float('inf')
+        for support in supports:
+            vertex_co = vertex.co
+            support_co = vertices[int(support)].co
+
+            if vertex_co != support_co:
+                dist_v = support_co - vertex_co
+                dist = dist_v.length
+
+                # find highest
+                if dist < to_closest_support:
+                    to_closest_support = dist
+
+        # find highest
+        if to_closest_support > highest:
+            highest = to_closest_support
+
+    frame_cantilever = highest
 
     # store frame based data
     data["frames"][str(frame)]["volume"] = frame_volume
@@ -288,6 +325,8 @@ def prepare_fea():
     data["frames"][str(frame)]["length"] = frame_length
     data["frames"][str(frame)]["kg"] = frame_kg
     data["frames"][str(frame)]["rise"] = frame_rise
+    data["frames"][str(frame)]["span"] = frame_span
+    data["frames"][str(frame)]["cantilever"] = frame_cantilever
 
     progress.http.update_p()
     return truss

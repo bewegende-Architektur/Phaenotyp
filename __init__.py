@@ -334,6 +334,34 @@ class phaenotyp_properties(PropertyGroup):
         default=False
     )
 
+    fitness_span: FloatProperty(
+        name = "span",
+        description = "Span distance of the structure (highest distance between supports).",
+        default = 0.0,
+        min = 0.0,
+        max = 1.0
+        )
+
+    fitness_span_invert: BoolProperty(
+        name='span invert',
+        description = "Activate to maximize the span.",
+        default=False
+    )
+
+    fitness_cantilever: FloatProperty(
+        name = "cantilever",
+        description = "Cantilever of the structure (lowest distance from all vertices to all supports).",
+        default = 0.0,
+        min = 0.0,
+        max = 1.0
+        )
+
+    fitness_cantilever_invert: BoolProperty(
+        name='cantilever invert',
+        description = "Activate to maximize the cantilever.",
+        default=False
+    )
+
     fitness_average_sigma: FloatProperty(
         name = "average sigma",
         description = "Average sigma of all members.",
@@ -1743,6 +1771,16 @@ class OBJECT_PT_Phaenotyp(Panel):
                         split.prop(phaenotyp, "fitness_rise", text="Rise")
                         split.prop(phaenotyp, "fitness_rise_invert", text="Invert")
 
+                        col = box_ga.column()
+                        split = col.split()
+                        split.prop(phaenotyp, "fitness_span", text="Span")
+                        split.prop(phaenotyp, "fitness_span_invert", text="Invert")
+
+                        col = box_ga.column()
+                        split = col.split()
+                        split.prop(phaenotyp, "fitness_cantilever", text="Cantilever")
+                        split.prop(phaenotyp, "fitness_cantilever_invert", text="Invert")
+
                         # structural fitness
                         if phaenotyp.calculation_type != "geometrical":
                             box_ga.prop(phaenotyp, "fitness_average_sigma", text="Sigma")
@@ -1809,6 +1847,8 @@ class OBJECT_PT_Phaenotyp(Panel):
                         box_text.label(text="Length: "+str(round(data["frames"][str(frame)]["length"],3)) + " m")
                         box_text.label(text="Kg: "+str(round(data["frames"][str(frame)]["kg"],3)) + " kg")
                         box_text.label(text="Rise: "+str(round(data["frames"][str(frame)]["rise"],3)) + " m")
+                        box_text.label(text="Span: "+str(round(data["frames"][str(frame)]["span"],3)) + " m")
+                        box_text.label(text="Cantilever: "+str(round(data["frames"][str(frame)]["cantilever"],3)) + " m")
 
                         box_text.separator()
 
@@ -1914,6 +1954,15 @@ def update_post(scene):
                     # the process ist not done for this frame
                     # some functions will be grayed out like optimization
                     data["process"]["done"] = False
+
+        # apply chromosome if available
+        individuals = data.get("ga_individuals")
+        if individuals:
+            shape_keys = data["structure"].data.shape_keys.key_blocks
+            chromosome = individuals[str(frame)]["chromosome"]
+            for id, key in enumerate(shape_keys):
+                if id > 0: # to exlude basis
+                    key.value = chromosome[id-1]*0.1
 
 def register():
     from bpy.utils import register_class

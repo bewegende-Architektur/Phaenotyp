@@ -103,6 +103,14 @@ def calculate_fitness(start, end):
         rise = data["frames"][str(frame)]["rise"]
         fitness_rise = rise
 
+        # span
+        span = data["frames"][str(frame)]["span"]
+        fitness_span = span
+
+        # cantilever
+        cantilever = data["frames"][str(frame)]["cantilever"]
+        fitness_cantilever = cantilever
+
         if phaenotyp.calculation_type != "geometrical":
             # average_sigma
             forces = []
@@ -162,6 +170,8 @@ def calculate_fitness(start, end):
         individual["fitness"]["area"] = fitness_area
         individual["fitness"]["kg"] = fitness_kg
         individual["fitness"]["rise"] = fitness_rise
+        individual["fitness"]["span"] = fitness_span
+        individual["fitness"]["cantilever"] = fitness_cantilever
         if phaenotyp.calculation_type != "geometrical":
             individual["fitness"]["average_sigma"] = fitness_average_sigma
             individual["fitness"]["average_strain_energy"] = fitness_average_strain_energy
@@ -192,6 +202,16 @@ def calculate_fitness(start, end):
             else:
                 weighted += basics.avoid_div_zero(1, basis_fitness["rise"]) * fitness_rise * phaenotyp.fitness_rise
 
+            if phaenotyp.fitness_span_invert:
+                weighted += basics.avoid_div_zero(1, fitness_span) * basis_fitness["span"] * phaenotyp.fitness_span
+            else:
+                weighted += basics.avoid_div_zero(1, basis_fitness["span"]) * fitness_span * phaenotyp.fitness_span
+
+            if phaenotyp.fitness_cantilever_invert:
+                weighted += basics.avoid_div_zero(1, fitness_cantilever) * basis_fitness["cantilever"] * phaenotyp.fitness_cantilever
+            else:
+                weighted += basics.avoid_div_zero(1, basis_fitness["cantilever"]) * fitness_cantilever * phaenotyp.fitness_cantilever
+
             if phaenotyp.calculation_type != "geometrical":
                 weighted += basics.avoid_div_zero(1, basis_fitness["average_sigma"]) * fitness_average_sigma * phaenotyp.fitness_average_sigma
                 weighted += basics.avoid_div_zero(1, basis_fitness["average_strain_energy"]) * fitness_average_strain_energy * phaenotyp.fitness_average_strain_energy
@@ -202,6 +222,8 @@ def calculate_fitness(start, end):
             weight += phaenotyp.fitness_area
             weight += phaenotyp.fitness_kg
             weight += phaenotyp.fitness_rise
+            weight += phaenotyp.fitness_span
+            weight += phaenotyp.fitness_cantilever
             if phaenotyp.calculation_type != "geometrical":
                 weight += phaenotyp.fitness_average_sigma
                 weight += phaenotyp.fitness_average_strain_energy
