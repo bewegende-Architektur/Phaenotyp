@@ -214,7 +214,9 @@ def create_members(structure_obj, members):
 
     # create modifiere if not existing
     modifier = obj.modifiers.get('<Phaenotyp>')
-    if not modifier:
+    if modifier:
+        text = "existing modifier:" + str(modifiers)
+    else:
         modifier_nodes = obj.modifiers.new(name="<Phaenotyp>", type='NODES')
         bpy.ops.node.new_geometry_node_group_assign()
         nodes = obj.modifiers['<Phaenotyp>'].node_group
@@ -226,32 +228,29 @@ def create_members(structure_obj, members):
             nodes.name = "<Phaenotyp>Nodes"
             node_group = bpy.data.node_groups['<Phaenotyp>Nodes']
 
-        # input and output of the geometry node modifiere
-        group_input = obj.modifiers["<Phaenotyp>"].node_group.nodes[0]
-        group_output = obj.modifiers["<Phaenotyp>"].node_group.nodes[1]
-
         # mesh to curve
-        mtc = node_group.nodes.new(type="GeometryNodeMeshToCurve")
-        input = mtc.inputs[0] # ['Mesh']
-        output = group_input.outputs[0] # ['Geometry']
+        node_group.nodes.new(type="GeometryNodeMeshToCurve")
+        input = node_group.nodes['Mesh to Curve'].inputs['Mesh']
+        output = node_group.nodes['Group Input'].outputs['Geometry']
         node_group.links.new(input, output)
 
         # curve to mesh
-        ctm = node_group.nodes.new(type="GeometryNodeCurveToMesh")
-        input = mtc.outputs[0] # ['Curve']
-        output = ctm.inputs[0] # ['Curve']
+        node_group.nodes.new(type="GeometryNodeCurveToMesh")
+        input = node_group.nodes['Mesh to Curve'].outputs['Curve']
+        output = node_group.nodes['Curve to Mesh'].inputs['Curve']
         node_group.links.new(input, output)
 
         # profile to curve
-        ptc = node_group.nodes.new(type="GeometryNodeCurvePrimitiveCircle")
-        input = ctm.inputs[1] # ['Profile Curve']
-        output = ptc.outputs[0] # ['Curve']
+        node_group.nodes.new(type="GeometryNodeCurvePrimitiveCircle")
+        input = node_group.nodes['Curve to Mesh'].inputs['Profile Curve']
+        output = node_group.nodes['Curve Circle'].outputs['Curve']
         node_group.links.new(input, output)
 
         # link to output
-        input = ctm.outputs[0] # ['Mesh']
-        output = group_output.inputs[0] # ['Geometry']
+        input = node_group.nodes['Curve to Mesh'].outputs['Mesh']
+        output = node_group.nodes['Group Output'].inputs['Geometry']
         node_group.links.new(input, output)
+
 
     # create vertex_group for radius
     # radius is automatically choosen by geometry nodes for radius-input
