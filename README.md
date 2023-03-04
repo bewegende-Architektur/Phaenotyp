@@ -44,4 +44,4 @@ https://youtu.be/F5ilsBDoIkY
 * follow steps from Installation
 
 ## compatibility
-Please be aware the we focuse on the latest version of Blender 3D only. Right now this is 3.4.1. Any version beforce geometry nodes is not supported. We test Phänotyp on linux and windows only. Anyway: We recevied possitive feedback, that it is running on mac also. Just drop an issue via github, if you face any issues.
+Please be aware the we focuse on the latest version of Blender 3D only. Right now this is 3.4.1. Any version beforce geometry nodes is not supported. If you use an older version of blender you can check out the releas 0.7. We test Phänotyp on linux and windows only. Anyway: We recevied possitive feedback, that it is running on mac also. Just drop an issue via github, if you face any issues.
