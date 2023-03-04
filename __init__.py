@@ -1800,9 +1800,8 @@ class OBJECT_PT_Phaenotyp(Panel):
                         else:
                             box_ga.label(text="Elitism should be smaller than 50% of generation size.")
 
-                        box_ga.separator()
-
                         if len(data["ga_individuals"]) > 0 and not bpy.context.screen.is_animation_playing:
+                            box_ga.separator()
                             box_ga.label(text="Select individual by fitness:")
                             box_ga.prop(phaenotyp, "ga_ranking", text="Result sorted by fitness.")
                             if phaenotyp.ga_ranking >= len(data["ga_individuals"]):
@@ -1851,9 +1850,8 @@ class OBJECT_PT_Phaenotyp(Panel):
                         box_text.label(text="Span: "+str(round(data["frames"][str(frame)]["span"],3)) + " m")
                         box_text.label(text="Cantilever: "+str(round(data["frames"][str(frame)]["cantilever"],3)) + " m")
 
-                        box_text.separator()
-
                         if phaenotyp.calculation_type != "geometrical":
+                            box_text.separator()
                             selected_objects = bpy.context.selected_objects
                             if len(selected_objects) > 1:
                                 box_text.label(text="Please select the vizualisation object only - too many objects")
