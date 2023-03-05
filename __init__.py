@@ -1498,6 +1498,9 @@ class WM_OT_reset(Operator):
         # delete collection
         basics.delete_col_if_existing("<Phaenotyp>")
 
+        # change view back to solid ...
+        basics.revert_vertex_colors()
+
         return {"FINISHED"}
 
 class OBJECT_PT_Phaenotyp(Panel):
