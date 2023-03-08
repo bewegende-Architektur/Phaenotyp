@@ -635,7 +635,7 @@ class OBJECT_PT_Phaenotyp(Panel):
             box_structure.enabled = False
 
             obj = data["structure"]
-            box_structure.label(text = obj.name_full + " is defined as structure")
+            box_structure.label(text = obj.name_full + " is defined as structure.")
 
             # check or uncheck scipy if available
             if data["scipy_available"]:
