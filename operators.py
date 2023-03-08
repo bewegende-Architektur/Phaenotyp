@@ -26,7 +26,8 @@ def set_structure():
     calculation.check_scipy()
 
 def set_support():
-    scene = bpy.context.scene
+    context = bpy.context
+    scene = context.scene
     phaenotyp = scene.phaenotyp
     data = scene["<Phaenotyp>"]
     obj = data["structure"]

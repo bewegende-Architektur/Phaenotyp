@@ -670,7 +670,7 @@ class OBJECT_PT_Phaenotyp(Panel):
             box_support.operator("wm.set_support", text="Set")
 
             if len(data["supports"]) > 0:
-                box_support.label(text = str(len(data["supports"])) + " vertices defined as support")
+                box_support.label(text = str(len(data["supports"])) + " vertices defined as support.")
 
                 # define material and geometry
                 box_profile = layout.box()
@@ -743,8 +743,20 @@ class OBJECT_PT_Phaenotyp(Panel):
 
                 box_profile.operator("wm.set_profile", text="Set")
 
-                # if all edges are defined as member
-                if len(data["structure"].data.edges) == len(data["members"]):
+                # if not all edges are defined as member
+                len_structure_edges = len(data["structure"].data.edges)
+                len_members = len(data["members"])
+                if len_members == 0:
+                    pass
+
+                elif len_structure_edges != len_members:
+                    text = str(len_members) + " edges of " + str(len_structure_edges) + " set as members."
+                    box_profile.label(text=text)
+
+                else:
+                    text = str(len_members) + " edges set as members."
+                    box_profile.label(text=text)
+
                     # Define loads
                     box_load = layout.box()
                     box_load.label(text="Loads:")
@@ -762,10 +774,15 @@ class OBJECT_PT_Phaenotyp(Panel):
 
                     box_load.operator("wm.set_load", text="Set")
 
+                    len_loads = len(data["loads_v"]) + len(data["loads_e"]) + len(data["loads_f"])
+                    if len_loads > 0:
+                        text = str(len_loads) + " loads defined."
+                        box_load.label(text=text)
+
                     if phaenotyp.calculation_type != "geometrical":
                         if not bpy.data.is_saved:
                             box_file = layout.box()
-                            box_file.label(text="Please save Blender-File first")
+                            box_file.label(text="Please save Blender-File first.")
 
                         else:
                             # Analysis
