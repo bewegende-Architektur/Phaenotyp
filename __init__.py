@@ -2,7 +2,7 @@ bl_info = {
     "name": "Phänotyp",
     "description": "Genetic optimization of architectural structures",
     "author": "bewegende Architektur e.U. and Karl Deix",
-    "version": (0, 1, 4),
+    "version": (0, 1, 5),
     "blender": (3, 4, 1),
     "location": "3D View > Tools",
 }
