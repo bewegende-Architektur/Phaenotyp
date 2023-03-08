@@ -17,48 +17,7 @@ from bpy.props import (IntProperty, FloatProperty, BoolProperty, StringProperty,
 from bpy.types import (Panel, Menu, Operator, PropertyGroup)
 from bpy.app.handlers import persistent
 
-import os
-import webbrowser
-
-from phaenotyp import basics, material, geometry, calculation, ga, report, progress
-import itertools
-
-def create_data():
-    data = bpy.context.scene.get("<Phaenotyp>")
-    if not data:
-        data = bpy.context.scene["<Phaenotyp>"] = {
-            "structure":{},
-            "supports":{},
-            "members":{},
-            "frames":{},
-            "loads_v":{},
-            "loads_e":{},
-            "loads_f":{},
-            "process":{},
-            "done":{},
-            "ga_environment":{},
-            "ga_individuals":{},
-            "texts":{}
-        }
-
-        data["structure"] = None
-        data["supports"] = {}
-        data["members"] = {}
-        data["frames"] = {}
-        data["loads_v"] = {}
-        data["loads_e"] = {}
-        data["loads_f"] = {}
-
-        data["process"]["scipy_available"] = False
-        data["done"] = {}
-
-        data["ga_environment"] = {}
-        data["ga_individuals"] = {}
-
-        data["texts"] = []
-
-def print_data(text):
-    print("Phaenotyp |", text)
+from phaenotyp import basics, operators, material, geometry, calculation, ga, report, progress
 
 def viz_update(self, context):
     scene = context.scene
@@ -462,21 +421,7 @@ class WM_OT_set_structure(Operator):
     bl_description = "Please select an object in Object-Mode and press set"
 
     def execute(self, context):
-        # crete / recreate collection
-        basics.delete_col_if_existing("<Phaenotyp>")
-        collection = bpy.data.collections.new("<Phaenotyp>")
-        bpy.context.scene.collection.children.link(collection)
-
-        create_data()
-        scene = context.scene
-        data = scene["<Phaenotyp>"]
-
-        data["structure"] = bpy.context.active_object
-        bpy.ops.object.mode_set(mode="EDIT")
-
-        # check for scipy
-        calculation.check_scipy()
-
+        operators.set_structure()
         return {"FINISHED"}
 
 class WM_OT_set_support(Operator):
@@ -485,56 +430,7 @@ class WM_OT_set_support(Operator):
     bl_description = "Please select vertices and press set, to define them as support (Be sure, that you are in Edit Mode of the Structure)"
 
     def execute(self, context):
-        scene = context.scene
-        phaenotyp = scene.phaenotyp
-        data = scene["<Phaenotyp>"]
-        obj = data["structure"]
-
-        if context.active_object.mode == "EDIT":
-            # get selected vertices
-            bpy.ops.object.mode_set(mode="OBJECT")
-            bpy.ops.object.mode_set(mode="EDIT")
-
-            for vertex in obj.data.vertices:
-                if vertex.select:
-                    id = vertex.index
-
-                    support = [
-                        phaenotyp.loc_x,
-                        phaenotyp.loc_y,
-                        phaenotyp.loc_z,
-                        phaenotyp.rot_x,
-                        phaenotyp.rot_y,
-                        phaenotyp.rot_z
-                        ]
-
-                    data["supports"][str(id)] = support
-
-                    # delete support if user is deleting the support
-                    # (set all conditions to False and apply)
-                    fixed = False
-                    for i in range(6):
-                        if support[i] == True:
-                            fixed = True
-
-                    if not fixed:
-                        data["supports"].pop(str(id))
-
-            # delete obj if existing
-            basics.delete_obj_if_existing("<Phaenotyp>support")
-            basics.delete_mesh_if_existing("<Phaenotyp>support")
-
-            # create one mesh for all
-            geometry.create_supports(data["structure"], data["supports"])
-
-        # leave signs of support, structure and go to edit-mode
-        # (in order to let the user define more supports)
-        bpy.ops.object.mode_set(mode="OBJECT")
-        bpy.ops.object.select_all(action='DESELECT')
-        obj.select_set(True)
-        bpy.context.view_layer.objects.active = obj
-        bpy.ops.object.mode_set(mode="EDIT")
-
+        operators.set_support()
         return {"FINISHED"}
 
 class WM_OT_set_profile(Operator):
@@ -543,132 +439,7 @@ class WM_OT_set_profile(Operator):
     bl_description = "Please select edges in Edit-Mode and press set, to define profiles"
 
     def execute(self, context):
-        scene = context.scene
-        phaenotyp = scene.phaenotyp
-        data = scene["<Phaenotyp>"]
-        obj = data["structure"]
-        frame = bpy.context.scene.frame_current
-
-        bpy.ops.object.mode_set(mode="OBJECT")
-
-        # create new member
-        for edge in obj.data.edges:
-            vertex_0_id = edge.vertices[0]
-            vertex_1_id = edge.vertices[1]
-
-            if edge.select:
-                id = edge.index
-
-                member = {}
-
-                # this variables are always fix
-                member["name"] = "member_" + str(id) # equals edge-id
-                member["vertex_0_id"] = vertex_0_id # equals id of vertex
-                member["vertex_1_id"] = vertex_1_id # equals id of vertex
-
-                member["acceptable_sigma"] = material.current["acceptable_sigma"] # from gui
-                member["acceptable_shear"] = material.current["acceptable_shear"] # from gui
-                member["acceptable_torsion"] = material.current["acceptable_torsion"] # from gui
-                member["acceptable_sigmav"] = material.current["acceptable_sigmav"] # from gui
-                member["knick_model"] = material.current["knick_model"] # from gui
-
-                member["E"] = material.current["E"] # from gui
-                member["G"] = material.current["G"] # from gui
-                member["d"] = material.current["d"] # from gui
-
-                # this variables can change per frame
-                # the key "first" is used to store the user-input of each member
-                # this is importand, if a user is chaning the frame during the
-                # input for some reason
-                member["Do"] = {}
-                member["Di"] = {}
-
-                member["Do_first"] = material.current["Do"] # from gui
-                member["Di_first"] = material.current["Di"] # from fui
-
-                member["Iy"] = {}
-                member["Iz"] = {}
-                member["J"] = {}
-                member["A"] = {}
-                member["kg_A"] = {}
-                member["ir"] = {}
-
-                member["Iy_first"] = material.current["Iy"] # from gui
-                member["Iz_first"] = material.current["Iz"] # from gui
-                member["J_first"] = material.current["J"] # from gui
-                member["A_first"] = material.current["A"] # from gui
-                member["kg_first"] = material.current["kg_A"] # from gui
-                member["ir_first"] = material.current["ir"] # from gui
-
-                # results
-                member["axial"] = {}
-                member["moment_y"] = {}
-                member["moment_z"] = {}
-                member["moment_h"] = {}
-                member["shear_y"] = {}
-                member["shear_z"] = {}
-                member["shear_h"] = {}
-                member["torque"] = {}
-                member["sigma"] = {}
-
-                member["Wy"] = {}
-                member["WJ"] = {}
-
-                member["long_stress"] = {}
-                member["tau_shear"] = {}
-                member["tau_torsion"] = {}
-                member["sum_tau"] = {}
-                member["sigmav"] = {}
-                member["sigma"] = {}
-                member["max_long_stress"] = {}
-                member["max_tau_shear"] = {}
-                member["max_tau_torsion"] = {}
-                member["max_sum_tau"] = {}
-                member["max_sigmav"] = {}
-                member["max_sigma"] = {}
-                member["acceptable_sigma_buckling"] = {}
-                member["lamda"] = {}
-                member["lever_arm"] = {}
-                member["max_lever_arm"] = {}
-                member["initial_positions"] = {}
-                member["deflection"] = {}
-                member["overstress"] = {}
-                member["utilization"] = {}
-
-                member["normal_energy"] = {}
-                member["moment_energy"] = {}
-                member["strain_energy"] = {}
-
-                member["kg"] = {}
-                member["length"] = {}
-
-                data["members"][str(id)] = member
-
-        # delete obj if existing
-        basics.delete_obj_if_existing("<Phaenotyp>member")
-        basics.delete_mesh_if_existing("<Phaenotyp>member")
-
-        # create one mesh for all
-        geometry.create_members(data["structure"], data["members"])
-
-        # leave membersand go to edit-mode
-        # (in order to let the user define more supports)
-        bpy.ops.object.mode_set(mode="OBJECT")
-        bpy.ops.object.select_all(action='DESELECT')
-        obj.select_set(True)
-        bpy.context.view_layer.objects.active = data["structure"]
-        bpy.ops.object.mode_set(mode="EDIT")
-
-        # switch to wireframe
-        for area in bpy.context.screen.areas:
-            if area.type == 'VIEW_3D':
-                for space in area.spaces:
-                    if space.type == 'VIEW_3D':
-                        space.shading.type = 'WIREFRAME'
-
-        # to avoid key-error in optimization
-        data["done"][str(frame)] = False
-
+        operators.set_profile()
         return {"FINISHED"}
 
 class WM_OT_set_load(Operator):
@@ -677,96 +448,7 @@ class WM_OT_set_load(Operator):
     bl_description = "Add load to selected vertices, edges, or faces"
 
     def execute(self, context):
-        scene = context.scene
-        phaenotyp = scene.phaenotyp
-        data = scene["<Phaenotyp>"]
-        obj = data["structure"]
-
-        # create load
-        #bpy.ops.object.mode_set(mode="OBJECT") # <---- to avoid "out-of-range-error" on windows
-        bpy.ops.object.mode_set(mode="EDIT") # <---- to avoid "out-of-range-error" on windows
-        bpy.ops.object.mode_set(mode="OBJECT") # <---- to avoid "out-of-range-error" on windows
-
-        # pass user input to data
-
-        if phaenotyp.load_type == "vertices":
-            for vertex in obj.data.vertices:
-                if vertex.select:
-                    id = vertex.index
-
-                    load = [
-                        phaenotyp.load_x,
-                        phaenotyp.load_y,
-                        phaenotyp.load_z
-                        ]
-
-                    data["loads_v"][str(id)] = load
-
-                    # delete load if user is deleting the load
-                    # (set all conditions to False and apply)
-                    force = False
-                    for i in range(3):
-                        if load[i] != 0:
-                            force = True
-
-                    if not force:
-                        data["loads_v"].pop(str(id))
-
-        if phaenotyp.load_type == "edges":
-            for edge in obj.data.edges:
-                vertex_0_id = edge.vertices[0]
-                vertex_1_id = edge.vertices[1]
-
-                if edge.select:
-                    id = edge.index
-
-                    load = [
-                        phaenotyp.load_x,
-                        phaenotyp.load_y,
-                        phaenotyp.load_z
-                        ]
-
-                    data["loads_e"][str(id)] = load
-
-                    # delete load if user is deleting the load
-                    # (set all conditions to False and apply)
-                    force = False
-                    for i in range(3):
-                        if load[i] != 0:
-                            force = True
-
-                    if not force:
-                        data["loads_e"].pop(str(id))
-
-        if phaenotyp.load_type == "faces":
-            for polygon in obj.data.polygons:
-                if polygon.select:
-                    id = polygon.index
-                    load = [
-                        phaenotyp.load_normal,
-                        phaenotyp.load_projected,
-                        phaenotyp.load_area_z,
-                        ]
-
-                    data["loads_f"][str(id)] = load
-
-                    # delete load if user is deleting the load
-                    # (set all conditions to False and apply)
-                    force = False
-                    for i in range(3):
-                        if load[i] != 0:
-                            force = True
-
-                    if not force:
-                        data["loads_f"].pop(str(id))
-
-        # delete text of loads
-        basics.delete_obj_if_name_contains("<Phaenotyp>load")
-
-        # run one function for all loads
-        geometry.create_loads(obj, data["loads_v"], data["loads_e"], data["loads_f"])
-
-        bpy.ops.object.mode_set(mode="EDIT")
+        operators.set_load()
         return {"FINISHED"}
 
 class WM_OT_calculate_single_frame(Operator):
@@ -775,29 +457,7 @@ class WM_OT_calculate_single_frame(Operator):
     bl_description = "Calulate single frame"
 
     def execute(self, context):
-        scene = context.scene
-        phaenotyp = scene.phaenotyp
-        data = scene["<Phaenotyp>"]
-        members = scene["<Phaenotyp>"]["members"]
-        frame = bpy.context.scene.frame_current
-
-        # calculate new properties for each member
-        geometry.update_members_pre()
-
-        # created a truss object of PyNite and add to dict
-        truss = calculation.prepare_fea()
-
-        # run singlethread and get results
-        feas = calculation.run_st(truss, frame)
-
-        # wait for it and interweave results to data
-        calculation.interweave_results(feas, members)
-
-        # calculate new visualization-mesh
-        geometry.update_members_post()
-
-        basics.view_vertex_colors()
-
+        operators.calculate_single_frame()
         return {"FINISHED"}
 
 class WM_OT_calculate_animation(Operator):
@@ -806,165 +466,43 @@ class WM_OT_calculate_animation(Operator):
     bl_description = "Calulate animation"
 
     def execute(self, context):
-        scene = context.scene
-        phaenotyp = scene.phaenotyp
-        data = scene["<Phaenotyp>"]
-        members = scene["<Phaenotyp>"]["members"]
-        frame = bpy.context.scene.frame_current
-
-        start = bpy.context.scene.frame_start
-        end = bpy.context.scene.frame_end + 1 # to render also last frame
-
-        # start progress
-        progress.run()
-        progress.http.reset_pci(end-start)
-
-        # create list of trusses
-        trusses = {}
-
-        for frame in range(start, end):
-            # update scene
-            bpy.context.scene.frame_current = frame
-            bpy.context.view_layer.update()
-
-            # calculate new properties for each member
-            geometry.update_members_pre()
-
-            # created a truss object of PyNite and add to dict
-            truss = calculation.prepare_fea()
-            trusses[frame] = truss
-
-        # run mp and get results
-        feas = calculation.run_mp(trusses)
-
-        # wait for it and interweave results to data
-        calculation.interweave_results(feas, members)
-
-        # calculate new visualization-mesh
-        geometry.update_members_post()
-
-        basics.view_vertex_colors()
-
-        # join progress
-        progress.http.active = False
-        progress.http.Thread_hosting.join()
-
+        operators.calculate_animation()
         return {"FINISHED"}
 
-class WM_OT_optimize_1(Operator):
-    bl_label = "optimize_1"
-    bl_idname = "wm.optimize_1"
+class WM_OT_optimize_simple(Operator):
+    bl_label = "optimize_simple"
+    bl_idname = "wm.optimize_simple"
     bl_description = "Simple sectional performance"
 
     def execute(self, context):
-        scene = context.scene
-        phaenotyp = scene.phaenotyp
-        data = scene["<Phaenotyp>"]
-        members = scene["<Phaenotyp>"]["members"]
-        frame = bpy.context.scene.frame_current
-
-        print_data("optimization 1 - simple sectional performance")
-
-        calculation.simple_sectional()
-
-        # calculate new properties for each member
-        geometry.update_members_pre()
-
-        # created a truss object of PyNite and add to dict
-        truss = calculation.prepare_fea()
-
-        # run singlethread and get results
-        feas = calculation.run_st(truss, frame)
-
-        # wait for it and interweave results to data
-        calculation.interweave_results(feas, members)
-
-        # calculate new visualization-mesh
-        geometry.update_members_post()
-
-        basics.view_vertex_colors()
-
+        operators.optimize_simple()
         return {"FINISHED"}
 
-class WM_OT_optimize_2(Operator):
-    bl_label = "optimize_2"
-    bl_idname = "wm.optimize_2"
+class WM_OT_optimize_utilization(Operator):
+    bl_label = "optimize_utilization"
+    bl_idname = "wm.optimize_utilization"
     bl_description = "utilization sectional performance"
 
     def execute(self, context):
-        scene = context.scene
-        phaenotyp = scene.phaenotyp
-        data = scene["<Phaenotyp>"]
-        members = scene["<Phaenotyp>"]["members"]
-        frame = bpy.context.scene.frame_current
-
-        print_data("optimization 2 - utilization sectional performance")
-
-        calculation.utilization_sectional()
-
-        # calculate new properties for each member
-        geometry.update_members_pre()
-
-        # created a truss object of PyNite and add to dict
-        truss = calculation.prepare_fea()
-
-        # run singlethread and get results
-        feas = calculation.run_st(truss, frame)
-
-        # wait for it and interweave results to data
-        calculation.interweave_results(feas, members)
-
-        # calculate new visualization-mesh
-        geometry.update_members_post()
-
-        basics.view_vertex_colors()
-
+        operators.optimize_utilization()
         return {"FINISHED"}
 
-class WM_OT_optimize_3(Operator):
-    bl_label = "optimize_3"
-    bl_idname = "wm.optimize_3"
+class WM_OT_optimize_complex(Operator):
+    bl_label = "optimize_complex"
+    bl_idname = "wm.optimize_complex"
     bl_description = "Complex sectional performance"
 
     def execute(self, context):
-        scene = context.scene
-        phaenotyp = scene.phaenotyp
-        data = scene["<Phaenotyp>"]
-        members = scene["<Phaenotyp>"]["members"]
-        frame = bpy.context.scene.frame_current
-
-        print_data("optimization 3 - complex sectional performance")
-
-        calculation.complex_sectional()
-
-        # calculate new properties for each member
-        geometry.update_members_pre()
-
-        # created a truss object of PyNite and add to dict
-        truss = calculation.prepare_fea()
-
-        # run singlethread and get results
-        feas = calculation.run_st(truss, frame)
-
-        # wait for it and interweave results to data
-        calculation.interweave_results(feas, members)
-
-        # calculate new visualization-mesh
-        geometry.update_members_post()
-
-        basics.view_vertex_colors()
-
+        operators.optimize_complex()
         return {"FINISHED"}
 
 class WM_OT_topology_1(Operator):
-    bl_label = "topolgy_1"
-    bl_idname = "wm.topolgy_1"
+    bl_label = "topolgy_decimate"
+    bl_idname = "wm.topolgy_decimate"
     bl_description = "Decimate topological performance"
 
     def execute(self, context):
-        print_data("optimization 3 - Decimate topological performance")
-        calculation.decimate_topology()
-
+        operators.topolgy_decimate()
         return {"FINISHED"}
 
 class WM_OT_ga_start(Operator):
@@ -973,164 +511,7 @@ class WM_OT_ga_start(Operator):
     bl_description = "Start genetic muatation over selected shape keys"
 
     def execute(self, context):
-        scene = context.scene
-        phaenotyp = scene.phaenotyp
-        data = scene["<Phaenotyp>"]
-        obj = data["structure"]
-
-        print_data("start genetic muataion over selected shape keys")
-
-        # pass from gui
-        data["ga_environment"]["generation_size"] = phaenotyp.generation_size
-        data["ga_environment"]["elitism"] = phaenotyp.elitism
-        data["ga_environment"]["generation_amount"] = phaenotyp.generation_amount
-        data["ga_environment"]["new_generation_size"] = phaenotyp.generation_size - phaenotyp.elitism
-
-        # clear to restart
-        data["ga_environment"]["generations"] = {}
-        data["ga_environment"]["generation_id"] = 0
-        data["ga_environment"]["genes"] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
-        data["ga_individuals"] = {}
-
-        # shorten
-        generation_size = data["ga_environment"]["generation_size"]
-        elitism = data["ga_environment"]["elitism"]
-        generation_amount = data["ga_environment"]["generation_amount"]
-        new_generation_size = data["ga_environment"]["new_generation_size"]
-        generation_id = data["ga_environment"]["generation_id"]
-        individuals = data["ga_individuals"]
-
-        if phaenotyp.ga_optimization in ["simple", "utilization", "complex"]:
-            ga_optimization_amount = phaenotyp.ga_optimization_amount
-        else:
-            ga_optimization_amount = 0
-
-        # skip ga_optimization if geometrical only
-        if phaenotyp.calculation_type != "geometrical":
-            ga_optimization_amount = 0
-
-        # start progress
-        progress.run()
-        progress.http.reset_pci(1)
-        progress.http.reset_o(ga_optimization_amount)
-
-        # set frame_start
-        bpy.context.scene.frame_start = 0
-
-        # generate an individual as basis at frame 0
-        # this individual has choromosome with all genes equals 0
-        # the fitness of this chromosome is the basis for all others
-        ga.generate_basis()
-
-        for i in range(ga_optimization_amount):
-            progress.http.reset_pci(1)
-            ga.sectional_optimization(0, 1)
-            progress.http.update_o()
-
-        progress.http.reset_pci(1)
-        ga.calculate_fitness(0, 1)
-        individuals["0"]["fitness"]["weighted"] = 1
-
-        if phaenotyp.mate_type in ["direct", "morph"]:
-            # create start and end of calculation and create individuals
-            start = 1
-            end = generation_size
-
-            # set frame_end to first size of inital generation
-            bpy.context.scene.frame_end = end
-
-            # progress
-            progress.http.reset_pci(end-start)
-            progress.http.g = [0, generation_amount]
-            progress.http.reset_o(ga_optimization_amount)
-
-            # create initial generation
-            # the first generation contains 20 individuals (standard value is 20)
-            # the indiviuals are created with random genes
-            # there is no elitism possible, because there is no previous group
-            ga.create_initial_individuals(start, end)
-
-            # optimize if sectional performance if activated
-            for i in range(ga_optimization_amount):
-                progress.http.reset_pci(end-start)
-                ga.sectional_optimization(start, end)
-                progress.http.update_o()
-
-            progress.http.reset_pci(end-start)
-            ga.calculate_fitness(start, end)
-            ga.populate_initial_generation()
-
-            # create all other generations
-            # 2 indiviuals are taken from previous group (standard value is 10)
-            # 10 indiviuals are paired (standard ist 50 %)
-            for i in range(generation_amount):
-                start = end
-                end = start + new_generation_size
-
-                # expand frame
-                bpy.context.scene.frame_end = end
-
-                # create new generation and copy fittest percent
-                ga.do_elitism()
-
-                # create 18 new individuals (standard value of 20 - 10 % elitism)
-                progress.http.reset_pci(end-start)
-                progress.http.reset_o(ga_optimization_amount)
-
-                ga.create_new_individuals(start, end)
-
-                for i in range(ga_optimization_amount):
-                    progress.http.reset_pci(end-start)
-                    ga.sectional_optimization(start, end)
-                    progress.http.update_o()
-
-                ga.calculate_fitness(start, end)
-                ga.populate_new_generation(start, end)
-
-                # update progress
-                progress.http.update_g()
-
-        if phaenotyp.mate_type == "bruteforce":
-            data = scene["<Phaenotyp>"]
-            shape_keys = obj.data.shape_keys.key_blocks
-
-            # create matrix of possible combinations
-            matrix = []
-            for key in range(len(shape_keys)-1): # to exclude basis
-                genes = data["ga_environment"]["genes"]
-                matrix.append(genes)
-
-            chromosomes = list(itertools.product(*matrix))
-            chromosomes.pop(0) # delete the basis individual, is allready calculated
-
-            # create start and end of calculation and create individuals
-            start = 1 # basis indiviual is allready created and optimized
-            end = len(chromosomes)+1
-
-            # set frame_end to first size of inital generation
-            bpy.context.scene.frame_end = end-1
-
-            # progress
-            progress.http.reset_pci(end-start)
-            progress.http.reset_o(ga_optimization_amount)
-            progress.http.g = [0,1]
-
-            # pair with bruteforce
-            ga.bruteforce(chromosomes)
-            for i in range(ga_optimization_amount):
-                progress.http.reset_pci(end-start)
-                ga.sectional_optimization(start, end)
-                progress.http.update_o()
-
-            ga.calculate_fitness(start, end)
-
-        if phaenotyp.calculation_type != "geometrical":
-            basics.view_vertex_colors()
-
-        # join progress
-        progress.http.active = False
-        progress.http.Thread_hosting.join()
-
+        operators.ga_start()
         return {"FINISHED"}
 
 class WM_OT_ga_ranking(Operator):
@@ -1139,13 +520,7 @@ class WM_OT_ga_ranking(Operator):
     bl_description = "Go to indivual by ranking."
 
     def execute(self, context):
-        scene = context.scene
-        data = scene["<Phaenotyp>"]
-
-        print_data("go to selected ranking")
-
-        ga.goto_indivual()
-
+        operators.ga_ranking()
         return {"FINISHED"}
 
 class WM_OT_ga_render_animation(Operator):
@@ -1154,73 +529,7 @@ class WM_OT_ga_render_animation(Operator):
     bl_description = "Go to indivual by ranking."
 
     def execute(self, context):
-        scene = context.scene
-        data = scene["<Phaenotyp>"]
-
-        environment = data["ga_environment"]
-        individuals = data["ga_individuals"]
-
-        print_data("render animation")
-
-        # change engine, shading
-        bpy.context.scene.render.engine = 'BLENDER_WORKBENCH'
-        bpy.context.scene.display.shading.light = 'FLAT'
-        bpy.context.scene.display.shading.color_type = 'VERTEX'
-
-        # set background to transparent
-        bpy.context.scene.render.film_transparent = True
-
-        # use stamp
-        bpy.context.scene.render.use_stamp = True
-        bpy.context.scene.render.use_stamp_note = True
-        bpy.context.scene.render.stamp_note_text = ""
-        bpy.context.scene.render.stamp_background[3] = 1
-        bpy.context.scene.render.stamp_background = (0, 0, 0, 1)
-
-        filepath = bpy.data.filepath
-        directory = os.path.dirname(filepath)
-
-        # render all indiviuals
-        image_id = 0 # to sort images by fitness in filemanager
-        amount_of_digts = len(str(len(individuals))) # write in format 01, 001 or 0001 ...
-
-        # sort by fitness
-        list_result = []
-        for name, individual in individuals.items():
-            list_result.append([name, individual["chromosome"], individual["fitness"]["weighted"]])
-
-        sorted_list = sorted(list_result, key = lambda x: x[2])
-
-        for frame, chromosome, fitness in sorted_list:
-            str_image_id = str(image_id).zfill(amount_of_digts)
-            filename = directory + "/Phaenotyp-ga_animation/image_id_" + str_image_id + "-individual_" + str(frame)
-
-            # get text from chromosome
-            str_chromosome = "["
-            for gene in chromosome:
-                str_chromosome += str(round(gene, 3))
-                str_chromosome += ", "
-            str_chromosome[-1]
-            str_chromosome += "]"
-
-            # set note
-            text = filename + " -> " + str_chromosome + " fitness " + str(fitness)
-            bpy.context.scene.render.stamp_note_text = text
-
-            # set path and render
-            bpy.context.scene.render.filepath = filename
-            bpy.context.scene.render.image_settings.file_format='PNG'
-            bpy.context.scene.render.filepath=filename
-            bpy.ops.render.render(write_still=1)
-
-            # update scene
-            bpy.context.scene.frame_current = int(frame)
-            bpy.context.view_layer.update()
-
-            image_id += 1
-
-        print_data("render animation - done")
-
+        operators.ga_ranking()
         return {"FINISHED"}
 
 class WM_OT_text(Operator):
@@ -1229,234 +538,43 @@ class WM_OT_text(Operator):
     bl_description = "Generate output at the selected vertex"
 
     def execute(self, context):
-        scene = context.scene
-        phaenotyp = scene.phaenotyp
-        data = scene["<Phaenotyp>"]
-        members = data["members"]
-        frame = bpy.context.scene.frame_current
-
-        print_data("Generate output at the selected point")
-        data["texts"] = []
-        selected_objects = bpy.context.selected_objects
-
-        # get selected vertex
-        bpy.ops.object.mode_set(mode="OBJECT")
-        for vertex in bpy.context.active_object.data.vertices:
-            if vertex.select == True:
-                # continue with this vertex:
-                # (only one is selected)
-                vertex_id = vertex.index
-                bpy.ops.object.mode_set(mode="EDIT")
-
-                # get member
-                for id, member in members.items():
-                    for position in range(11):
-                        if member["mesh_vertex_ids"][position] == vertex_id:
-                            data_temp = []
-                            # get member id
-                            text = "Member: " + id
-                            data_temp.append(text)
-
-                            # get Position
-                            text = "Position: " + str(position)
-                            data_temp.append(text)
-
-                            # get frame
-                            frame = bpy.context.scene.frame_current
-
-                            # get Do and Di
-                            text = "Do: " + str(round(member["Do"][str(frame)], 3))
-                            data_temp.append(text)
-                            text = "Di: " + str(round(member["Di"][str(frame)], 3))
-                            data_temp.append(text)
-
-                            # results
-                            text = "axial: " + str(round(member["axial"][str(frame)][position], 3))
-                            data_temp.append(text)
-                            text = "moment_y: " + str(round(member["moment_y"][str(frame)][position], 3))
-                            data_temp.append(text)
-                            text = "moment_z: " + str(round(member["moment_z"][str(frame)][position], 3))
-                            data_temp.append(text)
-                            text = "shear_y: " + str(round(member["shear_y"][str(frame)][position], 3))
-                            data_temp.append(text)
-                            text = "shear_z: " + str(round(member["shear_z"][str(frame)][position], 3))
-                            data_temp.append(text)
-                            text = "torque: " + str(round(member["torque"][str(frame)][position], 3))
-                            data_temp.append(text)
-
-                            text = "long_stress: " + str(round(member["long_stress"][str(frame)][position], 3))
-                            data_temp.append(text)
-                            text = "tau_shear: " + str(round(member["tau_shear"][str(frame)][position], 3))
-                            data_temp.append(text)
-                            text = "tau_torsion: " + str(round(member["tau_torsion"][str(frame)][position], 3))
-                            data_temp.append(text)
-                            text = "sum_tau: " + str(round(member["sum_tau"][str(frame)][position], 3))
-                            data_temp.append(text)
-                            text = "sigmav: " + str(round(member["sigmav"][str(frame)][position], 3))
-                            data_temp.append(text)
-                            text = "sigma: " + str(round(member["sigma"][str(frame)][position], 3))
-                            data_temp.append(text)
-
-                            # leverarm
-                            text = "leverarm: " + str(round(member["lever_arm"][str(frame)][position], 3))
-                            data_temp.append(text)
-
-                            # overstress
-                            text = "overstress: " + str(round(member["overstress"][str(frame)], 3))
-                            data_temp.append(text)
-
-                            data["texts"] = data_temp
-
-
+        operators.text()
         return {"FINISHED"}
 
 class WM_OT_report_members(Operator):
-    bl_label = "report"
+    bl_label = "report_members"
     bl_idname = "wm.report_members"
     bl_description = "Generate report as html-format"
 
     def execute(self, context):
-        print_data("Generate report at frame in html-format")
-
-        scene = bpy.context.scene
-        phaenotyp = scene.phaenotyp
-        data = scene["<Phaenotyp>"]
-        members = data["members"]
-        frame = bpy.context.scene.frame_current
-
-
-        # create folder
-        filepath = bpy.data.filepath
-        directory = os.path.dirname(filepath)
-
-        try:
-            os.mkdir(os.path.join(directory, "Phaenotyp-members"))
-        except:
-            pass
-
-        directory += "/Phaenotyp-members/"
-
-        report.copy_sorttable(directory)
-
-        sorted_frames = basics.sorted_keys(members["0"]["axial"])
-        start = sorted_frames[0] # first frame (if user is changing start frame)
-        end = sorted_frames[len(sorted_frames)-1]
-
-        report.report_members(directory, frame)
-
-        # open file
-        file_to_open = directory + "/axial.html"
-        webbrowser.open(file_to_open)
-
+        operators.report_members()
         return {"FINISHED"}
 
 class WM_OT_report_frames(Operator):
-    bl_label = "report"
+    bl_label = "report_frames"
     bl_idname = "wm.report_frames"
     bl_description = "Generate report as html-format"
 
     def execute(self, context):
-        print_data("Generate report overview in html-format")
-
-        scene = bpy.context.scene
-        phaenotyp = scene.phaenotyp
-        data = scene["<Phaenotyp>"]
-        members = data["members"]
-        frame = bpy.context.scene.frame_current
-
-
-        # create folder
-        filepath = bpy.data.filepath
-        directory = os.path.dirname(filepath)
-
-        try:
-            os.mkdir(os.path.join(directory, "Phaenotyp-frames"))
-        except:
-            pass
-
-        directory += "/Phaenotyp-frames/"
-
-        report.copy_sorttable(directory)
-
-        sorted_frames = basics.sorted_keys(members["0"]["axial"])
-        start = sorted_frames[0] # first frame (if user is changing start frame)
-        end = sorted_frames[len(sorted_frames)-1]
-
-        report.report_frames(directory, start, end)
-
-        # open file
-        file_to_open = directory + "/max_sigma.html"
-        webbrowser.open(file_to_open)
-
+        operators.report_frames()
         return {"FINISHED"}
 
 class WM_OT_report_chromosomes(Operator):
-    bl_label = "report"
+    bl_label = "report_chromosomes"
     bl_idname = "wm.report_chromosomes"
     bl_description = "Generate report as html-format"
 
     def execute(self, context):
-        print_data("Generate report at frame in html-format")
-
-        scene = bpy.context.scene
-        phaenotyp = scene.phaenotyp
-        data = scene["<Phaenotyp>"]
-        members = data["members"]
-        frame = bpy.context.scene.frame_current
-
-
-        # create folder
-        filepath = bpy.data.filepath
-        directory = os.path.dirname(filepath)
-
-        try:
-            os.mkdir(os.path.join(directory, "Phaenotyp-chromosomes"))
-        except:
-            pass
-
-        directory += "/Phaenotyp-chromosomes/"
-
-        report.copy_sorttable(directory)
-        report.report_chromosomes(directory)
-
-        # open file
-        file_to_open = directory + "/index.html"
-        webbrowser.open(file_to_open)
-
+        operators.report_chromosomes()
         return {"FINISHED"}
 
 class WM_OT_report_tree(Operator):
-    bl_label = "report"
+    bl_label = "report_tree"
     bl_idname = "wm.report_tree"
     bl_description = "Generate report as html-format"
 
     def execute(self, context):
-        print_data("Generate report at frame in html-format")
-
-        scene = bpy.context.scene
-        phaenotyp = scene.phaenotyp
-        data = scene["<Phaenotyp>"]
-        members = data["members"]
-        frame = bpy.context.scene.frame_current
-
-
-        # create folder
-        filepath = bpy.data.filepath
-        directory = os.path.dirname(filepath)
-
-        try:
-            os.mkdir(os.path.join(directory, "Phaenotyp-tree"))
-        except:
-            pass
-
-        directory += "/Phaenotyp-tree/"
-
-        report.report_tree(directory)
-
-        # open file
-        file_to_open = directory + "/index.html"
-        webbrowser.open(file_to_open)
-
+        operators.report_tree()
         return {"FINISHED"}
 
 class WM_OT_reset(Operator):
@@ -1465,46 +583,11 @@ class WM_OT_reset(Operator):
     bl_description = "Reset Phaenotyp"
 
     def execute(self, context):
-        print_data("reset phaenotyp")
-
-        scene = bpy.context.scene
-        phaenotyp = scene.phaenotyp
-        data = scene["<Phaenotyp>"]
-
-        # copied from create_data
-        data["structure"] = None
-        data["supports"] = {}
-        data["members"] = {}
-        data["frames"] = {}
-        data["loads_v"] = {}
-        data["loads_e"] = {}
-        data["loads_f"] = {}
-
-        data["process"]["scipy_available"] = False
-        data["done"] = {}
-
-        data["ga_environment"] = {}
-        data["ga_individuals"] = {}
-
-        data["texts"] = []
-
-        # delete obj and meshes
-        basics.delete_obj_if_existing("<Phaenotyp>support")
-        basics.delete_mesh_if_existing("<Phaenotyp>support")
-
-        basics.delete_obj_if_existing("<Phaenotyp>member")
-        basics.delete_mesh_if_existing("<Phaenotyp>member")
-
-        # delete collection
-        basics.delete_col_if_existing("<Phaenotyp>")
-
-        # change view back to solid ...
-        basics.revert_vertex_colors()
-
+        operators.reset()
         return {"FINISHED"}
 
 class OBJECT_PT_Phaenotyp(Panel):
-    bl_label = "Phänotyp 0.1.4"
+    bl_label = "Phänotyp 0.1.5"
     bl_idname = "OBJECT_PT_custom_panel"
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
@@ -1697,9 +780,9 @@ class OBJECT_PT_Phaenotyp(Panel):
 
                             result = data["done"].get(str(frame))
                             if result:
-                                box_opt.operator("wm.optimize_1", text="Simple - sectional performance")
-                                box_opt.operator("wm.optimize_2", text="Utilization - sectional performance")
-                                box_opt.operator("wm.optimize_3", text="Complex - sectional performance")
+                                box_opt.operator("wm.optimize_simple", text="Simple - sectional performance")
+                                box_opt.operator("wm.optimize_utilization", text="Utilization - sectional performance")
+                                box_opt.operator("wm.optimize_complex", text="Complex - sectional performance")
                             else:
                                 box_opt.label(text="Run single analysis first.")
 
@@ -1709,7 +792,7 @@ class OBJECT_PT_Phaenotyp(Panel):
 
                             result = data["done"].get(str(frame))
                             if result:
-                                box_opt.operator("wm.topolgy_1", text="Decimate - topological performance")
+                                box_opt.operator("wm.topolgy_decimate", text="Decimate - topological performance")
                             else:
                                 box_opt.label(text="Run single analysis first.")
 
@@ -1890,9 +973,9 @@ classes = (
     WM_OT_calculate_single_frame,
     WM_OT_calculate_animation,
 
-    WM_OT_optimize_1,
-    WM_OT_optimize_2,
-    WM_OT_optimize_3,
+    WM_OT_optimize_simple,
+    WM_OT_optimize_utilization,
+    WM_OT_optimize_complex,
     WM_OT_topology_1,
 
     WM_OT_ga_start,

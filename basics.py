@@ -1,5 +1,39 @@
 import bpy
 
+def create_data():
+    data = bpy.context.scene.get("<Phaenotyp>")
+    if not data:
+        data = bpy.context.scene["<Phaenotyp>"] = {
+            "structure":{},
+            "supports":{},
+            "members":{},
+            "frames":{},
+            "loads_v":{},
+            "loads_e":{},
+            "loads_f":{},
+            "process":{},
+            "done":{},
+            "ga_environment":{},
+            "ga_individuals":{},
+            "texts":{}
+        }
+
+        data["structure"] = None
+        data["supports"] = {}
+        data["members"] = {}
+        data["frames"] = {}
+        data["loads_v"] = {}
+        data["loads_e"] = {}
+        data["loads_f"] = {}
+
+        data["process"]["scipy_available"] = False
+        data["done"] = {}
+
+        data["ga_environment"] = {}
+        data["ga_individuals"] = {}
+
+        data["texts"] = []
+
 # this function is sorting the keys of the dict
 # (to avoid iterating like 0,10,2,3 ...)
 def sorted_keys(dict):
