@@ -229,26 +229,26 @@ def create_members(structure_obj, members):
             node_group = bpy.data.node_groups['<Phaenotyp>Nodes']
 
         # mesh to curve
-        node_group.nodes.new(type="GeometryNodeMeshToCurve")
-        input = node_group.nodes['Mesh to Curve'].inputs['Mesh']
-        output = node_group.nodes['Group Input'].outputs['Geometry']
+        mtc = node_group.nodes.new(type="GeometryNodeMeshToCurve")
+        input = mtc.inputs[0] # mesh to curve, mesh
+        output = node_group.nodes[0].outputs[0] # group input, geometry
         node_group.links.new(input, output)
 
         # curve to mesh
-        node_group.nodes.new(type="GeometryNodeCurveToMesh")
-        input = node_group.nodes['Mesh to Curve'].outputs['Curve']
-        output = node_group.nodes['Curve to Mesh'].inputs['Curve']
+        ctm = node_group.nodes.new(type="GeometryNodeCurveToMesh")
+        input = mtc.outputs[0] # mesh to curve, curve
+        output = ctm.inputs[0] # curve to mesh, curve
         node_group.links.new(input, output)
 
         # profile to curve
-        node_group.nodes.new(type="GeometryNodeCurvePrimitiveCircle")
-        input = node_group.nodes['Curve to Mesh'].inputs['Profile Curve']
-        output = node_group.nodes['Curve Circle'].outputs['Curve']
+        cc = node_group.nodes.new(type="GeometryNodeCurvePrimitiveCircle")
+        input = ctm.inputs[1] # curve to mesh, profile curve
+        output = cc.outputs[0] # curve circe, curve
         node_group.links.new(input, output)
 
         # link to output
-        input = node_group.nodes['Curve to Mesh'].outputs['Mesh']
-        output = node_group.nodes['Group Output'].inputs['Geometry']
+        input = ctm.outputs[0] # curve to mesh, mesh
+        output = node_group.nodes[1].inputs[0] # group output, geometry
         node_group.links.new(input, output)
 
 
