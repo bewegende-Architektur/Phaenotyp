@@ -1,4 +1,6 @@
 import bpy
+import bmesh
+from queue import Queue
 
 def create_data():
     data = bpy.context.scene.get("<Phaenotyp>")
@@ -107,3 +109,44 @@ def revert_vertex_colors():
                     space.shading.type = 'SOLID'
                     space.shading.light = 'STUDIO'
                     space.shading.color_type = 'MATERIAL'
+
+# Answer from testure
+# https://blenderartists.org/t/get-amount-of-connected-geometry-within-a-mesh/1454143
+def get_amount_of_mesh_parts():
+    def get_connected_faces(face):
+        return { f for e in face.edges for f in e.link_faces if f != face }
+
+    bm = bmesh.from_edit_mesh(bpy.context.edit_object.data)
+
+    connected_groups = []
+    work_list = [f for f in bm.faces]
+    while work_list:
+
+        frontier = Queue()
+        frontier.put( work_list[0] )
+        this_group = [work_list[0]]
+        work_list.pop(0)
+
+        while not frontier.empty():
+            for next_face in get_connected_faces(frontier.get()):
+                if next_face not in this_group:
+                    frontier.put(next_face)
+                    this_group.append(next_face)
+                    work_list.remove(next_face)
+
+        connected_groups.append(this_group)
+
+    connected_groups = sorted(connected_groups, key=lambda x: len(x))
+
+    keep_faces = connected_groups[-1]
+
+    return len(connected_groups)
+
+# based on answer from ChameleonScales
+# https://blender.stackexchange.com/questions/169844/multi-line-text-box-with-popup-menu
+def popup(title = "Phaenotyp", lines=""):
+    myLines=lines
+    def draw(self, context):
+        for n in myLines:
+            self.layout.label(text=n)
+    bpy.context.window_manager.popup_menu(draw, title = title)

@@ -22,6 +22,15 @@ def set_structure():
     data["structure"] = bpy.context.active_object
     bpy.ops.object.mode_set(mode="EDIT")
 
+    amount_of_mesh_parts = basics.get_amount_of_mesh_parts()
+    if amount_of_mesh_parts > 1:
+        text = [
+            "The mesh is made of " + str(amount_of_mesh_parts) + " parts.",
+            "Is this on purpose or is their any loose geometry?",
+            "Be aware that all parts need to be fixed with supports.",
+            "Avoid flying objects."]
+        basics.popup(lines = text)
+
     # check for scipy
     calculation.check_scipy()
 
@@ -303,22 +312,33 @@ def calculate_single_frame():
     members = scene["<Phaenotyp>"]["members"]
     frame = bpy.context.scene.frame_current
 
-    # calculate new properties for each member
-    geometry.update_members_pre()
+    try:
+        # calculate new properties for each member
+        geometry.update_members_pre()
 
-    # created a truss object of PyNite and add to dict
-    truss = calculation.prepare_fea()
+        # created a truss object of PyNite and add to dict
+        truss = calculation.prepare_fea()
 
-    # run singlethread and get results
-    feas = calculation.run_st(truss, frame)
+        # run singlethread and get results
+        feas = calculation.run_st(truss, frame)
 
-    # wait for it and interweave results to data
-    calculation.interweave_results(feas, members)
+        # wait for it and interweave results to data
+        calculation.interweave_results(feas, members)
 
-    # calculate new visualization-mesh
-    geometry.update_members_post()
+        # calculate new visualization-mesh
+        geometry.update_members_post()
 
-    basics.view_vertex_colors()
+        basics.view_vertex_colors()
+    except Exception as exception:
+        print_data(exception.__class__.__name__)
+        text = [
+            "It looks like the structure is unstable.",
+            "Are there any loose parts?",
+            "",
+            "Maybe you can solve this by doing:",
+            "- Mesh | Clean up | Delete loose parts.",
+            "- Mesh | Clean up | Merge by distance."]
+        basics.popup(lines = text)
 
 def calculate_animation():
     scene = bpy.context.scene
@@ -337,28 +357,39 @@ def calculate_animation():
     # create list of trusses
     trusses = {}
 
-    for frame in range(start, end):
-        # update scene
-        bpy.context.scene.frame_current = frame
-        bpy.context.view_layer.update()
+    try:
+        for frame in range(start, end):
+            # update scene
+            bpy.context.scene.frame_current = frame
+            bpy.context.view_layer.update()
 
-        # calculate new properties for each member
-        geometry.update_members_pre()
+            # calculate new properties for each member
+            geometry.update_members_pre()
 
-        # created a truss object of PyNite and add to dict
-        truss = calculation.prepare_fea()
-        trusses[frame] = truss
+            # created a truss object of PyNite and add to dict
+            truss = calculation.prepare_fea()
+            trusses[frame] = truss
 
-    # run mp and get results
-    feas = calculation.run_mp(trusses)
+        # run mp and get results
+        feas = calculation.run_mp(trusses)
 
-    # wait for it and interweave results to data
-    calculation.interweave_results(feas, members)
+        # wait for it and interweave results to data
+        calculation.interweave_results(feas, members)
 
-    # calculate new visualization-mesh
-    geometry.update_members_post()
+        # calculate new visualization-mesh
+        geometry.update_members_post()
 
-    basics.view_vertex_colors()
+        basics.view_vertex_colors()
+    except Exception as exception:
+        print_data(exception.__class__.__name__)
+        text = [
+            "It looks like the structure is unstable.",
+            "Are there any loose parts?",
+            "",
+            "Maybe you can solve this by doing:",
+            "- Mesh | Clean up | Delete loose parts.",
+            "- Mesh | Clean up | Merge by distance."]
+        basics.popup(lines = text)
 
     # join progress
     progress.http.active = False
