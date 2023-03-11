@@ -1037,6 +1037,11 @@ def update_post(scene):
                 if id > 0: # to exlude basis
                     key.value = chromosome[id-1]*0.1
 
+@persistent
+def undo(scene):
+    operators.print_data("Reset because user hit undo.")
+    operators.reset()
+
 def register():
     from bpy.utils import register_class
     for cls in classes:
@@ -1044,6 +1049,7 @@ def register():
 
     bpy.types.Scene.phaenotyp = PointerProperty(type=phaenotyp_properties)
     bpy.app.handlers.frame_change_post.append(update_post)
+    bpy.app.handlers.undo_pre.append(undo)
 
 def unregister():
     from bpy.utils import unregister_class
@@ -1052,6 +1058,7 @@ def unregister():
 
     del bpy.types.Scene.phaenotyp
     bpy.app.handlers.frame_change_post.remove(update_post)
+    bpy.app.handlers.undo_pre.remove(undo)
 
 if __name__ == "__main__":
     register()
