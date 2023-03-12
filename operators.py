@@ -47,7 +47,6 @@ def set_structure():
 
                 amount_of_mesh_parts = basics.amount_of_mesh_parts()
                 amount_of_loose_parts = basics.amount_of_loose_parts()
-                amount_of_non_manifold = basics.amount_of_non_manifold()
 
                 if amount_of_mesh_parts > 1:
                     text = [
@@ -61,13 +60,6 @@ def set_structure():
                         "The mesh contains loose elements: " + str(amount_of_loose_parts),
                         "Should Phaenotyp try to fix this?"]
                     basics.popup_operator(lines=text, operator="wm.fix_structure", text="Delete loose parts")
-                    basics.to_be_fixed = "delete_loose"
-
-                elif amount_of_non_manifold > 0:
-                    text = [
-                        "The mesh contains manifold elements: " + str(amount_of_loose_parts),
-                        "Should Phaenotyp try to fix this?"]
-                    basics.popup_operator(lines=text, operator="wm.fix_structure", text="Delete non manifold")
                     basics.to_be_fixed = "delete_loose"
 
                 # everything looks ok

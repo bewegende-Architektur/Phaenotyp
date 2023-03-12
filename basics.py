@@ -152,13 +152,6 @@ def amount_of_loose_parts():
     bpy.ops.mesh.select_loose()
     return obj.data.total_vert_sel
 
-def amount_of_non_manifold():
-    obj = bpy.context.active_object
-
-    bpy.ops.mesh.select_all(action='DESELECT')
-    bpy.ops.mesh.select_non_manifold()
-    return obj.data.total_vert_sel
-
 # based on answer from ChameleonScales
 # https://blender.stackexchange.com/questions/169844/multi-line-text-box-with-popup-menu
 def popup(title = "Phaenotyp", lines=""):
