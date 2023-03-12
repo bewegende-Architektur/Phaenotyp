@@ -424,6 +424,15 @@ class WM_OT_set_structure(Operator):
         operators.set_structure()
         return {"FINISHED"}
 
+class WM_OT_fix_structure(Operator):
+    bl_label = "fix_structure"
+    bl_idname = "wm.fix_structure"
+    bl_description = "Is running delete loose parts and merge by distance."
+
+    def execute(self, context):
+        operators.fix_structure()
+        return {"FINISHED"}
+
 class WM_OT_set_support(Operator):
     bl_label = "set_support"
     bl_idname = "wm.set_support"
@@ -984,6 +993,7 @@ classes = (
     phaenotyp_properties,
 
     WM_OT_set_structure,
+    WM_OT_fix_structure,
     WM_OT_set_support,
     WM_OT_set_profile,
     WM_OT_set_load,

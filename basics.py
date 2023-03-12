@@ -110,9 +110,12 @@ def revert_vertex_colors():
                     space.shading.light = 'STUDIO'
                     space.shading.color_type = 'MATERIAL'
 
+# variable to pass all stuff that needs to be fixed
+to_be_fixed = None
+
 # Answer from testure
 # https://blenderartists.org/t/get-amount-of-connected-geometry-within-a-mesh/1454143
-def get_amount_of_mesh_parts():
+def amount_of_mesh_parts():
     def get_connected_faces(face):
         return { f for e in face.edges for f in e.link_faces if f != face }
 
@@ -142,11 +145,32 @@ def get_amount_of_mesh_parts():
 
     return len(connected_groups)
 
+def amount_of_loose_parts():
+    obj = bpy.context.active_object
+
+    bpy.ops.mesh.select_all(action='DESELECT')
+    bpy.ops.mesh.select_loose()
+    return obj.data.total_vert_sel
+
+def amount_of_non_manifold():
+    obj = bpy.context.active_object
+
+    bpy.ops.mesh.select_all(action='DESELECT')
+    bpy.ops.mesh.select_non_manifold()
+    return obj.data.total_vert_sel
+
 # based on answer from ChameleonScales
 # https://blender.stackexchange.com/questions/169844/multi-line-text-box-with-popup-menu
 def popup(title = "Phaenotyp", lines=""):
-    myLines=lines
     def draw(self, context):
-        for n in myLines:
-            self.layout.label(text=n)
+        for line in lines:
+            self.layout.label(text=line)
+    bpy.context.window_manager.popup_menu(draw, title = title)
+
+def popup_operator(title = "Phaenotyp", lines="", operator=None, text=""):
+    def draw(self, context):
+        for line in lines:
+            self.layout.label(text=line)
+        self.layout.separator()
+        self.layout.operator(operator, text=text)
     bpy.context.window_manager.popup_menu(draw, title = title)

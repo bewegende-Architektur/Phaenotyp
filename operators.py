@@ -10,29 +10,111 @@ def print_data(text):
     print("Phaenotyp |", text)
 
 def set_structure():
-    # crete / recreate collection
-    basics.delete_col_if_existing("<Phaenotyp>")
-    collection = bpy.data.collections.new("<Phaenotyp>")
-    bpy.context.scene.collection.children.link(collection)
+    context = bpy.context
+    scene = context.scene
 
-    basics.create_data()
-    scene = bpy.context.scene
-    data = scene["<Phaenotyp>"]
+    selected_objects = context.selected_objects
+    obj = context.active_object
 
-    data["structure"] = bpy.context.active_object
-    bpy.ops.object.mode_set(mode="EDIT")
+    # more than two objects
+    if len(selected_objects) > 1:
+        if obj.type == 'CURVE':
+            text = ["The selection is of typ curve.",
+                "Should Phaenotyp try to convert the selection to mesh?"]
+            basics.popup_operator(lines=text, operator="wm.fix_structure", text="Convert curves to mesh")
+            basics.to_be_fixed = "curve_to_mesh"
 
-    amount_of_mesh_parts = basics.get_amount_of_mesh_parts()
-    if amount_of_mesh_parts > 1:
-        text = [
-            "The mesh is made of " + str(amount_of_mesh_parts) + " parts.",
-            "Is this on purpose or is their any loose geometry?",
-            "Be aware that all parts need to be fixed with supports.",
-            "Avoid flying objects."]
-        basics.popup(lines = text)
+        else:
+            text = ["Select multiple curves or a mesh only."]
+            basics.popup(lines = text)
 
-    # check for scipy
-    calculation.check_scipy()
+    # one object
+    else:
+        # mesh or curve
+        if obj.type not in ['CURVE', 'MESH']:
+            text = ["Select multiple curves or a mesh only."]
+            basics.popup(lines = text)
+
+        else:
+            if obj.type == 'CURVE':
+                text = ["The selection is of typ curve.",
+                    "Should Phaenotyp try to convert the selection to mesh?"]
+                basics.popup_operator(lines=text, operator="wm.fix_structure", text="Convert curve to mesh")
+                basics.to_be_fixed = "curve_to_mesh"
+
+            else:
+                bpy.ops.object.mode_set(mode="EDIT")
+
+                amount_of_mesh_parts = basics.amount_of_mesh_parts()
+                amount_of_loose_parts = basics.amount_of_loose_parts()
+                amount_of_non_manifold = basics.amount_of_non_manifold()
+
+                if amount_of_mesh_parts > 1:
+                    text = [
+                        "The mesh contains " + str(amount_of_mesh_parts) + " parts.",
+                        "Should Phaenotyp try to fix this?"]
+                    basics.popup_operator(lines=text, operator="wm.fix_structure", text="Delete or seperate loose parts")
+                    basics.to_be_fixed = "seperate_by_loose"
+
+                elif amount_of_loose_parts > 0:
+                    text = [
+                        "The mesh contains loose elements: " + str(amount_of_loose_parts),
+                        "Should Phaenotyp try to fix this?"]
+                    basics.popup_operator(lines=text, operator="wm.fix_structure", text="Delete loose parts")
+                    basics.to_be_fixed = "delete_loose"
+
+                elif amount_of_non_manifold > 0:
+                    text = [
+                        "The mesh contains manifold elements: " + str(amount_of_loose_parts),
+                        "Should Phaenotyp try to fix this?"]
+                    basics.popup_operator(lines=text, operator="wm.fix_structure", text="Delete non manifold")
+                    basics.to_be_fixed = "delete_loose"
+
+                # everything looks ok
+                else:
+                    # crete / recreate collection
+                    basics.delete_col_if_existing("<Phaenotyp>")
+                    collection = bpy.data.collections.new("<Phaenotyp>")
+                    bpy.context.scene.collection.children.link(collection)
+
+                    basics.create_data()
+
+                    basics.to_be_fixed = None
+                    data = scene["<Phaenotyp>"]
+                    data["structure"] = obj
+
+                    # check for scipy
+                    calculation.check_scipy()
+
+def fix_structure():
+    if basics.to_be_fixed == "seperate_by_loose":
+        print_data("Seperate by loose parts")
+        bpy.ops.object.mode_set(mode='EDIT')
+        bpy.ops.mesh.select_all(action='SELECT')
+        bpy.ops.mesh.remove_doubles()
+        bpy.ops.mesh.separate(type='LOOSE')
+        bpy.ops.object.mode_set(mode='OBJECT')
+
+    elif basics.to_be_fixed == "curve_to_mesh":
+        print_data("Try to convert the curves to mesh")
+        bpy.ops.object.mode_set(mode="OBJECT")
+        bpy.ops.object.join()
+        bpy.ops.object.convert(target='MESH')
+        bpy.ops.object.mode_set(mode='EDIT')
+        bpy.ops.mesh.select_all(action='SELECT')
+        bpy.ops.mesh.remove_doubles()
+        bpy.ops.object.mode_set(mode='OBJECT')
+
+    elif basics.to_be_fixed == "delete_loose":
+        print_data("Delete loose parts")
+        bpy.ops.object.mode_set(mode="EDIT")
+        bpy.ops.mesh.delete_loose()
+        bpy.ops.mesh.select_all(action='SELECT')
+        bpy.ops.mesh.remove_doubles()
+        bpy.ops.object.mode_set(mode='OBJECT')
+
+    else:
+        print_data("No idea to fix this")
 
 def set_support():
     context = bpy.context
