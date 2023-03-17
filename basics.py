@@ -113,37 +113,40 @@ def revert_vertex_colors():
 # variable to pass all stuff that needs to be fixed
 to_be_fixed = None
 
-# Answer from testure
-# https://blenderartists.org/t/get-amount-of-connected-geometry-within-a-mesh/1454143
+# Answer from BlackCutpoint
+# https://blender.stackexchange.com/questions/75332/how-to-find-the-number-of-loose-parts-with-blenders-python-api
 def amount_of_mesh_parts():
-    def get_connected_faces(face):
-        return { f for e in face.edges for f in e.link_faces if f != face }
+    obj = bpy.context.object
+    mesh = obj.data
+    paths = {v.index:set() for v in mesh.vertices}
 
-    bm = bmesh.from_edit_mesh(bpy.context.edit_object.data)
+    for e in mesh.edges:
+        paths[e.vertices[0]].add(e.vertices[1])
+        paths[e.vertices[1]].add(e.vertices[0])
 
-    connected_groups = []
-    work_list = [f for f in bm.faces]
-    while work_list:
+    parts = []
 
-        frontier = Queue()
-        frontier.put( work_list[0] )
-        this_group = [work_list[0]]
-        work_list.pop(0)
+    while True:
+        try:
+            i=next(iter(paths.keys()))
+        except StopIteration:
+            break
 
-        while not frontier.empty():
-            for next_face in get_connected_faces(frontier.get()):
-                if next_face not in this_group:
-                    frontier.put(next_face)
-                    this_group.append(next_face)
-                    work_list.remove(next_face)
+        part = {i}
+        cur = {i}
 
-        connected_groups.append(this_group)
+        while True:
+            eligible = {sc for sc in cur if sc in paths}
+            if not eligible:
+                break
 
-    connected_groups = sorted(connected_groups, key=lambda x: len(x))
+            cur = {ve for sc in eligible for ve in paths[sc]}
+            part.update(cur)
+            for key in eligible: paths.pop(key)
 
-    keep_faces = connected_groups[-1]
+        parts.append(part)
 
-    return len(connected_groups)
+    return len(parts)
 
 def amount_of_loose_parts():
     obj = bpy.context.active_object
