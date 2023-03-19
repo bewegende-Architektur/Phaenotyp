@@ -553,7 +553,7 @@ def optimize_complex():
 
     basics.view_vertex_colors()
 
-def topology_1():
+def topolgy_decimate():
     print_data("optimization 3 - Decimate topological performance")
     calculation.decimate_topology()
 
