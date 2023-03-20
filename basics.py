@@ -151,6 +151,7 @@ def amount_of_mesh_parts():
 def amount_of_loose_parts():
     obj = bpy.context.active_object
 
+    bpy.ops.mesh.select_mode(use_extend=False, use_expand=False, type='VERT')
     bpy.ops.mesh.select_all(action='DESELECT')
     bpy.ops.mesh.select_loose()
     return obj.data.total_vert_sel
