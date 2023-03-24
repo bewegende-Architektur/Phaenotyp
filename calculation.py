@@ -1,10 +1,11 @@
 import bpy
 import bmesh
 from PyNite import FEModel3D
-from numpy import array, empty, append, poly1d, polyfit
+from numpy import array, empty, append, poly1d, polyfit, linalg, zeros, intersect1d
 from phaenotyp import basics, material, progress
 from math import sqrt
 from math import tanh
+from math import pi
 
 from subprocess import Popen, PIPE
 import sys
@@ -26,6 +27,166 @@ def check_scipy():
 
     except:
         data["scipy_available"] = False
+
+# run force distribution single_frame
+def run_fd():
+    scene = bpy.context.scene
+    data = scene["<Phaenotyp>"]
+    members = scene["<Phaenotyp>"]["members"]
+    obj = data["structure"]
+    vertices = obj.data.vertices
+    edge_keys = obj.data.edge_keys
+    supports = data['supports']
+    loads = data['loads_v']
+    frame = bpy.context.scene.frame_current
+
+    # based on:
+    # Oliver Natt
+    # Physik mit Python
+    # Simulationen, Visualisierungen und Animationen von Anfang an
+    # 1. Auflage, Springer Spektrum, 2020
+    # https://pyph.de/1/1/index.php?name=code&kap=5&pgm=4
+
+    # amount of dimensions
+    dim = 3
+
+    # Lege die Positionen der Punkte fest [m].
+    points = []
+    for vertex in vertices:
+        co = vertex.co
+
+        x = co[0] * 100 # convert to cm for calculation
+        y = co[1] * 100 # convert to cm for calculation
+        z = co[2] * 100 # convert to cm for calculation
+
+        pos = [x,y,z]
+        points.append(pos)
+
+    punkte = array(points)
+
+    # Erzeuge eine Liste mit den Indizes der Stützpunkte.
+    fixed = []
+    for id, support in supports.items():
+        id = int(id)
+        fixed.append(id)
+
+    idx_stuetz = fixed # kann man gleich umbennen
+
+    # Jeder Stab verbindet genau zwei Punkte. Wir legen dazu die
+    # Indizes der zugehörigen Punkte in einem Array ab.
+    edges = []
+    lenghtes = []
+    for edge_key in edge_keys:
+        v_0 = edge_key[0]
+        v_1 = edge_key[1]
+
+        key = [v_0, v_1]
+        edges.append(key)
+
+        v_0_co = vertices[v_0].co
+        v_1_co = vertices[v_1].co
+        dist_v = v_1_co - v_0_co
+        dist = dist_v.length * 100 # convert to cm for calculation
+        lenghtes.append(dist)
+
+    staebe = array(edges)
+
+    # Lege die äußere Kraft fest, die auf jeden Punkt wirkt [N].
+    # Für die Stützpunkte setzen wir diese Kraft zunächst auf 0.
+    # Diese wird später berechnet.
+    forces = []
+    for vertex in vertices:
+        id = str(vertex.index)
+        if id in loads:
+            x = loads[id][0]
+            y = loads[id][1]
+            z = loads[id][2]
+
+        # Hier noch prüfen, ob keine Last auf Support liegt?
+
+        else:
+            x = 0
+            y = 0
+            z = 0
+
+        load = [x,y,z]
+        forces.append(load)
+
+    F_ext = array(forces)
+
+    # Definiere die Anzahl der Punkte, Stäbe etc.
+    n_punkte = punkte.shape[0]
+    n_staebe = staebe.shape[0]
+    n_stuetz = len(idx_stuetz)
+    n_knoten = n_punkte - n_stuetz
+    n_gleichungen = n_knoten * dim
+
+    # Erzeuge eine Liste mit den Indizes der Knoten.
+    idx_knoten = list(set(range(n_punkte)) - set(idx_stuetz))
+
+
+    def einheitsvektor(i_punkt, i_stab):
+        """Gibt den Einheitsvektor zurück, der vom Punkt i_punkt
+        entlang des Stabes mit dem Index i_stab zeigt. """
+        i1, i2 = staebe[i_stab]
+        if i_punkt == i1:
+            vec = punkte[i2] - punkte[i1]
+        else:
+            vec = punkte[i1] - punkte[i2]
+        return vec / linalg.norm(vec)
+
+
+    # Stelle das Gleichungssystem für die Kräfte auf.
+    A = zeros((n_gleichungen, n_gleichungen))
+    for i, stab in enumerate(staebe):
+        for k in intersect1d(stab, idx_knoten):
+            n = idx_knoten.index(k)
+            A[n * dim:(n + 1) * dim, i] = einheitsvektor(k, i)
+
+    # Löse das Gleichungssystem A @ F = -F_ext nach den Kräften F.
+    b = -F_ext[idx_knoten].reshape(-1)
+    F = linalg.solve(A, b)
+
+    # Berechne die äußeren Kräfte.
+    for i, stab in enumerate(staebe):
+        for k in intersect1d(stab, idx_stuetz):
+            F_ext[k] -= F[i] * einheitsvektor(k, i)
+
+    # auf Basis von:
+    # https://www.johannes-strommer.com/rechner/knicken-von-staeben-euler/
+    '''
+    Druck­spannung = F ÷ A (N/mm²)
+    FK	Kraft, bei der der Stab seit­lich aus­knickt; in kN
+    S	Sicherheit gegen Knicken; S = FK ÷ F
+    '''
+
+    for id in range(len(staebe)):
+        member = members[str(id)]
+
+        # shorten
+        I = member["Iy"][str(frame)]
+        A = member["A"][str(frame)]
+        E = member["E"]
+
+        force = F[id]
+        L = lenghtes[id]
+
+        # Zweiter Eulerscher Knickfall: s = L
+        FK = pi**2 * E * I / L**2
+        sigma = force / A # vorhande Druckspannung
+        S = FK / force
+        utilization = abs(FK) / abs(force)
+
+        member["axial"][str(frame)] = force
+        member["sigma"][str(frame)] = sigma
+        member["utilization"][str(frame)] = utilization
+
+        if S < 2.5:
+            member["overstress"][str(frame)] = True
+        else:
+            member["overstress"][str(frame)] = False
+
+    data["done"][str(frame)] = True
 
 def prepare_fea():
     scene = bpy.context.scene

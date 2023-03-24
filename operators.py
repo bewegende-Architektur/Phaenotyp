@@ -386,33 +386,46 @@ def calculate_single_frame():
     members = scene["<Phaenotyp>"]["members"]
     frame = bpy.context.scene.frame_current
 
-    try:
+    # if PyNite is used
+    if phaenotyp.calculation_type != "force_distribution":
+        try:
+            # calculate new properties for each member
+            geometry.update_members_pre()
+
+            # created a truss object of PyNite and add to dict
+            truss = calculation.prepare_fea()
+
+            # run singlethread and get results
+            feas = calculation.run_st(truss, frame)
+
+            # wait for it and interweave results to data
+            calculation.interweave_results(feas, members)
+
+            # calculate new visualization-mesh
+            geometry.update_members_post()
+
+            basics.view_vertex_colors()
+        except Exception as exception:
+            print_data(exception.__class__.__name__)
+            text = [
+                "It looks like the structure is unstable.",
+                "Are there any loose parts?",
+                "",
+                "Maybe you can solve this by doing:",
+                "- Mesh | Clean up | Delete loose parts.",
+                "- Mesh | Clean up | Merge by distance."]
+            basics.popup(lines = text)
+
+    else:
         # calculate new properties for each member
         geometry.update_members_pre()
 
-        # created a truss object of PyNite and add to dict
-        truss = calculation.prepare_fea()
-
-        # run singlethread and get results
-        feas = calculation.run_st(truss, frame)
-
-        # wait for it and interweave results to data
-        calculation.interweave_results(feas, members)
+        calculation.run_fd()
 
         # calculate new visualization-mesh
         geometry.update_members_post()
 
         basics.view_vertex_colors()
-    except Exception as exception:
-        print_data(exception.__class__.__name__)
-        text = [
-            "It looks like the structure is unstable.",
-            "Are there any loose parts?",
-            "",
-            "Maybe you can solve this by doing:",
-            "- Mesh | Clean up | Delete loose parts.",
-            "- Mesh | Clean up | Merge by distance."]
-        basics.popup(lines = text)
 
 def calculate_animation():
     scene = bpy.context.scene

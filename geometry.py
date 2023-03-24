@@ -159,7 +159,9 @@ def create_members(structure_obj, members):
     col = bpy.data.collections.get("<Phaenotyp>")
     col.objects.link(obj)
     bpy.context.view_layer.objects.active = obj
-    frame = bpy.context.scene.frame_current
+    scene = bpy.context.scene
+    phaenotyp = scene.phaenotyp
+    frame = scene.frame_current
 
     verts = []
     edges = []
@@ -174,7 +176,10 @@ def create_members(structure_obj, members):
     len_verts = 0
 
     for id, member in members.items():
-        member["mesh_vertex_ids"] = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        if phaenotyp.calculation_type != "force_distribution":
+            member["mesh_vertex_ids"] = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        else:
+            member["mesh_vertex_ids"] = [0, 0]
 
         id = int(id)
 
@@ -187,28 +192,44 @@ def create_members(structure_obj, members):
         vertex_1_co = mat @ structure_obj_vertices[vertex_1_id].co
 
         # create vertices
-        for i in range(11):
-            pos = (vertex_0_co*(i) + vertex_1_co*(10-i))*0.1
+        if phaenotyp.calculation_type != "force_distribution":
+            for i in range(11):
+                pos = (vertex_0_co*(i) + vertex_1_co*(10-i))*0.1
 
-            v = Vector(pos)
-            verts.append(v)
+                v = Vector(pos)
+                verts.append(v)
 
-            member["mesh_vertex_ids"][i] = len_verts+i
+                member["mesh_vertex_ids"][i] = len_verts+i
 
-        # add edges
-        edges.append([0 + len_verts, 1 + len_verts])
-        edges.append([1 + len_verts, 2 + len_verts])
-        edges.append([2 + len_verts, 3 + len_verts])
-        edges.append([3 + len_verts, 4 + len_verts])
-        edges.append([4 + len_verts, 5 + len_verts])
-        edges.append([5 + len_verts, 6 + len_verts])
-        edges.append([6 + len_verts, 7 + len_verts])
-        edges.append([7 + len_verts, 8 + len_verts])
-        edges.append([8 + len_verts, 9 + len_verts])
-        edges.append([9 + len_verts, 10 + len_verts])
+            # add edges
+            edges.append([0 + len_verts, 1 + len_verts])
+            edges.append([1 + len_verts, 2 + len_verts])
+            edges.append([2 + len_verts, 3 + len_verts])
+            edges.append([3 + len_verts, 4 + len_verts])
+            edges.append([4 + len_verts, 5 + len_verts])
+            edges.append([5 + len_verts, 6 + len_verts])
+            edges.append([6 + len_verts, 7 + len_verts])
+            edges.append([7 + len_verts, 8 + len_verts])
+            edges.append([8 + len_verts, 9 + len_verts])
+            edges.append([9 + len_verts, 10 + len_verts])
 
-        # update counter
-        len_verts += 11
+            # update counter
+            len_verts += 11
+
+        else:
+            v_0 = Vector(vertex_0_co)
+            verts.append(v_0)
+            member["mesh_vertex_ids"][0] = len_verts
+
+            v_1 = Vector(vertex_1_co)
+            verts.append(v_1)
+            member["mesh_vertex_ids"][1] = len_verts+1
+
+            # add edges
+            edges.append([0 + len_verts, 1 + len_verts])
+
+            # update counter
+            len_verts += 2
 
     mesh.from_pydata(verts, edges, faces)
 
@@ -337,18 +358,68 @@ def update_members_post():
         result = member[phaenotyp.forces]
 
         # move vertices and apply color
-        for i in range(11):
-            position = member["deflection"][str(frame)][i]
-            f = phaenotyp.viz_deflection * 0.01
-            x = position[0]*(1-f) + member["initial_positions"][str(frame)][10-i][0]*f
-            y = position[1]*(1-f) + member["initial_positions"][str(frame)][10-i][1]*f
-            z = position[2]*(1-f) + member["initial_positions"][str(frame)][10-i][2]*f
-            vertices[mesh_vertex_ids[i]].co = (x,y,z)
+        if phaenotyp.calculation_type != "force_distribution":
+            for i in range(11):
+                position = member["deflection"][str(frame)][i]
+                f = phaenotyp.viz_deflection * 0.01
+                x = position[0]*(1-f) + member["initial_positions"][str(frame)][10-i][0]*f
+                y = position[1]*(1-f) + member["initial_positions"][str(frame)][10-i][1]*f
+                z = position[2]*(1-f) + member["initial_positions"][str(frame)][10-i][2]*f
+                vertices[mesh_vertex_ids[i]].co = (x,y,z)
 
-            # if utilization in viz
-            if phaenotyp.forces == "utilization":
+                # if utilization in viz
+                if phaenotyp.forces == "utilization":
+                    # red or blue?
+                    force = result[str(frame)] - 1
+                    if force > 0:
+                        h = 0
+                    else:
+                        h = 0.666
+
+                    # define s
+                    s = 1 * abs(force) * phaenotyp.viz_scale * 0.01
+
+                    # define v
+                    if member["overstress"][str(frame)] == True:
+                        v = 0.25
+                    else:
+                        v = 1.0
+
+                # for 11 entries
+                else:
+                    # for all forces with 10 entries
+                    # 10th value is the same like 11th entrie
+                    # it should be ok for the viz only
+                    # report is showing all entries
+                    if len(result[str(frame)]) < 11 and i == 10:
+                        force = result[str(frame)][9]
+                    else:
+                        force = result[str(frame)][i]
+
+                    # red or blue?
+                    if force > 0:
+                        h = 0
+                    else:
+                        h = 0.666
+
+                    # define s
+                    s = 1 * abs(force) * phaenotyp.viz_scale * 0.01
+
+                    # define v
+                    if member["overstress"][str(frame)] == True:
+                        v = 0.25
+                    else:
+                        v = 1.0
+
+                c.hsv = h,s,v
+                attribute.data[mesh_vertex_ids[i]].color = [c.r, c.g, c.b, 1.0]
+
+        # for force disbribution
+        else:
+            for i in range(2):
                 # red or blue?
-                force = result[str(frame)] - 1
+                force = result[str(frame)]
+                print(force)
                 if force > 0:
                     h = 0
                 else:
@@ -363,34 +434,8 @@ def update_members_post():
                 else:
                     v = 1.0
 
-            # for 11 entries
-            else:
-                # for all forces with 10 entries
-                # 10th value is the same like 11th entrie
-                # it should be ok for the viz only
-                # report is showing all entries
-                if len(result[str(frame)]) < 11 and i == 10:
-                    force = result[str(frame)][9]
-                else:
-                    force = result[str(frame)][i]
-
-                # red or blue?
-                if force > 0:
-                    h = 0
-                else:
-                    h = 0.666
-
-                # define s
-                s = 1 * abs(force) * phaenotyp.viz_scale * 0.01
-
-                # define v
-                if member["overstress"][str(frame)] == True:
-                    v = 0.25
-                else:
-                    v = 1.0
-
-            c.hsv = h,s,v
-            attribute.data[mesh_vertex_ids[i]].color = [c.r, c.g, c.b, 1.0]
+                c.hsv = h,s,v
+                attribute.data[mesh_vertex_ids[i]].color = [c.r, c.g, c.b, 1.0]
 
 def create_loads(structure_obj, loads_v, loads_e, loads_f):
 

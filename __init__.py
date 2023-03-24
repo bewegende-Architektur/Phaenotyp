@@ -36,6 +36,7 @@ class phaenotyp_properties(PropertyGroup):
         description="Calculation types",
         items=[
                 ("geometrical", "Geometrical", ""),
+                ("force_distribution", "Force distribution", ""),
                 ("first_order", "First order", ""),
                 ("first_order_linear", "First order linear", ""),
                 ("second_order", "Second order", "")
@@ -376,7 +377,18 @@ class phaenotyp_properties(PropertyGroup):
         max = 250
         )
 
-    forces: EnumProperty(
+    forces_fd: EnumProperty(
+        name="forces:",
+        description="Force types",
+        items=[
+                ("sigma", "Sigma", ""),
+                ("axial", "Axial", ""),
+                ("utilization", "Utilization", "")
+               ],
+        update=viz_update
+        )
+
+    forces_pn: EnumProperty(
         name="forces:",
         description="Force types",
         items=[
@@ -661,20 +673,21 @@ class OBJECT_PT_Phaenotyp(Panel):
             box_support = layout.box()
             box_support.label(text="Support:")
 
-            col = box_support.column()
-            split = col.split()
-            split.prop(phaenotyp, "loc_x", text="loc x")
-            split.prop(phaenotyp, "rot_x", text="rot x")
+            if phaenotyp.calculation_type != "force_distribution":
+                col = box_support.column()
+                split = col.split()
+                split.prop(phaenotyp, "loc_x", text="loc x")
+                split.prop(phaenotyp, "rot_x", text="rot x")
 
-            col = box_support.column()
-            split = col.split()
-            split.prop(phaenotyp, "loc_y", text="loc y")
-            split.prop(phaenotyp, "rot_y", text="rot y")
+                col = box_support.column()
+                split = col.split()
+                split.prop(phaenotyp, "loc_y", text="loc y")
+                split.prop(phaenotyp, "rot_y", text="rot y")
 
-            col = box_support.column()
-            split = col.split()
-            split.prop(phaenotyp, "loc_z", text="loc z")
-            split.prop(phaenotyp, "rot_z", text="rot z")
+                col = box_support.column()
+                split = col.split()
+                split.prop(phaenotyp, "loc_z", text="loc z")
+                split.prop(phaenotyp, "rot_z", text="rot z")
 
             box_support.operator("wm.set_support", text="Set")
 
@@ -926,7 +939,10 @@ class OBJECT_PT_Phaenotyp(Panel):
 
                         box_viz = layout.box()
                         box_viz.label(text="Vizualisation:")
-                        box_viz.prop(phaenotyp, "forces", text="Force")
+                        if phaenotyp.calculation_type == "force_distribution":
+                            box_viz.prop(phaenotyp, "forces_fd", text="Force")
+                        else:
+                            box_viz.prop(phaenotyp, "forces_pn", text="Force")
 
                         # sliders to scale forces and deflection
                         box_viz.prop(phaenotyp, "viz_scale", text="scale", slider=True)
