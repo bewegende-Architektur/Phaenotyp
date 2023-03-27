@@ -304,6 +304,15 @@ def prepare_fea_fd():
         v_0 = vertices[vertex_0_id].co
         v_1 = vertices[vertex_1_id].co
 
+        # save initial_positions to mix with deflection
+        initial_positions = []
+        for position in [v_0, v_1]:
+            x = position[0]
+            y = position[1]
+            z = position[2]
+            initial_positions.append([x,y,z])
+        member["initial_positions"][str(frame)] = initial_positions
+
         # add self weight
         kg_A = member["kg_A"][str(frame)]
         kN = kg_A * -0.0000981

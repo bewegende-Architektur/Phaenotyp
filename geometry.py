@@ -598,6 +598,12 @@ def update_members_post():
             result = member[phaenotyp.forces_fd]
 
             for i in range(2):
+                # apply transformation
+                x = member["initial_positions"][str(frame)][i][0]
+                y = member["initial_positions"][str(frame)][i][1]
+                z = member["initial_positions"][str(frame)][i][2]
+                vertices[mesh_vertex_ids[i]].co = (x,y,z)
+
                 # red or blue?
                 force = result[str(frame)]
 

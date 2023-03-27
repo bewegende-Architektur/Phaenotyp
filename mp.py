@@ -1,5 +1,6 @@
 # coding-utf8
 from multiprocessing import Manager, Value, cpu_count, Pool
+from numpy import array, empty, append, poly1d, polyfit, linalg, zeros, intersect1d
 from math import sqrt
 from math import tanh
 
@@ -45,7 +46,7 @@ def import_trusses():
     return imported_trusses
 
 # run one single fea and save result into feas (multiprocessing manager dict)
-def run_fea(scipy_available, calculation_type, feas, truss, frame):
+def run_fea_pn(scipy_available, calculation_type, feas, truss, frame):
     # the variables truss, and frame are passed to mp
     # this variables can not be returned with multiprocessing
     # instead of this a dict with multiprocessing.Manager is created
@@ -78,6 +79,63 @@ def run_fea(scipy_available, calculation_type, feas, truss, frame):
     print_data(text)
     sys.stdout.flush()
 
+def run_fea_fd(feas, truss, frame):
+    # based on:
+    # Oliver Natt
+    # Physik mit Python
+    # Simulationen, Visualisierungen und Animationen von Anfang an
+    # 1. Auflage, Springer Spektrum, 2020
+    # https://pyph.de/1/1/index.php?name=code&kap=5&pgm=4
+
+    # amount of dimensions
+    dim = 3
+
+    points_array = truss[0]
+    supports_ids = truss[1]
+    edges_array = truss[2]
+    forces_array = truss[3]
+
+    # amount of points, edges, supports, verts
+    n_points_array = points_array.shape[0]
+    n_edges_array = edges_array.shape[0]
+    n_supports = len(supports_ids)
+    n_verts = n_points_array - n_supports
+    n_equation = n_verts * dim
+
+    # create list of indicies
+    verts_id = list(set(range(n_points_array)) - set(supports_ids))
+
+    def vector(vertices, edge):
+        v_0, v_1 = edges_array[edge]
+        if vertices == v_0:
+            vec = points_array[v_1] - points_array[v_0]
+        else:
+            vec = points_array[v_0] - points_array[v_1]
+        return vec / linalg.norm(vec)
+
+
+    # create equation
+    truss = zeros((n_equation, n_equation))
+    for id, edge in enumerate(edges_array):
+        for k in intersect1d(edge, verts_id):
+            n = verts_id.index(k)
+            truss[n * dim:(n + 1) * dim, id] = vector(k, id)
+
+    # Löse das Gleichungssystem A @ F = -forces_array nach den Kräften F.
+    b = -forces_array[verts_id].reshape(-1)
+    F = linalg.solve(truss, b)
+
+    # Berechne die äußeren Kräfte.
+    for id, edge in enumerate(edges_array):
+        for k in intersect1d(edge, supports_ids):
+            forces_array[k] -= F[id] * vector(k, id)
+
+    feas[str(frame)] = F
+
+    text = calculation_type + " multiprocessing job for frame " + str(frame) + " done"
+    print_data(text)
+    sys.stdout.flush()
+
 def mp_pool():
     global scipy_available
 
@@ -91,8 +149,16 @@ def mp_pool():
     '''
 
     pool = Pool(processes=cores)
-    for frame, truss in imported_trusses.items():
-        pool.apply_async(run_fea, args=(scipy_available, calculation_type, feas, truss, frame,))
+
+    # for PyNite
+    if calculation_type != "force_distribution":
+        for frame, truss in imported_trusses.items():
+            pool.apply_async(run_fea_pn, args=(scipy_available, calculation_type, feas, truss, frame,))
+
+    # for force distribution
+    else:
+        for frame, truss in imported_trusses.items():
+            pool.apply_async(run_fea_fd, args=(feas, truss, frame,))
 
     pool.close()
     pool.join()

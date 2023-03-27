@@ -17,6 +17,18 @@ def generate_basis():
     environment = data["ga_environment"]
     individuals = data["ga_individuals"]
 
+    # for PyNite
+    if phaenotyp.calculation_type != "force_distribution":
+        prepare_fea = prepare_fea_pn
+        run_st = calculation.run_st_pn
+        interweave_results = interweave_results_pn
+
+    # for force distribuion
+    else:
+        prepare_fea = calculation.prepare_fea_fd
+        run_st = calculation.run_st_fd
+        interweave_results = calculation.interweave_results_fd
+
     # create list of trusses
     trusses = {}
 
@@ -36,7 +48,7 @@ def generate_basis():
     geometry.update_members_pre()
 
     # created a truss object of PyNite and add to dict
-    truss = calculation.prepare_fea()
+    truss = prepare_fea()
     trusses[0] = truss
 
     if phaenotyp.calculation_type != "geometrical":
@@ -44,7 +56,7 @@ def generate_basis():
         feas = calculation.run_mp(trusses)
 
         # wait for it and interweave results to data
-        calculation.interweave_results(feas, members)
+        interweave_results(feas, members)
 
 def create_indivdual(chromosome, parent_1, parent_2):
     scene = bpy.context.scene
@@ -291,6 +303,18 @@ def bruteforce(chromosomes):
     # create list of trusses
     trusses = {}
 
+    # for PyNite
+    if phaenotyp.calculation_type != "force_distribution":
+        prepare_fea = prepare_fea_pn
+        run_st = calculation.run_st_pn
+        interweave_results = interweave_results_pn
+
+    # for force distribuion
+    else:
+        prepare_fea = calculation.prepare_fea_fd
+        run_st = calculation.run_st_fd
+        interweave_results = calculation.interweave_results_fd
+
     # for progress
     end = bpy.context.scene.frame_end
 
@@ -310,7 +334,7 @@ def bruteforce(chromosomes):
         geometry.update_members_pre()
 
         # created a truss object of PyNite and add to dict
-        truss = calculation.prepare_fea()
+        truss = prepare_fea()
         trusses[frame] = truss
 
     if phaenotyp.calculation_type != "geometrical":
@@ -318,7 +342,7 @@ def bruteforce(chromosomes):
         feas = calculation.run_mp(trusses)
 
         # wait for it and interweave results to data
-        calculation.interweave_results(feas, members)
+        interweave_results(feas, members)
 
 def create_initial_individuals(start, end):
     scene = bpy.context.scene
@@ -334,6 +358,19 @@ def create_initial_individuals(start, end):
     # create list of trusses
     trusses = {}
 
+    # for PyNite
+    if phaenotyp.calculation_type != "force_distribution":
+        prepare_fea = prepare_fea_pn
+        run_st = calculation.run_st_pn
+        interweave_results = interweave_results_pn
+
+    # for force distribuion
+    else:
+        prepare_fea = calculation.prepare_fea_fd
+        run_st = calculation.run_st_fd
+        interweave_results = calculation.interweave_results_fd
+
+    # calculate all frames
     for frame in range(start, end):
         # create chromosome with set of shapekeys (random for first generation)
         chromosome = []
@@ -351,7 +388,7 @@ def create_initial_individuals(start, end):
         geometry.update_members_pre()
 
         # created a truss object of PyNite and add to dict
-        truss = calculation.prepare_fea()
+        truss = prepare_fea()
         trusses[frame] = truss
 
     if phaenotyp.calculation_type != "geometrical":
@@ -359,7 +396,7 @@ def create_initial_individuals(start, end):
         feas = calculation.run_mp(trusses)
 
         # wait for it and interweave results to data
-        calculation.interweave_results(feas, members)
+        interweave_results(feas, members)
 
 def sectional_optimization(start, end):
     scene = bpy.context.scene
@@ -378,6 +415,19 @@ def sectional_optimization(start, end):
     # create list of trusses
     trusses = {}
 
+    # for PyNite
+    if phaenotyp.calculation_type != "force_distribution":
+        prepare_fea = prepare_fea_pn
+        run_st = calculation.run_st_pn
+        interweave_results = interweave_results_pn
+
+    # for force distribuion
+    else:
+        prepare_fea = calculation.prepare_fea_fd
+        run_st = calculation.run_st_fd
+        interweave_results = calculation.interweave_results_fd
+
+    # run for all frames
     for frame in range(start, end):
         # update scene
         bpy.context.scene.frame_current = frame
@@ -406,14 +456,14 @@ def sectional_optimization(start, end):
         geometry.update_members_pre()
 
         # created a truss object of PyNite and add to dict
-        truss = calculation.prepare_fea()
+        truss = prepare_fea()
         trusses[frame] = truss
 
     # run mp and get results
     feas = calculation.run_mp(trusses)
 
     # wait for it and interweave results to data
-    calculation.interweave_results(feas, members)
+    interweave_results(feas, members)
 
 def populate_initial_generation():
     scene = bpy.context.scene
@@ -547,6 +597,18 @@ def create_new_individuals(start, end):
     # create list of trusses
     trusses = {}
 
+    # for PyNite
+    if phaenotyp.calculation_type != "force_distribution":
+        prepare_fea = prepare_fea_pn
+        run_st = calculation.run_st_pn
+        interweave_results = interweave_results_pn
+
+    # for force distribuion
+    else:
+        prepare_fea = calculation.prepare_fea_fd
+        run_st = calculation.run_st_fd
+        interweave_results = calculation.interweave_results_fd
+
     for frame in range(start, end):
         # pair best 50 % of the previous generation
         # sample is used to avoid same random numbers
@@ -570,7 +632,7 @@ def create_new_individuals(start, end):
         geometry.update_members_pre()
 
         # created a truss object of PyNite and add to dict
-        truss = calculation.prepare_fea()
+        truss = prepare_fea()
         trusses[frame] = truss
 
     if phaenotyp.calculation_type != "geometrical":
@@ -578,7 +640,7 @@ def create_new_individuals(start, end):
         feas = calculation.run_mp(trusses)
 
         # wait for it and interweave results to data
-        calculation.interweave_results(feas, members)
+        interweave_results(feas, members)
 
 def populate_new_generation(start, end):
     scene = bpy.context.scene

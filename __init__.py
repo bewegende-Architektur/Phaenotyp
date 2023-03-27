@@ -805,6 +805,8 @@ class OBJECT_PT_Phaenotyp(Panel):
                     box_calculation_type.enabled = False
 
                 else:
+                    box_calculation_type.enabled = False
+
                     text = str(len_members) + " edges set as members."
                     box_members.label(text=text)
 
@@ -887,7 +889,7 @@ class OBJECT_PT_Phaenotyp(Panel):
                                         box_optimization.prop(phaenotyp, "optimization_fd", text="")
                                     else:
                                         box_optimization.prop(phaenotyp, "optimization_pn", text="")
-                                    if phaenotyp.optimization != "none":
+                                    if phaenotyp.optimization_pn != "none" or phaenotyp.optimization_fd != "none":
                                         box_optimization.prop(phaenotyp, "animation_optimization_type", text="")
                                         box_optimization.prop(phaenotyp, "optimization_amount", text="Amount of sectional optimization")
 
@@ -915,7 +917,7 @@ class OBJECT_PT_Phaenotyp(Panel):
                                         box_optimization.prop(phaenotyp, "optimization_fd", text="")
                                     else:
                                         box_optimization.prop(phaenotyp, "optimization_pn", text="")
-                                    if phaenotyp.optimization != "none":
+                                    if phaenotyp.optimization_pn != "none" or phaenotyp.optimization_fd != "none":
                                         box_ga.prop(phaenotyp, "optimization_amount", text="Amount of sectional optimization")
 
                                 if phaenotyp.mate_type in ["direct", "morph"]:
@@ -1009,16 +1011,18 @@ class OBJECT_PT_Phaenotyp(Panel):
                         except:
                             pass
 
-                        box_viz = layout.box()
-                        box_viz.label(text="Vizualisation:")
-                        if calculation_type == "force_distribution":
-                            box_viz.prop(phaenotyp, "forces_fd", text="Force")
-                        else:
-                            box_viz.prop(phaenotyp, "forces_pn", text="Force")
+                        if phaenotyp.calculation_type != "geometrical":
+                            box_viz = layout.box()
+                            box_viz.label(text="Vizualisation:")
+                            if calculation_type == "force_distribution":
+                                box_viz.prop(phaenotyp, "forces_fd", text="Force")
+                            else:
+                                box_viz.prop(phaenotyp, "forces_pn", text="Force")
 
-                        # sliders to scale forces and deflection
-                        box_viz.prop(phaenotyp, "viz_scale", text="scale", slider=True)
-                        box_viz.prop(phaenotyp, "viz_deflection", text="deflected / original", slider=True)
+                            # sliders to scale forces and deflection
+                            box_viz.prop(phaenotyp, "viz_scale", text="scale", slider=True)
+                            if phaenotyp.calculation_type != "force_distribution":
+                                box_viz.prop(phaenotyp, "viz_deflection", text="deflected / original", slider=True)
 
                         # Text
                         box_text = layout.box()
