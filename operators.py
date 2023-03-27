@@ -1037,62 +1037,97 @@ def text():
 
             # get member
             for id, member in members.items():
-                for position in range(11):
-                    if member["mesh_vertex_ids"][position] == vertex_id:
-                        data_temp = []
-                        # get member id
-                        text = "Member: " + id
-                        data_temp.append(text)
+                if phaenotyp.calculation_type != "force_distribution":
+                    for position in range(11):
+                        if member["mesh_vertex_ids"][position] == vertex_id:
+                            data_temp = []
+                            # get member id
+                            text = "Member: " + id
+                            data_temp.append(text)
 
-                        # get Position
-                        text = "Position: " + str(position)
-                        data_temp.append(text)
+                            # get Position
+                            text = "Position: " + str(position)
+                            data_temp.append(text)
 
-                        # get frame
-                        frame = bpy.context.scene.frame_current
+                            # get frame
+                            frame = bpy.context.scene.frame_current
 
-                        # get Do and Di
-                        text = "Do: " + str(round(member["Do"][str(frame)], 3))
-                        data_temp.append(text)
-                        text = "Di: " + str(round(member["Di"][str(frame)], 3))
-                        data_temp.append(text)
+                            # get Do and Di
+                            text = "Do: " + str(round(member["Do"][str(frame)], 3))
+                            data_temp.append(text)
+                            text = "Di: " + str(round(member["Di"][str(frame)], 3))
+                            data_temp.append(text)
 
-                        # results
-                        text = "axial: " + str(round(member["axial"][str(frame)][position], 3))
-                        data_temp.append(text)
-                        text = "moment_y: " + str(round(member["moment_y"][str(frame)][position], 3))
-                        data_temp.append(text)
-                        text = "moment_z: " + str(round(member["moment_z"][str(frame)][position], 3))
-                        data_temp.append(text)
-                        text = "shear_y: " + str(round(member["shear_y"][str(frame)][position], 3))
-                        data_temp.append(text)
-                        text = "shear_z: " + str(round(member["shear_z"][str(frame)][position], 3))
-                        data_temp.append(text)
-                        text = "torque: " + str(round(member["torque"][str(frame)][position], 3))
-                        data_temp.append(text)
+                            # results
+                            text = "axial: " + str(round(member["axial"][str(frame)][position], 3))
+                            data_temp.append(text)
+                            text = "moment_y: " + str(round(member["moment_y"][str(frame)][position], 3))
+                            data_temp.append(text)
+                            text = "moment_z: " + str(round(member["moment_z"][str(frame)][position], 3))
+                            data_temp.append(text)
+                            text = "shear_y: " + str(round(member["shear_y"][str(frame)][position], 3))
+                            data_temp.append(text)
+                            text = "shear_z: " + str(round(member["shear_z"][str(frame)][position], 3))
+                            data_temp.append(text)
+                            text = "torque: " + str(round(member["torque"][str(frame)][position], 3))
+                            data_temp.append(text)
 
-                        text = "long_stress: " + str(round(member["long_stress"][str(frame)][position], 3))
-                        data_temp.append(text)
-                        text = "tau_shear: " + str(round(member["tau_shear"][str(frame)][position], 3))
-                        data_temp.append(text)
-                        text = "tau_torsion: " + str(round(member["tau_torsion"][str(frame)][position], 3))
-                        data_temp.append(text)
-                        text = "sum_tau: " + str(round(member["sum_tau"][str(frame)][position], 3))
-                        data_temp.append(text)
-                        text = "sigmav: " + str(round(member["sigmav"][str(frame)][position], 3))
-                        data_temp.append(text)
-                        text = "sigma: " + str(round(member["sigma"][str(frame)][position], 3))
-                        data_temp.append(text)
+                            text = "long_stress: " + str(round(member["long_stress"][str(frame)][position], 3))
+                            data_temp.append(text)
+                            text = "tau_shear: " + str(round(member["tau_shear"][str(frame)][position], 3))
+                            data_temp.append(text)
+                            text = "tau_torsion: " + str(round(member["tau_torsion"][str(frame)][position], 3))
+                            data_temp.append(text)
+                            text = "sum_tau: " + str(round(member["sum_tau"][str(frame)][position], 3))
+                            data_temp.append(text)
+                            text = "sigmav: " + str(round(member["sigmav"][str(frame)][position], 3))
+                            data_temp.append(text)
+                            text = "sigma: " + str(round(member["sigma"][str(frame)][position], 3))
+                            data_temp.append(text)
 
-                        # leverarm
-                        text = "leverarm: " + str(round(member["lever_arm"][str(frame)][position], 3))
-                        data_temp.append(text)
+                            # leverarm
+                            text = "leverarm: " + str(round(member["lever_arm"][str(frame)][position], 3))
+                            data_temp.append(text)
 
-                        # overstress
-                        text = "overstress: " + str(round(member["overstress"][str(frame)], 3))
-                        data_temp.append(text)
+                            # overstress
+                            text = "overstress: " + str(round(member["overstress"][str(frame)], 3))
+                            data_temp.append(text)
 
-                        data["texts"] = data_temp
+                            data["texts"] = data_temp
+
+                else:
+                    for position in range(2):
+                        if member["mesh_vertex_ids"][position] == vertex_id:
+                            data_temp = []
+                            # get member id
+                            text = "Member: " + id
+                            data_temp.append(text)
+
+                            # get frame
+                            frame = bpy.context.scene.frame_current
+
+                            # get Do and Di
+                            text = "Do: " + str(round(member["Do"][str(frame)], 3))
+                            data_temp.append(text)
+                            text = "Di: " + str(round(member["Di"][str(frame)], 3))
+                            data_temp.append(text)
+
+                            # results
+                            text = "axial: " + str(round(member["axial"][str(frame)], 3))
+                            data_temp.append(text)
+
+                            text = "sigma: " + str(round(member["sigma"][str(frame)], 3))
+                            data_temp.append(text)
+
+                            # leverarm
+                            text = "utilization: " + str(round(member["utilization"][str(frame)], 3))
+                            data_temp.append(text)
+
+                            # overstress
+                            text = "overstress: " + str(round(member["overstress"][str(frame)], 3))
+                            data_temp.append(text)
+
+                            data["texts"] = data_temp
 
 def report_members():
     print_data("Generate report at frame in html-format")
