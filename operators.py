@@ -169,98 +169,158 @@ def set_member():
 
     bpy.ops.object.mode_set(mode="OBJECT")
 
-    # create new member
-    for edge in obj.data.edges:
-        vertex_0_id = edge.vertices[0]
-        vertex_1_id = edge.vertices[1]
+    # create new member for PyNite
+    if phaenotyp.calculation_type != "force_distribution":
+        for edge in obj.data.edges:
+            vertex_0_id = edge.vertices[0]
+            vertex_1_id = edge.vertices[1]
 
-        if edge.select:
-            id = edge.index
+            if edge.select:
+                id = edge.index
 
-            member = {}
+                member = {}
 
-            # this variables are always fix
-            member["name"] = "member_" + str(id) # equals edge-id
-            member["vertex_0_id"] = vertex_0_id # equals id of vertex
-            member["vertex_1_id"] = vertex_1_id # equals id of vertex
+                # this variables are always fix
+                member["name"] = "member_" + str(id) # equals edge-id
+                member["vertex_0_id"] = vertex_0_id # equals id of vertex
+                member["vertex_1_id"] = vertex_1_id # equals id of vertex
 
-            member["acceptable_sigma"] = material.current["acceptable_sigma"] # from gui
-            member["acceptable_shear"] = material.current["acceptable_shear"] # from gui
-            member["acceptable_torsion"] = material.current["acceptable_torsion"] # from gui
-            member["acceptable_sigmav"] = material.current["acceptable_sigmav"] # from gui
-            member["knick_model"] = material.current["knick_model"] # from gui
+                member["acceptable_sigma"] = material.current["acceptable_sigma"] # from gui
+                member["acceptable_shear"] = material.current["acceptable_shear"] # from gui
+                member["acceptable_torsion"] = material.current["acceptable_torsion"] # from gui
+                member["acceptable_sigmav"] = material.current["acceptable_sigmav"] # from gui
+                member["knick_model"] = material.current["knick_model"] # from gui
 
-            member["E"] = material.current["E"] # from gui
-            member["G"] = material.current["G"] # from gui
-            member["d"] = material.current["d"] # from gui
+                member["E"] = material.current["E"] # from gui
+                member["G"] = material.current["G"] # from gui
+                member["d"] = material.current["d"] # from gui
 
-            # this variables can change per frame
-            # the key "first" is used to store the user-input of each member
-            # this is importand, if a user is chaning the frame during the
-            # input for some reason
-            member["Do"] = {}
-            member["Di"] = {}
+                # this variables can change per frame
+                # the key "first" is used to store the user-input of each member
+                # this is importand, if a user is chaning the frame during the
+                # input for some reason
+                member["Do"] = {}
+                member["Di"] = {}
 
-            member["Do_first"] = material.current["Do"] # from gui
-            member["Di_first"] = material.current["Di"] # from fui
+                member["Do_first"] = material.current["Do"] # from gui
+                member["Di_first"] = material.current["Di"] # from fui
 
-            member["Iy"] = {}
-            member["Iz"] = {}
-            member["J"] = {}
-            member["A"] = {}
-            member["kg_A"] = {}
-            member["ir"] = {}
+                member["Iy"] = {}
+                member["Iz"] = {}
+                member["J"] = {}
+                member["A"] = {}
+                member["kg_A"] = {}
+                member["ir"] = {}
 
-            member["Iy_first"] = material.current["Iy"] # from gui
-            member["Iz_first"] = material.current["Iz"] # from gui
-            member["J_first"] = material.current["J"] # from gui
-            member["A_first"] = material.current["A"] # from gui
-            member["kg_first"] = material.current["kg_A"] # from gui
-            member["ir_first"] = material.current["ir"] # from gui
+                member["Iy_first"] = material.current["Iy"] # from gui
+                member["Iz_first"] = material.current["Iz"] # from gui
+                member["J_first"] = material.current["J"] # from gui
+                member["A_first"] = material.current["A"] # from gui
+                member["kg_first"] = material.current["kg_A"] # from gui
+                member["ir_first"] = material.current["ir"] # from gui
 
-            # results
-            member["axial"] = {}
-            member["moment_y"] = {}
-            member["moment_z"] = {}
-            member["moment_h"] = {}
-            member["shear_y"] = {}
-            member["shear_z"] = {}
-            member["shear_h"] = {}
-            member["torque"] = {}
-            member["sigma"] = {}
+                # results
+                member["axial"] = {}
+                member["moment_y"] = {}
+                member["moment_z"] = {}
+                member["moment_h"] = {}
+                member["shear_y"] = {}
+                member["shear_z"] = {}
+                member["shear_h"] = {}
+                member["torque"] = {}
+                member["sigma"] = {}
 
-            member["Wy"] = {}
-            member["WJ"] = {}
+                member["Wy"] = {}
+                member["WJ"] = {}
 
-            member["long_stress"] = {}
-            member["tau_shear"] = {}
-            member["tau_torsion"] = {}
-            member["sum_tau"] = {}
-            member["sigmav"] = {}
-            member["sigma"] = {}
-            member["max_long_stress"] = {}
-            member["max_tau_shear"] = {}
-            member["max_tau_torsion"] = {}
-            member["max_sum_tau"] = {}
-            member["max_sigmav"] = {}
-            member["max_sigma"] = {}
-            member["acceptable_sigma_buckling"] = {}
-            member["lamda"] = {}
-            member["lever_arm"] = {}
-            member["max_lever_arm"] = {}
-            member["initial_positions"] = {}
-            member["deflection"] = {}
-            member["overstress"] = {}
-            member["utilization"] = {}
+                member["long_stress"] = {}
+                member["tau_shear"] = {}
+                member["tau_torsion"] = {}
+                member["sum_tau"] = {}
+                member["sigmav"] = {}
+                member["sigma"] = {}
+                member["max_long_stress"] = {}
+                member["max_tau_shear"] = {}
+                member["max_tau_torsion"] = {}
+                member["max_sum_tau"] = {}
+                member["max_sigmav"] = {}
+                member["max_sigma"] = {}
+                member["acceptable_sigma_buckling"] = {}
+                member["lamda"] = {}
+                member["lever_arm"] = {}
+                member["max_lever_arm"] = {}
+                member["initial_positions"] = {}
+                member["deflection"] = {}
+                member["overstress"] = {}
+                member["utilization"] = {}
 
-            member["normal_energy"] = {}
-            member["moment_energy"] = {}
-            member["strain_energy"] = {}
+                member["normal_energy"] = {}
+                member["moment_energy"] = {}
+                member["strain_energy"] = {}
 
-            member["kg"] = {}
-            member["length"] = {}
+                member["kg"] = {}
+                member["length"] = {}
 
-            data["members"][str(id)] = member
+                data["members"][str(id)] = member
+
+    # create new member for PyNite
+    else:
+        for edge in obj.data.edges:
+            vertex_0_id = edge.vertices[0]
+            vertex_1_id = edge.vertices[1]
+
+            if edge.select:
+                id = edge.index
+
+                member = {}
+
+                # this variables are always fix
+                member["name"] = "member_" + str(id) # equals edge-id
+                member["vertex_0_id"] = vertex_0_id # equals id of vertex
+                member["vertex_1_id"] = vertex_1_id # equals id of vertex
+
+                member["acceptable_sigma"] = material.current["acceptable_sigma"] # from gui
+
+                member["E"] = material.current["E"] # from gui
+                member["G"] = material.current["G"] # from gui
+                member["d"] = material.current["d"] # from gui
+
+                # this variables can change per frame
+                # the key "first" is used to store the user-input of each member
+                # this is importand, if a user is chaning the frame during the
+                # input for some reason
+                member["Do"] = {}
+                member["Di"] = {}
+
+                member["Do_first"] = material.current["Do"] # from gui
+                member["Di_first"] = material.current["Di"] # from fui
+
+                member["Iy"] = {}
+                member["Iz"] = {}
+                member["J"] = {}
+                member["A"] = {}
+                member["kg_A"] = {}
+                member["ir"] = {}
+
+                member["Iy_first"] = material.current["Iy"] # from gui
+                member["Iz_first"] = material.current["Iz"] # from gui
+                member["J_first"] = material.current["J"] # from gui
+                member["A_first"] = material.current["A"] # from gui
+                member["kg_first"] = material.current["kg_A"] # from gui
+                member["ir_first"] = material.current["ir"] # from gui
+
+                # results
+                member["axial"] = {}
+                member["sigma"] = {}
+
+                member["initial_positions"] = {}
+                member["overstress"] = {}
+                member["utilization"] = {}
+
+                member["kg"] = {}
+                member["length"] = {}
+
+                data["members"][str(id)] = member
 
     # delete obj if existing
     basics.delete_obj_if_existing("<Phaenotyp>member")
@@ -518,22 +578,33 @@ def calculate_animation():
 
             # start progress
             progress.run()
-            progress.http.reset_pci(end-start)
+            progress.http.reset_pci(end-start+1)
+
+            # update scene
+            bpy.context.scene.frame_current = start
+            bpy.context.view_layer.update()
+
+            # mp is not working, because the previous frame is needed
+            # run in single frame
+            calculate_single_frame()
 
             # run analysis first
-            for frame in range(start, end):
+            for frame in range(start+1, end):
                 # update scene
                 bpy.context.scene.frame_current = frame
                 bpy.context.view_layer.update()
 
-                # mp cannot be used, because the previous frame is needed.
-                # start as single_frame
+                # copy previous frame to current
+                for id, member in members.items():
+                    member["Do"][str(frame)] = member["Do"][str(frame-1)]
+                    member["Di"][str(frame)] = member["Di"][str(frame-1)]
+
                 calculate_single_frame()
 
                 # run optimization and get new properties
-                if phaenotyp.calculation_type != "force_distribution":
-                    if phaenotyp.optimization_fd == "approximate_sectional":
-                        calculation.approximate_sectional()
+                if phaenotyp.calculation_type == "force_distribution":
+                    if phaenotyp.optimization_fd == "approximate":
+                        optimize_approximate()
 
                 else:
                     if phaenotyp.optimization_pn == "simple":
@@ -544,9 +615,6 @@ def calculate_animation():
 
                     if phaenotyp.optimization_pn == "complex":
                         calculation.complex_sectional()
-
-            # calculate last frame also
-            calculate_single_frame()
 
     # without optimization
     else:

@@ -401,7 +401,7 @@ class phaenotyp_properties(PropertyGroup):
         description = "Enables sectional optimization after each frame",
         items = [
                     ("none", "None", ""),
-                    ("approximate_sectional", "Approximate", "")
+                    ("approximate", "Approximate", "")
                 ]
         )
 

@@ -625,7 +625,6 @@ def update_members_post():
                 attribute.data[mesh_vertex_ids[i]].color = [c.r, c.g, c.b, 1.0]
 
 def create_loads(structure_obj, loads_v, loads_e, loads_f):
-
     # like suggested here by Gorgious and CodeManX:
     # https://blender.stackexchange.com/questions/6155/how-to-convert-coordinates-from-vertex-to-world-space
     mat = structure_obj.matrix_world
