@@ -124,32 +124,47 @@ def calculate_fitness(start, end):
         fitness_cantilever = cantilever
 
         if phaenotyp.calculation_type != "geometrical":
-            # average_sigma
-            forces = []
-            for id, member in members.items():
-                force = member["max_sigma"][str(frame)]
-                forces.append(force)
+            if phaenotyp.calculation_type != "force_distribution":
+                # average_sigma
+                forces = []
+                for id, member in members.items():
+                    force = member["max_sigma"][str(frame)]
+                    forces.append(force)
 
-            sum_forces = 0
-            for force in forces:
-                sum_forces = sum_forces + abs(force)
+                sum_forces = 0
+                for force in forces:
+                    sum_forces = sum_forces + abs(force)
 
-            fitness_average_sigma = sum_forces / len(forces)
+                fitness_average_sigma = sum_forces / len(forces)
 
-            # average_strain_energy
-            forces = []
-            for id, member in members.items():
-                values = []
-                for value in member["strain_energy"][str(frame)]:
-                    values.append(value)
-                force = basics.return_max_diff_to_zero(values)
-                forces.append(force)
+            else:
+                # average_sigma for force_distribution -> max_sigma = sigma
+                forces = []
+                for id, member in members.items():
+                    force = member["sigma"][str(frame)]
+                    forces.append(force)
 
-            sum_forces = 0
-            for force in forces:
-                sum_forces = sum_forces + abs(force)
+                sum_forces = 0
+                for force in forces:
+                    sum_forces = sum_forces + abs(force)
 
-            fitness_average_strain_energy = sum_forces / len(forces)
+                fitness_average_sigma = sum_forces / len(forces)
+
+            if phaenotyp.calculation_type != "force_distribution":
+                # average_strain_energy
+                forces = []
+                for id, member in members.items():
+                    values = []
+                    for value in member["strain_energy"][str(frame)]:
+                        values.append(value)
+                    force = basics.return_max_diff_to_zero(values)
+                    forces.append(force)
+
+                sum_forces = 0
+                for force in forces:
+                    sum_forces = sum_forces + abs(force)
+
+                fitness_average_strain_energy = sum_forces / len(forces)
 
             '''
             if environment["fitness_function"] == "lever_arm_truss":
@@ -186,7 +201,8 @@ def calculate_fitness(start, end):
         individual["fitness"]["cantilever"] = fitness_cantilever
         if phaenotyp.calculation_type != "geometrical":
             individual["fitness"]["average_sigma"] = fitness_average_sigma
-            individual["fitness"]["average_strain_energy"] = fitness_average_strain_energy
+            if phaenotyp.calculation_type != "force_distribution":
+                individual["fitness"]["average_strain_energy"] = fitness_average_strain_energy
 
         if frame != 0:
             # get from basis
@@ -226,7 +242,8 @@ def calculate_fitness(start, end):
 
             if phaenotyp.calculation_type != "geometrical":
                 weighted += basics.avoid_div_zero(1, basis_fitness["average_sigma"]) * fitness_average_sigma * phaenotyp.fitness_average_sigma
-                weighted += basics.avoid_div_zero(1, basis_fitness["average_strain_energy"]) * fitness_average_strain_energy * phaenotyp.fitness_average_strain_energy
+                if phaenotyp.calculation_type != "force_distribution":
+                    weighted += basics.avoid_div_zero(1, basis_fitness["average_strain_energy"]) * fitness_average_strain_energy * phaenotyp.fitness_average_strain_energy
 
 
             # if all sliders are set to one, the weight is 6 (with 6 fitness sliders)
@@ -238,7 +255,8 @@ def calculate_fitness(start, end):
             weight += phaenotyp.fitness_cantilever
             if phaenotyp.calculation_type != "geometrical":
                 weight += phaenotyp.fitness_average_sigma
-                weight += phaenotyp.fitness_average_strain_energy
+                if phaenotyp.calculation_type != "force_distribution":
+                    weight += phaenotyp.fitness_average_strain_energy
 
             # the overall weighted-value is always 1 for the basis individual
             individual["fitness"]["weighted"] = basics.avoid_div_zero(weighted, weight)
@@ -433,18 +451,19 @@ def sectional_optimization(start, end):
         bpy.context.scene.frame_current = frame
         bpy.context.view_layer.update()
 
-        # run optimization and get new properties
-        if phaenotyp.optimization == "approximate_sectional":
-            calculation.approximate_sectional()
+        if phaenotyp.calculation_type == "force_distribution":
+            if phaenotyp.optimization_fd == "approximate":
+                calculation.approximate_sectional()
 
-        if phaenotyp.optimization == "simple":
-            calculation.simple_sectional()
+        else:
+            if phaenotyp.optimization == "simple":
+                calculation.simple_sectional()
 
-        if phaenotyp.optimization == "utilization":
-            calculation.utilization_sectional()
+            if phaenotyp.optimization == "utilization":
+                calculation.utilization_sectional()
 
-        if phaenotyp.optimization == "complex":
-            calculation.complex_sectional()
+            if phaenotyp.optimization == "complex":
+                calculation.complex_sectional()
 
         # apply shape keys
         chromosome = individuals[str(frame)]["chromosome"]

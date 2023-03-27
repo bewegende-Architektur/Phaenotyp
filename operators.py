@@ -608,13 +608,13 @@ def calculate_animation():
 
                 else:
                     if phaenotyp.optimization_pn == "simple":
-                        calculation.simple_sectional()
+                        optimize_simple()
 
                     if phaenotyp.optimization_pn == "utilization":
-                        calculation.utilization_sectional()
+                        optimize_utilization()
 
                     if phaenotyp.optimization_pn == "complex":
-                        calculation.complex_sectional()
+                        optimize_complex()
 
     # without optimization
     else:
@@ -801,10 +801,17 @@ def ga_start():
     generation_id = data["ga_environment"]["generation_id"]
     individuals = data["ga_individuals"]
 
-    if phaenotyp.optimization in ["simple", "utilization", "complex"]:
-        optimization_amount = phaenotyp.optimization_amount
+    if phaenotyp.calculation_type == "force_distribution":
+        if phaenotyp.optimization_fd == "approximate":
+            optimization_amount = phaenotyp.optimization_amount
+        else:
+            optimization_amount = 0
+
     else:
-        optimization_amount = 0
+        if phaenotyp.optimization_pn in ["simple", "utilization", "complex"]:
+            optimization_amount = phaenotyp.optimization_amount
+        else:
+            optimization_amount = 0
 
     # skip optimization if geometrical only
     if phaenotyp.calculation_type != "geometrical":

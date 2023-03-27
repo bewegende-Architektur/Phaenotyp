@@ -965,7 +965,8 @@ class OBJECT_PT_Phaenotyp(Panel):
                                 # structural fitness
                                 if phaenotyp.calculation_type != "geometrical":
                                     box_fitness.prop(phaenotyp, "fitness_average_sigma", text="Sigma")
-                                    box_fitness.prop(phaenotyp, "fitness_average_strain_energy", text="Strain energy")
+                                    if phaenotyp.calculation_type != "force_distribution":
+                                        box_fitness.prop(phaenotyp, "fitness_average_strain_energy", text="Strain energy")
 
                                 box_shape_keys = layout.box()
                                 box_shape_keys.label(text="Shape keys:")
