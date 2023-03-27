@@ -540,7 +540,7 @@ def calculate_animation():
     progress.http.active = False
     progress.http.Thread_hosting.join()
 
-def approximate_sectional():
+def optimize_approximate():
     scene = bpy.context.scene
     phaenotyp = scene.phaenotyp
     data = scene["<Phaenotyp>"]
@@ -555,13 +555,13 @@ def approximate_sectional():
     geometry.update_members_pre()
 
     # created a truss object of PyNite and add to dict
-    truss = prepare_fea_fd()
+    truss = calculation.prepare_fea_fd()
 
     # run singlethread and get results
     feas = calculation.run_st_fd(truss, frame)
 
     # wait for it and interweave results to data
-    interweave_results_fd(feas, members)
+    calculation.interweave_results_fd(feas, members)
 
     # calculate new visualization-mesh
     geometry.update_members_post()

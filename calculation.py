@@ -871,27 +871,36 @@ def interweave_results_fd(feas, members):
             I = member["Iy"][str(frame)]
             A = member["A"][str(frame)]
             E = member["E"]
+            acceptable_sigma = member["acceptable_sigma"]
             L = member["length"][str(frame)]
 
             force = truss[id]
-
-            # based on:
-            # https://www.johannes-strommer.com/rechner/knicken-von-edges_arrayn-euler/
-            # euler buckling case 2: s = L
-            FK = pi**2 * E * I / L**2
-            # available sigma
             sigma = force / A
-            S = FK / force
+
+            # if pressure check for buckling
+            if force < 0:
+                # based on:
+                # https://www.johannes-strommer.com/rechner/knicken-von-edges_arrayn-euler/
+                # euler buckling case 2: s = L
+                FK = pi**2 * E * I / L**2
+                S = FK / force
+                if S > 2.5 or abs(sigma) > acceptable_sigma:
+                    member["overstress"][str(frame)] = True
+                else:
+                    member["overstress"][str(frame)] = False
+
+            # if tensile force
+            else:
+                if sigma > acceptable_sigma:
+                    member["overstress"][str(frame)] = True
+                else:
+                    member["overstress"][str(frame)] = False
+
             utilization = abs(FK) / abs(force)
 
             member["axial"][str(frame)] = force
             member["sigma"][str(frame)] = sigma
             member["utilization"][str(frame)] = utilization
-
-            if S < 2.5:
-                member["overstress"][str(frame)] = True
-            else:
-                member["overstress"][str(frame)] = False
 
         # update progress
         progress.http.update_i()
@@ -900,15 +909,26 @@ def interweave_results_fd(feas, members):
 
 # sectional performance or force distribution
 def approximate_sectional():
-    """
-    test_function does blah blah blah.
+    scene = bpy.context.scene
+    phaenotyp = scene.phaenotyp
+    data = scene["<Phaenotyp>"]
+    members = data["members"]
+    frame = bpy.context.scene.frame_current
 
-    :param p1: describe about parameter p1
-    :param p2: describe about parameter p2
-    :param p3: describe about parameter p3
-    :return: describe what it returns
-    """
-    pass
+    for id, member in members.items():
+        if member["overstress"][str(frame)] == True:
+            member["Do"][str(frame)] = member["Do"][str(frame)] * 1.2
+            member["Di"][str(frame)] = member["Di"][str(frame)] * 1.2
+
+        else:
+            member["Do"][str(frame)] = member["Do"][str(frame)] * 0.8
+            member["Di"][str(frame)] = member["Di"][str(frame)] * 0.8
+
+        # set miminum size of Do and Di to avoid division by zero
+        Do_Di_ratio = member["Do"][str(frame)]/member["Di"][str(frame)]
+        if member["Di"][str(frame)] < 0.1:
+            member["Di"][str(frame)] = 0.1
+            member["Do"][str(frame)] = member["Di"][str(frame)] * Do_Di_ratio
 
 # sectional performance for PyNite
 def simple_sectional():

@@ -502,7 +502,7 @@ class WM_OT_optimize_approximate(Operator):
     bl_description = "Approximate sectional performance"
 
     def execute(self, context):
-        operators.optimize_simple()
+        operators.optimize_approximate()
         return {"FINISHED"}
 
 class WM_OT_optimize_simple(Operator):
