@@ -386,35 +386,22 @@ def calculate_single_frame():
     members = scene["<Phaenotyp>"]["members"]
     frame = bpy.context.scene.frame_current
 
-    # if PyNite is used
-    if phaenotyp.calculation_type != "force_distribution":
-        # calculate new properties for each member
-        geometry.update_members_pre()
+    # calculate new properties for each member
+    geometry.update_members_pre()
 
-        # created a truss object of PyNite and add to dict
-        truss = calculation.prepare_fea()
+    # created a truss object of PyNite and add to dict
+    truss = calculation.prepare_fea()
 
-        # run singlethread and get results
-        feas = calculation.run_st(truss, frame)
+    # run singlethread and get results
+    feas = calculation.run_st(truss, frame)
 
-        # wait for it and interweave results to data
-        calculation.interweave_results(feas, members)
+    # wait for it and interweave results to data
+    calculation.interweave_results(feas, members)
+    
+    # calculate new visualization-mesh
+    geometry.update_members_post()
 
-        # calculate new visualization-mesh
-        geometry.update_members_post()
-
-        basics.view_vertex_colors()
-
-    else:
-        # calculate new properties for each member
-        geometry.update_members_pre()
-
-        calculation.run_fd()
-
-        # calculate new visualization-mesh
-        geometry.update_members_post()
-
-        basics.view_vertex_colors()
+    basics.view_vertex_colors()
 
 def calculate_animation():
     scene = bpy.context.scene
@@ -423,17 +410,18 @@ def calculate_animation():
     members = scene["<Phaenotyp>"]["members"]
     frame = bpy.context.scene.frame_current
 
-    start = bpy.context.scene.frame_start
-    end = bpy.context.scene.frame_end + 1 # to render also last frame
-
     # start progress
     progress.run()
     progress.http.reset_pci(end-start)
 
-    # create list of trusses
-    trusses = {}
+    if phaenotyp.animation_optimization_type == "each_frame":
+        start = bpy.context.scene.frame_start
+        end = bpy.context.scene.frame_end + 1 # to render also last frame
 
-    try:
+        # create list of trusses
+        trusses = {}
+
+        # run analysis for each frame first
         for frame in range(start, end):
             # update scene
             bpy.context.scene.frame_current = frame
@@ -455,21 +443,106 @@ def calculate_animation():
         # calculate new visualization-mesh
         geometry.update_members_post()
 
+        # run optimization and analysis
+        for i in range(phaenotyp.optimization_amount):
+            for frame in range(start, end):
+                # update scene
+                bpy.context.scene.frame_current = frame
+                bpy.context.view_layer.update()
+
+                # run optimization and get new properties
+                if phaenotyp.optimization == "approximate_sectional":
+                    calculation.approximate_sectional()
+
+                if phaenotyp.optimization == "simple":
+                    calculation.simple_sectional()
+
+                if phaenotyp.optimization == "utilization":
+                    calculation.utilization_sectional()
+
+                if phaenotyp.optimization == "complex":
+                    calculation.complex_sectional()
+
+                # calculate new properties for each member
+                geometry.update_members_pre()
+
+                # created a truss object of PyNite and add to dict
+                truss = calculation.prepare_fea()
+                trusses[frame] = truss
+
+            # run mp and get results
+            feas = calculation.run_mp(trusses)
+
+            # wait for it and interweave results to data
+            calculation.interweave_results(feas, members)
+
+            # calculate new visualization-mesh
+            geometry.update_members_post()
+
+        # update view
         basics.view_vertex_colors()
-    except Exception as exception:
-        print_data(exception.__class__.__name__)
-        text = [
-            "It looks like the structure is unstable.",
-            "Are there any loose parts?",
-            "",
-            "Maybe you can solve this by doing:",
-            "- Mesh | Clean up | Delete loose parts.",
-            "- Mesh | Clean up | Merge by distance."]
-        basics.popup(lines = text)
+
+    if phaenotyp.animation_optimization_type == "gradient":
+        start = bpy.context.scene.frame_start
+        end = bpy.context.scene.frame_end + phaenotyp.optimization_amount
+
+        # run analysis first
+        for frame in range(start, end):
+            # update scene
+            bpy.context.scene.frame_current = frame
+            bpy.context.view_layer.update()
+
+            # mp cannot be used, because the previous frame is needed.
+            # start as single_frame
+            calculate_single_frame()
+
+            # run optimization and get new properties
+            if phaenotyp.optimization == "approximate_sectional":
+                calculation.approximate_sectional()
+
+            if phaenotyp.optimization == "simple":
+                calculation.simple_sectional()
+
+            if phaenotyp.optimization == "utilization":
+                calculation.utilization_sectional()
+
+            if phaenotyp.optimization == "complex":
+                calculation.complex_sectional()
+
+        # calculate last frame also
+        calculate_single_frame()
 
     # join progress
     progress.http.active = False
     progress.http.Thread_hosting.join()
+
+def approximate_sectional():
+    scene = bpy.context.scene
+    phaenotyp = scene.phaenotyp
+    data = scene["<Phaenotyp>"]
+    members = scene["<Phaenotyp>"]["members"]
+    frame = bpy.context.scene.frame_current
+
+    print_data("approximate sectional performance")
+
+    calculation.approximate_sectional()
+
+    # calculate new properties for each member
+    geometry.update_members_pre()
+
+    # created a truss object of PyNite and add to dict
+    truss = calculation.prepare_fea()
+
+    # run singlethread and get results
+    feas = calculation.run_st(truss, frame)
+
+    # wait for it and interweave results to data
+    calculation.interweave_results(feas, members)
+
+    # calculate new visualization-mesh
+    geometry.update_members_post()
+
+    basics.view_vertex_colors()
 
 def optimize_simple():
     scene = bpy.context.scene
@@ -478,7 +551,7 @@ def optimize_simple():
     members = scene["<Phaenotyp>"]["members"]
     frame = bpy.context.scene.frame_current
 
-    print_data("optimization 1 - simple sectional performance")
+    print_data("simple sectional performance")
 
     calculation.simple_sectional()
 
@@ -506,7 +579,7 @@ def optimize_utilization():
     members = scene["<Phaenotyp>"]["members"]
     frame = bpy.context.scene.frame_current
 
-    print_data("optimization 2 - utilization sectional performance")
+    print_data("utilization sectional performance")
 
     calculation.utilization_sectional()
 
@@ -534,7 +607,7 @@ def optimize_complex():
     members = scene["<Phaenotyp>"]["members"]
     frame = bpy.context.scene.frame_current
 
-    print_data("optimization 3 - complex sectional performance")
+    print_data("complex sectional performance")
 
     calculation.complex_sectional()
 
@@ -556,7 +629,7 @@ def optimize_complex():
     basics.view_vertex_colors()
 
 def topolgy_decimate():
-    print_data("optimization 3 - Decimate topological performance")
+    print_data("Decimate topological performance")
     calculation.decimate_topology()
 
 def ga_start():

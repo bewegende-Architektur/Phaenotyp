@@ -69,15 +69,15 @@ def run_fd():
         pos = [x,y,z]
         points.append(pos)
 
-    punkte = array(points)
+    points_array = array(points)
 
-    # Erzeuge eine Liste mit den Indizes der Stützpunkte.
+    # Erzeuge eine Liste mit den Indizes der Stützpoints_array.
     fixed = []
     for id, support in supports.items():
         id = int(id)
         fixed.append(id)
 
-    idx_stuetz = fixed # kann man gleich umbennen
+    supports_ids = fixed # kann man gleich umbennen
 
     # Jeder Stab verbindet genau zwei Punkte. Wir legen dazu die
     # Indizes der zugehörigen Punkte in einem Array ab.
@@ -96,10 +96,10 @@ def run_fd():
         dist = dist_v.length * 100 # convert to cm for calculation
         lenghtes.append(dist)
 
-    staebe = array(edges)
+    edges_array = array(edges)
 
     # Lege die äußere Kraft fest, die auf jeden Punkt wirkt [N].
-    # Für die Stützpunkte setzen wir diese Kraft zunächst auf 0.
+    # Für die Stützpoints_array setzen wir diese Kraft zunächst auf 0.
     # Diese wird später berechnet.
     forces = []
     for vertex in vertices:
@@ -119,55 +119,55 @@ def run_fd():
         load = [x,y,z]
         forces.append(load)
 
-    F_ext = array(forces)
+    forces_array = array(forces)
 
     # Definiere die Anzahl der Punkte, Stäbe etc.
-    n_punkte = punkte.shape[0]
-    n_staebe = staebe.shape[0]
-    n_stuetz = len(idx_stuetz)
-    n_knoten = n_punkte - n_stuetz
-    n_gleichungen = n_knoten * dim
+    n_points_array = points_array.shape[0]
+    n_edges_array = edges_array.shape[0]
+    n_supports = len(supports_ids)
+    n_vertes = n_points_array - n_supports
+    n_equation = n_vertes * dim
 
     # Erzeuge eine Liste mit den Indizes der Knoten.
-    idx_knoten = list(set(range(n_punkte)) - set(idx_stuetz))
+    verts_id = list(set(range(n_points_array)) - set(supports_ids))
 
 
-    def einheitsvektor(i_punkt, i_stab):
-        """Gibt den Einheitsvektor zurück, der vom Punkt i_punkt
-        entlang des Stabes mit dem Index i_stab zeigt. """
-        i1, i2 = staebe[i_stab]
-        if i_punkt == i1:
-            vec = punkte[i2] - punkte[i1]
+    def vector(vertices, edge):
+        """Gibt den Einheitsvektor zurück, der vom Punkt vertices
+        entlang des Stabes mit dem Index edge zeigt. """
+        v_0, v_1 = edges_array[edge]
+        if vertices == v_0:
+            vec = points_array[v_1] - points_array[v_0]
         else:
-            vec = punkte[i1] - punkte[i2]
+            vec = points_array[v_0] - points_array[v_1]
         return vec / linalg.norm(vec)
 
 
     # Stelle das Gleichungssystem für die Kräfte auf.
-    A = zeros((n_gleichungen, n_gleichungen))
-    for i, stab in enumerate(staebe):
-        for k in intersect1d(stab, idx_knoten):
-            n = idx_knoten.index(k)
-            A[n * dim:(n + 1) * dim, i] = einheitsvektor(k, i)
+    truss = zeros((n_equation, n_equation))
+    for id, edge in enumerate(edges_array):
+        for k in intersect1d(edge, verts_id):
+            n = verts_id.index(k)
+            truss[n * dim:(n + 1) * dim, id] = vector(k, id)
 
-    # Löse das Gleichungssystem A @ F = -F_ext nach den Kräften F.
-    b = -F_ext[idx_knoten].reshape(-1)
-    F = linalg.solve(A, b)
+    # Löse das Gleichungssystem A @ F = -forces_array nach den Kräften F.
+    b = -forces_array[verts_id].reshape(-1)
+    F = linalg.solve(truss, b)
 
     # Berechne die äußeren Kräfte.
-    for i, stab in enumerate(staebe):
-        for k in intersect1d(stab, idx_stuetz):
-            F_ext[k] -= F[i] * einheitsvektor(k, i)
+    for id, edge in enumerate(edges_array):
+        for k in intersect1d(edge, supports_ids):
+            forces_array[k] -= F[id] * vector(k, id)
 
     # auf Basis von:
-    # https://www.johannes-strommer.com/rechner/knicken-von-staeben-euler/
+    # https://www.johannes-strommer.com/rechner/knicken-von-edges_arrayn-euler/
     '''
     Druck­spannung = F ÷ A (N/mm²)
     FK	Kraft, bei der der Stab seit­lich aus­knickt; in kN
     S	Sicherheit gegen Knicken; S = FK ÷ F
     '''
 
-    for id in range(len(staebe)):
+    for id in range(len(edges_array)):
         member = members[str(id)]
 
         # shorten
@@ -200,7 +200,14 @@ def prepare_fea():
     phaenotyp = scene.phaenotyp
     data = scene["<Phaenotyp>"]
     frame = bpy.context.scene.frame_current
-    truss = FEModel3D()
+
+    # for PyNite
+    if phaenotyp.calculation_type != "force_distribution":
+        truss = FEModel3D()
+    # for force distribution
+    else:
+        pass
+
 
     # apply chromosome if available
     try:
@@ -256,8 +263,6 @@ def prepare_fea():
         x = v[0] * 100 # convert to cm for calculation
         y = v[1] * 100 # convert to cm for calculation
         z = v[2] * 100 # convert to cm for calculation
-
-        truss.add_node(name, x,y,z)
 
     # define support
     supports = data["supports"]

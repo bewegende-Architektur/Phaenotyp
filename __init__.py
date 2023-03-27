@@ -1,6 +1,6 @@
 bl_info = {
     "name": "Phänotyp",
-    "description": "Genetic optimization of architectural structures",
+    "description": "Genetic algorithm for architectural structures",
     "author": "bewegende Architektur e.U. and Karl Deix",
     "version": (0, 1, 7),
     "blender": (3, 4, 1),
@@ -19,6 +19,11 @@ from bpy.app.handlers import persistent
 
 from phaenotyp import basics, operators, material, geometry, calculation, ga, report, progress
 
+def viz_update(self, context):
+    scene = context.scene
+    phaenotyp = scene.phaenotyp
+    geometry.update_members_post()
+
 class phaenotyp_properties(PropertyGroup):
     use_scipy: BoolProperty(
         name = 'use_scipy',
@@ -27,7 +32,7 @@ class phaenotyp_properties(PropertyGroup):
     )
 
     calculation_type: EnumProperty(
-        name = "calculation_type:",
+        name = "calculation_type",
         description = "Calculation types",
         items = [
                 ("geometrical", "Geometrical", ""),
@@ -36,8 +41,7 @@ class phaenotyp_properties(PropertyGroup):
                 ("first_order_linear", "First order linear", ""),
                 ("second_order", "Second order", "")
                 ],
-        default = "first_order",
-        update = basics.set_types
+        default = "first_order"
         )
 
     Do: FloatProperty(
@@ -57,7 +61,7 @@ class phaenotyp_properties(PropertyGroup):
         )
 
     material: EnumProperty(
-        name = "material:",
+        name = "material",
         description = "Predefined materials",
         items = material.dropdown
         )
@@ -132,7 +136,7 @@ class phaenotyp_properties(PropertyGroup):
     rot_z: BoolProperty(name = 'rot_z', default = False)
 
     load_type: EnumProperty(
-        name = "load_type:",
+        name = "load_type",
         description = "Load types",
         items = [
                 ("vertices", "Vertices", ""),
@@ -210,7 +214,7 @@ class phaenotyp_properties(PropertyGroup):
         description="Amount of generations",
         default = 10,
         min = 1,
-        max = 100
+        max = 250
         )
 
     fitness_volume: FloatProperty(
@@ -314,7 +318,7 @@ class phaenotyp_properties(PropertyGroup):
         )
 
     mate_type: EnumProperty(
-        name = "mate_type:",
+        name = "mate_type",
         description = "Type of mating",
         items = [
                 ("direct", "direct", ""),
@@ -331,17 +335,40 @@ class phaenotyp_properties(PropertyGroup):
         max = 250
         )
 
-    forces: EnumProperty(
-        name = "forces:",
+    forces_fd: EnumProperty(
+        name = "forces",
         description = "Force types",
-        items = basics.forces.types,
-        update = basics.viz_update
+        items = [
+                    ("sigma", "Sigma", ""),
+                    ("axial", "Axial", ""),
+                    ("utilization", "Utilization", "")
+                ],
+        update = viz_update
+        )
+
+    forces_pn: EnumProperty(
+        name = "forces",
+        description = "Force types",
+        items = [
+                    ("sigma", "Sigma", ""),
+                    ("axial", "Axial", ""),
+                    ("moment_y", "Moment Y", ""),
+                    ("moment_z", "Moment Z", ""),
+                    ("shear_y", "Shear Y", ""),
+                    ("shear_z", "Shear_y", ""),
+                    ("torque", "Torque", ""),
+                    ("utilization", "Utilization", ""),
+                    ("normal_energy", "Normal energy", ""),
+                    ("moment_energy", "Moment energy", ""),
+                    ("strain_energy", "Strain energy", "")
+                ],
+        update = viz_update
         )
 
     viz_scale: IntProperty(
         name = "viz_scale",
         description = "scale",
-        update = basics.viz_update,
+        update = viz_update,
         subtype = "PERCENTAGE",
         default = 50,
         min = 1,
@@ -351,7 +378,7 @@ class phaenotyp_properties(PropertyGroup):
     viz_deflection: IntProperty(
         name = "viz_scale",
         description = "deflected / original",
-        update = basics.viz_update,
+        update = viz_update,
         subtype = "PERCENTAGE",
         default = 50,
         min = 1,
@@ -359,28 +386,51 @@ class phaenotyp_properties(PropertyGroup):
         )
 
     mode: EnumProperty(
-        name = "mode:",
+        name = "mode",
         description = "Select mode to start",
         items = [
-                ("single_frame", "Single frame", ""),
-                ("animation", "Animation", ""),
-                ("genetic_algorithm", "Genetic algorithm", "")
+                    ("single_frame", "Single frame", ""),
+                    ("animation", "Animation", ""),
+                    ("genetic_algorithm", "Genetic algorithm", "")
                ],
         default = "single_frame"
         )
 
-    optimization: EnumProperty(
-        name = "optimization:",
+    optimization_fd: EnumProperty(
+        name = "optimization",
         description = "Enables sectional optimization after each frame",
-        items = basics.optimizations.types
+        items = [
+                    ("none", "None", ""),
+                    ("approximate_sectional", "Approximate", "")
+                ]
+        )
+
+    optimization_pn: EnumProperty(
+        name = "optimization",
+        description = "Enables sectional optimization after each frame",
+        items = [
+                    ("none", "None", ""),
+                    ("simple", "Simple", ""),
+                    ("utilization", "Utilization", ""),
+                    ("complex", "Complex", "")
+                ]
         )
 
     optimization_amount: IntProperty(
         name = "optimization_amount",
-        description="Amount of optimization to run for each member",
+        description = "Amount of optimization to run for each member",
         default = 3,
         min = 1,
         max = 10
+        )
+
+    animation_optimization_type: EnumProperty(
+        name = "animation_optimization_type",
+        description = "Optimize each frame by amount or create gradient with amount.",
+        items = [
+                ("each_frame", "Each frame", ""),
+                ("gradient", "Gradient", "")
+               ],
         )
 
 class WM_OT_set_structure(Operator):
@@ -446,6 +496,15 @@ class WM_OT_calculate_animation(Operator):
         operators.calculate_animation()
         return {"FINISHED"}
 
+class WM_OT_optimize_approximate(Operator):
+    bl_label = "optimize_approximate"
+    bl_idname = "wm.optimize_approximate"
+    bl_description = "Approximate sectional performance"
+
+    def execute(self, context):
+        operators.optimize_simple()
+        return {"FINISHED"}
+
 class WM_OT_optimize_simple(Operator):
     bl_label = "optimize_simple"
     bl_idname = "wm.optimize_simple"
@@ -473,7 +532,7 @@ class WM_OT_optimize_complex(Operator):
         operators.optimize_complex()
         return {"FINISHED"}
 
-class WM_OT_topology_1(Operator):
+class WM_OT_decimate(Operator):
     bl_label = "topolgy_decimate"
     bl_idname = "wm.topolgy_decimate"
     bl_description = "Decimate topological performance"
@@ -564,7 +623,7 @@ class WM_OT_reset(Operator):
         return {"FINISHED"}
 
 class OBJECT_PT_Phaenotyp(Panel):
-    bl_label = "Phänotyp 0.1.6"
+    bl_label = "Phänotyp 0.1.7"
     bl_idname = "OBJECT_PT_custom_panel"
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
@@ -623,7 +682,7 @@ class OBJECT_PT_Phaenotyp(Panel):
             # calculaton type
             box_calculation_type = layout.box()
             box_calculation_type.label(text = "Calculation type:")
-            box_calculation_type.prop(phaenotyp, "calculation_type", text="Calculation type")
+            box_calculation_type.prop(phaenotyp, "calculation_type", text="")
 
             calculation_type = phaenotyp.calculation_type
 
@@ -665,7 +724,7 @@ class OBJECT_PT_Phaenotyp(Panel):
                 material.current["Do"] = phaenotyp.Do * 0.1
                 material.current["Di"] = phaenotyp.Di * 0.1
 
-                box_members.prop(phaenotyp, "material", text="Type")
+                box_members.prop(phaenotyp, "material", text="")
                 if phaenotyp.material == "custom":
                     box_members.prop(phaenotyp, "E", text="Modulus of elasticity")
                     box_members.prop(phaenotyp, "G", text="Shear modulus")
@@ -752,7 +811,7 @@ class OBJECT_PT_Phaenotyp(Panel):
                     # Define loads
                     box_loads = layout.box()
                     box_loads.label(text="Loads:")
-                    box_loads.prop(phaenotyp, "load_type", text="Type")
+                    box_loads.prop(phaenotyp, "load_type", text="")
 
                     if phaenotyp.load_type == "faces": # if faces
                         box_loads.prop(phaenotyp, "load_normal", text="normal (like wind)")
@@ -771,23 +830,23 @@ class OBJECT_PT_Phaenotyp(Panel):
                         text = str(len_loads) + " loads defined."
                         box_loads.label(text=text)
 
-                    if phaenotyp.calculation_type != "geometrical":
-                        if not bpy.data.is_saved:
-                            box_file = layout.box()
-                            box_file.label(text="Please save Blender-File first.")
+                    if not bpy.data.is_saved:
+                        box_file = layout.box()
+                        box_file.label(text="Please save Blender-File first.")
 
-                        else:
-                            box_Start = layout.box()
-                            box_Start.label(text="Start:")
-                            box_Start.prop(phaenotyp, "mode", text="Mode")
-                            mode = phaenotyp.mode
+                    else:
+                        box_start = layout.box()
+                        box_start.label(text="Mode:")
+                        box_start.prop(phaenotyp, "mode", text="")
+                        mode = phaenotyp.mode
 
-                            # Single frame
-                            if mode == "single_frame":
+                        # Single frame
+                        if mode == "single_frame":
+                            if calculation_type != "geometrical":
                                 # analysis
                                 box_analysis = layout.box()
                                 box_analysis.label(text="Analysis:")
-                                box_analysis.operator("wm.calculate_single_frame", text="Single Frame")
+                                box_analysis.operator("wm.calculate_single_frame", text="Start")
 
                                 # Optimization
                                 box_opt = layout.box()
@@ -795,9 +854,12 @@ class OBJECT_PT_Phaenotyp(Panel):
 
                                 result = data["done"].get(str(frame))
                                 if result:
-                                    box_opt.operator("wm.optimize_simple", text="Simple - sectional performance")
-                                    box_opt.operator("wm.optimize_utilization", text="Utilization - sectional performance")
-                                    box_opt.operator("wm.optimize_complex", text="Complex - sectional performance")
+                                    if calculation_type == "force_distribution":
+                                        box_opt.operator("wm.optimize_approximate", text="Approximate")
+                                    else:
+                                        box_opt.operator("wm.optimize_simple", text="Simple")
+                                        box_opt.operator("wm.optimize_utilization", text="Utilization")
+                                        box_opt.operator("wm.optimize_complex", text="Complex")
                                 else:
                                     box_opt.label(text="Run single analysis first.")
 
@@ -807,101 +869,129 @@ class OBJECT_PT_Phaenotyp(Panel):
 
                                 result = data["done"].get(str(frame))
                                 if result:
-                                    box_opt.operator("wm.topolgy_decimate", text="Decimate - topological performance")
+                                    box_opt.operator("wm.topolgy_decimate", text="Decimate")
                                 else:
                                     box_opt.label(text="Run single analysis first.")
 
-                            # Animation
-                            elif mode == "animation":
-                                box_analysis = layout.box()
-                                box_analysis.operator("wm.calculate_animation", text="Animation")
-
-
-                    shape_key = data["structure"].data.shape_keys
-                    if shape_key:
-                        # Genetic Mutation:
-                        box_ga = layout.box()
-                        box_ga.label(text="Genetic Mutation:")
-                        box_ga.prop(phaenotyp, "mate_type", text="Type of mating")
-                        if phaenotyp.calculation_type != "geometrical":
-                            box_ga.prop(phaenotyp, "optimization", text="Sectional optimization")
-                            if phaenotyp.optimization != "none":
-                                box_ga.prop(phaenotyp, "optimization_amount", text="Amount of sectional optimization")
-
-                        if phaenotyp.mate_type in ["direct", "morph"]:
-                            box_ga.prop(phaenotyp, "generation_size", text="Size of generation for GA")
-                            box_ga.prop(phaenotyp, "elitism", text="Size of elitism for GA")
-                            box_ga.prop(phaenotyp, "generation_amount", text="Amount of generations")
-
-                        box_ga.separator()
-
-                        # fitness headline
-                        box_ga.label(text="Fitness function:")
-
-                        # architectural fitness
-                        col = box_ga.column()
-                        split = col.split()
-                        split.prop(phaenotyp, "fitness_volume", text="Volume")
-                        split.prop(phaenotyp, "fitness_volume_invert", text="Invert")
-
-                        col = box_ga.column()
-                        split = col.split()
-                        split.prop(phaenotyp, "fitness_area", text="Area")
-                        split.prop(phaenotyp, "fitness_area_invert", text="Invert")
-
-                        col = box_ga.column()
-                        split = col.split()
-                        split.prop(phaenotyp, "fitness_kg", text="Kg")
-                        split.prop(phaenotyp, "fitness_kg_invert", text="Invert")
-
-                        col = box_ga.column()
-                        split = col.split()
-                        split.prop(phaenotyp, "fitness_rise", text="Rise")
-                        split.prop(phaenotyp, "fitness_rise_invert", text="Invert")
-
-                        col = box_ga.column()
-                        split = col.split()
-                        split.prop(phaenotyp, "fitness_span", text="Span")
-                        split.prop(phaenotyp, "fitness_span_invert", text="Invert")
-
-                        col = box_ga.column()
-                        split = col.split()
-                        split.prop(phaenotyp, "fitness_cantilever", text="Cantilever")
-                        split.prop(phaenotyp, "fitness_cantilever_invert", text="Invert")
-
-                        # structural fitness
-                        if phaenotyp.calculation_type != "geometrical":
-                            box_ga.prop(phaenotyp, "fitness_average_sigma", text="Sigma")
-                            box_ga.prop(phaenotyp, "fitness_average_strain_energy", text="Strain energy")
-
-                        box_ga.separator()
-
-                        box_ga.label(text="Shape keys:")
-                        for keyblock in shape_key.key_blocks:
-                            name = keyblock.name
-                            box_ga.label(text=name)
-
-                        # check generation_size and elitism
-                        if phaenotyp.generation_size*0.5 > phaenotyp.elitism:
-                            box_ga.operator("wm.ga_start", text="Start")
-                        else:
-                            box_ga.label(text="Elitism should be smaller than 50% of generation size.")
-
-                        if len(data["ga_individuals"]) > 0 and not bpy.context.screen.is_animation_playing:
-                            box_ga.separator()
-                            box_ga.label(text="Select individual by fitness:")
-                            box_ga.prop(phaenotyp, "ga_ranking", text="Result sorted by fitness.")
-                            if phaenotyp.ga_ranking >= len(data["ga_individuals"]):
-                                text = "Only " + str(len(data["ga_individuals"])) + " available."
-                                box_ga.label(text=text)
                             else:
-                                # show
-                                box_ga.operator("wm.ga_ranking", text="Generate")
+                                box_analysis = layout.box()
+                                box_analysis.label(text="Only genetic algorithm is available for geometrical mode.")
 
-                            box_ga.separator()
+                        # Animation
+                        elif mode == "animation":
+                            if calculation_type != "geometrical":
+                                box_optimization = layout.box()
+                                box_optimization.label(text="Optimization:")
+                                if phaenotyp.calculation_type != "geometrical":
+                                    if calculation_type == "force_distribution":
+                                        box_optimization.prop(phaenotyp, "optimization_fd", text="")
+                                    else:
+                                        box_optimization.prop(phaenotyp, "optimization_pn", text="")
+                                    if phaenotyp.optimization != "none":
+                                        box_optimization.prop(phaenotyp, "animation_optimization_type", text="")
+                                        box_optimization.prop(phaenotyp, "optimization_amount", text="Amount of sectional optimization")
 
-                            box_ga.label(text="Render sorted indiviuals:")
-                            box_ga.operator("wm.ga_render_animation", text="Generate")
+                                box_animation = layout.box()
+                                box_animation.label(text="Animation:")
+                                box_animation.operator("wm.calculate_animation", text="Start")
+
+                            else:
+                                box_optimization = layout.box()
+                                box_optimization.label(text="Only genetic algorithm is available for geometrical mode.")
+
+                        # Genetic algorithm
+                        elif mode == "genetic_algorithm":
+                            shape_key = data["structure"].data.shape_keys
+                            if not shape_key:
+                                box_ga = layout.box()
+                                box_ga.label(text="Please set shape keys first.")
+                            else:
+                                # Genetic Mutation:
+                                box_ga = layout.box()
+                                box_ga.label(text="Genetic Mutation:")
+                                box_ga.prop(phaenotyp, "mate_type", text="Type of mating")
+                                if phaenotyp.calculation_type != "geometrical":
+                                    if calculation_type == "force_distribution":
+                                        box_optimization.prop(phaenotyp, "optimization_fd", text="")
+                                    else:
+                                        box_optimization.prop(phaenotyp, "optimization_pn", text="")
+                                    if phaenotyp.optimization != "none":
+                                        box_ga.prop(phaenotyp, "optimization_amount", text="Amount of sectional optimization")
+
+                                if phaenotyp.mate_type in ["direct", "morph"]:
+                                    box_ga.prop(phaenotyp, "generation_size", text="Size of generation for GA")
+                                    box_ga.prop(phaenotyp, "elitism", text="Size of elitism for GA")
+                                    box_ga.prop(phaenotyp, "generation_amount", text="Amount of generations")
+
+                                box_ga.separator()
+
+                                # fitness headline
+                                box_ga.label(text="Fitness function:")
+
+                                # architectural fitness
+                                col = box_ga.column()
+                                split = col.split()
+                                split.prop(phaenotyp, "fitness_volume", text="Volume")
+                                split.prop(phaenotyp, "fitness_volume_invert", text="Invert")
+
+                                col = box_ga.column()
+                                split = col.split()
+                                split.prop(phaenotyp, "fitness_area", text="Area")
+                                split.prop(phaenotyp, "fitness_area_invert", text="Invert")
+
+                                col = box_ga.column()
+                                split = col.split()
+                                split.prop(phaenotyp, "fitness_kg", text="Kg")
+                                split.prop(phaenotyp, "fitness_kg_invert", text="Invert")
+
+                                col = box_ga.column()
+                                split = col.split()
+                                split.prop(phaenotyp, "fitness_rise", text="Rise")
+                                split.prop(phaenotyp, "fitness_rise_invert", text="Invert")
+
+                                col = box_ga.column()
+                                split = col.split()
+                                split.prop(phaenotyp, "fitness_span", text="Span")
+                                split.prop(phaenotyp, "fitness_span_invert", text="Invert")
+
+                                col = box_ga.column()
+                                split = col.split()
+                                split.prop(phaenotyp, "fitness_cantilever", text="Cantilever")
+                                split.prop(phaenotyp, "fitness_cantilever_invert", text="Invert")
+
+                                # structural fitness
+                                if phaenotyp.calculation_type != "geometrical":
+                                    box_ga.prop(phaenotyp, "fitness_average_sigma", text="Sigma")
+                                    box_ga.prop(phaenotyp, "fitness_average_strain_energy", text="Strain energy")
+
+                                box_ga.separator()
+
+                                box_ga.label(text="Shape keys:")
+                                for keyblock in shape_key.key_blocks:
+                                    name = keyblock.name
+                                    box_ga.label(text=name)
+
+                                # check generation_size and elitism
+                                if phaenotyp.generation_size*0.5 > phaenotyp.elitism:
+                                    box_ga.operator("wm.ga_start", text="Start")
+                                else:
+                                    box_ga.label(text="Elitism should be smaller than 50% of generation size.")
+
+                                if len(data["ga_individuals"]) > 0 and not bpy.context.screen.is_animation_playing:
+                                    box_ga.separator()
+                                    box_ga.label(text="Select individual by fitness:")
+                                    box_ga.prop(phaenotyp, "ga_ranking", text="Result sorted by fitness.")
+                                    if phaenotyp.ga_ranking >= len(data["ga_individuals"]):
+                                        text = "Only " + str(len(data["ga_individuals"])) + " available."
+                                        box_ga.label(text=text)
+                                    else:
+                                        # show
+                                        box_ga.operator("wm.ga_ranking", text="Generate")
+
+                                    box_ga.separator()
+
+                                    box_ga.label(text="Render sorted indiviuals:")
+                                    box_ga.operator("wm.ga_render_animation", text="Generate")
 
                     # Visualization
                     result = data["done"].get(str(frame))
@@ -921,7 +1011,10 @@ class OBJECT_PT_Phaenotyp(Panel):
 
                         box_viz = layout.box()
                         box_viz.label(text="Vizualisation:")
-                        box_viz.prop(phaenotyp, "forces", text="Force")
+                        if calculation_type == "force_distribution":
+                            box_viz.prop(phaenotyp, "forces_fd", text="Force")
+                        else:
+                            box_viz.prop(phaenotyp, "forces_pn", text="Force")
 
                         # sliders to scale forces and deflection
                         box_viz.prop(phaenotyp, "viz_scale", text="scale", slider=True)
@@ -995,10 +1088,11 @@ classes = (
     WM_OT_calculate_single_frame,
     WM_OT_calculate_animation,
 
+    WM_OT_optimize_approximate,
     WM_OT_optimize_simple,
     WM_OT_optimize_utilization,
     WM_OT_optimize_complex,
-    WM_OT_topology_1,
+    WM_OT_decimate,
 
     WM_OT_ga_start,
     WM_OT_ga_ranking,

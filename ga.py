@@ -383,6 +383,10 @@ def sectional_optimization(start, end):
         bpy.context.scene.frame_current = frame
         bpy.context.view_layer.update()
 
+        # run optimization and get new properties
+        if phaenotyp.optimization == "approximate_sectional":
+            calculation.approximate_sectional()
+
         if phaenotyp.optimization == "simple":
             calculation.simple_sectional()
 
