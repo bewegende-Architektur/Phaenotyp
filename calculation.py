@@ -886,6 +886,8 @@ def interweave_results_fd(feas, members):
             force = truss[id]
             sigma = force / A
 
+            overstress = False
+
             # if pressure check for buckling
             if force < 0:
                 # based on:
@@ -894,22 +896,20 @@ def interweave_results_fd(feas, members):
                 FK = pi**2 * E * I / L**2
                 S = FK / force
                 if S > 2.5 or abs(sigma) > acceptable_sigma:
-                    member["overstress"][str(frame)] = True
-                else:
-                    member["overstress"][str(frame)] = False
+                    overstress = True
 
             # if tensile force
             else:
                 if sigma > acceptable_sigma:
-                    member["overstress"][str(frame)] = True
-                else:
-                    member["overstress"][str(frame)] = False
+                    overstress = True
 
-            utilization = abs(acceptable_sigma) / abs(sigma)
+            utilization = basics.avoid_div_zero(abs(acceptable_sigma), abs(sigma))
 
             member["axial"][str(frame)] = force
             member["sigma"][str(frame)] = sigma
+            member["overstress"][str(frame)] = overstress
             member["utilization"][str(frame)] = utilization
+            print(utilization)
 
         # update progress
         progress.http.update_i()
@@ -1044,7 +1044,7 @@ def decimate_topology():
 
     # create factors for nodes from members
     for id, member in members.items():
-        factor = abs(member["max_long_stress"][str(frame)]/member["acceptable_sigma_buckling"][str(frame)])
+        factor = member["utilization"][str(frame)]
         # first node
         vertex_0_id = member["vertex_0_id"]
         weights[vertex_0_id].append(factor)

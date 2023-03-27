@@ -1160,6 +1160,39 @@ def report_frames():
     file_to_open = directory + "/max_sigma.html"
     webbrowser.open(file_to_open)
 
+def report_combined():
+    print_data("Generate report overview in html-format")
+
+    scene = bpy.context.scene
+    phaenotyp = scene.phaenotyp
+    data = scene["<Phaenotyp>"]
+    members = data["members"]
+    frame = bpy.context.scene.frame_current
+
+
+    # create folder
+    filepath = bpy.data.filepath
+    directory = os.path.dirname(filepath)
+
+    try:
+        os.mkdir(os.path.join(directory, "Phaenotyp-combined"))
+    except:
+        pass
+
+    directory += "/Phaenotyp-combined/"
+
+    report.copy_sorttable(directory)
+
+    sorted_frames = basics.sorted_keys(members["0"]["axial"])
+    start = sorted_frames[0] # first frame (if user is changing start frame)
+    end = sorted_frames[len(sorted_frames)-1]
+
+    report.report_combined(directory, start, end)
+
+    # open file
+    file_to_open = directory + "/sigma.html"
+    webbrowser.open(file_to_open)
+
 def report_chromosomes():
     print_data("Generate report at frame in html-format")
 

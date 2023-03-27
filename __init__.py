@@ -595,6 +595,15 @@ class WM_OT_report_frames(Operator):
         operators.report_frames()
         return {"FINISHED"}
 
+class WM_OT_report_combined(Operator):
+    bl_label = "report_combined"
+    bl_idname = "wm.report_combined"
+    bl_description = "Generate report as html-format"
+
+    def execute(self, context):
+        operators.report_combined()
+        return {"FINISHED"}
+
 class WM_OT_report_chromosomes(Operator):
     bl_label = "report_chromosomes"
     bl_idname = "wm.report_chromosomes"
@@ -1068,10 +1077,13 @@ class OBJECT_PT_Phaenotyp(Panel):
                         box_report.label(text="Report:")
 
                         if phaenotyp.calculation_type != "geometrical":
-                            box_report.operator("wm.report_members", text="members")
-                            box_report.operator("wm.report_frames", text="frames")
+                            if phaenotyp.calculation_type != "force_distribution":
+                                box_report.operator("wm.report_members", text="members")
+                                box_report.operator("wm.report_frames", text="frames")
+                            else:
+                                box_report.operator("wm.report_combined", text="combined")
                         else:
-                            box_report.label(text="No report for members or frames available in geometrical mode.")
+                            box_report.label(text="No report for members, frames or combined available in geometrical mode.")
 
                         # if ga
                         ga_available = data.get("ga_environment")
@@ -1107,6 +1119,7 @@ classes = (
     WM_OT_text,
     WM_OT_report_members,
     WM_OT_report_frames,
+    WM_OT_report_combined,
     WM_OT_report_chromosomes,
     WM_OT_report_tree,
 

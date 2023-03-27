@@ -449,7 +449,8 @@ def fill_matrix_chromosomes(matrix, len_chromosome):
 
     if phaenotyp.calculation_type != "geometrical":
         fitness_types.append("average_sigma")
-        fitness_types.append("average_strain_energy")
+        if phaenotyp.calculation_type != "force_distribution":
+            fitness_types.append("average_strain_energy")
 
     fitness_types.append("weighted")
 
@@ -533,6 +534,42 @@ def append_head(file, report_type):
         file.write("<a href='Di.html'>Di</a> |\n")
         file.write("<a href='utilization.html'>utilization</a> |\n")
         file.write("<a href='acceptable_sigma_buckling.html'>acceptable_sigma_buckling |</a>\n")
+        file.write("<a href='kg.html'>kg</a> |\n")
+        file.write("<a href='length.html'>length</a>\n")
+
+        file.write("<br>\n")
+        file.write("<br>\n")
+        file.write("<br>\n")
+        file.write("</head>\n")
+
+        file.write("\n")
+        file.write("<style>\n")
+        file.write("* {font-family: sans-serif;}\n")
+        file.write("a:link {color: rgb(0, 0, 0); background-color: transparent; text-decoration: none;}\n")
+        file.write("a:visited {color: rgb(0,0,0); background-color: transparent; text-decoration: none;}\n")
+        file.write("a:hover {color: rgb(0,0,0); background-color: transparent; text-decoration: underline;}\n")
+        file.write("a:active {color: rgb(0,0,0); background-color: transparent; text-decoration: underline;}\n")
+        file.write("</style>\n")
+
+        # from https://www.kryogenix.org/
+        # as suggested by smilyface
+        # https://stackoverflow.com/questions/10683712/html-table-sort
+        file.write('<script src="sorttable.js"></script>')
+
+        file.write('<table class="sortable">')
+        file.write('<tr class="item">')
+
+        # empty part in the top-left
+        text = '<td height="20" width="20" bgcolor="FFFFFF">Member</td>'
+        file.write(text)
+
+    elif report_type == "combined":
+        file.write("<a href='axial.html'>axial</a> |\n")
+        file.write("<a href='sigma.html'>sigma</a>\n")
+
+        file.write("<a href='Do.html'>Do</a> |\n")
+        file.write("<a href='Di.html'>Di</a> |\n")
+        file.write("<a href='utilization.html'>utilization</a> |\n")
         file.write("<a href='kg.html'>kg</a> |\n")
         file.write("<a href='length.html'>length</a>\n")
 
@@ -792,7 +829,6 @@ def report_members(directory, frame):
     force_types["strain_energy"] = 10
 
     for force_type, length in force_types.items():
-
         # create file
         filename = directory + str(force_type) + ".html"
         file = open(filename, 'w')
@@ -867,6 +903,49 @@ def report_frames(directory, start, end):
 
         append_end(file)
 
+# is working like report_frames but for force distribution
+def report_combined(directory, start, end):
+    scene = bpy.context.scene
+    phaenotyp = scene.phaenotyp
+    data = scene["<Phaenotyp>"]
+    members = data["members"]
+
+    force_types = {}
+
+    force_types["axial"] = 1
+    force_types["sigma"] = 1
+
+    force_types["Do"] = 1
+    force_types["Di"] = 1
+    force_types["utilization"] = 1
+
+    force_types["kg"] = 1
+    force_types["length"] = 1
+
+    for force_type, length in force_types.items():
+        # create file
+        filename = directory + str(force_type) + ".html"
+        file = open(filename, 'w')
+        len_members = (len(members))
+        frames_len = len(members["0"][force_type]) # Was wenn start wo anders?
+
+        # create matrix with length of col and row
+        result_matrix = create_matrix(frames_len, len_members)
+
+        # fill matrix with, result_matrix, forcetype, length and absolute
+        result_matrix, highest, lowest = fill_matrix_frames(result_matrix, force_type, length)
+
+        # append start
+        append_head(file, "combined")
+
+        names = list(range(start, end+1))
+        append_headlines(file, names, 3)
+
+        # append matrix with or without
+        append_matrix_frames(file, result_matrix, highest, lowest, length)
+
+        append_end(file)
+
 def report_chromosomes(directory):
     scene = bpy.context.scene
     phaenotyp = scene.phaenotyp
@@ -886,7 +965,10 @@ def report_chromosomes(directory):
     if phaenotyp.calculation_type != "geometrical":
         len_fitness_functions = 9
     else:
-        len_fitness_functions = 7
+        if phaenotyp.calculation_type == "force_distribution":
+            len_fitness_functions = 6
+        else:
+            len_fitness_functions = 7
 
     # create matrix with length of col and row
     # len = genes + amount of fitness
@@ -911,7 +993,8 @@ def report_chromosomes(directory):
 
     if phaenotyp.calculation_type != "geometrical":
         names.append("average_sigma")
-        names.append("average_strain_energy")
+        if phaenotyp.calculation_type != "force_distribution":
+            names.append("average_strain_energy")
     names.append("weighted")
 
     append_headlines(file, names, 3)
