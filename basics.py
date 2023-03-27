@@ -117,52 +117,6 @@ def revert_vertex_colors():
                     space.shading.light = 'STUDIO'
                     space.shading.color_type = 'MATERIAL'
 
-# variable to pass all stuff that needs to be fixed
-to_be_fixed = None
-
-# Answer from BlackCutpoint
-# https://blender.stackexchange.com/questions/75332/how-to-find-the-number-of-loose-parts-with-blenders-python-api
-def amount_of_mesh_parts():
-    obj = bpy.context.object
-    mesh = obj.data
-    paths = {v.index:set() for v in mesh.vertices}
-
-    for e in mesh.edges:
-        paths[e.vertices[0]].add(e.vertices[1])
-        paths[e.vertices[1]].add(e.vertices[0])
-
-    parts = []
-
-    while True:
-        try:
-            i=next(iter(paths.keys()))
-        except StopIteration:
-            break
-
-        part = {i}
-        cur = {i}
-
-        while True:
-            eligible = {sc for sc in cur if sc in paths}
-            if not eligible:
-                break
-
-            cur = {ve for sc in eligible for ve in paths[sc]}
-            part.update(cur)
-            for key in eligible: paths.pop(key)
-
-        parts.append(part)
-
-    return len(parts)
-
-def amount_of_loose_parts():
-    obj = bpy.context.active_object
-
-    bpy.ops.mesh.select_mode(use_extend=False, use_expand=False, type='VERT')
-    bpy.ops.mesh.select_all(action='DESELECT')
-    bpy.ops.mesh.select_loose()
-    return obj.data.total_vert_sel
-
 # based on answer from ChameleonScales
 # https://blender.stackexchange.com/questions/169844/multi-line-text-box-with-popup-menu
 def popup(title = "Phaenotyp", lines=""):

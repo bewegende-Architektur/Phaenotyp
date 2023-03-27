@@ -2,7 +2,7 @@ import bpy
 import bmesh
 from PyNite import FEModel3D
 from numpy import array, empty, append, poly1d, polyfit, linalg, zeros, intersect1d
-from phaenotyp import basics, material, progress
+from phaenotyp import basics, material, geometry, progress
 from math import sqrt
 from math import tanh
 from math import pi
@@ -56,6 +56,11 @@ def run_fd():
 
     # amount of dimensions
     dim = 3
+
+    from time import time
+
+    # start prepare
+    start_time = time()
 
     # Lege die Positionen der Punkte fest [m].
     points = []
@@ -121,6 +126,11 @@ def run_fd():
 
     forces_array = array(forces)
 
+    # end prepare
+    print("prepare:", time() - start_time)
+    # start calculation
+    start_time = time()
+
     # Definiere die Anzahl der Punkte, Stäbe etc.
     n_points_array = points_array.shape[0]
     n_edges_array = edges_array.shape[0]
@@ -131,10 +141,7 @@ def run_fd():
     # Erzeuge eine Liste mit den Indizes der Knoten.
     verts_id = list(set(range(n_points_array)) - set(supports_ids))
 
-
     def vector(vertices, edge):
-        """Gibt den Einheitsvektor zurück, der vom Punkt vertices
-        entlang des Stabes mit dem Index edge zeigt. """
         v_0, v_1 = edges_array[edge]
         if vertices == v_0:
             vec = points_array[v_1] - points_array[v_0]
@@ -167,6 +174,11 @@ def run_fd():
     S	Sicherheit gegen Knicken; S = FK ÷ F
     '''
 
+    # end calculation
+    print("calculation:", time() - start_time)
+    # start interweave_results
+    start_time = time()
+
     for id in range(len(edges_array)):
         member = members[str(id)]
 
@@ -195,40 +207,29 @@ def run_fd():
 
     data["done"][str(frame)] = True
 
+    # end interweave
+    print("interweave:", time() - start_time)
+
 def prepare_fea():
     scene = bpy.context.scene
     phaenotyp = scene.phaenotyp
     data = scene["<Phaenotyp>"]
     frame = bpy.context.scene.frame_current
 
-    # for PyNite
-    if phaenotyp.calculation_type != "force_distribution":
-        truss = FEModel3D()
-    # for force distribution
-    else:
-        pass
-
+    truss = FEModel3D()
 
     # apply chromosome if available
-    try:
-        for id, key in enumerate(data.shape_keys):
-            v = data.chromosome[str(frame)][id]
-            key.value = v
-    except:
-        pass
+    geometry.set_shape_keys(data)
 
     # get absolute position of vertex (when using shape-keys, animation et cetera)
     dg = bpy.context.evaluated_depsgraph_get()
     obj = data["structure"].evaluated_get(dg)
 
     mesh = obj.to_mesh(preserve_all_data_layers=True, depsgraph=dg)
+
     vertices = mesh.vertices
     edges = mesh.edges
     faces = mesh.polygons
-
-    # like suggested here by Gorgious and CodeManX:
-    # https://blender.stackexchange.com/questions/6155/how-to-convert-coordinates-from-vertex-to-world-space
-    mat = obj.matrix_world
 
     # to be collected:
     data["frames"][str(frame)] = {}
@@ -238,18 +239,11 @@ def prepare_fea():
     frame_kg = 0
     frame_rise = 0
     frame_span = 0
-    frane_cantilever = 0
+    frame_cantilever = 0
 
-    # get volume of this frame
-    bm = bmesh.new()
-    bm.from_mesh(mesh)
-    frame_volume = bm.calc_volume()
-
-    # get area of the frame
-    # overall sum of faces
-    # user can delete faces to influence this as fitness in ga
-    for face in faces:
-        frame_area += face.area
+    # like suggested here by Gorgious and CodeManX:
+    # https://blender.stackexchange.com/questions/6155/how-to-convert-coordinates-from-vertex-to-world-space
+    mat = obj.matrix_world
 
     # add nodes from vertices
     for vertex in vertices:
@@ -260,9 +254,14 @@ def prepare_fea():
         # https://blender.stackexchange.com/questions/6155/how-to-convert-coordinates-from-vertex-to-world-space
         v = mat @ vertex.co
 
+        # apply to all vertices to work for edges and faces also
+        vertex.co = v
+
         x = v[0] * 100 # convert to cm for calculation
         y = v[1] * 100 # convert to cm for calculation
         z = v[2] * 100 # convert to cm for calculation
+
+        truss.add_node(name, x,y,z)
 
     # define support
     supports = data["supports"]
@@ -277,10 +276,8 @@ def prepare_fea():
         vertex_0_id = member["vertex_0_id"]
         vertex_1_id = member["vertex_1_id"]
 
-        # like suggested here by Gorgious and CodeManX:
-        # https://blender.stackexchange.com/questions/6155/how-to-convert-coordinates-from-vertex-to-world-space
-        v_0 = mat @ vertices[vertex_0_id].co
-        v_1 = mat @ vertices[vertex_1_id].co
+        v_0 = vertices[vertex_0_id].co
+        v_1 = vertices[vertex_1_id].co
 
         # save initial_positions to mix with deflection
         initial_positions = []
@@ -335,12 +332,7 @@ def prepare_fea():
     for id, load in loads_f.items():
         # int(id), otherwise crashing Speicherzugriffsfehler
         face = data["structure"].data.polygons[int(id)]
-        org_normal = face.normal
-
-        # apply matrix
-        # like suggested here by Gorgious and CodeManX:
-        # https://blender.stackexchange.com/questions/6155/how-to-convert-coordinates-from-vertex-to-world-space
-        normal = mat @ org_normal
+        normal = face.normal
 
         edge_keys = face.edge_keys
         area = face.area
@@ -349,31 +341,7 @@ def prepare_fea():
         load_projected = load[1]
         load_area_z = load[2]
 
-        # get projected area
-        # based on answer from Nikos Athanasiou:
-        # https://stackoverflow.com/questions/24467972/calculate-area-of-polygon-given-x-y-coordinates
-        vertex_ids = face.vertices
-        vertices_temp = []
-        for vertex_id in vertex_ids:
-            vertex = vertices[vertex_id]
-
-            # like suggested here by Gorgious and CodeManX:
-            # https://blender.stackexchange.com/questions/6155/how-to-convert-coordinates-from-vertex-to-world-space
-            v = mat @ vertex.co
-
-            vertices_temp.append(v)
-
-        n = len(vertices_temp)
-        a = 0.0
-        for i in range(n):
-            j = (i + 1) % n
-            v_i = vertices_temp[i]
-            v_j = vertices_temp[j]
-
-            a += v_i[0] * v_j[1]
-            a -= v_j[0] * v_i[1]
-
-        area_projected = abs(a) / 2.0
+        area_projected = geometry.area_projected(face, vertices)
 
         # get distances and perimeter
         distances = []
@@ -381,10 +349,8 @@ def prepare_fea():
             vertex_0_id = edge_key[0]
             vertex_1_id = edge_key[1]
 
-            # like suggested here by Gorgious and CodeManX:
-            # https://blender.stackexchange.com/questions/6155/how-to-convert-coordinates-from-vertex-to-world-space
-            vertex_0_co = mat @ vertices[vertex_0_id].co
-            vertex_1_co = mat @ vertices[vertex_1_id].co
+            vertex_0_co = vertices[vertex_0_id].co
+            vertex_1_co = vertices[vertex_1_id].co
 
             dist_vector = vertex_0_co - vertex_1_co
             dist = dist_vector.length
@@ -501,8 +467,8 @@ def prepare_fea():
     frame_cantilever = highest
 
     # store frame based data
-    data["frames"][str(frame)]["volume"] = frame_volume
-    data["frames"][str(frame)]["area"] = frame_area
+    data["frames"][str(frame)]["volume"] = geometry.volume(mesh)
+    data["frames"][str(frame)]["area"] = geometry.area(faces)
     data["frames"][str(frame)]["length"] = frame_length
     data["frames"][str(frame)]["kg"] = frame_kg
     data["frames"][str(frame)]["rise"] = frame_rise

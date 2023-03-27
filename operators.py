@@ -45,8 +45,8 @@ def set_structure():
             else:
                 bpy.ops.object.mode_set(mode="EDIT")
 
-                amount_of_mesh_parts = basics.amount_of_mesh_parts()
-                amount_of_loose_parts = basics.amount_of_loose_parts()
+                amount_of_mesh_parts = geometry.amount_of_mesh_parts()
+                amount_of_loose_parts = geometry.amount_of_loose_parts()
 
                 if amount_of_mesh_parts > 1:
                     text = [
@@ -397,7 +397,8 @@ def calculate_single_frame():
 
     # wait for it and interweave results to data
     calculation.interweave_results(feas, members)
-    
+
+    #calculation.run_fd()
     # calculate new visualization-mesh
     geometry.update_members_post()
 

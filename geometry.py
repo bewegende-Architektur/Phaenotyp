@@ -1,7 +1,103 @@
 import bpy
+import bmesh
 from math import sqrt, pi
 from mathutils import Color, Vector
 c = Color()
+
+# variable to pass all stuff that needs to be fixed
+to_be_fixed = None
+
+# Answer from BlackCutpoint
+# https://blender.stackexchange.com/questions/75332/how-to-find-the-number-of-loose-parts-with-blenders-python-api
+def amount_of_mesh_parts():
+    obj = bpy.context.object
+    mesh = obj.data
+    paths = {v.index:set() for v in mesh.vertices}
+
+    for e in mesh.edges:
+        paths[e.vertices[0]].add(e.vertices[1])
+        paths[e.vertices[1]].add(e.vertices[0])
+
+    parts = []
+
+    while True:
+        try:
+            i=next(iter(paths.keys()))
+        except StopIteration:
+            break
+
+        part = {i}
+        cur = {i}
+
+        while True:
+            eligible = {sc for sc in cur if sc in paths}
+            if not eligible:
+                break
+
+            cur = {ve for sc in eligible for ve in paths[sc]}
+            part.update(cur)
+            for key in eligible: paths.pop(key)
+
+        parts.append(part)
+
+    return len(parts)
+
+def amount_of_loose_parts():
+    obj = bpy.context.active_object
+
+    bpy.ops.mesh.select_mode(use_extend=False, use_expand=False, type='VERT')
+    bpy.ops.mesh.select_all(action='DESELECT')
+    bpy.ops.mesh.select_loose()
+    return obj.data.total_vert_sel
+
+def volume(mesh):
+    bm = bmesh.new()
+    bm.from_mesh(mesh)
+    frame_volume = bm.calc_volume()
+
+    return frame_volume
+
+def area(faces):
+    # get area of the frame
+    # overall sum of faces
+    # user can delete faces to influence this as fitness in ga
+    frame_area = 0
+    for face in faces:
+        frame_area += face.area
+
+    return frame_area
+
+def area_projected(face, vertices):
+    # get projected area
+    # based on answer from Nikos Athanasiou:
+    # https://stackoverflow.com/questions/24467972/calculate-area-of-polygon-given-x-y-coordinates
+    vertex_ids = face.vertices
+    vertices_temp = []
+    for vertex_id in vertex_ids:
+        vertex = vertices[vertex_id]
+        vertices_temp.append(vertex.co)
+
+    n = len(vertices_temp)
+    a = 0.0
+    for i in range(n):
+        j = (i + 1) % n
+        v_i = vertices_temp[i]
+        v_j = vertices_temp[j]
+
+        a += v_i[0] * v_j[1]
+        a -= v_j[0] * v_i[1]
+
+    area_projected = abs(a) / 2.0
+
+    return area_projected
+
+def set_shape_keys(data):
+    try:
+        for id, key in enumerate(data.shape_keys):
+            v = data.chromosome[str(frame)][id]
+            key.value = v
+    except:
+        pass
 
 def create_supports(structure_obj, supports):
     mesh = bpy.data.meshes.new("<Phaenotyp>support")
@@ -421,7 +517,7 @@ def update_members_post():
             for i in range(2):
                 # red or blue?
                 force = result[str(frame)]
-                print(force)
+
                 if force > 0:
                     h = 0
                 else:
