@@ -15,9 +15,16 @@ import gc
 gc.disable()
 
 def print_data(text):
+    """
+    Used to print data for debugging.
+    :param text: Needs a text as string (Do not pass as list).
+    """
     print("Phaenotyp |", text)
 
 def check_scipy():
+    """
+    Checking if scipy is available and is setting the value to data.
+    """
     scene = bpy.context.scene
     data = scene["<Phaenotyp>"]
 
@@ -855,6 +862,19 @@ def interweave_results(feas, members):
 
         data["done"][str(frame)] = True
 
+# sectional performance or force distribution
+def approximate_sectional():
+    """
+    test_function does blah blah blah.
+
+    :param p1: describe about parameter p1
+    :param p2: describe about parameter p2
+    :param p3: describe about parameter p3
+    :return: describe what it returns
+    """
+    pass
+
+# sectional performance for PyNite
 def simple_sectional():
     scene = bpy.context.scene
     phaenotyp = scene.phaenotyp
@@ -935,6 +955,7 @@ def complex_sectional():
             member["Di"][str(frame)] = 0.1
             member["Do"][str(frame)] = member["Di"][str(frame)] * Do_Di_ratio
 
+# is working for fd and pn
 def decimate_topology():
     scene = bpy.context.scene
     phaenotyp = scene.phaenotyp

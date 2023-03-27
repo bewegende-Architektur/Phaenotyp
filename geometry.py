@@ -354,11 +354,10 @@ def update_members_post():
         radius = member["Do"][str(frame)]*0.01
         radius_group.add(vertex_ids, radius, 'REPLACE')
 
-        # get forcetyp and force
-        result = member[phaenotyp.forces]
-
-        # move vertices and apply color
         if phaenotyp.calculation_type != "force_distribution":
+            # get forcetyp and force
+            result = member[phaenotyp.forces_pn]
+
             for i in range(11):
                 position = member["deflection"][str(frame)][i]
                 f = phaenotyp.viz_deflection * 0.01
@@ -368,7 +367,7 @@ def update_members_post():
                 vertices[mesh_vertex_ids[i]].co = (x,y,z)
 
                 # if utilization in viz
-                if phaenotyp.forces == "utilization":
+                if phaenotyp.forces_pn == "utilization":
                     # red or blue?
                     force = result[str(frame)] - 1
                     if force > 0:
@@ -416,6 +415,9 @@ def update_members_post():
 
         # for force disbribution
         else:
+            # get forcetyp and force
+            result = member[phaenotyp.forces_fd]
+
             for i in range(2):
                 # red or blue?
                 force = result[str(frame)]

@@ -160,7 +160,7 @@ def set_support():
     bpy.context.view_layer.objects.active = obj
     bpy.ops.object.mode_set(mode="EDIT")
 
-def set_profile():
+def set_member():
     scene = bpy.context.scene
     phaenotyp = scene.phaenotyp
     data = scene["<Phaenotyp>"]
@@ -388,33 +388,22 @@ def calculate_single_frame():
 
     # if PyNite is used
     if phaenotyp.calculation_type != "force_distribution":
-        try:
-            # calculate new properties for each member
-            geometry.update_members_pre()
+        # calculate new properties for each member
+        geometry.update_members_pre()
 
-            # created a truss object of PyNite and add to dict
-            truss = calculation.prepare_fea()
+        # created a truss object of PyNite and add to dict
+        truss = calculation.prepare_fea()
 
-            # run singlethread and get results
-            feas = calculation.run_st(truss, frame)
+        # run singlethread and get results
+        feas = calculation.run_st(truss, frame)
 
-            # wait for it and interweave results to data
-            calculation.interweave_results(feas, members)
+        # wait for it and interweave results to data
+        calculation.interweave_results(feas, members)
 
-            # calculate new visualization-mesh
-            geometry.update_members_post()
+        # calculate new visualization-mesh
+        geometry.update_members_post()
 
-            basics.view_vertex_colors()
-        except Exception as exception:
-            print_data(exception.__class__.__name__)
-            text = [
-                "It looks like the structure is unstable.",
-                "Are there any loose parts?",
-                "",
-                "Maybe you can solve this by doing:",
-                "- Mesh | Clean up | Delete loose parts.",
-                "- Mesh | Clean up | Merge by distance."]
-            basics.popup(lines = text)
+        basics.view_vertex_colors()
 
     else:
         # calculate new properties for each member
@@ -598,19 +587,19 @@ def ga_start():
     generation_id = data["ga_environment"]["generation_id"]
     individuals = data["ga_individuals"]
 
-    if phaenotyp.ga_optimization in ["simple", "utilization", "complex"]:
-        ga_optimization_amount = phaenotyp.ga_optimization_amount
+    if phaenotyp.optimization in ["simple", "utilization", "complex"]:
+        optimization_amount = phaenotyp.optimization_amount
     else:
-        ga_optimization_amount = 0
+        optimization_amount = 0
 
-    # skip ga_optimization if geometrical only
+    # skip optimization if geometrical only
     if phaenotyp.calculation_type != "geometrical":
-        ga_optimization_amount = 0
+        optimization_amount = 0
 
     # start progress
     progress.run()
     progress.http.reset_pci(1)
-    progress.http.reset_o(ga_optimization_amount)
+    progress.http.reset_o(optimization_amount)
 
     # set frame_start
     bpy.context.scene.frame_start = 0
@@ -620,7 +609,7 @@ def ga_start():
     # the fitness of this chromosome is the basis for all others
     ga.generate_basis()
 
-    for i in range(ga_optimization_amount):
+    for i in range(optimization_amount):
         progress.http.reset_pci(1)
         ga.sectional_optimization(0, 1)
         progress.http.update_o()
@@ -640,7 +629,7 @@ def ga_start():
         # progress
         progress.http.reset_pci(end-start)
         progress.http.g = [0, generation_amount]
-        progress.http.reset_o(ga_optimization_amount)
+        progress.http.reset_o(optimization_amount)
 
         # create initial generation
         # the first generation contains 20 individuals (standard value is 20)
@@ -649,7 +638,7 @@ def ga_start():
         ga.create_initial_individuals(start, end)
 
         # optimize if sectional performance if activated
-        for i in range(ga_optimization_amount):
+        for i in range(optimization_amount):
             progress.http.reset_pci(end-start)
             ga.sectional_optimization(start, end)
             progress.http.update_o()
@@ -673,11 +662,11 @@ def ga_start():
 
             # create 18 new individuals (standard value of 20 - 10 % elitism)
             progress.http.reset_pci(end-start)
-            progress.http.reset_o(ga_optimization_amount)
+            progress.http.reset_o(optimization_amount)
 
             ga.create_new_individuals(start, end)
 
-            for i in range(ga_optimization_amount):
+            for i in range(optimization_amount):
                 progress.http.reset_pci(end-start)
                 ga.sectional_optimization(start, end)
                 progress.http.update_o()
@@ -710,12 +699,12 @@ def ga_start():
 
         # progress
         progress.http.reset_pci(end-start)
-        progress.http.reset_o(ga_optimization_amount)
+        progress.http.reset_o(optimization_amount)
         progress.http.g = [0,1]
 
         # pair with bruteforce
         ga.bruteforce(chromosomes)
-        for i in range(ga_optimization_amount):
+        for i in range(optimization_amount):
             progress.http.reset_pci(end-start)
             ga.sectional_optimization(start, end)
             progress.http.update_o()

@@ -2,6 +2,86 @@ import bpy
 import bmesh
 from queue import Queue
 
+def print_data(text):
+    """
+    Used to print data for debugging.
+    :param text: Needs a text as string (Do not pass as list).
+    """
+    print("Phaenotyp |", text)
+
+# available forces for different calculation types
+class forces:
+    gm = []
+    fd = [
+                    ("sigma", "Sigma", ""),
+                    ("axial", "Axial", ""),
+                    ("utilization", "Utilization", "")
+                ]
+    pn = [
+                    ("sigma", "Sigma", ""),
+                    ("axial", "Axial", ""),
+                    ("moment_y", "Moment Y", ""),
+                    ("moment_z", "Moment Z", ""),
+                    ("shear_y", "Shear Y", ""),
+                    ("shear_z", "Shear_y", ""),
+                    ("torque", "Torque", ""),
+                    ("utilization", "Utilization", ""),
+                    ("normal_energy", "Normal energy", ""),
+                    ("moment_energy", "Moment energy", ""),
+                    ("strain_energy", "Strain energy", "")
+                ]
+
+    types = pn
+
+class optimizations:
+    gm = []
+    fd = [
+                    ("none", "None", ""),
+                    ("approximate_sectional", "Approximate", "")
+                ]
+    pn = [
+                    ("none", "None", ""),
+                    ("simple", "Simple", ""),
+                    ("utilization", "Utilization", ""),
+                    ("complex", "Complex", "")
+                ]
+
+    types = pn
+
+def set_types(self, context):
+    """
+    Setting the available forces and optimizations for the choosen type of calculation.
+    """
+    scene = context.scene
+    phaenotyp = scene.phaenotyp
+
+    calculation_type = phaenotyp.calculation_type
+
+    text = "Set available types of forces and optimizations: "
+
+    if calculation_type == "geometrical":
+        forces.set = forces.gm
+        optimizations.set = optimizations.gm
+        text += "geometrical"
+
+    elif calculation_type == "force_distribution":
+        forces.set = forces.fd
+        optimizations.set = optimizations.fd
+        text += "force distribution"
+
+    # set forces for PyNite
+    else:
+        forces.set = forces.pn
+        optimizations.set = optimizations.pn
+        text += "PyNite"
+
+    print_data(text)
+
+def viz_update(self, context):
+    scene = context.scene
+    phaenotyp = scene.phaenotyp
+    geometry.update_members_post()
+
 def create_data():
     data = bpy.context.scene.get("<Phaenotyp>")
     if not data:

@@ -43,10 +43,10 @@ def update():
     current["Iz"] = current["Iy"]
 
     # torsional constant, 65.875 cm⁴
-    current["J"]  = pi * (current["Do"]**4 - current["Di"]**4)/(32)
+    current["J"] = pi * (current["Do"]**4 - current["Di"]**4)/(32)
 
     # cross-sectional area, 8,64 cm²
-    current["A"]  = ((pi * (current["Do"]*0.5)**2) - (pi * (current["Di"]*0.5)**2))
+    current["A"] = ((pi * (current["Do"]*0.5)**2) - (pi * (current["Di"]*0.5)**2))
 
     # weight of profile, 6.79 kg/m
     current["kg_A"] =  current["A"]*current["d"] * 0.1

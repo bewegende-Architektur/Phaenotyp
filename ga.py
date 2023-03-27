@@ -383,13 +383,13 @@ def sectional_optimization(start, end):
         bpy.context.scene.frame_current = frame
         bpy.context.view_layer.update()
 
-        if phaenotyp.ga_optimization == "simple":
+        if phaenotyp.optimization == "simple":
             calculation.simple_sectional()
 
-        if phaenotyp.ga_optimization == "utilization":
+        if phaenotyp.optimization == "utilization":
             calculation.utilization_sectional()
 
-        if phaenotyp.ga_optimization == "complex":
+        if phaenotyp.optimization == "complex":
             calculation.complex_sectional()
 
         # apply shape keys
