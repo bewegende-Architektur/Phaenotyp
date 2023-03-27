@@ -440,9 +440,11 @@ def calculate_animation():
             start = bpy.context.scene.frame_start
             end = bpy.context.scene.frame_end + 1 # to render also last frame
 
+            amount = (end-start) * (phaenotyp.optimization_amount+1)
+
             # start progress
             progress.run()
-            progress.http.reset_pci(end-start)
+            progress.http.reset_pci(amount)
 
             # create list of trusses
             trusses = {}
@@ -529,7 +531,7 @@ def calculate_animation():
                 calculate_single_frame()
 
                 # run optimization and get new properties
-                if calculation_type != "force_distribution":
+                if phaenotyp.calculation_type != "force_distribution":
                     if phaenotyp.optimization_fd == "approximate_sectional":
                         calculation.approximate_sectional()
 

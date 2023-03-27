@@ -421,7 +421,7 @@ class phaenotyp_properties(PropertyGroup):
         description = "Amount of optimization to run for each member",
         default = 3,
         min = 1,
-        max = 10
+        max = 100
         )
 
     animation_optimization_type: EnumProperty(
