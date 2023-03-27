@@ -91,6 +91,89 @@ def area_projected(face, vertices):
 
     return area_projected
 
+def perimeter(edge_keys, vertices):
+    # get distances and perimeter
+    distances = []
+    for edge_key in edge_keys:
+        vertex_0_id = edge_key[0]
+        vertex_1_id = edge_key[1]
+
+        vertex_0_co = vertices[vertex_0_id].co
+        vertex_1_co = vertices[vertex_1_id].co
+
+        dist_vector = vertex_0_co - vertex_1_co
+        dist = dist_vector.length
+        distances.append(dist)
+
+    perimeter = sum(distances)
+
+    return distances, perimeter
+
+def rise(vertices):
+    highest = 0
+    lowest = 0
+
+    for vertex in vertices:
+        z = vertex.co[2]
+
+        # find highest
+        if z > highest:
+            highest = z
+
+        # find lowest
+        if z < lowest:
+            lowest = z
+
+    frame_rise = highest-lowest
+    return frame_rise
+
+def span(vertices, supports):
+    # get span of frame
+    # (highest distance between supports)
+    highest = 0
+
+    for current in supports:
+        for other in supports:
+            if current != other:
+                current_co = vertices[int(current)].co
+                other_co = vertices[int(other)].co
+
+                dist_v = other_co - current_co
+                dist = dist_v.length
+
+                # find highest
+                if dist > highest:
+                    highest = dist
+
+    frame_span = highest
+    return frame_span
+
+def cantilever(vertices, supports):
+    # get cantilever of frame
+    # (lowest distance from all vertices to all supports)
+    highest = 0
+
+    for vertex in vertices:
+        to_closest_support = float('inf')
+        for support in supports:
+            vertex_co = vertex.co
+            support_co = vertices[int(support)].co
+
+            if vertex_co != support_co:
+                dist_v = support_co - vertex_co
+                dist = dist_v.length
+
+                # find highest
+                if dist < to_closest_support:
+                    to_closest_support = dist
+
+        # find highest
+        if to_closest_support > highest:
+            highest = to_closest_support
+
+    frame_cantilever = highest
+    return frame_cantilever
+
 def set_shape_keys(data):
     try:
         for id, key in enumerate(data.shape_keys):

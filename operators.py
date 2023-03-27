@@ -386,19 +386,30 @@ def calculate_single_frame():
     members = scene["<Phaenotyp>"]["members"]
     frame = bpy.context.scene.frame_current
 
+    # for PyNite
+    if phaenotyp.calculation_type != "force_distribution":
+        prepare_fea = calculation.prepare_fea_pn
+        run_st = calculation.run_st_pn
+        interweave_results = calculation.interweave_results_pn
+
+    # for force distribuion
+    else:
+        prepare_fea = calculation.prepare_fea_fd
+        run_st = calculation.run_st_fd
+        interweave_results = calculation.interweave_results_fd
+
     # calculate new properties for each member
     geometry.update_members_pre()
 
     # created a truss object of PyNite and add to dict
-    truss = calculation.prepare_fea()
+    truss = prepare_fea()
 
     # run singlethread and get results
-    feas = calculation.run_st(truss, frame)
+    feas = run_st(truss, frame)
 
     # wait for it and interweave results to data
-    calculation.interweave_results(feas, members)
+    interweave_results(feas, members)
 
-    #calculation.run_fd()
     # calculate new visualization-mesh
     geometry.update_members_post()
 
@@ -414,6 +425,18 @@ def calculate_animation():
     # start progress
     progress.run()
     progress.http.reset_pci(end-start)
+
+    # for PyNite
+    if phaenotyp.calculation_type != "force_distribution":
+        prepare_fea = prepare_fea_pn
+        run_st = calculation.run_st_pn
+        interweave_results = interweave_results_pn
+
+    # for force distribuion
+    else:
+        prepare_fea = geometry.prepare_fea_fd
+        run_st = geometry.run_st_fd
+        interweave_results = geometry.interweave_results_fd
 
     if phaenotyp.animation_optimization_type == "each_frame":
         start = bpy.context.scene.frame_start
@@ -432,14 +455,14 @@ def calculate_animation():
             geometry.update_members_pre()
 
             # created a truss object of PyNite and add to dict
-            truss = calculation.prepare_fea()
+            truss = prepare_fea()
             trusses[frame] = truss
 
         # run mp and get results
         feas = calculation.run_mp(trusses)
 
         # wait for it and interweave results to data
-        calculation.interweave_results(feas, members)
+        interweave_results(feas, members)
 
         # calculate new visualization-mesh
         geometry.update_members_post()
@@ -468,14 +491,14 @@ def calculate_animation():
                 geometry.update_members_pre()
 
                 # created a truss object of PyNite and add to dict
-                truss = calculation.prepare_fea()
+                truss = prepare_fea()
                 trusses[frame] = truss
 
             # run mp and get results
             feas = calculation.run_mp(trusses)
 
             # wait for it and interweave results to data
-            calculation.interweave_results(feas, members)
+            interweave_results(feas, members)
 
             # calculate new visualization-mesh
             geometry.update_members_post()
@@ -532,13 +555,13 @@ def approximate_sectional():
     geometry.update_members_pre()
 
     # created a truss object of PyNite and add to dict
-    truss = calculation.prepare_fea()
+    truss = prepare_fea_fd()
 
     # run singlethread and get results
-    feas = calculation.run_st(truss, frame)
+    feas = calculation.run_st_fd(truss, frame)
 
     # wait for it and interweave results to data
-    calculation.interweave_results(feas, members)
+    interweave_results_fd(feas, members)
 
     # calculate new visualization-mesh
     geometry.update_members_post()
@@ -560,13 +583,13 @@ def optimize_simple():
     geometry.update_members_pre()
 
     # created a truss object of PyNite and add to dict
-    truss = calculation.prepare_fea()
+    truss = calculation.prepare_fea_pn()
 
     # run singlethread and get results
-    feas = calculation.run_st(truss, frame)
+    feas = calculation.run_st_pn(truss, frame)
 
     # wait for it and interweave results to data
-    calculation.interweave_results(feas, members)
+    calculation.interweave_results_pn(feas, members)
 
     # calculate new visualization-mesh
     geometry.update_members_post()
@@ -588,13 +611,13 @@ def optimize_utilization():
     geometry.update_members_pre()
 
     # created a truss object of PyNite and add to dict
-    truss = calculation.prepare_fea()
+    truss = calculation.prepare_fea_pn()
 
     # run singlethread and get results
-    feas = calculation.run_st(truss, frame)
+    feas = calculation.run_st_pn(truss, frame)
 
     # wait for it and interweave results to data
-    calculation.interweave_results(feas, members)
+    calculation.interweave_results_pn(feas, members)
 
     # calculate new visualization-mesh
     geometry.update_members_post()
@@ -616,13 +639,13 @@ def optimize_complex():
     geometry.update_members_pre()
 
     # created a truss object of PyNite and add to dict
-    truss = calculation.prepare_fea()
+    truss = calculation.prepare_fea_pn()
 
     # run singlethread and get results
-    feas = calculation.run_st(truss, frame)
+    feas = calculation.run_st_pn(truss, frame)
 
     # wait for it and interweave results to data
-    calculation.interweave_results(feas, members)
+    calculation.interweave_results_pn(feas, members)
 
     # calculate new visualization-mesh
     geometry.update_members_post()

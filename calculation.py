@@ -35,182 +35,7 @@ def check_scipy():
     except:
         data["scipy_available"] = False
 
-# run force distribution single_frame
-def run_fd():
-    scene = bpy.context.scene
-    data = scene["<Phaenotyp>"]
-    members = scene["<Phaenotyp>"]["members"]
-    obj = data["structure"]
-    vertices = obj.data.vertices
-    edge_keys = obj.data.edge_keys
-    supports = data['supports']
-    loads = data['loads_v']
-    frame = bpy.context.scene.frame_current
-
-    # based on:
-    # Oliver Natt
-    # Physik mit Python
-    # Simulationen, Visualisierungen und Animationen von Anfang an
-    # 1. Auflage, Springer Spektrum, 2020
-    # https://pyph.de/1/1/index.php?name=code&kap=5&pgm=4
-
-    # amount of dimensions
-    dim = 3
-
-    from time import time
-
-    # start prepare
-    start_time = time()
-
-    # Lege die Positionen der Punkte fest [m].
-    points = []
-    for vertex in vertices:
-        co = vertex.co
-
-        x = co[0] * 100 # convert to cm for calculation
-        y = co[1] * 100 # convert to cm for calculation
-        z = co[2] * 100 # convert to cm for calculation
-
-        pos = [x,y,z]
-        points.append(pos)
-
-    points_array = array(points)
-
-    # Erzeuge eine Liste mit den Indizes der Stützpoints_array.
-    fixed = []
-    for id, support in supports.items():
-        id = int(id)
-        fixed.append(id)
-
-    supports_ids = fixed # kann man gleich umbennen
-
-    # Jeder Stab verbindet genau zwei Punkte. Wir legen dazu die
-    # Indizes der zugehörigen Punkte in einem Array ab.
-    edges = []
-    lenghtes = []
-    for edge_key in edge_keys:
-        v_0 = edge_key[0]
-        v_1 = edge_key[1]
-
-        key = [v_0, v_1]
-        edges.append(key)
-
-        v_0_co = vertices[v_0].co
-        v_1_co = vertices[v_1].co
-        dist_v = v_1_co - v_0_co
-        dist = dist_v.length * 100 # convert to cm for calculation
-        lenghtes.append(dist)
-
-    edges_array = array(edges)
-
-    # Lege die äußere Kraft fest, die auf jeden Punkt wirkt [N].
-    # Für die Stützpoints_array setzen wir diese Kraft zunächst auf 0.
-    # Diese wird später berechnet.
-    forces = []
-    for vertex in vertices:
-        id = str(vertex.index)
-        if id in loads:
-            x = loads[id][0]
-            y = loads[id][1]
-            z = loads[id][2]
-
-        # Hier noch prüfen, ob keine Last auf Support liegt?
-
-        else:
-            x = 0
-            y = 0
-            z = 0
-
-        load = [x,y,z]
-        forces.append(load)
-
-    forces_array = array(forces)
-
-    # end prepare
-    print("prepare:", time() - start_time)
-    # start calculation
-    start_time = time()
-
-    # Definiere die Anzahl der Punkte, Stäbe etc.
-    n_points_array = points_array.shape[0]
-    n_edges_array = edges_array.shape[0]
-    n_supports = len(supports_ids)
-    n_vertes = n_points_array - n_supports
-    n_equation = n_vertes * dim
-
-    # Erzeuge eine Liste mit den Indizes der Knoten.
-    verts_id = list(set(range(n_points_array)) - set(supports_ids))
-
-    def vector(vertices, edge):
-        v_0, v_1 = edges_array[edge]
-        if vertices == v_0:
-            vec = points_array[v_1] - points_array[v_0]
-        else:
-            vec = points_array[v_0] - points_array[v_1]
-        return vec / linalg.norm(vec)
-
-
-    # Stelle das Gleichungssystem für die Kräfte auf.
-    truss = zeros((n_equation, n_equation))
-    for id, edge in enumerate(edges_array):
-        for k in intersect1d(edge, verts_id):
-            n = verts_id.index(k)
-            truss[n * dim:(n + 1) * dim, id] = vector(k, id)
-
-    # Löse das Gleichungssystem A @ F = -forces_array nach den Kräften F.
-    b = -forces_array[verts_id].reshape(-1)
-    F = linalg.solve(truss, b)
-
-    # Berechne die äußeren Kräfte.
-    for id, edge in enumerate(edges_array):
-        for k in intersect1d(edge, supports_ids):
-            forces_array[k] -= F[id] * vector(k, id)
-
-    # auf Basis von:
-    # https://www.johannes-strommer.com/rechner/knicken-von-edges_arrayn-euler/
-    '''
-    Druck­spannung = F ÷ A (N/mm²)
-    FK	Kraft, bei der der Stab seit­lich aus­knickt; in kN
-    S	Sicherheit gegen Knicken; S = FK ÷ F
-    '''
-
-    # end calculation
-    print("calculation:", time() - start_time)
-    # start interweave_results
-    start_time = time()
-
-    for id in range(len(edges_array)):
-        member = members[str(id)]
-
-        # shorten
-        I = member["Iy"][str(frame)]
-        A = member["A"][str(frame)]
-        E = member["E"]
-
-        force = F[id]
-        L = lenghtes[id]
-
-        # Zweiter Eulerscher Knickfall: s = L
-        FK = pi**2 * E * I / L**2
-        sigma = force / A # vorhande Druckspannung
-        S = FK / force
-        utilization = abs(FK) / abs(force)
-
-        member["axial"][str(frame)] = force
-        member["sigma"][str(frame)] = sigma
-        member["utilization"][str(frame)] = utilization
-
-        if S < 2.5:
-            member["overstress"][str(frame)] = True
-        else:
-            member["overstress"][str(frame)] = False
-
-    data["done"][str(frame)] = True
-
-    # end interweave
-    print("interweave:", time() - start_time)
-
-def prepare_fea():
+def prepare_fea_pn():
     scene = bpy.context.scene
     phaenotyp = scene.phaenotyp
     data = scene["<Phaenotyp>"]
@@ -342,21 +167,7 @@ def prepare_fea():
         load_area_z = load[2]
 
         area_projected = geometry.area_projected(face, vertices)
-
-        # get distances and perimeter
-        distances = []
-        for edge_key in edge_keys:
-            vertex_0_id = edge_key[0]
-            vertex_1_id = edge_key[1]
-
-            vertex_0_co = vertices[vertex_0_id].co
-            vertex_1_co = vertices[vertex_1_id].co
-
-            dist_vector = vertex_0_co - vertex_1_co
-            dist = dist_vector.length
-            distances.append(dist)
-
-        perimeter = sum(distances)
+        distances, perimeter = geometry.perimeter(edge_keys, vertices)
 
         # define loads for each edge
         edge_load_normal = []
@@ -406,80 +217,227 @@ def prepare_fea():
             z = edge_load_area_z[i]
             truss.add_member_dist_load(name, 'FZ', z, z)
 
-    # get rise of frame
-    highest = 0
-    lowest = 0
+    # store frame based data
+    data["frames"][str(frame)]["volume"] = geometry.volume(mesh)
+    data["frames"][str(frame)]["area"] = geometry.area(faces)
+    data["frames"][str(frame)]["length"] = frame_length
+    data["frames"][str(frame)]["kg"] = frame_kg
+    data["frames"][str(frame)]["rise"] = geometry.rise(vertices)
+    data["frames"][str(frame)]["span"] = geometry.span(vertices, supports)
+    data["frames"][str(frame)]["cantilever"] = geometry.cantilever(vertices, supports)
 
+    progress.http.update_p()
+    return truss
+
+def prepare_fea_fd():
+    scene = bpy.context.scene
+    phaenotyp = scene.phaenotyp
+    data = scene["<Phaenotyp>"]
+    frame = bpy.context.scene.frame_current
+
+    # apply chromosome if available
+    geometry.set_shape_keys(data)
+
+    # get absolute position of vertex (when using shape-keys, animation et cetera)
+    dg = bpy.context.evaluated_depsgraph_get()
+    obj = data["structure"].evaluated_get(dg)
+
+    mesh = obj.to_mesh(preserve_all_data_layers=True, depsgraph=dg)
+
+    vertices = mesh.vertices
+    edges = mesh.edges
+    faces = mesh.polygons
+
+    # to be collected:
+    data["frames"][str(frame)] = {}
+    frame_volume = 0
+    frame_area = 0
+    frame_length = 0
+    frame_kg = 0
+    frame_rise = 0
+    frame_span = 0
+    frame_cantilever = 0
+
+    # like suggested here by Gorgious and CodeManX:
+    # https://blender.stackexchange.com/questions/6155/how-to-convert-coordinates-from-vertex-to-world-space
+    mat = obj.matrix_world
+
+    # add nodes from vertices
+    points = []
     for vertex in vertices:
-        z = vertex.co[2]
+        # like suggested here by Gorgious and CodeManX:
+        # https://blender.stackexchange.com/questions/6155/how-to-convert-coordinates-from-vertex-to-world-space
+        v = mat @ vertex.co
 
-        # find highest
-        if z > highest:
-            highest = z
+        # apply to all vertices to work for edges and faces also
+        vertex.co = v
 
-        # find lowest
-        if z < lowest:
-            lowest = z
+        x = v[0] * 100 # convert to cm for calculation
+        y = v[1] * 100 # convert to cm for calculation
+        z = v[2] * 100 # convert to cm for calculation
 
-    frame_rise = highest-lowest
+        pos = [x,y,z]
+        points.append(pos)
 
-    # get span of frame
-    # (highest distance between supports)
-    highest = 0
+    points_array = array(points)
 
-    for current in supports:
-        for other in supports:
-            if current != other:
-                current_co = vertices[int(current)].co
-                other_co = vertices[int(other)].co
+    # define support
+    fixed = []
+    supports = data["supports"]
+    for id, support in supports.items():
+        id = int(id)
+        fixed.append(id)
 
-                dist_v = other_co - current_co
-                dist = dist_v.length
+    supports_ids = fixed
 
-                # find highest
-                if dist > highest:
-                    highest = dist
+    # create members
+    members = data["members"]
+    edges = []
+    lenghtes = []
+    for id, member in members.items():
+        vertex_0_id = member["vertex_0_id"]
+        vertex_1_id = member["vertex_1_id"]
 
-    frame_span = highest
+        key = [vertex_0_id, vertex_1_id]
+        edges.append(key)
 
-    # get cantilever of frame
-    # (lowest distance from all vertices to all supports)
-    highest = 0
+        v_0 = vertices[vertex_0_id].co
+        v_1 = vertices[vertex_1_id].co
 
+        # add self weight
+        kg_A = member["kg_A"][str(frame)]
+        kN = kg_A * -0.0000981
+        '''
+        # add self weight as distributed load
+        truss.add_member_dist_load(name, "FZ", kN, kN)
+        '''
+
+        # calculate lenght of parts (maybe usefull later ...)
+        length = (v_0 - v_1).length
+        frame_length += length
+
+        # calculate and add weight to overall weight of structure
+        kg = length * kg_A
+        frame_kg += kg
+
+        # for calculation
+        lenghtes.append(length)
+
+        # store in member
+        member["kg"][str(frame)] = kg
+        member["length"][str(frame)] = length
+
+    edges_array = array(edges)
+
+    # add loads
+    loads_v = data["loads_v"]
+    forces = []
     for vertex in vertices:
-        to_closest_support = float('inf')
-        for support in supports:
-            vertex_co = vertex.co
-            support_co = vertices[int(support)].co
+        id = str(vertex.index)
+        if id in loads_v:
+            load_v = loads_v[id]
+            x = load_v[0]
+            y = load_v[1]
+            z = load_v[2]
 
-            if vertex_co != support_co:
-                dist_v = support_co - vertex_co
-                dist = dist_v.length
+        # Hier noch prüfen, ob keine Last auf Support liegt?
 
-                # find highest
-                if dist < to_closest_support:
-                    to_closest_support = dist
+        else:
+            x = 0
+            y = 0
+            z = 0
 
-        # find highest
-        if to_closest_support > highest:
-            highest = to_closest_support
+        load = [x,y,z]
+        forces.append(load)
 
-    frame_cantilever = highest
+    forces_array = array(forces)
+
+    loads_e = data["loads_e"]
+    for id, load in loads_e.items():
+        name = "member_" + str(id)
+        #truss.add_member_dist_load(name, 'FX', load[0]*0.01, load[0]*0.01) # m to cm
+        #truss.add_member_dist_load(name, 'FY', load[1]*0.01, load[1]*0.01) # m to cm
+        #truss.add_member_dist_load(name, 'FZ', load[2]*0.01, load[2]*0.01) # m to cm
+
+    loads_f = data["loads_f"]
+    for id, load in loads_f.items():
+        # int(id), otherwise crashing Speicherzugriffsfehler
+        face = data["structure"].data.polygons[int(id)]
+        normal = face.normal
+
+        edge_keys = face.edge_keys
+        area = face.area
+
+        load_normal = load[0]
+        load_projected = load[1]
+        load_area_z = load[2]
+
+        area_projected = geometry.area_projected(face, vertices)
+        distances, perimeter = geometry.perimeter(edge_keys, vertices)
+
+        # define loads for each edge
+        edge_load_normal = []
+        edge_load_projected = []
+        edge_load_area_z = []
+
+        ratio = 1 / len(edge_keys)
+        for edge_id, dist in enumerate(distances):
+            # load_normal
+            area_load = load_normal * area
+            edge_load = area_load * ratio / dist * 0.01 # m to cm
+            edge_load_normal.append(edge_load)
+
+            # load projected
+            area_load = load_projected * area_projected
+            edge_load = area_load * ratio / dist * 0.01 # m to cm
+            edge_load_projected.append(edge_load)
+
+            # load projected
+            area_load = load_area_z * area
+            edge_load = area_load * ratio / dist * 0.01 # m to cm
+            edge_load_area_z.append(edge_load)
+
+        # i is the id within the class (0, 1, 3 and maybe more)
+        # edge_id is the id of the edge in the mesh -> the member
+        for i, edge_key in enumerate(edge_keys):
+            # get name <---------------------------------------- maybe better method?
+            for edge in edges:
+                if edge.vertices[0] in edge_key:
+                    if edge.vertices[1] in edge_key:
+                        name = "member_" + str(edge.index)
+
+            # edge_load_normal <--------------------------------- to be tested / checked
+            x = edge_load_normal[i] * normal[0]
+            y = edge_load_normal[i] * normal[1]
+            z = edge_load_normal[i] * normal[2]
+
+            #truss.add_member_dist_load(name, 'FX', x, x)
+            #truss.add_member_dist_load(name, 'FY', y, y)
+            #truss.add_member_dist_load(name, 'FZ', z, z)
+
+            # edge_load_projected
+            z = edge_load_projected[i]
+            #truss.add_member_dist_load(name, 'FZ', z, z)
+
+            # edge_load_area_z
+            z = edge_load_area_z[i]
+            #truss.add_member_dist_load(name, 'FZ', z, z)
 
     # store frame based data
     data["frames"][str(frame)]["volume"] = geometry.volume(mesh)
     data["frames"][str(frame)]["area"] = geometry.area(faces)
     data["frames"][str(frame)]["length"] = frame_length
     data["frames"][str(frame)]["kg"] = frame_kg
-    data["frames"][str(frame)]["rise"] = frame_rise
-    data["frames"][str(frame)]["span"] = frame_span
-    data["frames"][str(frame)]["cantilever"] = frame_cantilever
+    data["frames"][str(frame)]["rise"] = geometry.rise(vertices)
+    data["frames"][str(frame)]["span"] = geometry.span(vertices, supports)
+    data["frames"][str(frame)]["cantilever"] = geometry.cantilever(vertices, supports)
 
     progress.http.update_p()
+
+    truss = [points_array, supports_ids, edges_array, forces_array]
     return truss
 
-# run a singlethread calculation
-def run_st(truss, frame):
+def run_st_pn(truss, frame):
     scene = bpy.context.scene
     scipy_available = scene["<Phaenotyp>"]["scipy_available"]
 
@@ -498,6 +456,73 @@ def run_st(truss, frame):
 
     feas = {}
     feas[str(frame)] = truss
+
+    text = calculation_type + " singlethread job for frame " + str(frame) + " done"
+    print_data(text)
+
+    progress.http.update_c()
+
+    return feas
+
+def run_st_fd(truss, frame):
+    scene = bpy.context.scene
+    scipy_available = scene["<Phaenotyp>"]["scipy_available"]
+
+    phaenotyp = scene.phaenotyp
+    calculation_type = phaenotyp.calculation_type
+
+    # based on:
+    # Oliver Natt
+    # Physik mit Python
+    # Simulationen, Visualisierungen und Animationen von Anfang an
+    # 1. Auflage, Springer Spektrum, 2020
+    # https://pyph.de/1/1/index.php?name=code&kap=5&pgm=4
+
+    # amount of dimensions
+    dim = 3
+
+    points_array = truss[0]
+    supports_ids = truss[1]
+    edges_array = truss[2]
+    forces_array = truss[3]
+
+    # amount of points, edges, supports, verts
+    n_points_array = points_array.shape[0]
+    n_edges_array = edges_array.shape[0]
+    n_supports = len(supports_ids)
+    n_verts = n_points_array - n_supports
+    n_equation = n_verts * dim
+
+    # create list of indicies
+    verts_id = list(set(range(n_points_array)) - set(supports_ids))
+
+    def vector(vertices, edge):
+        v_0, v_1 = edges_array[edge]
+        if vertices == v_0:
+            vec = points_array[v_1] - points_array[v_0]
+        else:
+            vec = points_array[v_0] - points_array[v_1]
+        return vec / linalg.norm(vec)
+
+
+    # create equation
+    truss = zeros((n_equation, n_equation))
+    for id, edge in enumerate(edges_array):
+        for k in intersect1d(edge, verts_id):
+            n = verts_id.index(k)
+            truss[n * dim:(n + 1) * dim, id] = vector(k, id)
+
+    # Löse das Gleichungssystem A @ F = -forces_array nach den Kräften F.
+    b = -forces_array[verts_id].reshape(-1)
+    F = linalg.solve(truss, b)
+
+    # Berechne die äußeren Kräfte.
+    for id, edge in enumerate(edges_array):
+        for k in intersect1d(edge, supports_ids):
+            forces_array[k] -= F[id] * vector(k, id)
+
+    feas = {}
+    feas[str(frame)] = F
 
     text = calculation_type + " singlethread job for frame " + str(frame) + " done"
     print_data(text)
@@ -551,7 +576,7 @@ def run_mp(trusses):
 
     return imported_trusses
 
-def interweave_results(feas, members):
+def interweave_results_pn(feas, members):
     scene = bpy.context.scene
     data = scene["<Phaenotyp>"]
 
@@ -827,6 +852,46 @@ def interweave_results(feas, members):
                 deflection.append([x,y,z])
 
             member["deflection"][frame] = deflection
+
+        # update progress
+        progress.http.update_i()
+
+        data["done"][str(frame)] = True
+
+def interweave_results_fd(feas, members):
+    scene = bpy.context.scene
+    data = scene["<Phaenotyp>"]
+
+    end = bpy.context.scene.frame_end
+
+    for frame, truss in feas.items():
+        for id, member in members.items():
+            id = int(id)
+            # shorten
+            I = member["Iy"][str(frame)]
+            A = member["A"][str(frame)]
+            E = member["E"]
+            L = member["length"][str(frame)]
+
+            force = truss[id]
+
+            # based on:
+            # https://www.johannes-strommer.com/rechner/knicken-von-edges_arrayn-euler/
+            # euler buckling case 2: s = L
+            FK = pi**2 * E * I / L**2
+            # available sigma
+            sigma = force / A
+            S = FK / force
+            utilization = abs(FK) / abs(force)
+
+            member["axial"][str(frame)] = force
+            member["sigma"][str(frame)] = sigma
+            member["utilization"][str(frame)] = utilization
+
+            if S < 2.5:
+                member["overstress"][str(frame)] = True
+            else:
+                member["overstress"][str(frame)] = False
 
         # update progress
         progress.http.update_i()
