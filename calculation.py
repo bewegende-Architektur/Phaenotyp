@@ -905,7 +905,7 @@ def interweave_results_fd(feas, members):
                 else:
                     member["overstress"][str(frame)] = False
 
-            utilization = abs(FK) / abs(force)
+            utilization = abs(acceptable_sigma) / abs(sigma)
 
             member["axial"][str(frame)] = force
             member["sigma"][str(frame)] = sigma
