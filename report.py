@@ -963,12 +963,12 @@ def report_chromosomes(directory):
 
     # len_fitness_functions
     if phaenotyp.calculation_type != "geometrical":
-        len_fitness_functions = 9
-    else:
         if phaenotyp.calculation_type == "force_distribution":
-            len_fitness_functions = 6
+            len_fitness_functions = 8
         else:
-            len_fitness_functions = 7
+            len_fitness_functions = 9
+    else:
+        len_fitness_functions = 7
 
     # create matrix with length of col and row
     # len = genes + amount of fitness
