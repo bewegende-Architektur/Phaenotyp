@@ -940,12 +940,12 @@ def approximate_sectional():
 
     for id, member in members.items():
         if member["overstress"][str(frame)] == True:
-            member["Do"][str(frame)] = member["Do"][str(frame)] * 1.2
-            member["Di"][str(frame)] = member["Di"][str(frame)] * 1.2
+            member["Do"][str(frame)] = member["Do"][str(frame)] * 1.05
+            member["Di"][str(frame)] = member["Di"][str(frame)] * 1.05
 
         else:
-            member["Do"][str(frame)] = member["Do"][str(frame)] * 0.8
-            member["Di"][str(frame)] = member["Di"][str(frame)] * 0.8
+            member["Do"][str(frame)] = member["Do"][str(frame)] * 0.95
+            member["Di"][str(frame)] = member["Di"][str(frame)] * 0.95
 
         # set miminum size of Do and Di to avoid division by zero
         Do_Di_ratio = member["Do"][str(frame)]/member["Di"][str(frame)]
