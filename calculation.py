@@ -881,10 +881,21 @@ def interweave_results_fd(feas, members):
             A = member["A"][str(frame)]
             E = member["E"]
             acceptable_sigma = member["acceptable_sigma"]
-            L = member["length"][str(frame)]
+            L = member["length"][str(frame)] * 100
 
             force = truss[id]
             sigma = force / A
+
+            # with 500cm, Do 60, Di 50, -10 kN
+            '''
+            print("I", I) # 32.9376 cm4
+            print("A", A) # 8,64 cm2
+            print("E", E) # 21000
+            print("acceptable_sigma", acceptable_sigma) # 16.5
+            print("L", L) # 500 cm
+            print("force", force) # 10 kN
+            print("sigma", sigma) # 1,16 kN/cm²
+            '''
 
             overstress = False
 
@@ -895,8 +906,14 @@ def interweave_results_fd(feas, members):
                 # euler buckling case 2: s = L
                 FK = pi**2 * E * I / L**2
                 S = FK / force
-                if S > 2.5 or abs(sigma) > acceptable_sigma:
+                if abs(S) < 2.5:
                     overstress = True
+
+                '''
+                print("FK", FK) # 27,31 kN
+                print("S", S) # 2,73 kN
+                print("")
+                '''
 
             # if tensile force
             else:
