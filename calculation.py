@@ -909,7 +909,6 @@ def interweave_results_fd(feas, members):
             member["sigma"][str(frame)] = sigma
             member["overstress"][str(frame)] = overstress
             member["utilization"][str(frame)] = utilization
-            print(utilization)
 
         # update progress
         progress.http.update_i()
