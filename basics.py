@@ -125,10 +125,18 @@ def popup(title = "Phaenotyp", lines=""):
             self.layout.label(text=line)
     bpy.context.window_manager.popup_menu(draw, title = title)
 
-def popup_operator(title = "Phaenotyp", lines="", operator=None, text=""):
-    def draw(self, context):
-        for line in lines:
-            self.layout.label(text=line)
-        self.layout.separator()
-        self.layout.operator(operator, text=text)
-    bpy.context.window_manager.popup_menu(draw, title = title)
+def force_distribution_info(self, context):
+    # inform user when using force_distribution
+    if bpy.context.scene.phaenotyp.calculation_type == "force_distribution":
+        text = [
+            "Force distribution is a solver for advance users.",
+            "Please make sure, that your structure meets this conditions:",
+            "- geometry is a mesh",
+            "- the mesh is triangulated",
+            "- the structure is stable (not flat)",
+            "- the structure is one part only",
+            "- exactly three vertices are defined as support",
+            "- the supports are not connected with egdes",
+            "- at least one load is defined"
+            ]
+        popup(lines = text)

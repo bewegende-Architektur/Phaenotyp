@@ -106,7 +106,7 @@ def fix_structure():
         bpy.ops.object.mode_set(mode='OBJECT')
 
     else:
-        print_data("No idea to fix this")
+        print_data("No idea how to fix this")
 
 def set_support():
     context = bpy.context
@@ -574,7 +574,7 @@ def calculate_animation():
 
         if phaenotyp.animation_optimization_type == "gradient":
             start = bpy.context.scene.frame_start
-            end = start + phaenotyp.optimization_amount
+            end = start + phaenotyp.optimization_amount*2
 
             # start progress
             progress.run()
