@@ -349,8 +349,6 @@ def prepare_fea_fd():
             y = load_v[1]
             z = load_v[2]
 
-        # Hier noch prüfen, ob keine Last auf Support liegt?
-
         else:
             x = 0
             y = 0

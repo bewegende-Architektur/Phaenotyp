@@ -824,10 +824,11 @@ class OBJECT_PT_Phaenotyp(Panel):
                     box_loads.label(text="Loads:")
                     box_loads.prop(phaenotyp, "load_type", text="")
 
-                    if phaenotyp.load_type == "faces": # if faces
-                        box_loads.prop(phaenotyp, "load_normal", text="normal (like wind)")
-                        box_loads.prop(phaenotyp, "load_projected", text="projected (like snow)")
-                        box_loads.prop(phaenotyp, "load_area_z", text="area z (like weight of facade)")
+                    if phaenotyp.calculation_type != "force_distribution":
+                        if phaenotyp.load_type == "faces": # if faces
+                            box_loads.prop(phaenotyp, "load_normal", text="normal (like wind)")
+                            box_loads.prop(phaenotyp, "load_projected", text="projected (like snow)")
+                            box_loads.prop(phaenotyp, "load_area_z", text="area z (like weight of facade)")
 
                     else: # if vertices or edges
                         box_loads.prop(phaenotyp, "load_x", text="x")
