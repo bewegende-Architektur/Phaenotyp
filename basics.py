@@ -93,6 +93,8 @@ def delete_obj_if_name_contains(text):
 
 # change view to show vertex-colors
 def view_vertex_colors():
+    # issue with vertex-color in blender 3.5
+    '''
     # change viewport to material
     # based on approach from Hotox:
     # https://devtalk.blender.org/t/how-to-change-view3dshading-type-in-2-8/3462
@@ -103,9 +105,12 @@ def view_vertex_colors():
                     space.shading.type = 'SOLID'
                     space.shading.light = 'FLAT'
                     space.shading.color_type = 'VERTEX'
+    '''
+    bpy.context.space_data.shading.type = 'MATERIAL'
 
 # change view to show vertex-colors
 def revert_vertex_colors():
+    '''
     # change viewport to material
     # based on approach from Hotox:
     # https://devtalk.blender.org/t/how-to-change-view3dshading-type-in-2-8/3462
@@ -116,6 +121,8 @@ def revert_vertex_colors():
                     space.shading.type = 'SOLID'
                     space.shading.light = 'STUDIO'
                     space.shading.color_type = 'MATERIAL'
+    '''
+    bpy.context.space_data.shading.type = 'SOLID'
 
 # based on answer from ChameleonScales
 # https://blender.stackexchange.com/questions/169844/multi-line-text-box-with-popup-menu

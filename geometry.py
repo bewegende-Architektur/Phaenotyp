@@ -412,6 +412,35 @@ def create_members(structure_obj, members):
 
     mesh.from_pydata(verts, edges, faces)
 
+    # create vertex_color
+    attribute = obj.data.attributes.get("force")
+    if attribute:
+        text = "existing attribute:" + str(attribute)
+    else:
+        bpy.ops.geometry.color_attribute_add(name="force", domain='POINT', data_type='FLOAT_COLOR', color=(255, 0, 255, 1))
+
+    # create material
+    name = "<Phaenotyp>member"
+    existing = bpy.data.materials.get("<Phaenotyp>member")
+    if existing == None:
+        mat = bpy.data.materials.new(name)
+        obj.data.materials.append(mat)
+        obj.active_material_index = len(obj.data.materials) - 1
+
+        mat.use_nodes = True
+        nodetree = mat.node_tree
+
+        # add color attribute
+        ca = nodetree.nodes.new(type="ShaderNodeVertexColor")
+
+        # set group
+        ca.layer_name = "force"
+
+        # connect to color attribute to base color
+        input = mat.node_tree.nodes['Principled BSDF'].inputs['Base Color']
+        output = ca.outputs['Color']
+        nodetree.links.new(input, output)
+
     # create modifiere if not existing
     modifier = obj.modifiers.get('<Phaenotyp>')
     if modifier:
@@ -442,13 +471,21 @@ def create_members(structure_obj, members):
 
         # profile to curve
         cc = node_group.nodes.new(type="GeometryNodeCurvePrimitiveCircle")
+        cc.inputs[0].default_value = 8 # set amount of vertices of circle
         input = ctm.inputs[1] # curve to mesh, profile curve
         output = cc.outputs[0] # curve circe, curve
         node_group.links.new(input, output)
 
+        # set material
+        gnsm = node_group.nodes.new(type="GeometryNodeSetMaterial")
+        gnsm.inputs[2].default_value = bpy.data.materials["<Phaenotyp>member"]
+        input = gnsm.inputs[0] # geometry
+        output = ctm.outputs[0] # curve to mesh, mesh
+        node_group.links.new(input, output)
+
         # link to output
-        input = ctm.outputs[0] # curve to mesh, mesh
-        output = node_group.nodes[1].inputs[0] # group output, geometry
+        output = gnsm.outputs[0] # gnsm, geometry
+        input = node_group.nodes[1].inputs[0] # group output, geometry
         node_group.links.new(input, output)
 
 
@@ -472,13 +509,6 @@ def create_members(structure_obj, members):
 
         radius = member["Do"][str(frame)]*0.01
         radius_group.add(vertex_ids, radius, 'REPLACE')
-
-    # create vertex_color
-    attribute = obj.data.attributes.get("force")
-    if attribute:
-        text = "existing attribute:" + str(attribute)
-    else:
-        bpy.ops.geometry.color_attribute_add(name="force", domain='POINT', data_type='FLOAT_COLOR', color=(255, 0, 255, 1))
 
 def update_members_pre():
     scene = bpy.context.scene
