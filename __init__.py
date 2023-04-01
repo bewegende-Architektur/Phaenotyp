@@ -1164,10 +1164,24 @@ def update_post(scene):
                 if id > 0: # to exlude basis
                     key.value = chromosome[id-1]*0.1
 
+# disabled because of weird results
 @persistent
 def undo(scene):
-    operators.print_data("Reset because user hit undo.")
-    operators.reset()
+    # only run if Phanotyp is used
+    scene = bpy.context.scene
+    data_available = scene.get("<Phaenotyp>")
+    if data_available:
+        phaenotyp = scene.phaenotyp
+        frame = scene.frame_current
+        data = scene["<Phaenotyp>"]
+        structure = data["structure"]
+        result = data["done"].get(str(frame))
+        # reset only if user is trying to undo during definition
+        if structure and not result:
+            bpy.ops.object.mode_set(mode = 'OBJECT')
+            operators.print_data("Reset because user hit undo.")
+            operators.reset()
+            bpy.ops.ed.undo_push()
 
 def register():
     from bpy.utils import register_class
