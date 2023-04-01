@@ -12,6 +12,7 @@ def print_data(text):
 def set_structure():
     context = bpy.context
     scene = context.scene
+    phaenotyp = scene.phaenotyp
 
     selected_objects = context.selected_objects
     obj = context.active_object
@@ -19,15 +20,21 @@ def set_structure():
     # more than two objects
     if len(selected_objects) > 1:
         if obj.type == 'CURVE':
-            text = ["The selection is of typ curve.",
+            text = ["The selection is of type curve.",
                 "Should Phaenotyp try to convert the selection to mesh?"]
             basics.popup_operator(lines=text, operator="wm.fix_structure", text="Convert curves to mesh")
-            basics.to_be_fixed = "curve_to_mesh"
+            geometry.to_be_fixed = "curve_to_mesh"
 
         else:
             text = ["Select multiple curves or a mesh only."]
             basics.popup(lines = text)
 
+    if obj.type == 'META':
+        text = ["The selection is of type meta.",
+            "Should Phaenotyp try to convert the selection to mesh?"]
+        basics.popup_operator(lines=text, operator="wm.fix_structure", text="Meta to mesh")
+        geometry.to_be_fixed = "meta_to_mesh"
+        
     # one object
     else:
         # mesh or curve
@@ -40,7 +47,7 @@ def set_structure():
                 text = ["The selection is of typ curve.",
                     "Should Phaenotyp try to convert the selection to mesh?"]
                 basics.popup_operator(lines=text, operator="wm.fix_structure", text="Convert curve to mesh")
-                basics.to_be_fixed = "curve_to_mesh"
+                geometry.to_be_fixed = "curve_to_mesh"
 
             else:
                 bpy.ops.object.mode_set(mode="EDIT")
@@ -53,14 +60,14 @@ def set_structure():
                         "The mesh contains " + str(amount_of_mesh_parts) + " parts.",
                         "Should Phaenotyp try to fix this?"]
                     basics.popup_operator(lines=text, operator="wm.fix_structure", text="Delete or seperate loose parts")
-                    basics.to_be_fixed = "seperate_by_loose"
+                    geometry.to_be_fixed = "seperate_by_loose"
 
                 elif amount_of_loose_parts > 0:
                     text = [
                         "The mesh contains loose elements: " + str(amount_of_loose_parts),
                         "Should Phaenotyp try to fix this?"]
                     basics.popup_operator(lines=text, operator="wm.fix_structure", text="Delete loose parts")
-                    basics.to_be_fixed = "delete_loose"
+                    geometry.to_be_fixed = "delete_loose"
 
                 # everything looks ok
                 else:
@@ -71,7 +78,7 @@ def set_structure():
 
                     basics.create_data()
 
-                    basics.to_be_fixed = None
+                    geometry.to_be_fixed = None
                     data = scene["<Phaenotyp>"]
                     data["structure"] = obj
 
@@ -79,7 +86,7 @@ def set_structure():
                     calculation.check_scipy()
 
 def fix_structure():
-    if basics.to_be_fixed == "seperate_by_loose":
+    if geometry.to_be_fixed == "seperate_by_loose":
         print_data("Seperate by loose parts")
         bpy.ops.object.mode_set(mode='EDIT')
         bpy.ops.mesh.select_all(action='SELECT')
@@ -87,7 +94,7 @@ def fix_structure():
         bpy.ops.mesh.separate(type='LOOSE')
         bpy.ops.object.mode_set(mode='OBJECT')
 
-    elif basics.to_be_fixed == "curve_to_mesh":
+    elif geometry.to_be_fixed == "curve_to_mesh":
         print_data("Try to convert the curves to mesh")
         bpy.ops.object.mode_set(mode="OBJECT")
         bpy.ops.object.join()
@@ -97,13 +104,27 @@ def fix_structure():
         bpy.ops.mesh.remove_doubles()
         bpy.ops.object.mode_set(mode='OBJECT')
 
-    elif basics.to_be_fixed == "delete_loose":
+    elif geometry.to_be_fixed == "meta_to_mesh":
+        print_data("Try to convert meta to mesh")
+        bpy.ops.object.mode_set(mode="OBJECT")
+        bpy.ops.object.convert(target='MESH')
+
+    elif geometry.to_be_fixed == "delete_loose":
         print_data("Delete loose parts")
         bpy.ops.object.mode_set(mode="EDIT")
         bpy.ops.mesh.delete_loose()
         bpy.ops.mesh.select_all(action='SELECT')
         bpy.ops.mesh.remove_doubles()
         bpy.ops.object.mode_set(mode='OBJECT')
+    
+    elif geometry.to_be_fixed == "triangulate":
+        print_data("triangulate")
+        bpy.ops.object.mode_set(mode = 'EDIT')
+        bpy.ops.mesh.select_all(action='SELECT')
+        bpy.ops.mesh.quads_convert_to_tris(quad_method='BEAUTY', ngon_method='BEAUTY')
+        bpy.ops.mesh.select_all(action='DESELECT')
+        bpy.ops.object.mode_set(mode = 'OBJECT')
+
 
     else:
         print_data("No idea how to fix this")

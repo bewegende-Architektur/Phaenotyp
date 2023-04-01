@@ -42,6 +42,20 @@ def amount_of_mesh_parts():
 
     return len(parts)
 
+# check if the model is triangulated
+def triangulation():
+    # get selected faces
+    obj = bpy.context.active_object
+    bpy.ops.object.mode_set(mode = 'OBJECT')
+    triangulated = True
+    for face in obj.data.polygons:
+        # check triangulation
+        if len(face.vertices) != 3:
+            # set False, if one face is not tri
+            triangulated = False
+    
+    return triangulated
+
 def amount_of_loose_parts():
     obj = bpy.context.active_object
 
