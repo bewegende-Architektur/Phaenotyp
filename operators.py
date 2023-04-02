@@ -194,6 +194,7 @@ def set_support():
             obj.select_set(True)
             bpy.context.view_layer.objects.active = obj
             bpy.ops.object.mode_set(mode="EDIT")
+            bpy.context.space_data.shading.type = 'WIREFRAME'
 
         # for PyNite
         else:

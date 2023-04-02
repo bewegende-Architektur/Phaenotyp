@@ -42,6 +42,14 @@ def amount_of_mesh_parts():
 
     return len(parts)
 
+def amount_of_loose_parts():
+    obj = bpy.context.active_object
+
+    bpy.ops.mesh.select_mode(use_extend=False, use_expand=False, type='VERT')
+    bpy.ops.mesh.select_all(action='DESELECT')
+    bpy.ops.mesh.select_loose()
+    return obj.data.total_vert_sel
+
 # check if the model is triangulated
 def triangulation():
     # get selected faces
@@ -83,15 +91,6 @@ def delete_selected_faces():
     bpy.ops.object.mode_set(mode = 'EDIT')
     #support_ids = selected_faces[0].vertices
     bpy.ops.mesh.delete(type='EDGE_FACE')
-
-
-def amount_of_loose_parts():
-    obj = bpy.context.active_object
-
-    bpy.ops.mesh.select_mode(use_extend=False, use_expand=False, type='VERT')
-    bpy.ops.mesh.select_all(action='DESELECT')
-    bpy.ops.mesh.select_loose()
-    return obj.data.total_vert_sel
 
 def volume(mesh):
     bm = bmesh.new()

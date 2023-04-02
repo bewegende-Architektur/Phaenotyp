@@ -1115,31 +1115,31 @@ class OBJECT_PT_Phaenotyp(Panel):
                         box_text.label(text="Cantilever: "+str(round(data["frames"][str(frame)]["cantilever"],3)) + " m")
 
                         if phaenotyp.calculation_type != "geometrical":
-                            box_selection = layout.box()
-                            box_selection.label(text="Selection:")
+                            box_info = layout.box()
+                            box_info.label(text="Info:")
                             selected_objects = bpy.context.selected_objects
                             if len(selected_objects) > 1:
-                                box_selection.label(text="Please select the vizualisation object only - too many objects")
+                                box_info.label(text="Please select the vizualisation object only - too many objects")
 
                             elif len(selected_objects) == 0:
-                                box_selection.label(text="Please select the vizualisation object - no object selected")
+                                box_info.label(text="Please select the vizualisation object - no object selected")
 
                             elif selected_objects[0].name_full != "<Phaenotyp>member":
-                                box_selection.label(text="Please select the vizualisation object - wrong object selected")
+                                box_info.label(text="Please select the vizualisation object - wrong object selected")
 
                             else:
                                 if context.active_object.mode == 'EDIT':
                                     vert_sel = bpy.context.active_object.data.total_vert_sel
                                     if vert_sel != 1:
-                                        box_selection.label(text="Select one vertex only")
+                                        box_info.label(text="Select one vertex only")
 
                                     else:
-                                        box_selection.operator("wm.text", text="Generate")
+                                        box_info.operator("wm.text", text="Generate")
                                         if len(data["texts"]) > 0:
                                             for text in data["texts"]:
-                                                box_selection.label(text=text)
+                                                box_info.label(text=text)
                                 else:
-                                    box_selection.label(text="Switch to edit-mode")
+                                    box_info.label(text="Switch to edit-mode")
 
                         # Report
                         box_report = layout.box()
