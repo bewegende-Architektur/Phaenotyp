@@ -19,9 +19,9 @@ def generate_basis():
 
     # for PyNite
     if phaenotyp.calculation_type != "force_distribution":
-        prepare_fea = prepare_fea_pn
+        prepare_fea = calculation.prepare_fea_pn
         run_st = calculation.run_st_pn
-        interweave_results = interweave_results_pn
+        interweave_results = calculation.interweave_results_pn
 
     # for force distribuion
     else:
@@ -323,9 +323,9 @@ def bruteforce(chromosomes):
 
     # for PyNite
     if phaenotyp.calculation_type != "force_distribution":
-        prepare_fea = prepare_fea_pn
+        prepare_fea = calculation.prepare_fea_pn
         run_st = calculation.run_st_pn
-        interweave_results = interweave_results_pn
+        interweave_results = calculation.interweave_results_pn
 
     # for force distribuion
     else:
@@ -378,9 +378,9 @@ def create_initial_individuals(start, end):
 
     # for PyNite
     if phaenotyp.calculation_type != "force_distribution":
-        prepare_fea = prepare_fea_pn
+        prepare_fea = calculation.prepare_fea_pn
         run_st = calculation.run_st_pn
-        interweave_results = interweave_results_pn
+        interweave_results = calculation.interweave_results_pn
 
     # for force distribuion
     else:
@@ -435,9 +435,9 @@ def sectional_optimization(start, end):
 
     # for PyNite
     if phaenotyp.calculation_type != "force_distribution":
-        prepare_fea = prepare_fea_pn
+        prepare_fea = calculation.prepare_fea_pn
         run_st = calculation.run_st_pn
-        interweave_results = interweave_results_pn
+        interweave_results = calculation.interweave_results_pn
 
     # for force distribuion
     else:
@@ -618,9 +618,9 @@ def create_new_individuals(start, end):
 
     # for PyNite
     if phaenotyp.calculation_type != "force_distribution":
-        prepare_fea = prepare_fea_pn
+        prepare_fea = calculation.prepare_fea_pn
         run_st = calculation.run_st_pn
-        interweave_results = interweave_results_pn
+        interweave_results = calculation.interweave_results_pn
 
     # for force distribuion
     else:
