@@ -386,10 +386,27 @@ class phaenotyp_properties(PropertyGroup):
         max = 100
         )
 
+    assimilate_length: FloatProperty(
+        name = "assimilate_length",
+        description = "Target length for assimilation.",
+        default = 4,
+        min = 0.1,
+        max = 100
+        )
+
+    actuator_length: FloatProperty(
+        name = "actuator_length",
+        description = "Target length for actuator.",
+        default = 4,
+        min = 0.1,
+        max = 100
+        )
+    
     mode: EnumProperty(
         name = "mode",
         description = "Select mode to start",
         items = [
+                    ("translation", "Translation", ""),
                     ("single_frame", "Single frame", ""),
                     ("animation", "Animation", ""),
                     ("genetic_algorithm", "Genetic algorithm", "")
@@ -477,6 +494,33 @@ class WM_OT_set_load(Operator):
 
     def execute(self, context):
         operators.set_load()
+        return {"FINISHED"}
+
+class WM_OT_assimilate(Operator):
+    bl_label = "assimilate"
+    bl_idname = "wm.assimilate"
+    bl_description = "Assimilate length of members."
+
+    def execute(self, context):
+        operators.assimilate()
+        return {"FINISHED"}
+
+class WM_OT_actuator(Operator):
+    bl_label = "actuator"
+    bl_idname = "wm.actuator"
+    bl_description = "Extend or retract to given length."
+
+    def execute(self, context):
+        operators.actuator()
+        return {"FINISHED"}
+        
+class WM_OT_reach_goal(Operator):
+    bl_label = "reach_goal"
+    bl_idname = "wm.reach_goal"
+    bl_description = "Reach goal."
+
+    def execute(self, context):
+        operators.reach_goal()
         return {"FINISHED"}
 
 class WM_OT_calculate_single_frame(Operator):
@@ -859,6 +903,22 @@ class OBJECT_PT_Phaenotyp(Panel):
                         box_start.prop(phaenotyp, "mode", text="")
                         mode = phaenotyp.mode
 
+                        # translation
+                        if mode == "translation":
+                            box_assimilation = layout.box()
+                            box_assimilation.label(text="Assimilation:")
+                            box_assimilation.prop(phaenotyp, "assimilate_length", text="")
+                            box_assimilation.operator("wm.assimilate", text="Start")
+
+                            box_actuator = layout.box()
+                            box_actuator.label(text="Actuator:")
+                            box_actuator.prop(phaenotyp, "actuator_length", text="")
+                            box_actuator.operator("wm.actuator", text="Start")
+
+                            box_goal = layout.box()
+                            box_goal.label(text="Reach goal:")
+                            box_goal.operator("wm.reach_goal", text="Start")
+
                         # Single frame
                         if mode == "single_frame":
                             if calculation_type != "geometrical":
@@ -1112,6 +1172,11 @@ classes = (
     WM_OT_set_support,
     WM_OT_set_member,
     WM_OT_set_load,
+
+    WM_OT_assimilate,
+    WM_OT_actuator,
+    WM_OT_reach_goal,
+
     WM_OT_calculate_single_frame,
     WM_OT_calculate_animation,
 
