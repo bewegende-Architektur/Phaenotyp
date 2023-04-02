@@ -150,7 +150,7 @@ def force_distribution_info(self, context):
                 "Should Phaenotyp try to triangulate the selection?"]
             popup_operator(lines=text, operator="wm.fix_structure", text="Triangulate")
             geometry.to_be_fixed = "triangulate"
-        
+
         else:
             text = [
                 "Force distribution is a solver for advance users.",
@@ -162,3 +162,96 @@ def force_distribution_info(self, context):
                 "- at least one load is defined"
                 ]
             popup(lines = text)
+
+
+# check modifieres in modify or deform
+# modifieres working with Phänotyp:
+modifiers = {}
+modifiers["ARMATURE"] = True
+modifiers["CAST"] = True
+modifiers["CLOTH"] = True
+modifiers["COLLISION"] = True
+modifiers["CURVE"] = True
+modifiers["DATA_TRANSFER"] = True
+modifiers["DYNAMIC_PAINT"] = True
+modifiers["DISPLACE"] = True
+modifiers["HOOK"] = True
+modifiers["LAPLACIANDEFORM"] = True
+modifiers["LATTICE"] = True
+modifiers["MESH_CACHE"] = True
+modifiers["MESH_DEFORM"] = True
+modifiers["MESH_SEQUENCE_CACHE"] = True
+modifiers["NORMAL_EDIT"] = True
+modifiers["NODES"] = True
+modifiers["SHRINKWRAP"] = True
+modifiers["SIMPLE_DEFORM"] = True
+modifiers["SMOOTH"] = True
+modifiers["CORRECTIVE_SMOOTH"] = True
+modifiers["LAPLACIANSMOOTH"] = True
+modifiers["OCEAN"] = True
+modifiers["PARTICLE_INSTANCE"] = True
+modifiers["PARTICLE_SYSTEM"] = True
+modifiers["SOFT_BODY"] = True
+modifiers["SURFACE"] = True
+modifiers["SURFACE_DEFORM"] = True
+modifiers["WARP"] = True
+modifiers["WAVE"] = True
+modifiers["WEIGHTED_NORMAL"] = True
+modifiers["UV_PROJECT"] = True
+modifiers["UV_WARP"] = True
+modifiers["VERTEX_WEIGHT_EDIT"] = True
+modifiers["VERTEX_WEIGHT_MIX"] = True
+modifiers["VERTEX_WEIGHT_PROXIMITY"] = True
+
+# not working:
+modifiers["ARRAY"] = False
+modifiers["BEVEL"] = False
+modifiers["BOOLEAN"] = False
+modifiers["BUILD"] = False
+modifiers["DECIMATE"] = False
+modifiers["EDGE_SPLIT"] = False
+modifiers["EXPLODE"] = False
+modifiers["FLUID"] = False
+modifiers["MASK"] = False
+modifiers["MIRROR"] = False
+modifiers["MESH_TO_VOLUME"] = False
+modifiers["MULTIRES"] = False
+modifiers["REMESH"] = False
+modifiers["SCREW"] = False
+modifiers["SKIN"] = False
+modifiers["SOLIDIFY"] = False
+modifiers["SUBSURF"] = False
+modifiers["TRIANGULATE"] = False
+modifiers["VOLUME_TO_MESH"] = False
+modifiers["WELD"] = False
+modifiers["WIREFRAME"] = False
+modifiers["VOLUME_DISPLACE"] = False
+
+
+def check_modifiers():
+    obj = bpy.context.object
+    for modifiere in obj.modifiers:
+        name = modifiere.type
+
+        if name == "NODES":
+            text = ["Geometry Nodes can be used but make sure that no geometry is added",
+               "or deleted during execution of Phaenotyp to avoid weird results"]
+            popup(lines = text)
+
+        elif name in modifiers:
+            working = modifiers[name]
+            if working == False:
+                text = [
+                        "Modifiere with type " + str(name) + " can cause weird results.",
+                        "",
+                        "You can use this modifiers:",
+                        "ARMATURE, CAST, CLOTH, COLLISION, CURVE, DATA_TRANSFER,",
+                        "DYNAMIC_PAINT, DISPLACE, HOOK, LAPLACIANDEFORM, LATTICE,",
+                        "MESH_CACHE, MESH_DEFORM, MESH_SEQUENCE_CACHE, NORMAL_EDIT,",
+                        "NODES, SHRINKWRAP, SIMPLE_DEFORM, SMOOTH, CORRECTIVE_SMOOTH,",
+                        "LAPLACIANSMOOTH, OCEAN, PARTICLE_INSTANCE, PARTICLE_SYSTEM,",
+                        "SOFT_BODY, SURFACE, SURFACE_DEFORM, WARP, WAVE, WEIGHTED_NORMAL,",
+                        "UV_PROJECT, UV_WARP, VERTEX_WEIGHT_EDIT, VERTEX_WEIGHT_MIX,",
+                        "VERTEX_WEIGHT_PROXIMITY."
+                        ]
+                popup(lines = text)

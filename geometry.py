@@ -46,6 +46,7 @@ def amount_of_mesh_parts():
 def triangulation():
     # get selected faces
     obj = bpy.context.active_object
+    mode = bpy.context.object.mode
     bpy.ops.object.mode_set(mode = 'OBJECT')
     triangulated = True
     for face in obj.data.polygons:
@@ -53,8 +54,36 @@ def triangulation():
         if len(face.vertices) != 3:
             # set False, if one face is not tri
             triangulated = False
-    
+
+    # go back to previous mode
+    bpy.ops.object.mode_set(mode = mode)
     return triangulated
+
+def amount_of_selected_faces():
+    obj = bpy.context.active_object
+    bpy.ops.object.mode_set(mode = 'OBJECT')
+    selected_faces = []
+    for face in obj.data.polygons:
+        # collect all selected faces
+        if face.select == True:
+            selected_faces.append(face)
+
+    return len(selected_faces)
+    print(selected_faces)
+
+def delete_selected_faces():
+    obj = bpy.context.active_object
+    bpy.ops.object.mode_set(mode = 'OBJECT')
+    selected_faces = []
+    for face in obj.data.polygons:
+        # collect all selected faces
+        if face.select == True:
+            selected_faces.append(face)
+
+    bpy.ops.object.mode_set(mode = 'EDIT')
+    #support_ids = selected_faces[0].vertices
+    bpy.ops.mesh.delete(type='EDGE_FACE')
+
 
 def amount_of_loose_parts():
     obj = bpy.context.active_object

@@ -17,6 +17,9 @@ def set_structure():
     selected_objects = context.selected_objects
     obj = context.active_object
 
+    # check for modifiers
+    basics.check_modifiers()
+
     # more than two objects
     if len(selected_objects) > 1:
         if obj.type == 'CURVE':
@@ -34,7 +37,7 @@ def set_structure():
             "Should Phaenotyp try to convert the selection to mesh?"]
         basics.popup_operator(lines=text, operator="wm.fix_structure", text="Meta to mesh")
         geometry.to_be_fixed = "meta_to_mesh"
-        
+
     # one object
     else:
         # mesh or curve
@@ -116,14 +119,13 @@ def fix_structure():
         bpy.ops.mesh.select_all(action='SELECT')
         bpy.ops.mesh.remove_doubles()
         bpy.ops.object.mode_set(mode='OBJECT')
-    
+
     elif geometry.to_be_fixed == "triangulate":
         print_data("triangulate")
         bpy.ops.object.mode_set(mode = 'EDIT')
         bpy.ops.mesh.select_all(action='SELECT')
         bpy.ops.mesh.quads_convert_to_tris(quad_method='BEAUTY', ngon_method='BEAUTY')
         bpy.ops.mesh.select_all(action='DESELECT')
-        bpy.ops.object.mode_set(mode = 'OBJECT')
 
 
     else:
@@ -137,49 +139,107 @@ def set_support():
     obj = data["structure"]
 
     if context.active_object.mode == "EDIT":
-        # get selected vertices
+        # for force disbribution
+        if phaenotyp.calculation_type == "force_distribution":
+            if geometry.amount_of_selected_faces() != 1:
+                text = ["Select one as for support for force distribution only."]
+                basics.popup(lines = text)
+
+
+            # apply supports
+            else:
+                # get selected vertices
+                bpy.ops.object.mode_set(mode="OBJECT")
+                bpy.ops.object.mode_set(mode="EDIT")
+
+                for vertex in obj.data.vertices:
+                    if vertex.select:
+                        id = vertex.index
+
+                        support = [
+                            phaenotyp.loc_x,
+                            phaenotyp.loc_y,
+                            phaenotyp.loc_z,
+                            phaenotyp.rot_x,
+                            phaenotyp.rot_y,
+                            phaenotyp.rot_z
+                            ]
+
+                        data["supports"][str(id)] = support
+
+                        # delete support if user is deleting the support
+                        # (set all conditions to False and apply)
+                        fixed = False
+                        for i in range(6):
+                            if support[i] == True:
+                                fixed = True
+
+                        if not fixed:
+                            data["supports"].pop(str(id))
+
+                # delete face and edges to work with force distribution
+                geometry.delete_selected_faces()
+
+                # delete obj if existing
+                basics.delete_obj_if_existing("<Phaenotyp>support")
+                basics.delete_mesh_if_existing("<Phaenotyp>support")
+
+                # create one mesh for all
+                geometry.create_supports(data["structure"], data["supports"])
+
+            # leave signs of support, structure and go to edit-mode
+            # (in order to let the user define more supports)
+            bpy.ops.object.mode_set(mode="OBJECT")
+            bpy.ops.object.select_all(action='DESELECT')
+            obj.select_set(True)
+            bpy.context.view_layer.objects.active = obj
+            bpy.ops.object.mode_set(mode="EDIT")
+
+        # for PyNite
+        else:
+            # get selected vertices
+            bpy.ops.object.mode_set(mode="OBJECT")
+            bpy.ops.object.mode_set(mode="EDIT")
+
+            for vertex in obj.data.vertices:
+                if vertex.select:
+                    id = vertex.index
+
+                    support = [
+                        phaenotyp.loc_x,
+                        phaenotyp.loc_y,
+                        phaenotyp.loc_z,
+                        phaenotyp.rot_x,
+                        phaenotyp.rot_y,
+                        phaenotyp.rot_z
+                        ]
+
+                    data["supports"][str(id)] = support
+
+                    # delete support if user is deleting the support
+                    # (set all conditions to False and apply)
+                    fixed = False
+                    for i in range(6):
+                        if support[i] == True:
+                            fixed = True
+
+                    if not fixed:
+                        data["supports"].pop(str(id))
+
+            # delete obj if existing
+            basics.delete_obj_if_existing("<Phaenotyp>support")
+            basics.delete_mesh_if_existing("<Phaenotyp>support")
+
+            # create one mesh for all
+            geometry.create_supports(data["structure"], data["supports"])
+
+        # leave signs of support, structure and go to edit-mode
+        # (in order to let the user define more supports)
         bpy.ops.object.mode_set(mode="OBJECT")
+        bpy.ops.object.select_all(action='DESELECT')
+        obj.select_set(True)
+        bpy.context.view_layer.objects.active = obj
         bpy.ops.object.mode_set(mode="EDIT")
-
-        for vertex in obj.data.vertices:
-            if vertex.select:
-                id = vertex.index
-
-                support = [
-                    phaenotyp.loc_x,
-                    phaenotyp.loc_y,
-                    phaenotyp.loc_z,
-                    phaenotyp.rot_x,
-                    phaenotyp.rot_y,
-                    phaenotyp.rot_z
-                    ]
-
-                data["supports"][str(id)] = support
-
-                # delete support if user is deleting the support
-                # (set all conditions to False and apply)
-                fixed = False
-                for i in range(6):
-                    if support[i] == True:
-                        fixed = True
-
-                if not fixed:
-                    data["supports"].pop(str(id))
-
-        # delete obj if existing
-        basics.delete_obj_if_existing("<Phaenotyp>support")
-        basics.delete_mesh_if_existing("<Phaenotyp>support")
-
-        # create one mesh for all
-        geometry.create_supports(data["structure"], data["supports"])
-
-    # leave signs of support, structure and go to edit-mode
-    # (in order to let the user define more supports)
-    bpy.ops.object.mode_set(mode="OBJECT")
-    bpy.ops.object.select_all(action='DESELECT')
-    obj.select_set(True)
-    bpy.context.view_layer.objects.active = obj
-    bpy.ops.object.mode_set(mode="EDIT")
 
 def set_member():
     scene = bpy.context.scene
