@@ -407,7 +407,7 @@ class phaenotyp_properties(PropertyGroup):
         name = "mode",
         description = "Select mode to start",
         items = [
-                    ("translation", "Translation", ""),
+                    ("transformation", "Transformation", ""),
                     ("single_frame", "Single frame", ""),
                     ("animation", "Animation", ""),
                     ("genetic_algorithm", "Genetic algorithm", "")
@@ -972,8 +972,8 @@ class OBJECT_PT_Phaenotyp(Panel):
                         box_start.prop(phaenotyp, "mode", text="")
                         mode = phaenotyp.mode
 
-                        # translation
-                        if mode == "translation":
+                        # transformation
+                        if mode == "transformation":
                             box_assimilation = layout.box()
                             box_assimilation.label(text="Assimilation:")
                             box_assimilation.prop(phaenotyp, "assimilate_length", text="")
