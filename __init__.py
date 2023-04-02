@@ -356,8 +356,9 @@ class phaenotyp_properties(PropertyGroup):
                     ("moment_y", "Moment Y", ""),
                     ("moment_z", "Moment Z", ""),
                     ("shear_y", "Shear Y", ""),
-                    ("shear_z", "Shear_y", ""),
+                    ("shear_z", "Shear y", ""),
                     ("torque", "Torque", ""),
+                    ("lever_arm", "Lever arm", ""),
                     ("utilization", "Utilization", ""),
                     ("normal_energy", "Normal energy", ""),
                     ("moment_energy", "Moment energy", ""),
@@ -448,9 +449,68 @@ class phaenotyp_properties(PropertyGroup):
         items = [
                 ("each_frame", "Each frame", ""),
                 ("gradient", "Gradient", "")
-               ],
+               ]
         )
 
+    selection_key_fd: EnumProperty(
+        name = "selection_key_fd",
+        description = "Key for selection.",
+        items = [
+                    ("id", "id", ""),
+                    ("Do", "Do", ""),
+                    ("Di", "Di", ""),
+                    ("kg", "kg", ""),
+                    ("length", "length", ""),
+                    ("sigma", "Sigma", ""),
+                    ("axial", "Axial", ""),
+                    ("utilization", "Utilization", "")
+                ],
+        default = "Do"
+        )
+
+    selection_key_pn: EnumProperty(
+        name = "selection_key_pn",
+        description = "Key for selection.",
+        items = [
+                    ("id", "Id", ""),
+                    ("Do", "Do", ""),
+                    ("Di", "Di", ""),
+                    ("kg", "kg", ""),
+                    ("length", "Length", ""),
+                    ("max_long_stress", "Max long stress", ""),
+                    ("max_tau_shear", "Max tau shear", ""),
+                    ("max_tau_torsion", "Max tau torsion", ""),
+                    ("max_sum_tau", "Max sum tau", ""),
+                    ("max_sigmav", "Max sigmav", ""),
+                    ("max_sigma", "Max sigma", ""),
+                    ("max_lever_arm", "Max lever arm", ""),
+                    ("utilization", "Utilization", "")
+                ],
+        default = "Do"
+        )
+    
+    selection_compare: EnumProperty(
+        name = "selection_compare",
+        description = "Type of comparsion.",
+        items = [
+                    ("Equal", "Equal", ""),
+                    ("Greater", "Greater", ""),
+                    ("Less", "Less", "")
+                ]
+        )
+    
+    selection_value: StringProperty(
+        name = "selection_value",
+        description = "Value for selection.",
+        default = "0"
+        )
+
+    selection_threshold: StringProperty(
+        name = "selection_threshold",
+        description = "Threshold for selection.",
+        default = "0"
+        )
+    
 class WM_OT_set_structure(Operator):
     bl_label = "set_structure"
     bl_idname = "wm.set_structure"
@@ -622,6 +682,15 @@ class WM_OT_text(Operator):
         operators.text()
         return {"FINISHED"}
 
+class WM_OT_selection(Operator):
+    bl_label = "selection"
+    bl_idname = "wm.selection"
+    bl_description = "Select edges by given key and value"
+
+    def execute(self, context):
+        operators.selection()
+        return {"FINISHED"}
+    
 class WM_OT_report_members(Operator):
     bl_label = "report_members"
     bl_idname = "wm.report_members"
@@ -1113,7 +1182,8 @@ class OBJECT_PT_Phaenotyp(Panel):
                         box_text.label(text="Rise: "+str(round(data["frames"][str(frame)]["rise"],3)) + " m")
                         box_text.label(text="Span: "+str(round(data["frames"][str(frame)]["span"],3)) + " m")
                         box_text.label(text="Cantilever: "+str(round(data["frames"][str(frame)]["cantilever"],3)) + " m")
-
+                        
+                        # Info
                         if phaenotyp.calculation_type != "geometrical":
                             box_info = layout.box()
                             box_info.label(text="Info:")
@@ -1140,7 +1210,21 @@ class OBJECT_PT_Phaenotyp(Panel):
                                                 box_info.label(text=text)
                                 else:
                                     box_info.label(text="Switch to edit-mode")
-
+                        
+                        # Selection
+                        if phaenotyp.calculation_type != "geometrical":
+                            box_selection = layout.box()
+                            box_selection.label(text="Selection:")
+                            if phaenotyp.calculation_type == "force_distribution":
+                                box_selection.prop(phaenotyp, "selection_key_fd", text="")
+                            else:
+                                box_selection.prop(phaenotyp, "selection_key_pn", text="Key:")
+                            box_selection.prop(phaenotyp, "selection_compare", text="Compare:")
+                            box_selection.prop(phaenotyp, "selection_value", text="Value:")
+                            box_selection.prop(phaenotyp, "selection_threshold", text="Threshold:")
+                            box_selection.operator("wm.selection", text="Start")
+                            
+                            
                         # Report
                         box_report = layout.box()
                         box_report.label(text="Report:")
@@ -1191,6 +1275,8 @@ classes = (
     WM_OT_ga_render_animation,
 
     WM_OT_text,
+    WM_OT_selection,
+    
     WM_OT_report_members,
     WM_OT_report_frames,
     WM_OT_report_combined,

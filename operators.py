@@ -1421,6 +1421,93 @@ def text():
 
                             data["texts"] = data_temp
 
+def selection():
+    print_data("Generate report at frame in html-format")
+
+    scene = bpy.context.scene
+    phaenotyp = scene.phaenotyp
+    data = scene["<Phaenotyp>"]
+    obj = data["structure"]
+    members = data["members"]
+    frame = bpy.context.scene.frame_current
+    
+    print_data("Select edges by given key and value.")
+    
+    # get data from gui
+    if phaenotyp.calculation_type == "force_distribution":
+        key = phaenotyp.selection_key_fd
+    else:
+        key = phaenotyp.selection_key_pn
+    
+    compare = phaenotyp.selection_compare
+    value = int(phaenotyp.selection_value)
+    threshold = abs(int(phaenotyp.selection_threshold))
+    value_min = value - threshold
+    value_max = value + threshold
+    
+    # set edge for selection type and deselect
+    bpy.ops.object.mode_set(mode="EDIT")
+    bpy.ops.mesh.select_mode(use_extend=False, use_expand=False, type='EDGE')
+    bpy.ops.mesh.select_all(action='DESELECT')
+
+    # set obj active and switch mode
+    bpy.context.view_layer.objects.active = obj
+    bpy.ops.object.mode_set(mode="OBJECT")
+    
+    # iterate edges
+    edges = obj.data.edges
+    
+    if key == "id":
+        for edge in edges:
+            id = edge.index
+            member = members[str(id)]
+            
+            if compare == "Equal":
+                if value_min <= id <= value_max:
+                    edge.select = True
+                else:
+                    edge.select = False
+
+            if compare == "Greater":
+                if id > value_min:
+                    edge.select = True
+                else:
+                    edge.select = False
+                    
+            if compare == "Less":
+                if id < value_max:
+                    edge.select = True
+                else:
+                    edge.select = False
+
+    else:
+        for edge in edges:
+            id = edge.index
+            member = members[str(id)]
+            value = member[key][str(frame)]
+            
+            if compare == "Equal":
+                if value_min <= value <= value_max:
+                    edge.select = True
+                else:
+                    edge.select = False
+
+            if compare == "Greater":
+                if value > value_min:
+                    edge.select = True
+                else:
+                    edge.select = False
+                    
+            if compare == "Less":
+                if value < value_max:
+                    edge.select = True
+                else:
+                    edge.select = False
+
+    # go into edit-mode and switch to wireframe
+    bpy.ops.object.mode_set(mode="EDIT")
+    bpy.context.space_data.shading.type = 'WIREFRAME'
+    
 def report_members():
     print_data("Generate report at frame in html-format")
 
@@ -1611,3 +1698,6 @@ def reset():
 
     # change view back to solid ...
     basics.revert_vertex_colors()
+    
+    # change props
+    phaenotyp.calculation_type = "first_order"
