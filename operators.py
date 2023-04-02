@@ -142,7 +142,7 @@ def set_support():
         # for force disbribution
         if phaenotyp.calculation_type == "force_distribution":
             if geometry.amount_of_selected_faces() != 1:
-                text = ["Select one as for support for force distribution only."]
+                text = ["Select one face as support for force distribution only."]
                 basics.popup(lines = text)
 
 
