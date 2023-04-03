@@ -1196,12 +1196,69 @@ class OBJECT_PT_Phaenotyp(Panel):
                             else:
                                 # Genetic Mutation:
                                 box_gd = layout.box()
-                                box_gd.label(text="Gradient descent:")
+                                box_gd.label(text="Learing:")
                                 box_gd.prop(phaenotyp, "gd_delta", text="Delta")
                                 box_gd.prop(phaenotyp, "gd_learning_rate", text="Learning rate")
                                 box_gd.prop(phaenotyp, "gd_abort", text="Abort")
                                 box_gd.prop(phaenotyp, "gd_max_iteration", text="Max iteration")
                                 box_gd.operator("wm.gd_start", text="Start")
+
+                                if phaenotyp.calculation_type != "geometrical":
+                                    box_optimization = layout.box()
+                                    box_optimization.label(text="Optimization:")
+                                    if calculation_type == "force_distribution":
+                                        box_optimization.prop(phaenotyp, "optimization_fd", text="")
+                                    else:
+                                        box_optimization.prop(phaenotyp, "optimization_pn", text="")
+                                    if phaenotyp.optimization_pn != "none" or phaenotyp.optimization_fd != "none":
+                                        box_optimization.prop(phaenotyp, "optimization_amount", text="Amount of sectional optimization")
+
+                                # fitness headline
+                                box_fitness = layout.box()
+                                box_fitness.label(text="Fitness function:")
+
+                                # architectural fitness
+                                col = box_fitness.column()
+                                split = col.split()
+                                split.prop(phaenotyp, "fitness_volume", text="Volume")
+                                split.prop(phaenotyp, "fitness_volume_invert", text="Invert")
+
+                                col = box_fitness.column()
+                                split = col.split()
+                                split.prop(phaenotyp, "fitness_area", text="Area")
+                                split.prop(phaenotyp, "fitness_area_invert", text="Invert")
+
+                                col = box_fitness.column()
+                                split = col.split()
+                                split.prop(phaenotyp, "fitness_kg", text="Kg")
+                                split.prop(phaenotyp, "fitness_kg_invert", text="Invert")
+
+                                col = box_fitness.column()
+                                split = col.split()
+                                split.prop(phaenotyp, "fitness_rise", text="Rise")
+                                split.prop(phaenotyp, "fitness_rise_invert", text="Invert")
+
+                                col = box_fitness.column()
+                                split = col.split()
+                                split.prop(phaenotyp, "fitness_span", text="Span")
+                                split.prop(phaenotyp, "fitness_span_invert", text="Invert")
+
+                                col = box_fitness.column()
+                                split = col.split()
+                                split.prop(phaenotyp, "fitness_cantilever", text="Cantilever")
+                                split.prop(phaenotyp, "fitness_cantilever_invert", text="Invert")
+
+                                # structural fitness
+                                if phaenotyp.calculation_type != "geometrical":
+                                    box_fitness.prop(phaenotyp, "fitness_average_sigma", text="Sigma")
+                                    if phaenotyp.calculation_type != "force_distribution":
+                                        box_fitness.prop(phaenotyp, "fitness_average_strain_energy", text="Strain energy")
+
+                                box_shape_keys = layout.box()
+                                box_shape_keys.label(text="Shape keys:")
+                                for keyblock in shape_key.key_blocks:
+                                    name = keyblock.name
+                                    box_shape_keys.label(text=name)
 
                     # Visualization
                     result = data["done"].get(str(frame))

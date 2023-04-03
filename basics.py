@@ -5,12 +5,18 @@ from queue import Queue
 
 def print_data(text):
     """
-    Used to print data for debugging.
-    :param text: Needs a text as string (Do not pass as list).
+    Print data for debugging
+    :param text: Needs a text as string (Do not pass as list)
     """
     print("Phaenotyp |", text)
 
 def create_data():
+    """
+    Create scene[<Phaenotyp>] and build all basics to store data.
+    All data that should be saved with the blend-file is stored here.
+    Data that does not need to be available after restart is generated,
+    handeled and stored by the specific function or class.
+    """
     data = bpy.context.scene.get("<Phaenotyp>")
     if not data:
         data = bpy.context.scene["<Phaenotyp>"] = {
@@ -44,22 +50,34 @@ def create_data():
 
         data["texts"] = []
 
-# this function is sorting the keys of the dict
-# (to avoid iterating like 0,10,2,3 ...)
 def sorted_keys(dict):
+    '''
+    Is sorting the keys of the dict (to avoid iterating like 0,10,2,3 ...)
+    :param dict dict: Dictionary with keys as string
+    :return: Sorted keys as integer
+    '''
     keys_int = list(map(int, dict))
     sorted_int_keys = sorted(keys_int)
     return sorted_int_keys
 
-# to avoid division by zero if a force is 0
 def avoid_div_zero(a,b):
+    '''
+    To avoid division by zero if a force is 0.
+    :param a: Can be integer or float
+    :param b: Can be integer or float
+    :return: Returns the result or 0 in case of division by zero.
+    '''
     if b == 0:
         return 0
     else:
         return a/b
 
-# function to return the smallest_minus or biggest_plus in a list
 def return_max_diff_to_zero(list):
+    '''
+    Return the value with the highest difference to zero (for plus or minus)
+    :param list: List of integers or floats
+    :return: List item of given list
+    '''
     list_copy = list.copy()
     list_copy.sort()
 
@@ -71,8 +89,11 @@ def return_max_diff_to_zero(list):
     else:
         return biggest_plus
 
-# functions to handle objects
 def delete_obj_if_existing(name):
+    '''
+    Delete object with given name if existing
+    :param name: Name as string
+    '''
     obj = bpy.data.objects.get(name)
     if obj:
         bpy.data.objects.remove(obj, do_unlink=True)

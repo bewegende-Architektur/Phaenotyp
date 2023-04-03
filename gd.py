@@ -3,7 +3,7 @@ from phaenotyp import operators, geometry, calculation, ga
 import numpy as np
 
 # Funktionen für gradient decent
-def gd_individual(keys, frame):
+def create_individual(keys, frame):
     scene = bpy.context.scene
     data = scene["<Phaenotyp>"]
     obj = data["structure"]
@@ -94,10 +94,10 @@ def start_gd():
     while  j < maxiteration:
         frame_number+=1
         print ("Frame-number: ", frame_number)
-        gd, fitness = gd_individual(chromosome_aktuell,frame_number)
+        gd, fitness = create_individual(chromosome_aktuell,frame_number)
         print("gd", gd["name"], "mit fitness:", fitness)
         fitness_0 = fitness
-        
+
         # Varianten von den Keys erstellen
         # dieser Teil könnte mp sein
         for i in range(len(shape_keys)-1):
@@ -109,7 +109,7 @@ def start_gd():
             frame_number+=1
             print ("Frame-number: ", frame_number)
             chromosome[i] += delta
-            gd, fitness = gd_individual(chromosome, frame)
+            gd, fitness = create_individual(chromosome, frame)
             print("Gradient descent", gd["name"], "mit fitness:", fitness)
             # Neigung
             neigung[i]=(fitness-fitness_0)/delta
