@@ -53,7 +53,7 @@ def structure(layout):
     if not state_temp:
         box_structure.label(text="Structure:")
         box_structure.operator("wm.set_structure", text="Set")
-    
+
     # user state a structure
     else:
         obj = data["structure"]
@@ -64,7 +64,7 @@ def structure(layout):
 
         # disable box
         box_structure.enabled = False
-        
+
 def scipy(layout):
     context = bpy.context
     scene = context.scene
@@ -96,7 +96,7 @@ def calculation_type(layout):
         box_calculation_type.prop(phaenotyp, "calculation_type", text="")
 
         calculation_type = phaenotyp.calculation_type
-    
+
         if state.calculation_type == False:
             box_calculation_type.enabled = False
 
@@ -134,7 +134,7 @@ def supports(layout):
         if len(data["supports"]) > 0:
             box_supports.label(text = str(len(data["supports"])) + " vertices state as support.")
             state.supports = True
-    
+
     # disable box
     if grayed_out.supports:
         box_supports.enabled = False
@@ -346,7 +346,7 @@ def single_frame(layout):
     phaenotyp = scene.phaenotyp
     frame = scene.frame_current
     data = bpy.context.scene.get("<Phaenotyp>")
-    
+
     if state.file and state.members:
         if calculation_type != "geometrical":
             # analysis
@@ -389,7 +389,7 @@ def animation(layout):
     phaenotyp = scene.phaenotyp
     frame = scene.frame_current
     data = bpy.context.scene.get("<Phaenotyp>")
-    
+
     if state.file and state.members:
         if calculation_type != "geometrical":
             box_optimization = layout.box()
@@ -417,7 +417,7 @@ def genetic_algorithm(layout):
     phaenotyp = scene.phaenotyp
     frame = scene.frame_current
     data = bpy.context.scene.get("<Phaenotyp>")
-    
+
     if state.file and state.members:
         shape_key = data["structure"].data.shape_keys
         if not shape_key:
@@ -499,12 +499,12 @@ def genetic_algorithm(layout):
             else:
                 box_ga_start.label(text="Elitism should be smaller than 50% of generation size.")
 
-            if len(data["ga_individuals"]) > 0 and not bpy.context.screen.is_animation_playing:
+            if len(data["individuals"]) > 0 and not bpy.context.screen.is_animation_playing:
                 box_ga_select = layout.box()
                 box_ga_select.label(text="Select individual by fitness:")
                 box_ga_select.prop(phaenotyp, "ga_ranking", text="Result sorted by fitness.")
-                if phaenotyp.ga_ranking >= len(data["ga_individuals"]):
-                    text = "Only " + str(len(data["ga_individuals"])) + " available."
+                if phaenotyp.ga_ranking >= len(data["individuals"]):
+                    text = "Only " + str(len(data["individuals"])) + " available."
                     box_ga_select.label(text=text)
                 else:
                     # show
@@ -709,7 +709,7 @@ def report(layout):
         box_report.label(text="No report for members, frames or combined available in geometrical mode.")
 
     # if ga
-    ga_available = data.get("ga_environment")
+    ga_available = data.get("environment")
     if ga_available:
         box_report.operator("wm.report_chromosomes", text="chromosomes")
         box_report.operator("wm.report_tree", text="tree")
@@ -731,7 +731,7 @@ def reset(layout):
     state.supports = False
     state.members = False
     state.file = False
-    
+
     grayed_out.scipy = False
     grayed_out.supports = False
     grayed_out.members = False

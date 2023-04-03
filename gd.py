@@ -12,8 +12,8 @@ def create_individual(keys, frame):
     frame = bpy.context.scene.frame_current
     phaenotyp = scene.phaenotyp
 
-    environment = data["ga_environment"]
-    individuals = data["ga_individuals"]
+    environment = data["environment"]
+    individuals = data["individuals"]
 
     bpy.context.scene.frame_current = frame
 
@@ -57,8 +57,8 @@ def start_gd():
     frame = bpy.context.scene.frame_current
     phaenotyp = scene.phaenotyp
 
-    environment = data["ga_environment"]
-    individuals = data["ga_individuals"]
+    environment = data["environment"]
+    individuals = data["individuals"]
 
     # Basis erstellen
     # Das erst Argument sind die Shapekeys

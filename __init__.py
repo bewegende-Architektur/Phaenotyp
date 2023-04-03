@@ -822,24 +822,25 @@ class OBJECT_PT_Phaenotyp(Panel):
 
         # run if there is a result
         data = scene.get("<Phaenotyp>")
-        result = data["done"].get(str(frame))
-        if result:
-            # hide previous boxes
-            # (to avoid confusion, if user is changing the setup
-            # the setup and the result would not match
-            # new setup needs new calculation by pressing reset
-            # or by changing frame)
-            panel.grayed_out.scipy = True
-            panel.grayed_out.supports = True
-            panel.grayed_out.members = True
-            panel.grayed_out.loads = True
+        if data:
+            result = data["done"].get(str(frame))
+            if result:
+                # hide previous boxes
+                # (to avoid confusion, if user is changing the setup
+                # the setup and the result would not match
+                # new setup needs new calculation by pressing reset
+                # or by changing frame)
+                panel.grayed_out.scipy = True
+                panel.grayed_out.supports = True
+                panel.grayed_out.members = True
+                panel.grayed_out.loads = True
 
-            panel.visualization(layout)
-            panel.text(layout)
-            panel.info(layout)
-            panel.selection(layout)
-            panel.report(layout)
-        
+                panel.visualization(layout)
+                panel.text(layout)
+                panel.info(layout)
+                panel.selection(layout)
+                panel.report(layout)
+
         panel.reset(layout)
 
 classes = (
@@ -903,7 +904,7 @@ def update_post(scene):
                 geometry.update_members_post()
 
         # apply chromosome if available
-        individuals = data.get("ga_individuals")
+        individuals = data.get("individuals")
         if individuals:
             shape_keys = data["structure"].data.shape_keys.key_blocks
             chromosome = individuals[str(frame)]["chromosome"]

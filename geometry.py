@@ -214,6 +214,11 @@ def cantilever(vertices, supports):
             highest = to_closest_support
 
     frame_cantilever = highest
+
+    # return 0 if there is only one support
+    if frame_cantilever == float('inf'):
+        frame_cantilever = 0
+
     return frame_cantilever
 
 def set_shape_keys(data):

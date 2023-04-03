@@ -29,8 +29,8 @@ def create_data():
             "loads_f":{},
             "process":{},
             "done":{},
-            "ga_environment":{},
-            "ga_individuals":{},
+            "environment":{},
+            "individuals":{},
             "texts":{}
         }
 
@@ -45,8 +45,8 @@ def create_data():
         data["process"]["scipy_available"] = False
         data["done"] = {}
 
-        data["ga_environment"] = {}
-        data["ga_individuals"] = {}
+        data["environment"] = {}
+        data["individuals"] = {}
 
         data["texts"] = []
 

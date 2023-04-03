@@ -76,8 +76,8 @@ class svg_individuals:
         shape_keys = obj.data.shape_keys.key_blocks
         members = data["members"]
 
-        environment = data["ga_environment"]
-        individuals = data["ga_individuals"]
+        environment = data["environment"]
+        individuals = data["individuals"]
 
         generation = environment["generations"]["0"]
 
@@ -98,8 +98,8 @@ class svg_individuals:
         shape_keys = obj.data.shape_keys.key_blocks
         members = data["members"]
 
-        environment = data["ga_environment"]
-        individuals = data["ga_individuals"]
+        environment = data["environment"]
+        individuals = data["individuals"]
 
         # all generations except of initial generation
         col_id = 1
@@ -203,99 +203,99 @@ class svg_individuals:
         file.write('  </g>\n')
 
     def draw_vg(self, file):
-            # overall position
-            x = svg_individuals.border_left + svg_individuals.row_w * self.row_id
-            y = svg_individuals.border_top + svg_individuals.col_h * self.col_id
+        # overall position
+        x = svg_individuals.border_left + svg_individuals.row_w * self.row_id
+        y = svg_individuals.border_top + svg_individuals.col_h * self.col_id
 
-            # store to self to make accesable by others
-            self.x = x
-            self.y = y
+        # store to self to make accesable by others
+        self.x = x
+        self.y = y
 
-            # draw dot at ovrall position
-            dot_x = 'cx="' + str(x) + '" '
-            dot_y = 'cy="' + str(y) + '" '
-            file.write('  <circle ' + dot_x + dot_y + 'r="4" stroke="black" stroke-width="1" fill="transparent" />\n')
+        # draw dot at ovrall position
+        dot_x = 'cx="' + str(x) + '" '
+        dot_y = 'cy="' + str(y) + '" '
+        file.write('  <circle ' + dot_x + dot_y + 'r="4" stroke="black" stroke-width="1" fill="transparent" />\n')
 
-            # create color as str
-            fitness_weakest = svg_individuals.fitness_weakest
-            fitness = self.fitness
-            value = int(basics.avoid_div_zero(255, fitness_weakest) * fitness)
-            r, g, b = [value, value, 255]
-            r, g, b = [str(r), str(g), str(b)]
-            c = 'rgb('+r+','+g+','+b+')'
+        # create color as str
+        fitness_weakest = svg_individuals.fitness_weakest
+        fitness = self.fitness
+        value = int(basics.avoid_div_zero(255, fitness_weakest) * fitness)
+        r, g, b = [value, value, 255]
+        r, g, b = [str(r), str(g), str(b)]
+        c = 'rgb('+r+','+g+','+b+')'
 
-            box_x = str(x - svg_individuals.box_w * 0.5) # centered
-            box_y = str(y)
+        box_x = str(x - svg_individuals.box_w * 0.5) # centered
+        box_y = str(y)
 
-            box_w = str(svg_individuals.box_w)
-            box_h = str(svg_individuals.box_h)
+        box_w = str(svg_individuals.box_w)
+        box_h = str(svg_individuals.box_h)
 
-            # open individual
-            file.write('  <g class="individual">\n')
-            file.write('    <rect x="'+box_x+'" y="'+box_y+'" width="'+box_w+'" height="'+box_h+'" fill="'+c+'"/>\n')
+        # open individual
+        file.write('  <g class="individual">\n')
+        file.write('    <rect x="'+box_x+'" y="'+box_y+'" width="'+box_w+'" height="'+box_h+'" fill="'+c+'"/>\n')
 
-            # draw parents or elitism
+        # draw parents or elitism
 
-            if self.origins != None: # to avoid error in first generation
-                for origin in self.origins:
-                    # get svg_individual from parent
-                    for svg_individual in svg_individuals.instances:
-                        if svg_individual.name == origin:
+        if self.origins != None: # to avoid error in first generation
+            for origin in self.origins:
+                # get svg_individual from parent
+                for svg_individual in svg_individuals.instances:
+                    if svg_individual.name == origin:
 
-                            # start point at parent
-                            x_1 = svg_individual.x
-                            y_1 = svg_individual.y + svg_individual.box_h
+                        # start point at parent
+                        x_1 = svg_individual.x
+                        y_1 = svg_individual.y + svg_individual.box_h
 
-                            # end point
-                            x_4 = x
-                            y_4 = y
+                        # end point
+                        x_4 = x
+                        y_4 = y
 
-                            # interpolated points
-                            x_2 = x_1
-                            y_2 = y_1 + svg_individual.box_h
+                        # interpolated points
+                        x_2 = x_1
+                        y_2 = y_1 + svg_individual.box_h
 
-                            x_3 = x_4
-                            y_3 = y_4 - svg_individual.box_h
+                        x_3 = x_4
+                        y_3 = y_4 - svg_individual.box_h
 
-                            text = '<path d="M ' + str(x_1) + ' ' + str(y_1)
-                            text += ' C' + str(x_2) + ', ' + str(y_2) + ' '
-                            text += str(x_3) + ', ' + str(y_3) + ' '
-                            text += str(x_4) + ', ' + str(y_4) + '" '
-                            text += 'fill="transparent"/>\n'
-                            file.write(text)
+                        text = '<path d="M ' + str(x_1) + ' ' + str(y_1)
+                        text += ' C' + str(x_2) + ', ' + str(y_2) + ' '
+                        text += str(x_3) + ', ' + str(y_3) + ' '
+                        text += str(x_4) + ', ' + str(y_4) + '" '
+                        text += 'fill="transparent"/>\n'
+                        file.write(text)
 
-            # end individual
-            file.write('  </g>\n')
+        # end individual
+        file.write('  </g>\n')
 
-            # write name
+        # write name
+        text_x = str(x)
+        text_y = str(y + svg_individuals.line_h)
+
+        name = str(self.name).zfill(3)
+        text = '<text x="' + text_x +  '" y="' + text_y
+        text += '" dominant-baseline="middle" ' + 'text-anchor="middle">'
+        text += name + '</text>\n'
+        file.write(text)
+
+        # write fitness
+        text_x = str(x)
+        text_y = str(y + svg_individuals.line_h * 2)
+
+        text = '<text x="' + text_x +  '" y="' + text_y
+        text += '" dominant-baseline="middle" ' + 'text-anchor="middle">'
+        text += str(round(self.fitness,3)) + '</text>\n'
+        file.write(text)
+
+        # write chromosome
+        for i, gene in enumerate(self.chromosome):
             text_x = str(x)
-            text_y = str(y + svg_individuals.line_h)
+            text_y = str(y + svg_individuals.line_h * (4+i))
 
-            name = str(self.name).zfill(3)
+            gene = round(gene, 2)
             text = '<text x="' + text_x +  '" y="' + text_y
             text += '" dominant-baseline="middle" ' + 'text-anchor="middle">'
-            text += name + '</text>\n'
+            text += str(gene) + '</text>\n'
             file.write(text)
-
-            # write fitness
-            text_x = str(x)
-            text_y = str(y + svg_individuals.line_h * 2)
-
-            text = '<text x="' + text_x +  '" y="' + text_y
-            text += '" dominant-baseline="middle" ' + 'text-anchor="middle">'
-            text += str(round(self.fitness,3)) + '</text>\n'
-            file.write(text)
-
-            # write chromosome
-            for i, gene in enumerate(self.chromosome):
-                text_x = str(x)
-                text_y = str(y + svg_individuals.line_h * (4+i))
-
-                gene = round(gene, 2)
-                text = '<text x="' + text_x +  '" y="' + text_y
-                text += '" dominant-baseline="middle" ' + 'text-anchor="middle">'
-                text += str(gene) + '</text>\n'
-                file.write(text)
 
 def copy_sorttable(directory):
     script_folder = os.path.dirname(__file__)
@@ -421,8 +421,8 @@ def fill_matrix_chromosomes(matrix, len_chromosome):
     phaenotyp = scene.phaenotyp
     data = scene["<Phaenotyp>"]
     members = data["members"]
-    environment = data["ga_environment"]
-    individuals = data["ga_individuals"]
+    environment = data["environment"]
+    individuals = data["individuals"]
 
     highest = 0
     lowest = 0
@@ -953,7 +953,7 @@ def report_chromosomes(directory):
     obj = data["structure"]
     shape_keys = obj.data.shape_keys.key_blocks
     members = data["members"]
-    individuals = data["ga_individuals"]
+    individuals = data["individuals"]
 
     # create file
     filename = directory + "index.html"
@@ -1012,8 +1012,8 @@ def report_tree(directory):
     shape_keys = obj.data.shape_keys.key_blocks
     members = data["members"]
 
-    environment = data["ga_environment"]
-    individuals = data["ga_individuals"]
+    environment = data["environment"]
+    individuals = data["individuals"]
 
     filename = directory + "index.html"
     file = open(filename, 'w')

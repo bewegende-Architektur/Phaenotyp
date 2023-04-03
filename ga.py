@@ -14,8 +14,8 @@ def generate_basis():
     shape_keys = obj.data.shape_keys.key_blocks
     members = data["members"]
 
-    environment = data["ga_environment"]
-    individuals = data["ga_individuals"]
+    environment = data["environment"]
+    individuals = data["individuals"]
 
     # for PyNite
     if phaenotyp.calculation_type != "force_distribution":
@@ -67,8 +67,8 @@ def create_indivdual(chromosome, parent_1, parent_2):
     members = data["members"]
     frame = bpy.context.scene.frame_current
 
-    environment = data["ga_environment"]
-    individuals = data["ga_individuals"]
+    environment = data["environment"]
+    individuals = data["individuals"]
 
     # apply shape keys
     for id, key in enumerate(shape_keys):
@@ -92,8 +92,8 @@ def calculate_fitness(start, end):
     obj = data["structure"]
     members = data["members"]
 
-    environment = data["ga_environment"]
-    individuals = data["ga_individuals"]
+    environment = data["environment"]
+    individuals = data["individuals"]
 
     # calculate fitness
     for frame in range(start, end):
@@ -265,8 +265,8 @@ def mate_chromosomes(chromosome_1, chromosome_2):
     scene = bpy.context.scene
     phaenotyp = scene.phaenotyp
     data = scene["<Phaenotyp>"]
-    environment = data["ga_environment"]
-    individuals = data["ga_individuals"]
+    environment = data["environment"]
+    individuals = data["individuals"]
 
     if phaenotyp.mate_type == "direct":
         # chromosome for offspring
@@ -315,8 +315,8 @@ def bruteforce(chromosomes):
     shape_keys = obj.data.shape_keys.key_blocks
     members = data["members"]
 
-    environment = data["ga_environment"]
-    individuals = data["ga_individuals"]
+    environment = data["environment"]
+    individuals = data["individuals"]
 
     # create list of trusses
     trusses = {}
@@ -370,8 +370,8 @@ def create_initial_individuals(start, end):
     shape_keys = obj.data.shape_keys.key_blocks
     members = data["members"]
 
-    environment = data["ga_environment"]
-    individuals = data["ga_individuals"]
+    environment = data["environment"]
+    individuals = data["individuals"]
 
     # create list of trusses
     trusses = {}
@@ -424,8 +424,8 @@ def sectional_optimization(start, end):
     shape_keys = obj.data.shape_keys.key_blocks
     members = data["members"]
 
-    environment = data["ga_environment"]
-    individuals = data["ga_individuals"]
+    environment = data["environment"]
+    individuals = data["individuals"]
 
     new_generation_size = environment["new_generation_size"]
     generation_id = environment["generation_id"]
@@ -489,8 +489,8 @@ def populate_initial_generation():
     data = scene["<Phaenotyp>"]
     members = data["members"]
 
-    environment = data["ga_environment"]
-    individuals = data["ga_individuals"]
+    environment = data["environment"]
+    individuals = data["individuals"]
 
      # create initial generation
     environment["generations"]["0"] = {} # create dict
@@ -532,9 +532,9 @@ def do_elitism():
     data = scene["<Phaenotyp>"]
     members = data["members"]
 
-    environment = data["ga_environment"]
-    individuals = data["ga_individuals"]
-    generation_id = data["ga_environment"]["generation_id"]
+    environment = data["environment"]
+    individuals = data["individuals"]
+    generation_id = data["environment"]["generation_id"]
 
     # the current generation
     current_generation = environment["generations"][str(generation_id)]
@@ -548,7 +548,7 @@ def do_elitism():
 
     # the next generation
     generation_id = generation_id + 1 # increase id
-    data["ga_environment"]["generation_id"] = generation_id # += would not working
+    data["environment"]["generation_id"] = generation_id # += would not working
 
     environment["generations"][str(generation_id)] = {} # create dict
     next_generation = environment["generations"][str(generation_id)]
@@ -598,8 +598,8 @@ def create_new_individuals(start, end):
     shape_keys = obj.data.shape_keys.key_blocks
     members = data["members"]
 
-    environment = data["ga_environment"]
-    individuals = data["ga_individuals"]
+    environment = data["environment"]
+    individuals = data["individuals"]
 
     new_generation_size = environment["new_generation_size"]
     generation_id = environment["generation_id"]
@@ -669,8 +669,8 @@ def populate_new_generation(start, end):
     shape_keys = obj.data.shape_keys.key_blocks
     members = data["members"]
 
-    environment = data["ga_environment"]
-    individuals = data["ga_individuals"]
+    environment = data["environment"]
+    individuals = data["individuals"]
 
     new_generation_size = environment["new_generation_size"]
     generation_id = environment["generation_id"]
@@ -724,8 +724,8 @@ def goto_indivual():
     # turns ga off, if user interrupted the process
     data["process"]["genetetic_mutation_update_post"] = False
 
-    environment = data["ga_environment"]
-    individuals = data["ga_individuals"]
+    environment = data["environment"]
+    individuals = data["individuals"]
 
     # sort by fitness
     list_result = []

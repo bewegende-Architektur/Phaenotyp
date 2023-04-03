@@ -1076,24 +1076,24 @@ def ga_start():
     print_data("start genetic muataion over selected shape keys")
 
     # pass from gui
-    data["ga_environment"]["generation_size"] = phaenotyp.generation_size
-    data["ga_environment"]["elitism"] = phaenotyp.elitism
-    data["ga_environment"]["generation_amount"] = phaenotyp.generation_amount
-    data["ga_environment"]["new_generation_size"] = phaenotyp.generation_size - phaenotyp.elitism
+    data["environment"]["generation_size"] = phaenotyp.generation_size
+    data["environment"]["elitism"] = phaenotyp.elitism
+    data["environment"]["generation_amount"] = phaenotyp.generation_amount
+    data["environment"]["new_generation_size"] = phaenotyp.generation_size - phaenotyp.elitism
 
     # clear to restart
-    data["ga_environment"]["generations"] = {}
-    data["ga_environment"]["generation_id"] = 0
-    data["ga_environment"]["genes"] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
-    data["ga_individuals"] = {}
+    data["environment"]["generations"] = {}
+    data["environment"]["generation_id"] = 0
+    data["environment"]["genes"] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+    data["individuals"] = {}
 
     # shorten
-    generation_size = data["ga_environment"]["generation_size"]
-    elitism = data["ga_environment"]["elitism"]
-    generation_amount = data["ga_environment"]["generation_amount"]
-    new_generation_size = data["ga_environment"]["new_generation_size"]
-    generation_id = data["ga_environment"]["generation_id"]
-    individuals = data["ga_individuals"]
+    generation_size = data["environment"]["generation_size"]
+    elitism = data["environment"]["elitism"]
+    generation_amount = data["environment"]["generation_amount"]
+    new_generation_size = data["environment"]["new_generation_size"]
+    generation_id = data["environment"]["generation_id"]
+    individuals = data["individuals"]
 
     if phaenotyp.calculation_type == "force_distribution":
         if phaenotyp.optimization_fd == "approximate":
@@ -1199,7 +1199,7 @@ def ga_start():
         # create matrix of possible combinations
         matrix = []
         for key in range(len(shape_keys)-1): # to exclude basis
-            genes = data["ga_environment"]["genes"]
+            genes = data["environment"]["genes"]
             matrix.append(genes)
 
         chromosomes = list(itertools.product(*matrix))
@@ -1245,8 +1245,8 @@ def ga_render_animation():
     scene = bpy.context.scene
     data = scene["<Phaenotyp>"]
 
-    environment = data["ga_environment"]
-    individuals = data["ga_individuals"]
+    environment = data["environment"]
+    individuals = data["individuals"]
 
     print_data("render animation")
 
@@ -1687,8 +1687,8 @@ def reset():
     data["process"]["scipy_available"] = False
     data["done"] = {}
 
-    data["ga_environment"] = {}
-    data["ga_individuals"] = {}
+    data["environment"] = {}
+    data["individuals"] = {}
 
     data["texts"] = []
 
