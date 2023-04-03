@@ -2,7 +2,7 @@ bl_info = {
     "name": "Phänotyp",
     "description": "Genetic algorithm for architectural structures",
     "author": "bewegende Architektur e.U. and Karl Deix",
-    "version": (0, 1, 8),
+    "version": (0, 1, 9),
     "blender": (3, 5, 0),
     "location": "3D View > Tools",
 }
@@ -402,7 +402,7 @@ class phaenotyp_properties(PropertyGroup):
         min = 0.1,
         max = 100
         )
-    
+
     mode: EnumProperty(
         name = "mode",
         description = "Select mode to start",
@@ -410,7 +410,8 @@ class phaenotyp_properties(PropertyGroup):
                     ("transformation", "Transformation", ""),
                     ("single_frame", "Single frame", ""),
                     ("animation", "Animation", ""),
-                    ("genetic_algorithm", "Genetic algorithm", "")
+                    ("genetic_algorithm", "Genetic algorithm", ""),
+                    ("gradient_descent", "Gradient descent", "")
                ],
         default = "single_frame"
         )
@@ -488,7 +489,7 @@ class phaenotyp_properties(PropertyGroup):
                 ],
         default = "Do"
         )
-    
+
     selection_compare: EnumProperty(
         name = "selection_compare",
         description = "Type of comparsion.",
@@ -498,7 +499,7 @@ class phaenotyp_properties(PropertyGroup):
                     ("Less", "Less", "")
                 ]
         )
-    
+
     selection_value: StringProperty(
         name = "selection_value",
         description = "Value for selection.",
@@ -510,7 +511,39 @@ class phaenotyp_properties(PropertyGroup):
         description = "Threshold for selection.",
         default = "0"
         )
-    
+
+    gd_delta: FloatProperty(
+        name = "gd_delta",
+        description="Step size for gradient.",
+        default = 0.01,
+        min = 0.001,
+        max = 0.1
+        )
+
+    gd_learning_rate: FloatProperty(
+        name = "gd_learning_rate",
+        description="Learning rate.",
+        default = 0.005,
+        min = 0.001,
+        max = 0.01
+        )
+
+    gd_abort: FloatProperty(
+        name = "gd_abort",
+        description="Abort criterion.",
+        default = 0.01,
+        min = 0.001,
+        max = 0.1
+        )
+
+    gd_max_iteration: IntProperty(
+        name = "gd_max_iteration",
+        description="Max number of iteration to avoid endless loop.",
+        default = 20,
+        min = 10,
+        max = 100
+        )
+
 class WM_OT_set_structure(Operator):
     bl_label = "set_structure"
     bl_idname = "wm.set_structure"
@@ -573,7 +606,7 @@ class WM_OT_actuator(Operator):
     def execute(self, context):
         operators.actuator()
         return {"FINISHED"}
-        
+
 class WM_OT_reach_goal(Operator):
     bl_label = "reach_goal"
     bl_idname = "wm.reach_goal"
@@ -649,7 +682,7 @@ class WM_OT_decimate(Operator):
 class WM_OT_ga_start(Operator):
     bl_label = "ga_start"
     bl_idname = "wm.ga_start"
-    bl_description = "Start genetic muatation over selected shape keys"
+    bl_description = "Start genetic muatation over selected shape keys."
 
     def execute(self, context):
         operators.ga_start()
@@ -673,6 +706,15 @@ class WM_OT_ga_render_animation(Operator):
         operators.ga_ranking()
         return {"FINISHED"}
 
+class WM_OT_gd_start(Operator):
+    bl_label = "gd_start"
+    bl_idname = "wm.gd_start"
+    bl_description = "Start gradient descent over selected shape keys."
+
+    def execute(self, context):
+        operators.gd_start()
+        return {"FINISHED"}
+
 class WM_OT_text(Operator):
     bl_label = "text"
     bl_idname = "wm.text"
@@ -690,7 +732,7 @@ class WM_OT_selection(Operator):
     def execute(self, context):
         operators.selection()
         return {"FINISHED"}
-    
+
 class WM_OT_report_members(Operator):
     bl_label = "report_members"
     bl_idname = "wm.report_members"
@@ -746,7 +788,7 @@ class WM_OT_reset(Operator):
         return {"FINISHED"}
 
 class OBJECT_PT_Phaenotyp(Panel):
-    bl_label = "Phänotyp 0.1.8"
+    bl_label = "Phänotyp 0.1.9"
     bl_idname = "OBJECT_PT_custom_panel"
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
@@ -1143,6 +1185,16 @@ class OBJECT_PT_Phaenotyp(Panel):
                                     box_ga_rendering.label(text="Render sorted indiviuals:")
                                     box_ga_rendering.operator("wm.ga_render_animation", text="Generate")
 
+                        # Genetic algorithm
+                        elif mode == "gradient_descent":
+                            box_gd_start = layout.box()
+                            box_gd_start.label(text="Gradient descent:")
+                            box_gd_start.prop(phaenotyp, "gd_delta", text="Delta")
+                            box_gd_start.prop(phaenotyp, "gd_learning_rate", text="Learning rate")
+                            box_gd_start.prop(phaenotyp, "gd_abort", text="Abort")
+                            box_gd_start.prop(phaenotyp, "gd_max_iteration", text="Max iteration")
+                            box_gd_start.operator("wm.gd_start", text="Start")
+
                     # Visualization
                     result = data["done"].get(str(frame))
                     if result:
@@ -1182,7 +1234,7 @@ class OBJECT_PT_Phaenotyp(Panel):
                         box_text.label(text="Rise: "+str(round(data["frames"][str(frame)]["rise"],3)) + " m")
                         box_text.label(text="Span: "+str(round(data["frames"][str(frame)]["span"],3)) + " m")
                         box_text.label(text="Cantilever: "+str(round(data["frames"][str(frame)]["cantilever"],3)) + " m")
-                        
+
                         # Info
                         if phaenotyp.calculation_type != "geometrical":
                             box_info = layout.box()
@@ -1210,7 +1262,7 @@ class OBJECT_PT_Phaenotyp(Panel):
                                                 box_info.label(text=text)
                                 else:
                                     box_info.label(text="Switch to edit-mode")
-                        
+
                         # Selection
                         if phaenotyp.calculation_type != "geometrical":
                             box_selection = layout.box()
@@ -1223,8 +1275,8 @@ class OBJECT_PT_Phaenotyp(Panel):
                             box_selection.prop(phaenotyp, "selection_value", text="Value:")
                             box_selection.prop(phaenotyp, "selection_threshold", text="Threshold:")
                             box_selection.operator("wm.selection", text="Start")
-                            
-                            
+
+
                         # Report
                         box_report = layout.box()
                         box_report.label(text="Report:")
@@ -1274,9 +1326,11 @@ classes = (
     WM_OT_ga_ranking,
     WM_OT_ga_render_animation,
 
+    WM_OT_gd_start,
+
     WM_OT_text,
     WM_OT_selection,
-    
+
     WM_OT_report_members,
     WM_OT_report_frames,
     WM_OT_report_combined,

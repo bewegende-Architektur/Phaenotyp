@@ -531,9 +531,9 @@ def assimilate():
     obj = data["structure"]
     vertices = obj.data.vertices
     edges = obj.data.edges
-    
+
     bpy.ops.object.mode_set(mode="OBJECT")
-    
+
     # get ids of supports
     support_ids = []
     for id, support in supports.items():
@@ -541,7 +541,7 @@ def assimilate():
         support_ids.append(support_id)
 
     target = phaenotyp.assimilate_length
-    
+
     # assimilate all edges
     for i in range(10):
         for edge in edges:
@@ -572,7 +572,7 @@ def actuator():
     data = scene["<Phaenotyp>"]
     supports = scene["<Phaenotyp>"]["supports"]
     frame = bpy.context.scene.frame_current
-    
+
     obj = data["structure"]
     vertices = obj.data.vertices
     edges = obj.data.edges
@@ -581,46 +581,46 @@ def actuator():
 
     # target lenght from gui
     length = phaenotyp.actuator_length
-    
+
     # get current length of each edge
     lengthes = {}
 
     for edge in edges:
         v_0_id = edge.vertices[0]
         v_1_id = edge.vertices[1]
-        
+
         v_0 = vertices[v_0_id].co
         v_1 = vertices[v_1_id].co
-        
+
         dist_v = v_1 - v_0
         dist = dist_v.length
-        
+
         lengthes[str(edge.index)] = dist
-    
+
     # get id of supports
     support_ids = []
     for id, support in supports.items():
         support_id = int(id)
-        support_ids.append(support_id)    
-    
+        support_ids.append(support_id)
+
     # set target length to all selected edges
     for edge in edges:
         if edge.select == True:
             id = edge.index
             lengthes[str(id)] = length
-    
+
     # change lengthes
     for i in range(10):
         for edge in edges:
             v_0_id = edge.vertices[0]
             v_1_id = edge.vertices[1]
-            
+
             v_0 = vertices[v_0_id].co
             v_1 = vertices[v_1_id].co
-            
+
             dist_v = v_1 - v_0
             dist = dist_v.length
-            
+
             if dist > lengthes[str(edge.index)]:
                 # move only if no support
                 # allow to move if only fixed in other direction?
@@ -628,13 +628,13 @@ def actuator():
                     vertices[v_0_id].co = v_0 + dist_v*0.01
                 if v_1_id not in support_ids:
                     vertices[v_1_id].co = v_1 - dist_v*0.01
-                
+
             else:
                 if v_0_id not in support_ids:
                     vertices[v_0_id].co = v_0 - dist_v*0.01
                 if v_1_id not in support_ids:
                     vertices[v_1_id].co = v_1 + dist_v*0.01
-    
+
 def reach_goal():
     scene = bpy.context.scene
     phaenotyp = scene.phaenotyp
@@ -647,76 +647,76 @@ def reach_goal():
     data = scene["<Phaenotyp>"]
     supports = scene["<Phaenotyp>"]["supports"]
     frame = bpy.context.scene.frame_current
-    
+
     obj = data["structure"]
     vertices = obj.data.vertices
     edges = obj.data.edges
 
     bpy.ops.object.mode_set(mode="OBJECT")
-    
+
     # get empties
     empties = []
     for selected_obj in bpy.context.selected_objects:
         if selected_obj.type == "EMPTY":
             empties.append(selected_obj)
-    
+
     # check conditions
     if len(empties) != 1:
         text = ["Select one empty only."]
         basics.popup(lines = text)
-    
+
     else:
         empty = empties[0]
 
         # target lenght from gui
         length = phaenotyp.actuator_length
-        
+
         # get current length of each edge
         lengthes = {}
 
         for edge in edges:
             v_0_id = edge.vertices[0]
             v_1_id = edge.vertices[1]
-            
+
             v_0 = vertices[v_0_id].co
             v_1 = vertices[v_1_id].co
-            
+
             dist_v = v_1 - v_0
             dist = dist_v.length
-            
+
             lengthes[str(edge.index)] = dist
-        
+
         # get id of supports
         support_ids = []
         for id, support in supports.items():
             support_id = int(id)
             support_ids.append(support_id)
-        
+
         # towards empty
         for i in range(10):
             for vertex in vertices:
                 vertex_co = vertex.co
                 empty_loc = empty.location
-                
+
                 dist_v = vertex_co - empty_loc
                 dist = dist_v.length
 
                 if dist > 1:
                     if vertex.index not in support_ids:
                         vertex.co = vertex_co - dist_v*0.01
-                        
-            
+
+
             # keep lenghtes
             for edge in edges:
                 v_0_id = edge.vertices[0]
                 v_1_id = edge.vertices[1]
-                
+
                 v_0 = vertices[v_0_id].co
                 v_1 = vertices[v_1_id].co
-                
+
                 dist_v = v_1 - v_0
                 dist = dist_v.length
-                
+
                 if dist > lengthes[str(edge.index)]:
                     # move only if no support
                     # allow to move if only fixed in other direction?
@@ -724,13 +724,13 @@ def reach_goal():
                         vertices[v_0_id].co = v_0 + dist_v*0.01
                     if v_1_id not in support_ids:
                         vertices[v_1_id].co = v_1 - dist_v*0.01
-                    
+
                 else:
                     if v_0_id not in support_ids:
                         vertices[v_0_id].co = v_0 - dist_v*0.01
                     if v_1_id not in support_ids:
                         vertices[v_1_id].co = v_1 + dist_v*0.01
-                
+
 def calculate_single_frame():
     scene = bpy.context.scene
     phaenotyp = scene.phaenotyp
@@ -1307,6 +1307,9 @@ def ga_render_animation():
 
     print_data("render animation - done")
 
+def gd_start():
+    print_data("Start gradient descent over selected shape keys")
+
 def text():
     scene = bpy.context.scene
     phaenotyp = scene.phaenotyp
@@ -1430,21 +1433,21 @@ def selection():
     obj = data["structure"]
     members = data["members"]
     frame = bpy.context.scene.frame_current
-    
+
     print_data("Select edges by given key and value.")
-    
+
     # get data from gui
     if phaenotyp.calculation_type == "force_distribution":
         key = phaenotyp.selection_key_fd
     else:
         key = phaenotyp.selection_key_pn
-    
+
     compare = phaenotyp.selection_compare
     value = int(phaenotyp.selection_value)
     threshold = abs(int(phaenotyp.selection_threshold))
     value_min = value - threshold
     value_max = value + threshold
-    
+
     # set edge for selection type and deselect
     bpy.ops.object.mode_set(mode="EDIT")
     bpy.ops.mesh.select_mode(use_extend=False, use_expand=False, type='EDGE')
@@ -1453,15 +1456,15 @@ def selection():
     # set obj active and switch mode
     bpy.context.view_layer.objects.active = obj
     bpy.ops.object.mode_set(mode="OBJECT")
-    
+
     # iterate edges
     edges = obj.data.edges
-    
+
     if key == "id":
         for edge in edges:
             id = edge.index
             member = members[str(id)]
-            
+
             if compare == "Equal":
                 if value_min <= id <= value_max:
                     edge.select = True
@@ -1473,7 +1476,7 @@ def selection():
                     edge.select = True
                 else:
                     edge.select = False
-                    
+
             if compare == "Less":
                 if id < value_max:
                     edge.select = True
@@ -1485,7 +1488,7 @@ def selection():
             id = edge.index
             member = members[str(id)]
             value = member[key][str(frame)]
-            
+
             if compare == "Equal":
                 if value_min <= value <= value_max:
                     edge.select = True
@@ -1497,7 +1500,7 @@ def selection():
                     edge.select = True
                 else:
                     edge.select = False
-                    
+
             if compare == "Less":
                 if value < value_max:
                     edge.select = True
@@ -1507,7 +1510,7 @@ def selection():
     # go into edit-mode and switch to wireframe
     bpy.ops.object.mode_set(mode="EDIT")
     bpy.context.space_data.shading.type = 'WIREFRAME'
-    
+
 def report_members():
     print_data("Generate report at frame in html-format")
 
@@ -1698,6 +1701,6 @@ def reset():
 
     # change view back to solid ...
     basics.revert_vertex_colors()
-    
+
     # change props
     phaenotyp.calculation_type = "first_order"
