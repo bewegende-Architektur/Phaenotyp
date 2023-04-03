@@ -17,6 +17,8 @@ def set_structure():
     selected_objects = context.selected_objects
     obj = context.active_object
 
+    print_data("set structure")
+
     # check for modifiers
     basics.check_modifiers()
 
