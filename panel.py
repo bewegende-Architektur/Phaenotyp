@@ -135,9 +135,9 @@ def supports(layout):
             box_supports.label(text = str(len(data["supports"])) + " vertices state as support.")
             state.supports = True
 
-    # disable box
-    if grayed_out.supports:
-        box_supports.enabled = False
+        # disable box
+        if grayed_out.supports:
+            box_supports.enabled = False
 
 def members(layout):
     context = bpy.context
@@ -724,15 +724,3 @@ def reset(layout):
     # reset data
     box_reset = layout.box()
     box_reset.operator("wm.reset", text="Reset")
-
-    # reset panel
-    state.structure = False
-    state.calculation_type = False
-    state.supports = False
-    state.members = False
-    state.file = False
-
-    grayed_out.scipy = False
-    grayed_out.supports = False
-    grayed_out.members = False
-    grayed_out.laods = False

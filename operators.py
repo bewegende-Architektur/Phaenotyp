@@ -3,7 +3,7 @@ import bpy
 import os
 import webbrowser
 
-from phaenotyp import basics, material, geometry, calculation, ga, gd, report, progress
+from phaenotyp import basics, material, geometry, calculation, ga, gd, panel, report, progress
 import itertools
 
 def print_data(text):
@@ -1126,11 +1126,11 @@ def ga_start():
 
     for i in range(optimization_amount):
         progress.http.reset_pci(1)
-        ga.sectional_optimization(0, 1)
+        calculation.sectional_optimization(0, 1)
         progress.http.update_o()
 
     progress.http.reset_pci(1)
-    ga.calculate_fitness(0, 1)
+    calculation.calculate_fitness(0, 1)
     individuals["0"]["fitness"]["weighted"] = 1
 
     if phaenotyp.mate_type in ["direct", "morph"]:
@@ -1155,11 +1155,11 @@ def ga_start():
         # optimize if sectional performance if activated
         for i in range(optimization_amount):
             progress.http.reset_pci(end-start)
-            ga.sectional_optimization(start, end)
+            calculation.sectional_optimization(start, end)
             progress.http.update_o()
 
         progress.http.reset_pci(end-start)
-        ga.calculate_fitness(start, end)
+        calculation.calculate_fitness(start, end)
         ga.populate_initial_generation()
 
         # create all other generations
@@ -1183,10 +1183,10 @@ def ga_start():
 
             for i in range(optimization_amount):
                 progress.http.reset_pci(end-start)
-                ga.sectional_optimization(start, end)
+                calculation.sectional_optimization(start, end)
                 progress.http.update_o()
 
-            ga.calculate_fitness(start, end)
+            calculation.calculate_fitness(start, end)
             ga.populate_new_generation(start, end)
 
             # update progress
@@ -1221,10 +1221,10 @@ def ga_start():
         ga.bruteforce(chromosomes)
         for i in range(optimization_amount):
             progress.http.reset_pci(end-start)
-            ga.sectional_optimization(start, end)
+            calculation.sectional_optimization(start, end)
             progress.http.update_o()
 
-        ga.calculate_fitness(start, end)
+        calculation.calculate_fitness(start, end)
 
     if phaenotyp.calculation_type != "geometrical":
         basics.view_vertex_colors()
@@ -1707,3 +1707,15 @@ def reset():
 
     # change props
     phaenotyp.calculation_type = "first_order"
+
+    # reset panel
+    panel.state.structure = False
+    panel.state.calculation_type = False
+    panel.state.supports = False
+    panel.state.members = False
+    panel.state.file = False
+
+    panel.grayed_out.scipy = False
+    panel.grayed_out.supports = False
+    panel.grayed_out.members = False
+    panel.grayed_out.laods = False
