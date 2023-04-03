@@ -1094,6 +1094,7 @@ class OBJECT_PT_Phaenotyp(Panel):
                             shape_key = data["structure"].data.shape_keys
                             if not shape_key:
                                 box_ga = layout.box()
+                                box_ga.label(text="Genetic algorithm:")
                                 box_ga.label(text="Please set shape keys first.")
                             else:
                                 # Genetic Mutation:
@@ -1185,15 +1186,22 @@ class OBJECT_PT_Phaenotyp(Panel):
                                     box_ga_rendering.label(text="Render sorted indiviuals:")
                                     box_ga_rendering.operator("wm.ga_render_animation", text="Generate")
 
-                        # Genetic algorithm
+                        # Gradient descent
                         elif mode == "gradient_descent":
-                            box_gd_start = layout.box()
-                            box_gd_start.label(text="Gradient descent:")
-                            box_gd_start.prop(phaenotyp, "gd_delta", text="Delta")
-                            box_gd_start.prop(phaenotyp, "gd_learning_rate", text="Learning rate")
-                            box_gd_start.prop(phaenotyp, "gd_abort", text="Abort")
-                            box_gd_start.prop(phaenotyp, "gd_max_iteration", text="Max iteration")
-                            box_gd_start.operator("wm.gd_start", text="Start")
+                            shape_key = data["structure"].data.shape_keys
+                            if not shape_key:
+                                box_gd = layout.box()
+                                box_gd.label(text="Gradient descent:")
+                                box_gd.label(text="Please set shape keys first.")
+                            else:
+                                # Genetic Mutation:
+                                box_gd = layout.box()
+                                box_gd.label(text="Gradient descent:")
+                                box_gd.prop(phaenotyp, "gd_delta", text="Delta")
+                                box_gd.prop(phaenotyp, "gd_learning_rate", text="Learning rate")
+                                box_gd.prop(phaenotyp, "gd_abort", text="Abort")
+                                box_gd.prop(phaenotyp, "gd_max_iteration", text="Max iteration")
+                                box_gd.operator("wm.gd_start", text="Start")
 
                     # Visualization
                     result = data["done"].get(str(frame))

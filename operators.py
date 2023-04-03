@@ -3,7 +3,7 @@ import bpy
 import os
 import webbrowser
 
-from phaenotyp import basics, material, geometry, calculation, ga, report, progress
+from phaenotyp import basics, material, geometry, calculation, ga, gd, report, progress
 import itertools
 
 def print_data(text):
@@ -1309,6 +1309,7 @@ def ga_render_animation():
 
 def gd_start():
     print_data("Start gradient descent over selected shape keys")
+    gd.start_gd()
 
 def text():
     scene = bpy.context.scene
