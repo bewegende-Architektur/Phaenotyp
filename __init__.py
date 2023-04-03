@@ -221,7 +221,7 @@ class phaenotyp_properties(PropertyGroup):
     fitness_volume: FloatProperty(
         name = "volume",
         description = "Volume of the enclosed parts of the structure",
-        default = 1.0,
+        default = 0.0,
         min = 0.0,
         max = 1.0
         )
@@ -323,13 +323,12 @@ class phaenotyp_properties(PropertyGroup):
         description = "Type of mating",
         items = [
                 ("direct", "direct", ""),
-                ("morph", "morph", ""),
-                ("bruteforce", "bruteforce", "")
+                ("morph", "morph", "")
                ]
         )
 
-    ga_ranking: IntProperty(
-        name = "ga_ranking",
+    ranking: IntProperty(
+        name = "ranking",
         description="Show results from best to worth fitness.",
         default = 0,
         min = 0,
@@ -410,6 +409,7 @@ class phaenotyp_properties(PropertyGroup):
                     ("transformation", "Transformation", ""),
                     ("single_frame", "Single frame", ""),
                     ("animation", "Animation", ""),
+                    ("bruteforce", "Bruteforce", ""),
                     ("genetic_algorithm", "Genetic algorithm", ""),
                     ("gradient_descent", "Gradient descent", "")
                ],
@@ -679,6 +679,15 @@ class WM_OT_decimate(Operator):
         operators.topolgy_decimate()
         return {"FINISHED"}
 
+class WM_OT_bf_start(Operator):
+    bl_label = "bf_start"
+    bl_idname = "wm.bf_start"
+    bl_description = "Start bruteforce over selected shape keys."
+
+    def execute(self, context):
+        operators.bf_start()
+        return {"FINISHED"}
+
 class WM_OT_ga_start(Operator):
     bl_label = "ga_start"
     bl_idname = "wm.ga_start"
@@ -688,24 +697,6 @@ class WM_OT_ga_start(Operator):
         operators.ga_start()
         return {"FINISHED"}
 
-class WM_OT_ga_ranking(Operator):
-    bl_label = "ga_ranking"
-    bl_idname = "wm.ga_ranking"
-    bl_description = "Go to indivual by ranking."
-
-    def execute(self, context):
-        operators.ga_ranking()
-        return {"FINISHED"}
-
-class WM_OT_ga_render_animation(Operator):
-    bl_label = "ga_ranking"
-    bl_idname = "wm.ga_render_animation"
-    bl_description = "Go to indivual by ranking."
-
-    def execute(self, context):
-        operators.ga_ranking()
-        return {"FINISHED"}
-
 class WM_OT_gd_start(Operator):
     bl_label = "gd_start"
     bl_idname = "wm.gd_start"
@@ -713,6 +704,24 @@ class WM_OT_gd_start(Operator):
 
     def execute(self, context):
         operators.gd_start()
+        return {"FINISHED"}
+
+class WM_OT_ranking(Operator):
+    bl_label = "ranking"
+    bl_idname = "wm.ranking"
+    bl_description = "Go to indivual by ranking."
+
+    def execute(self, context):
+        operators.ranking()
+        return {"FINISHED"}
+
+class WM_OT_render_animation(Operator):
+    bl_label = "render_animation"
+    bl_idname = "wm.render_animation"
+    bl_description = "Go to indivual by ranking."
+
+    def execute(self, context):
+        operators.render_animation()
         return {"FINISHED"}
 
 class WM_OT_text(Operator):
@@ -865,11 +874,11 @@ classes = (
     WM_OT_optimize_complex,
     WM_OT_decimate,
 
+    WM_OT_bf_start,
     WM_OT_ga_start,
-    WM_OT_ga_ranking,
-    WM_OT_ga_render_animation,
-
     WM_OT_gd_start,
+    WM_OT_ranking,
+    WM_OT_render_animation,
 
     WM_OT_text,
     WM_OT_selection,

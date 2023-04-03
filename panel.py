@@ -411,6 +411,97 @@ def animation(layout):
             box_optimization = layout.box()
             box_optimization.label(text="Only genetic algorithm is available for geometrical mode.")
 
+def bruteforce(layout):
+    context = bpy.context
+    scene = context.scene
+    phaenotyp = scene.phaenotyp
+    frame = scene.frame_current
+    data = bpy.context.scene.get("<Phaenotyp>")
+
+    if state.file and state.members:
+        shape_key = data["structure"].data.shape_keys
+        if not shape_key:
+            box_ga = layout.box()
+            box_ga.label(text="Bruteforce:")
+            box_ga.label(text="Please set shape keys first.")
+        else:
+            if phaenotyp.calculation_type != "geometrical":
+                box_optimization = layout.box()
+                box_optimization.label(text="Optimization:")
+                if calculation_type == "force_distribution":
+                    box_optimization.prop(phaenotyp, "optimization_fd", text="")
+                else:
+                    box_optimization.prop(phaenotyp, "optimization_pn", text="")
+                if phaenotyp.optimization_pn != "none" or phaenotyp.optimization_fd != "none":
+                    box_optimization.prop(phaenotyp, "optimization_amount", text="Amount of sectional optimization")
+
+            # fitness headline
+            box_fitness = layout.box()
+            box_fitness.label(text="Fitness function:")
+
+            # architectural fitness
+            col = box_fitness.column()
+            split = col.split()
+            split.prop(phaenotyp, "fitness_volume", text="Volume")
+            split.prop(phaenotyp, "fitness_volume_invert", text="Invert")
+
+            col = box_fitness.column()
+            split = col.split()
+            split.prop(phaenotyp, "fitness_area", text="Area")
+            split.prop(phaenotyp, "fitness_area_invert", text="Invert")
+
+            col = box_fitness.column()
+            split = col.split()
+            split.prop(phaenotyp, "fitness_kg", text="Kg")
+            split.prop(phaenotyp, "fitness_kg_invert", text="Invert")
+
+            col = box_fitness.column()
+            split = col.split()
+            split.prop(phaenotyp, "fitness_rise", text="Rise")
+            split.prop(phaenotyp, "fitness_rise_invert", text="Invert")
+
+            col = box_fitness.column()
+            split = col.split()
+            split.prop(phaenotyp, "fitness_span", text="Span")
+            split.prop(phaenotyp, "fitness_span_invert", text="Invert")
+
+            col = box_fitness.column()
+            split = col.split()
+            split.prop(phaenotyp, "fitness_cantilever", text="Cantilever")
+            split.prop(phaenotyp, "fitness_cantilever_invert", text="Invert")
+
+            # structural fitness
+            if phaenotyp.calculation_type != "geometrical":
+                box_fitness.prop(phaenotyp, "fitness_average_sigma", text="Sigma")
+                if phaenotyp.calculation_type != "force_distribution":
+                    box_fitness.prop(phaenotyp, "fitness_average_strain_energy", text="Strain energy")
+
+            box_shape_keys = layout.box()
+            box_shape_keys.label(text="Shape keys:")
+            for keyblock in shape_key.key_blocks:
+                name = keyblock.name
+                box_shape_keys.label(text=name)
+
+            # check generation_size and elitism
+            box_start = layout.box()
+            box_start.label(text="Bruteforce:")
+            box_start.operator("wm.bf_start", text="Start")
+
+            if len(data["individuals"]) > 0 and not bpy.context.screen.is_animation_playing:
+                box_select = layout.box()
+                box_select.label(text="Select individual by fitness:")
+                box_select.prop(phaenotyp, "ranking", text="Result sorted by fitness.")
+                if phaenotyp.ranking >= len(data["individuals"]):
+                    text = "Only " + str(len(data["individuals"])) + " available."
+                    box_select.label(text=text)
+                else:
+                    # show
+                    box_select.operator("wm.ranking", text="Generate")
+
+                box_rendering = layout.box()
+                box_rendering.label(text="Render sorted indiviuals:")
+                box_rendering.operator("wm.render_animation", text="Generate")
+
 def genetic_algorithm(layout):
     context = bpy.context
     scene = context.scene
@@ -429,10 +520,9 @@ def genetic_algorithm(layout):
             box_ga = layout.box()
             box_ga.label(text="Mutation:")
             box_ga.prop(phaenotyp, "mate_type", text="Type of mating")
-            if phaenotyp.mate_type in ["direct", "morph"]:
-                box_ga.prop(phaenotyp, "generation_size", text="Size of generation for GA")
-                box_ga.prop(phaenotyp, "elitism", text="Size of elitism for GA")
-                box_ga.prop(phaenotyp, "generation_amount", text="Amount of generations")
+            box_ga.prop(phaenotyp, "generation_size", text="Size of generation for GA")
+            box_ga.prop(phaenotyp, "elitism", text="Size of elitism for GA")
+            box_ga.prop(phaenotyp, "generation_amount", text="Amount of generations")
 
             if phaenotyp.calculation_type != "geometrical":
                 box_optimization = layout.box()
@@ -492,27 +582,27 @@ def genetic_algorithm(layout):
                 box_shape_keys.label(text=name)
 
             # check generation_size and elitism
-            box_ga_start = layout.box()
-            box_ga_start.label(text="Genetic algorithm:")
+            box_start = layout.box()
+            box_start.label(text="Genetic algorithm:")
             if phaenotyp.generation_size*0.5 > phaenotyp.elitism:
-                box_ga_start.operator("wm.ga_start", text="Start")
+                box_start.operator("wm.ga_start", text="Start")
             else:
-                box_ga_start.label(text="Elitism should be smaller than 50% of generation size.")
+                box_start.label(text="Elitism should be smaller than 50% of generation size.")
 
             if len(data["individuals"]) > 0 and not bpy.context.screen.is_animation_playing:
-                box_ga_select = layout.box()
-                box_ga_select.label(text="Select individual by fitness:")
-                box_ga_select.prop(phaenotyp, "ga_ranking", text="Result sorted by fitness.")
-                if phaenotyp.ga_ranking >= len(data["individuals"]):
+                box_select = layout.box()
+                box_select.label(text="Select individual by fitness:")
+                box_select.prop(phaenotyp, "ranking", text="Result sorted by fitness.")
+                if phaenotyp.ranking >= len(data["individuals"]):
                     text = "Only " + str(len(data["individuals"])) + " available."
-                    box_ga_select.label(text=text)
+                    box_select.label(text=text)
                 else:
                     # show
-                    box_ga_select.operator("wm.ga_ranking", text="Generate")
+                    box_select.operator("wm.ranking", text="Generate")
 
-                box_ga_rendering = layout.box()
-                box_ga_rendering.label(text="Render sorted indiviuals:")
-                box_ga_rendering.operator("wm.ga_render_animation", text="Generate")
+                box_rendering = layout.box()
+                box_rendering.label(text="Render sorted indiviuals:")
+                box_rendering.operator("wm.render_animation", text="Generate")
 
 def gradient_descent(layout):
     context = bpy.context
@@ -709,10 +799,12 @@ def report(layout):
         box_report.label(text="No report for members, frames or combined available in geometrical mode.")
 
     # if ga
-    ga_available = data.get("environment")
-    if ga_available:
-        box_report.operator("wm.report_chromosomes", text="chromosomes")
-        box_report.operator("wm.report_tree", text="tree")
+    environment = data.get("environment")
+    if environment:
+        ga_available = environment.get("generations")
+        if ga_available:
+            box_report.operator("wm.report_chromosomes", text="chromosomes")
+            box_report.operator("wm.report_tree", text="tree")
 
 def reset(layout):
     context = bpy.context

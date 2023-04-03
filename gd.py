@@ -1,25 +1,20 @@
 import bpy
-from phaenotyp import operators, geometry, calculation, ga
+from phaenotyp import operators, geometry, calculation, progress
 import numpy as np
 
-# Funktionen für gradient decent
-def create_individual(keys, frame):
+def print_data(text):
+    print("Phaenotyp |", text)
+
+def generate_basis():
     scene = bpy.context.scene
+    phaenotyp = scene.phaenotyp
     data = scene["<Phaenotyp>"]
     obj = data["structure"]
-    members = data["members"]
     shape_keys = obj.data.shape_keys.key_blocks
-    frame = bpy.context.scene.frame_current
-    phaenotyp = scene.phaenotyp
+    members = data["members"]
 
     environment = data["environment"]
     individuals = data["individuals"]
-
-    bpy.context.scene.frame_current = frame
-
-    # Das Chromosome ist eine Liste der Shapekeys
-    ga.create_indivdual(keys, None, None)
-
 
     # for PyNite
     if phaenotyp.calculation_type != "force_distribution":
@@ -33,103 +28,206 @@ def create_individual(keys, frame):
         run_st = calculation.run_st_fd
         interweave_results = calculation.interweave_results_fd
 
-    # Volumen as Fitness erhalten
-    # Später können wir hier eine neue Funktion bauen
-    # Die Funktion von Ga fnktioniert hier nicht,
-    # da wir die Fitness mit Frame 0 errechnen
+    # create list of trusses
+    trusses = {}
+
+    # create chromosome all set to 0
+    chromosome = []
+    for gnome_len in range(len(shape_keys)-1): # -1 to exlude basis
+        gene = 0
+        chromosome.append(gene)
+
+    # update scene
+    frame = 0
+    bpy.context.scene.frame_start = frame
+    bpy.context.scene.frame_current = frame
+    bpy.context.view_layer.update()
+
+    # create indiviual
+    individual = {}
+    individual["name"] = str(frame) # individuals are identified by frame
+    individual["chromosome"] = chromosome
+    individual["fitness"] = {}
+
+    individuals[str(frame)] = individual
+
+    # for PyNite
+    if phaenotyp.calculation_type != "force_distribution":
+        prepare_fea = calculation.prepare_fea_pn
+        run_st = calculation.run_st_pn
+        interweave_results = calculation.interweave_results_pn
+
+    # for force distribuion
+    else:
+        prepare_fea = calculation.prepare_fea_fd
+        run_st = calculation.run_st_fd
+        interweave_results = calculation.interweave_results_fd
+
+    # calculate frame
     geometry.update_members_pre()
     truss = prepare_fea()
     fea = run_st(truss, frame)
     interweave_results(fea, members)
     geometry.update_members_post()
-    fitness = data["frames"][str(frame)]["kg"] # hier nur für kg, Änderung auf alle
 
-    gd = individuals[str(frame)]
+    # optimization
+    for i in range(phaenotyp.optimization_amount):
+        progress.http.reset_pci(frame)
+        calculation.sectional_optimization(frame, frame+1)
+        progress.http.update_o()
 
-    return gd, fitness
+    # get fitness
+    calculation.calculate_fitness(frame, frame+1)
+    individuals["0"]["fitness"]["weighted"] = 1
 
-def start_gd():
+def make_step(chromosome, frame):
     scene = bpy.context.scene
     data = scene["<Phaenotyp>"]
     obj = data["structure"]
     members = data["members"]
     shape_keys = obj.data.shape_keys.key_blocks
-    frame = bpy.context.scene.frame_current
     phaenotyp = scene.phaenotyp
 
     environment = data["environment"]
     individuals = data["individuals"]
 
-    # Basis erstellen
-    # Das erst Argument sind die Shapekeys
-    # Das zweite Argument ist der Frame (Zeitleiste)
-    # Jeder Frame ist eine eigene Berechnung
-    # Die Nummer des Frame ist gleich die Nummer des Individuums
+    bpy.context.scene.frame_current = frame
+    bpy.context.view_layer.update()
+
+    # apply shape keys
+    for id, key in enumerate(shape_keys):
+        if id > 0: # to exlude basis
+            key.value = chromosome[id-1]*0.1
+
+    # create indivual
+    individual = {}
+    individual["name"] = str(frame) # individuals are identified by frame
+    individual["chromosome"] = chromosome
+    individual["fitness"] = {}
+
+    individuals[str(frame)] = individual
+
+    # for PyNite
+    if phaenotyp.calculation_type != "force_distribution":
+        prepare_fea = calculation.prepare_fea_pn
+        run_st = calculation.run_st_pn
+        interweave_results = calculation.interweave_results_pn
+
+    # for force distribuion
+    else:
+        prepare_fea = calculation.prepare_fea_fd
+        run_st = calculation.run_st_fd
+        interweave_results = calculation.interweave_results_fd
+
+    # calculate frame
+    geometry.update_members_pre()
+    truss = prepare_fea()
+    fea = run_st(truss, frame)
+    interweave_results(fea, members)
+    geometry.update_members_post()
+
+    # optimization
+    for i in range(phaenotyp.optimization_amount):
+        progress.http.reset_pci(frame)
+        calculation.sectional_optimization(frame, frame+1)
+        progress.http.update_o()
+
+    # calculate fitness
+    calculation.calculate_fitness(frame, frame+1)
+
+    # get data from individual
+    gd = individuals[str(frame)]
+    fitness = gd["fitness"]["weighted"]
+
+    text = "Step " + gd["name"] + " with fitness: " + str(fitness) + "\n"
+    print_data(text)
+
+    return gd, fitness
+
+def start():
+    scene = bpy.context.scene
+    data = scene["<Phaenotyp>"]
+    obj = data["structure"]
+    members = data["members"]
+    shape_keys = obj.data.shape_keys.key_blocks
+    phaenotyp = scene.phaenotyp
+
+    environment = data["environment"]
+    individuals = data["individuals"]
 
     # get data from gui
-
-    # Hyperparamter:
-    # Schrittlänge nur zur Neigungsbestimmung
     delta = phaenotyp.gd_delta
-    # Lernrate, kann auch wählbar sein
     learning_rate = phaenotyp.gd_learning_rate
-    # Abbruchkriterium auch als Eingabe möglich machen,
     abort = phaenotyp.gd_abort
-    # maximal number if iteration,um Endlosschleifen zu vermeiden
     maxiteration = phaenotyp.gd_max_iteration
 
-    # Ausgangspunkt
-    chromosome_start = [0.5]
-    neigung = [0]
-    for i in range(len(shape_keys)-2):
+    # generate_basis for fitness
+    generate_basis()
+
+    # set frame to 0
+    frame = 0
+
+    # starting point with all genes set to 0.5
+    # for three shape keys this is [0.5, 0.5, 0.5]
+    # (unlike the basis for fitness with all genes 0)
+    chromosome_start = []
+    slope = [0]
+    for i in range(len(shape_keys)-1):
         chromosome_start.append(0.5)
-        neigung.append(0)
-    #chromosome_start = [0.5, 0.5, 0.5] # kann auch mit GA ermittelt werden
-    print ("Startpunkt: ", chromosome_start)
-    chromosome_aktuell=chromosome_start
-    frame_number=0
-    print ()
+        slope.append(0)
 
-    j=0
-    while  j < maxiteration:
-        frame_number+=1
-        print ("Frame-number: ", frame_number)
-        gd, fitness = create_individual(chromosome_aktuell,frame_number)
-        print("gd", gd["name"], "mit fitness:", fitness)
-        fitness_0 = fitness
+    text = "Starting at: " + str(chromosome_start) + "\n"
+    print_data(text)
+    chromosome_current = chromosome_start
 
-        # Varianten von den Keys erstellen
-        # dieser Teil könnte mp sein
-        for i in range(len(shape_keys)-1):
-            # Frame addieren
-            bpy.context.scene.frame_current += 1
-            frame = bpy.context.scene.frame_current
-            chromosome = chromosome_aktuell.copy()
-            print ("frame =",frame, "i=", i)
-            frame_number+=1
-            print ("Frame-number: ", frame_number)
-            chromosome[i] += delta
-            gd, fitness = create_individual(chromosome, frame)
-            print("Gradient descent", gd["name"], "mit fitness:", fitness)
-            # Neigung
-            neigung[i]=(fitness-fitness_0)/delta
-            print ("Neigung shapekey ",i,"=", neigung[i])
-            # neuer Punkt
-            chromosome_aktuell[i]=chromosome_aktuell[i]-neigung[i]*learning_rate
-            if chromosome_aktuell[i]<0:
-                chromosome_aktuell[i]=0
-                neigung[i]=0
-            if chromosome_aktuell[i]>1:
-                chromosome_aktuell[i]=1
-                neigung[i]=0
-            print ("Neigung shapekey_",i,"=", neigung[i])
-        print ("Neuer chromosome:",chromosome_aktuell)
-        vektor = (np.linalg.norm(neigung))*learning_rate
-        print("vektor: ",vektor)
-        j+=1
-        print()
-        print()
-        if vektor < abort:
+    iteration = 0
+    while iteration < maxiteration:
+        # update frame
+        frame += 1
+
+        # make step
+        gd, fitness = make_step(chromosome_current, frame)
+
+        # pass old fitness
+        fitness_old = fitness
+
+        # copy current chromosome
+        chromosome = chromosome_current.copy()
+
+        # create variations of keys
+        for key_id in range(len(shape_keys)-1):
+            # update frame
+            frame += 1
+
+            # update chromosome
+            chromosome[key_id] += delta
+
+            # make next step
+            gd, fitness = make_step(chromosome, frame)
+
+            # calculate slope
+            slope[key_id] = (fitness - fitness_old) / delta
+            text = "Slope of key " + str(key_id) + str(slope[key_id])
+            print_data(text)
+
+            # new direction
+            chromosome_current[key_id] = chromosome_current[key_id] - slope[key_id] * learning_rate
+            if chromosome_current[key_id] < 0:
+                chromosome_current[key_id] = 0
+                slope[key_id] = 0
+
+            if chromosome_current[key_id] > 1:
+                chromosome_current[key_id] = 1
+                slope[key_id] = 0
+
+        text = "New step:" + str(chromosome_current)
+        print_data(text)
+
+        vector = (np.linalg.norm(slope))*learning_rate
+        text = "Vector: " + str(vector)
+        print_data(text)
+
+        iteration += 1
+
+        if vector < abort:
             break
-    print()
-    print()

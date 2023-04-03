@@ -6,6 +6,33 @@ from phaenotyp import basics, geometry, calculation, progress
 def print_data(text):
     print("Phaenotyp |", text)
 
+def create_indivdual(chromosome, parent_1, parent_2):
+    scene = bpy.context.scene
+    phaenotyp = scene.phaenotyp
+    data = scene["<Phaenotyp>"]
+    obj = data["structure"]
+    shape_keys = obj.data.shape_keys.key_blocks
+    members = data["members"]
+    frame = bpy.context.scene.frame_current
+
+    environment = data["environment"]
+    individuals = data["individuals"]
+
+    # apply shape keys
+    for id, key in enumerate(shape_keys):
+        if id > 0: # to exlude basis
+            key.value = chromosome[id-1]*0.1
+
+    individual = {}
+    individual["name"] = str(frame) # individuals are identified by frame
+    individual["chromosome"] = chromosome
+
+    individual["parent_1"] = str(parent_1)
+    individual["parent_2"] = str(parent_2)
+    individual["fitness"] = {}
+
+    individuals[str(frame)] = individual
+
 def generate_basis():
     scene = bpy.context.scene
     phaenotyp = scene.phaenotyp
@@ -58,33 +85,6 @@ def generate_basis():
         # wait for it and interweave results to data
         interweave_results(feas, members)
 
-def create_indivdual(chromosome, parent_1, parent_2):
-    scene = bpy.context.scene
-    phaenotyp = scene.phaenotyp
-    data = scene["<Phaenotyp>"]
-    obj = data["structure"]
-    shape_keys = obj.data.shape_keys.key_blocks
-    members = data["members"]
-    frame = bpy.context.scene.frame_current
-
-    environment = data["environment"]
-    individuals = data["individuals"]
-
-    # apply shape keys
-    for id, key in enumerate(shape_keys):
-        if id > 0: # to exlude basis
-            key.value = chromosome[id-1]*0.1
-
-    individual = {}
-    individual["name"] = str(frame) # individuals are identified by frame
-    individual["chromosome"] = chromosome
-
-    individual["parent_1"] = str(parent_1)
-    individual["parent_2"] = str(parent_2)
-    individual["fitness"] = {}
-
-    individuals[str(frame)] = individual
-
 def mate_chromosomes(chromosome_1, chromosome_2):
     scene = bpy.context.scene
     phaenotyp = scene.phaenotyp
@@ -130,61 +130,6 @@ def mate_chromosomes(chromosome_1, chromosome_2):
                 child_chromosome.append(random.choice(environment["genes"]))
 
     return child_chromosome
-
-def bruteforce(chromosomes):
-    scene = bpy.context.scene
-    phaenotyp = scene.phaenotyp
-    data = scene["<Phaenotyp>"]
-    obj = data["structure"]
-    shape_keys = obj.data.shape_keys.key_blocks
-    members = data["members"]
-
-    environment = data["environment"]
-    individuals = data["individuals"]
-
-    # create list of trusses
-    trusses = {}
-
-    # for PyNite
-    if phaenotyp.calculation_type != "force_distribution":
-        prepare_fea = calculation.prepare_fea_pn
-        run_st = calculation.run_st_pn
-        interweave_results = calculation.interweave_results_pn
-
-    # for force distribuion
-    else:
-        prepare_fea = calculation.prepare_fea_fd
-        run_st = calculation.run_st_fd
-        interweave_results = calculation.interweave_results_fd
-
-    # for progress
-    end = bpy.context.scene.frame_end
-
-    for i, chromosome in enumerate(chromosomes):
-        # update scene
-        frame = i+1  # exclude basis indivual
-        bpy.context.scene.frame_current = frame
-        bpy.context.view_layer.update()
-
-        # no parents in bruteforce
-        parent_1, parent_2 = [None, None]
-        create_indivdual(chromosome, parent_1, parent_2 ) # and change frame to shape key
-
-        create_indivdual(chromosome, None, None) # and change frame to shape key
-
-        # calculate new properties for each member
-        geometry.update_members_pre()
-
-        # created a truss object of PyNite and add to dict
-        truss = prepare_fea()
-        trusses[frame] = truss
-
-    if phaenotyp.calculation_type != "geometrical":
-        # run mp and get results
-        feas = calculation.run_mp(trusses)
-
-        # wait for it and interweave results to data
-        interweave_results(feas, members)
 
 def create_initial_individuals(start, end):
     scene = bpy.context.scene
@@ -470,30 +415,3 @@ def populate_new_generation(start, end):
                 text = "child: " + str(individual["name"]) + " "
                 text += str_chromosome + ", fitness: " + str(individual["fitness"]["weighted"])
                 print_data(text)
-
-def goto_indivual():
-    scene = bpy.context.scene
-    phaenotyp = scene.phaenotyp
-    ranking_pos = phaenotyp.ga_ranking
-
-    data = scene["<Phaenotyp>"]
-    # turns ga off, if user interrupted the process
-    data["process"]["genetetic_mutation_update_post"] = False
-
-    environment = data["environment"]
-    individuals = data["individuals"]
-
-    # sort by fitness
-    list_result = []
-    for name, individual in individuals.items():
-        list_result.append([name, individual["chromosome"], individual["fitness"]["weighted"]])
-
-    sorted_list = sorted(list_result, key = lambda x: x[2])
-    ranked_indiviual = sorted_list[ranking_pos]
-
-    text = str(ranking_pos) + ". ranked with fitness: " + str(ranked_indiviual[2])
-    print_data(text)
-
-    frame_to_switch_to = int(ranked_indiviual[0])
-
-    bpy.context.scene.frame_current = frame_to_switch_to
