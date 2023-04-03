@@ -1108,7 +1108,7 @@ def ga_start():
             optimization_amount = 0
 
     # skip optimization if geometrical only
-    if phaenotyp.calculation_type != "geometrical":
+    if phaenotyp.calculation_type == "geometrical":
         optimization_amount = 0
 
     # start progress

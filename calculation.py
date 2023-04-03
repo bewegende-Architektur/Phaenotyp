@@ -1110,23 +1110,20 @@ def sectional_optimization(start, end):
     environment = data["environment"]
     individuals = data["individuals"]
 
-    new_generation_size = environment["new_generation_size"]
-    generation_id = environment["generation_id"]
-
     # create list of trusses
     trusses = {}
 
     # for PyNite
     if phaenotyp.calculation_type != "force_distribution":
-        prepare_fea = calculation.prepare_fea_pn
-        run_st = calculation.run_st_pn
-        interweave_results = calculation.interweave_results_pn
+        prepare_fea = prepare_fea_pn
+        run_st = run_st_pn
+        interweave_results = interweave_results_pn
 
     # for force distribuion
     else:
-        prepare_fea = calculation.prepare_fea_fd
-        run_st = calculation.run_st_fd
-        interweave_results = calculation.interweave_results_fd
+        prepare_fea = prepare_fea_fd
+        run_st = run_st_fd
+        interweave_results = interweave_results_fd
 
     # run for all frames
     for frame in range(start, end):
@@ -1136,17 +1133,17 @@ def sectional_optimization(start, end):
 
         if phaenotyp.calculation_type == "force_distribution":
             if phaenotyp.optimization_fd == "approximate":
-                calculation.approximate_sectional()
+                approximate_sectional()
 
         else:
-            if phaenotyp.optimization == "simple":
-                calculation.simple_sectional()
+            if phaenotyp.optimization_pn == "simple":
+                simple_sectional()
 
-            if phaenotyp.optimization == "utilization":
-                calculation.utilization_sectional()
+            if phaenotyp.optimization_pn == "utilization":
+                utilization_sectional()
 
-            if phaenotyp.optimization == "complex":
-                calculation.complex_sectional()
+            if phaenotyp.optimization_pn == "complex":
+                complex_sectional()
 
         # apply shape keys
         chromosome = individuals[str(frame)]["chromosome"]
@@ -1162,7 +1159,7 @@ def sectional_optimization(start, end):
         trusses[frame] = truss
 
     # run mp and get results
-    feas = calculation.run_mp(trusses)
+    feas = run_mp(trusses)
 
     # wait for it and interweave results to data
     interweave_results(feas, members)
