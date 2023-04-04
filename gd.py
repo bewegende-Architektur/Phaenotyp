@@ -225,7 +225,7 @@ def start():
 				chromosome_current[key_id] = 1
 				slope[key_id] = 0
 
-		text = "New step:" + str(chromosome_current)
+		text = "New step: " + str(chromosome_current)
 		print_data(text)
 
 		vector = (np.linalg.norm(slope))*learning_rate
