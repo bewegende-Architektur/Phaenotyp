@@ -4,185 +4,185 @@ from phaenotyp import geometry
 from queue import Queue
 
 def print_data(text):
-    """
-    Print data for debugging
-    :param text: Needs a text as string (Do not pass as list)
-    """
-    print("Phaenotyp |", text)
+	"""
+	Print data for debugging
+	:param text: Needs a text as string (Do not pass as list)
+	"""
+	print("Phaenotyp |", text)
 
 def create_data():
-    """
-    Create scene[<Phaenotyp>] and build all basics to store data.
-    All data that should be saved with the blend-file is stored here.
-    Data that does not need to be available after restart is generated,
-    handeled and stored by the specific function or class.
-    """
-    data = bpy.context.scene.get("<Phaenotyp>")
-    if not data:
-        data = bpy.context.scene["<Phaenotyp>"] = {
-            "structure":{},
-            "supports":{},
-            "members":{},
-            "frames":{},
-            "loads_v":{},
-            "loads_e":{},
-            "loads_f":{},
-            "process":{},
-            "done":{},
-            "environment":{},
-            "individuals":{},
-            "texts":{}
-        }
+	"""
+	Create scene[<Phaenotyp>] and build all basics to store data.
+	All data that should be saved with the blend-file is stored here.
+	Data that does not need to be available after restart is generated,
+	handeled and stored by the specific function or class.
+	"""
+	data = bpy.context.scene.get("<Phaenotyp>")
+	if not data:
+		data = bpy.context.scene["<Phaenotyp>"] = {
+			"structure":{},
+			"supports":{},
+			"members":{},
+			"frames":{},
+			"loads_v":{},
+			"loads_e":{},
+			"loads_f":{},
+			"process":{},
+			"done":{},
+			"environment":{},
+			"individuals":{},
+			"texts":{}
+		}
 
-        data["structure"] = None
-        data["supports"] = {}
-        data["members"] = {}
-        data["frames"] = {}
-        data["loads_v"] = {}
-        data["loads_e"] = {}
-        data["loads_f"] = {}
+		data["structure"] = None
+		data["supports"] = {}
+		data["members"] = {}
+		data["frames"] = {}
+		data["loads_v"] = {}
+		data["loads_e"] = {}
+		data["loads_f"] = {}
 
-        data["process"]["scipy_available"] = False
-        data["done"] = {}
+		data["process"]["scipy_available"] = False
+		data["done"] = {}
 
-        data["environment"] = {}
-        data["individuals"] = {}
+		data["environment"] = {}
+		data["individuals"] = {}
 
-        data["texts"] = []
+		data["texts"] = []
 
 def sorted_keys(dict):
-    '''
-    Is sorting the keys of the dict (to avoid iterating like 0,10,2,3 ...)
-    :param dict dict: Dictionary with keys as string
-    :return: Sorted keys as integer
-    '''
-    keys_int = list(map(int, dict))
-    sorted_int_keys = sorted(keys_int)
-    return sorted_int_keys
+	'''
+	Is sorting the keys of the dict (to avoid iterating like 0,10,2,3 ...)
+	:param dict dict: Dictionary with keys as string
+	:return: Sorted keys as integer
+	'''
+	keys_int = list(map(int, dict))
+	sorted_int_keys = sorted(keys_int)
+	return sorted_int_keys
 
 def avoid_div_zero(a,b):
-    '''
-    To avoid division by zero if a force is 0.
-    :param a: Can be integer or float
-    :param b: Can be integer or float
-    :return: Returns the result or 0 in case of division by zero.
-    '''
-    if b == 0:
-        return 0
-    else:
-        return a/b
+	'''
+	To avoid division by zero if a force is 0.
+	:param a: Can be integer or float
+	:param b: Can be integer or float
+	:return: Returns the result or 0 in case of division by zero.
+	'''
+	if b == 0:
+		return 0
+	else:
+		return a/b
 
 def return_max_diff_to_zero(list):
-    '''
-    Return the value with the highest difference to zero (for plus or minus)
-    :param list: List of integers or floats
-    :return: List item of given list
-    '''
-    list_copy = list.copy()
-    list_copy.sort()
+	'''
+	Return the value with the highest difference to zero (for plus or minus)
+	:param list: List of integers or floats
+	:return: List item of given list
+	'''
+	list_copy = list.copy()
+	list_copy.sort()
 
-    smallest_minus = list_copy[0]
-    biggest_plus = list_copy[len(list_copy)-1]
+	smallest_minus = list_copy[0]
+	biggest_plus = list_copy[len(list_copy)-1]
 
-    if abs(smallest_minus) > abs(biggest_plus):
-        return smallest_minus
-    else:
-        return biggest_plus
+	if abs(smallest_minus) > abs(biggest_plus):
+		return smallest_minus
+	else:
+		return biggest_plus
 
 def delete_obj_if_existing(name):
-    '''
-    Delete object with given name if existing
-    :param name: Name as string
-    '''
-    obj = bpy.data.objects.get(name)
-    if obj:
-        bpy.data.objects.remove(obj, do_unlink=True)
+	'''
+	Delete object with given name if existing
+	:param name: Name as string
+	'''
+	obj = bpy.data.objects.get(name)
+	if obj:
+		bpy.data.objects.remove(obj, do_unlink=True)
 
 def delete_mesh_if_existing(name):
-    mesh = bpy.data.meshes.get(name)
-    if mesh:
-        bpy.data.meshes.remove(mesh, do_unlink=True)
+	mesh = bpy.data.meshes.get(name)
+	if mesh:
+		bpy.data.meshes.remove(mesh, do_unlink=True)
 
 def delete_col_if_existing(name):
-    col = bpy.data.collections.get(name)
-    if col:
-        bpy.data.collections.remove(col, do_unlink=True)
+	col = bpy.data.collections.get(name)
+	if col:
+		bpy.data.collections.remove(col, do_unlink=True)
 
 def delete_obj_if_name_contains(text):
-    for obj in bpy.data.objects:
-        if text in obj.name_full:
-            bpy.data.objects.remove(obj, do_unlink=True)
+	for obj in bpy.data.objects:
+		if text in obj.name_full:
+			bpy.data.objects.remove(obj, do_unlink=True)
 
 # change view to show vertex-colors
 def view_vertex_colors():
-    # issue with vertex-color in blender 3.5
-    '''
-    # change viewport to material
-    # based on approach from Hotox:
-    # https://devtalk.blender.org/t/how-to-change-view3dshading-type-in-2-8/3462
-    for area in bpy.context.screen.areas:
-        if area.type == 'VIEW_3D':
-            for space in area.spaces:
-                if space.type == 'VIEW_3D':
-                    space.shading.type = 'SOLID'
-                    space.shading.light = 'FLAT'
-                    space.shading.color_type = 'VERTEX'
-    '''
-    bpy.context.space_data.shading.type = 'MATERIAL'
+	# issue with vertex-color in blender 3.5
+	'''
+	# change viewport to material
+	# based on approach from Hotox:
+	# https://devtalk.blender.org/t/how-to-change-view3dshading-type-in-2-8/3462
+	for area in bpy.context.screen.areas:
+		if area.type == 'VIEW_3D':
+			for space in area.spaces:
+				if space.type == 'VIEW_3D':
+					space.shading.type = 'SOLID'
+					space.shading.light = 'FLAT'
+					space.shading.color_type = 'VERTEX'
+	'''
+	bpy.context.space_data.shading.type = 'MATERIAL'
 
 # change view to show vertex-colors
 def revert_vertex_colors():
-    '''
-    # change viewport to material
-    # based on approach from Hotox:
-    # https://devtalk.blender.org/t/how-to-change-view3dshading-type-in-2-8/3462
-    for area in bpy.context.screen.areas:
-        if area.type == 'VIEW_3D':
-            for space in area.spaces:
-                if space.type == 'VIEW_3D':
-                    space.shading.type = 'SOLID'
-                    space.shading.light = 'STUDIO'
-                    space.shading.color_type = 'MATERIAL'
-    '''
-    bpy.context.space_data.shading.type = 'SOLID'
+	'''
+	# change viewport to material
+	# based on approach from Hotox:
+	# https://devtalk.blender.org/t/how-to-change-view3dshading-type-in-2-8/3462
+	for area in bpy.context.screen.areas:
+		if area.type == 'VIEW_3D':
+			for space in area.spaces:
+				if space.type == 'VIEW_3D':
+					space.shading.type = 'SOLID'
+					space.shading.light = 'STUDIO'
+					space.shading.color_type = 'MATERIAL'
+	'''
+	bpy.context.space_data.shading.type = 'SOLID'
 
 # based on answer from ChameleonScales
 # https://blender.stackexchange.com/questions/169844/multi-line-text-box-with-popup-menu
 def popup(title = "Phaenotyp", lines=""):
-    def draw(self, context):
-        for line in lines:
-            self.layout.label(text=line)
-    bpy.context.window_manager.popup_menu(draw, title = title)
+	def draw(self, context):
+		for line in lines:
+			self.layout.label(text=line)
+	bpy.context.window_manager.popup_menu(draw, title = title)
 
 def popup_operator(title = "Phaenotyp", lines="", operator=None, text=""):
-    def draw(self, context):
-        for line in lines:
-            self.layout.label(text=line)
-        self.layout.separator()
-        self.layout.operator(operator, text=text)
-    bpy.context.window_manager.popup_menu(draw, title = title)
+	def draw(self, context):
+		for line in lines:
+			self.layout.label(text=line)
+		self.layout.separator()
+		self.layout.operator(operator, text=text)
+	bpy.context.window_manager.popup_menu(draw, title = title)
 
 def force_distribution_info(self, context):
-    # inform user when using force_distribution
-    if bpy.context.scene.phaenotyp.calculation_type == "force_distribution":
-        # triangulation
-        if geometry.triangulation() == False:
-            text = ["The selection needs to be triangulated for force distribution.",
-                "Should Phaenotyp try to triangulate the selection?"]
-            popup_operator(lines=text, operator="wm.fix_structure", text="Triangulate")
-            geometry.to_be_fixed = "triangulate"
+	# inform user when using force_distribution
+	if bpy.context.scene.phaenotyp.calculation_type == "force_distribution":
+		# triangulation
+		if geometry.triangulation() == False:
+			text = ["The selection needs to be triangulated for force distribution.",
+				"Should Phaenotyp try to triangulate the selection?"]
+			popup_operator(lines=text, operator="wm.fix_structure", text="Triangulate")
+			geometry.to_be_fixed = "triangulate"
 
-        else:
-            text = [
-                "Force distribution is a solver for advance users.",
-                "Please make sure, that your structure meets this conditions:",
-                "- the mesh is triangulated",
-                "- the structure is stable (not flat)",
-                "- exactly three vertices are defined as support",
-                "- the supports are not connected with egdes",
-                "- at least one load is defined"
-                ]
-            popup(lines = text)
+		else:
+			text = [
+				"Force distribution is a solver for advance users.",
+				"Please make sure, that your structure meets this conditions:",
+				"- the mesh is triangulated",
+				"- the structure is stable (not flat)",
+				"- exactly three vertices are defined as support",
+				"- the supports are not connected with egdes",
+				"- at least one load is defined"
+				]
+			popup(lines = text)
 
 
 # check modifieres in modify or deform
@@ -250,29 +250,29 @@ modifiers["VOLUME_DISPLACE"] = False
 
 
 def check_modifiers():
-    obj = bpy.context.object
-    for modifiere in obj.modifiers:
-        name = modifiere.type
+	obj = bpy.context.object
+	for modifiere in obj.modifiers:
+		name = modifiere.type
 
-        if name == "NODES":
-            text = ["Geometry Nodes can be used but make sure that no geometry is added",
-               "or deleted during execution of Phaenotyp to avoid weird results"]
-            popup(lines = text)
+		if name == "NODES":
+			text = ["Geometry Nodes can be used but make sure that no geometry is added",
+			   "or deleted during execution of Phaenotyp to avoid weird results"]
+			popup(lines = text)
 
-        elif name in modifiers:
-            working = modifiers[name]
-            if working == False:
-                text = [
-                        "Modifiere with type " + str(name) + " can cause weird results.",
-                        "",
-                        "You can use this modifiers:",
-                        "ARMATURE, CAST, CLOTH, COLLISION, CURVE, DATA_TRANSFER,",
-                        "DYNAMIC_PAINT, DISPLACE, HOOK, LAPLACIANDEFORM, LATTICE,",
-                        "MESH_CACHE, MESH_DEFORM, MESH_SEQUENCE_CACHE, NORMAL_EDIT,",
-                        "NODES, SHRINKWRAP, SIMPLE_DEFORM, SMOOTH, CORRECTIVE_SMOOTH,",
-                        "LAPLACIANSMOOTH, OCEAN, PARTICLE_INSTANCE, PARTICLE_SYSTEM,",
-                        "SOFT_BODY, SURFACE, SURFACE_DEFORM, WARP, WAVE, WEIGHTED_NORMAL,",
-                        "UV_PROJECT, UV_WARP, VERTEX_WEIGHT_EDIT, VERTEX_WEIGHT_MIX,",
-                        "VERTEX_WEIGHT_PROXIMITY."
-                        ]
-                popup(lines = text)
+		elif name in modifiers:
+			working = modifiers[name]
+			if working == False:
+				text = [
+						"Modifiere with type " + str(name) + " can cause weird results.",
+						"",
+						"You can use this modifiers:",
+						"ARMATURE, CAST, CLOTH, COLLISION, CURVE, DATA_TRANSFER,",
+						"DYNAMIC_PAINT, DISPLACE, HOOK, LAPLACIANDEFORM, LATTICE,",
+						"MESH_CACHE, MESH_DEFORM, MESH_SEQUENCE_CACHE, NORMAL_EDIT,",
+						"NODES, SHRINKWRAP, SIMPLE_DEFORM, SMOOTH, CORRECTIVE_SMOOTH,",
+						"LAPLACIANSMOOTH, OCEAN, PARTICLE_INSTANCE, PARTICLE_SYSTEM,",
+						"SOFT_BODY, SURFACE, SURFACE_DEFORM, WARP, WAVE, WEIGHTED_NORMAL,",
+						"UV_PROJECT, UV_WARP, VERTEX_WEIGHT_EDIT, VERTEX_WEIGHT_MIX,",
+						"VERTEX_WEIGHT_PROXIMITY."
+						]
+				popup(lines = text)
