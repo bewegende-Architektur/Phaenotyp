@@ -71,6 +71,7 @@ def generate_basis():
 	geometry.update_members_post()
 
 	# optimization
+	progress.http.reset_o(phaenotyp.optimization_amount)
 	for i in range(phaenotyp.optimization_amount):
 		progress.http.reset_pci(frame)
 		calculation.sectional_optimization(frame, frame+1)
@@ -127,6 +128,7 @@ def make_step(chromosome, frame):
 	geometry.update_members_post()
 
 	# optimization
+	progress.http.reset_o(phaenotyp.optimization_amount)
 	for i in range(phaenotyp.optimization_amount):
 		progress.http.reset_pci(frame)
 		calculation.sectional_optimization(frame, frame+1)
@@ -161,6 +163,9 @@ def start():
 	abort = phaenotyp.gd_abort
 	maxiteration = phaenotyp.gd_max_iteration
 
+	progress.http.reset_pci(phaenotyp.gd_max_iteration+1)
+	progress.http.reset_o(phaenotyp.optimization_amount)
+	
 	# generate_basis for fitness
 	generate_basis()
 

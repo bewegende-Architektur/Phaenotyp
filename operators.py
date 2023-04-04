@@ -825,8 +825,12 @@ def calculate_animation():
 			# calculate new visualization-mesh
 			geometry.update_members_post()
 
+			progress.http.reset_o(phaenotyp.optimization_amount)
+			
 			# run optimization and analysis
 			for i in range(phaenotyp.optimization_amount):
+				progress.http.reset_pci(amount)
+				
 				for frame in range(start, end):
 					# update scene
 					bpy.context.scene.frame_current = frame
@@ -853,7 +857,7 @@ def calculate_animation():
 					# created a truss object of PyNite and add to dict
 					truss = prepare_fea()
 					trusses[frame] = truss
-
+				
 				# run mp and get results
 				feas = calculation.run_mp(trusses)
 
@@ -862,17 +866,21 @@ def calculate_animation():
 
 				# calculate new visualization-mesh
 				geometry.update_members_post()
+				
+				progress.http.update_o()
 
 			# update view
 			basics.view_vertex_colors()
 
 		if phaenotyp.animation_optimization_type == "gradient":
 			start = bpy.context.scene.frame_start
-			end = start + phaenotyp.optimization_amount*2
+			end = start + phaenotyp.optimization_amount
+			
+			amount = end - start
 
 			# start progress
 			progress.run()
-			progress.http.reset_pci(end-start+1)
+			progress.http.reset_pci(amount*2)
 
 			# update scene
 			bpy.context.scene.frame_current = start
@@ -1139,7 +1147,6 @@ def bf_start():
 	# progress
 	progress.http.reset_pci(end-start)
 	progress.http.reset_o(optimization_amount)
-	progress.http.g = [0,1]
 
 	# pair with bruteforce
 	bf.bruteforce(chromosomes)
@@ -1296,8 +1303,6 @@ def gd_start():
 	print_data("Start gradient descent over selected shape keys")
 
 	progress.run()
-	progress.http.reset_pci(1)
-	progress.http.reset_o(phaenotyp.optimization_amount)
 
 	gd.start()
 

@@ -625,7 +625,6 @@ def gradient_descent(layout):
 			box_gd.prop(phaenotyp, "gd_learning_rate", text="Learning rate")
 			box_gd.prop(phaenotyp, "gd_abort", text="Abort")
 			box_gd.prop(phaenotyp, "gd_max_iteration", text="Max iteration")
-			box_gd.operator("wm.gd_start", text="Start")
 
 			if phaenotyp.calculation_type != "geometrical":
 				box_optimization = layout.box()
@@ -683,6 +682,10 @@ def gradient_descent(layout):
 			for keyblock in shape_key.key_blocks:
 				name = keyblock.name
 				box_shape_keys.label(text=name)
+			
+			box_gd_start = layout.box()
+			box_gd_start.label(text="Genetic descent:")
+			box_gd_start.operator("wm.gd_start", text="Start")
 
 def visualization(layout):
 	context = bpy.context

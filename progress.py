@@ -170,11 +170,13 @@ class http:
 			client_connection.sendall(http.table_http("prepare:", http.p))
 			client_connection.sendall(http.table_http("calculate:", http.c))
 			client_connection.sendall(http.table_http("interweave:", http.i))
-
-			client_connection.send(b'<br>')
-			client_connection.sendall(http.table_http("optimization:", http.o))
 			
-			# to show only with ga
+			# show only when optimizing
+			if http.o[1] > 0:
+				client_connection.send(b'<br>')
+				client_connection.sendall(http.table_http("optimization:", http.o))
+			
+			# show only with ga
 			if http.g[1] > 0:
 				client_connection.send(b'<br>')
 				client_connection.sendall(http.table_http("generation:", http.g))
