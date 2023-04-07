@@ -56,12 +56,16 @@ def generate_basis():
 		prepare_fea = calculation.prepare_fea_pn
 		run_st = calculation.run_st_pn
 		interweave_results = calculation.interweave_results_pn
+		
+		optimization_type = phaenotyp.optimization_pn
 
 	# for force distribuion
 	else:
 		prepare_fea = calculation.prepare_fea_fd
 		run_st = calculation.run_st_fd
 		interweave_results = calculation.interweave_results_fd
+		
+		optimization_type = phaenotyp.optimization_fd
 
 	# calculate frame
 	geometry.update_members_pre()
@@ -71,11 +75,11 @@ def generate_basis():
 	geometry.update_members_post()
 
 	# optimization
-	progress.http.reset_o(phaenotyp.optimization_amount)
-	for i in range(phaenotyp.optimization_amount):
-		progress.http.reset_pci(frame)
-		calculation.sectional_optimization(frame, frame+1)
-		progress.http.update_o()
+	if optimization_type != "none":
+		progress.http.reset_o(phaenotyp.optimization_amount)
+		for i in range(phaenotyp.optimization_amount):
+			calculation.sectional_optimization(frame, frame+1)
+			progress.http.update_o()
 
 	# get fitness
 	calculation.calculate_fitness(frame, frame+1)
@@ -113,12 +117,16 @@ def make_step(chromosome, frame):
 		prepare_fea = calculation.prepare_fea_pn
 		run_st = calculation.run_st_pn
 		interweave_results = calculation.interweave_results_pn
+		
+		optimization_type = phaenotyp.optimization_pn
 
 	# for force distribuion
 	else:
 		prepare_fea = calculation.prepare_fea_fd
 		run_st = calculation.run_st_fd
 		interweave_results = calculation.interweave_results_fd
+		
+		optimization_type = phaenotyp.optimization_fd
 
 	# calculate frame
 	geometry.update_members_pre()
@@ -128,11 +136,11 @@ def make_step(chromosome, frame):
 	geometry.update_members_post()
 
 	# optimization
-	progress.http.reset_o(phaenotyp.optimization_amount)
-	for i in range(phaenotyp.optimization_amount):
-		progress.http.reset_pci(frame)
-		calculation.sectional_optimization(frame, frame+1)
-		progress.http.update_o()
+	if optimization_type != "none":
+		progress.http.reset_o(phaenotyp.optimization_amount)
+		for i in range(phaenotyp.optimization_amount):
+			calculation.sectional_optimization(frame, frame+1)
+			progress.http.update_o()
 
 	# calculate fitness
 	calculation.calculate_fitness(frame, frame+1)
@@ -164,7 +172,8 @@ def start():
 	maxiteration = phaenotyp.gd_max_iteration
 
 	progress.http.reset_pci(phaenotyp.gd_max_iteration+1)
-	progress.http.reset_o(phaenotyp.optimization_amount)
+	if phaenotyp.optimization_pn != "none" or phaenotyp.optimization_fd != "none":
+		progress.http.reset_o(phaenotyp.optimization_amount)
 	
 	# generate_basis for fitness
 	generate_basis()
