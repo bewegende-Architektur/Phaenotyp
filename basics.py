@@ -99,62 +99,63 @@ def delete_obj_if_existing(name):
 		bpy.data.objects.remove(obj, do_unlink=True)
 
 def delete_mesh_if_existing(name):
+	'''
+	Delete mesh with given name if existing
+	:param name: Name as string
+	'''
 	mesh = bpy.data.meshes.get(name)
 	if mesh:
 		bpy.data.meshes.remove(mesh, do_unlink=True)
 
 def delete_col_if_existing(name):
+	'''
+	Delete collection with given name if existing
+	:param name: Name as string
+	'''
 	col = bpy.data.collections.get(name)
 	if col:
 		bpy.data.collections.remove(col, do_unlink=True)
 
 def delete_obj_if_name_contains(text):
+	'''
+	Delete objectif name contains the given string.
+	:param name: Name as string
+	'''
 	for obj in bpy.data.objects:
 		if text in obj.name_full:
 			bpy.data.objects.remove(obj, do_unlink=True)
 
-# change view to show vertex-colors
 def view_vertex_colors():
-	# issue with vertex-color in blender 3.5
 	'''
-	# change viewport to material
-	# based on approach from Hotox:
-	# https://devtalk.blender.org/t/how-to-change-view3dshading-type-in-2-8/3462
-	for area in bpy.context.screen.areas:
-		if area.type == 'VIEW_3D':
-			for space in area.spaces:
-				if space.type == 'VIEW_3D':
-					space.shading.type = 'SOLID'
-					space.shading.light = 'FLAT'
-					space.shading.color_type = 'VERTEX'
+	Change view to show colored material.
 	'''
 	bpy.context.space_data.shading.type = 'MATERIAL'
 
-# change view to show vertex-colors
 def revert_vertex_colors():
 	'''
-	# change viewport to material
-	# based on approach from Hotox:
-	# https://devtalk.blender.org/t/how-to-change-view3dshading-type-in-2-8/3462
-	for area in bpy.context.screen.areas:
-		if area.type == 'VIEW_3D':
-			for space in area.spaces:
-				if space.type == 'VIEW_3D':
-					space.shading.type = 'SOLID'
-					space.shading.light = 'STUDIO'
-					space.shading.color_type = 'MATERIAL'
+	Change view to solid.
 	'''
 	bpy.context.space_data.shading.type = 'SOLID'
 
 # based on answer from ChameleonScales
 # https://blender.stackexchange.com/questions/169844/multi-line-text-box-with-popup-menu
 def popup(title = "Phaenotyp", lines=""):
+	'''
+	Create popup to inform user.
+	:param lines: List of strings to be written.
+	'''
 	def draw(self, context):
 		for line in lines:
 			self.layout.label(text=line)
 	bpy.context.window_manager.popup_menu(draw, title = title)
 
 def popup_operator(title = "Phaenotyp", lines="", operator=None, text=""):
+	'''
+	Create popup to inform user and to run an operator.
+	:param lines: List of strings to be written.
+	:param operator: Operator to start.
+	:param text: Name of the operator.
+	'''
 	def draw(self, context):
 		for line in lines:
 			self.layout.label(text=line)
@@ -163,6 +164,9 @@ def popup_operator(title = "Phaenotyp", lines="", operator=None, text=""):
 	bpy.context.window_manager.popup_menu(draw, title = title)
 
 def force_distribution_info(self, context):
+	'''
+	Create a popup to inform user about force disbribution.
+	'''
 	# inform user when using force_distribution
 	if bpy.context.scene.phaenotyp.calculation_type == "force_distribution":
 		# triangulation
@@ -250,6 +254,10 @@ modifiers["VOLUME_DISPLACE"] = False
 
 
 def check_modifiers():
+	'''
+	Check the available modifiers of the object an give feedback.
+	A popup is opened if a modifier is available that could create weird results.
+	'''
 	obj = bpy.context.object
 	for modifiere in obj.modifiers:
 		name = modifiere.type
