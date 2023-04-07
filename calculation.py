@@ -15,11 +15,10 @@ import gc
 gc.disable()
 
 def print_data(text):
-	'''
+	"""
 	Print data for debugging
-	:param str text: Needs text as string (Do not pass as list)
-	:return: None
-	'''
+	:param text: Needs a text as string (Do not pass as list)
+	"""
 	print("Phaenotyp |", text)
 
 def check_scipy():

@@ -3,9 +3,17 @@ from phaenotyp import operators, geometry, calculation, progress
 import numpy as np
 
 def print_data(text):
+	"""
+	Print data for debugging
+	:param text: Needs a text as string (Do not pass as list)
+	"""
 	print("Phaenotyp |", text)
 
 def generate_basis():
+	'''
+	Generate the basis individual to work with.
+	The fitness of all others are weighted with this first individual.
+	'''
 	scene = bpy.context.scene
 	phaenotyp = scene.phaenotyp
 	data = scene["<Phaenotyp>"]
@@ -86,6 +94,11 @@ def generate_basis():
 	individuals["0"]["fitness"]["weighted"] = 1
 
 def make_step(chromosome, frame):
+	'''
+	Make a step with the adapted chromosome.
+	:paramm chromosome: List of floats from 0 to 10.
+	:frame: Frame to save this individual to.
+	'''
 	scene = bpy.context.scene
 	data = scene["<Phaenotyp>"]
 	obj = data["structure"]
@@ -155,6 +168,9 @@ def make_step(chromosome, frame):
 	return gd, fitness
 
 def start():
+	'''
+	Main function to run gradient descent.
+	'''
 	scene = bpy.context.scene
 	data = scene["<Phaenotyp>"]
 	obj = data["structure"]

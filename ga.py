@@ -4,9 +4,19 @@ import random
 from phaenotyp import basics, geometry, calculation, progress
 
 def print_data(text):
+	"""
+	Print data for debugging
+	:param text: Needs a text as string (Do not pass as list)
+	"""
 	print("Phaenotyp |", text)
 
 def create_indivdual(chromosome, parent_1, parent_2):
+	"""
+	Creates an individual for bruteforce mode.
+	:param chromosome: The chromosome is a list of floats from 0 to 10.
+	:parent_1: The first parent as class instance individual.
+	:parent_2: The second parent as class instance individual.
+	"""
 	scene = bpy.context.scene
 	phaenotyp = scene.phaenotyp
 	data = scene["<Phaenotyp>"]
@@ -34,6 +44,10 @@ def create_indivdual(chromosome, parent_1, parent_2):
 	individuals[str(frame)] = individual
 
 def generate_basis():
+	"""
+	Creates the basis individual for the genetic algorithm.
+	This individual is used to calculate the weighted fitness of all others.
+	"""
 	scene = bpy.context.scene
 	phaenotyp = scene.phaenotyp
 	data = scene["<Phaenotyp>"]
@@ -86,6 +100,11 @@ def generate_basis():
 		interweave_results(feas, members)
 
 def mate_chromosomes(chromosome_1, chromosome_2):
+	'''
+	Function to mate chromosomes.
+	:param chromosom_1: First chromosome for mating as list of floats.
+	:param chromosom_2: Second chromosome for mating as list of floats.
+	'''
 	scene = bpy.context.scene
 	phaenotyp = scene.phaenotyp
 	data = scene["<Phaenotyp>"]
@@ -132,6 +151,12 @@ def mate_chromosomes(chromosome_1, chromosome_2):
 	return child_chromosome
 
 def create_initial_individuals(start, end):
+	'''
+	Create random individuals of the first generation.
+	Every frame is for one individual only.
+	:param start: Frame to start at.
+	:param end: Frame to end with.
+	'''
 	scene = bpy.context.scene
 	phaenotyp = scene.phaenotyp
 	data = scene["<Phaenotyp>"]
@@ -186,6 +211,9 @@ def create_initial_individuals(start, end):
 		interweave_results(feas, members)
 
 def populate_initial_generation():
+	'''
+	Populate the first generation.
+	'''
 	scene = bpy.context.scene
 	data = scene["<Phaenotyp>"]
 	members = data["members"]
@@ -229,6 +257,9 @@ def populate_initial_generation():
 		print_data(text)
 
 def do_elitism():
+	'''
+	Copy the best individuals to the next generation directly.
+	'''
 	scene = bpy.context.scene
 	data = scene["<Phaenotyp>"]
 	members = data["members"]
@@ -292,6 +323,11 @@ def do_elitism():
 		print_data(text)
 
 def create_new_individuals(start, end):
+	'''
+	Create new individuals for all generations except of generation 1.
+	:param start: Frame to start at.
+	:param end: Frame to end with.
+	'''
 	scene = bpy.context.scene
 	phaenotyp = scene.phaenotyp
 	data = scene["<Phaenotyp>"]
@@ -363,6 +399,9 @@ def create_new_individuals(start, end):
 		interweave_results(feas, members)
 
 def populate_new_generation(start, end):
+	'''
+	Populate all generations that except of generation 1.
+	'''
 	scene = bpy.context.scene
 	phaenotyp = scene.phaenotyp
 	data = scene["<Phaenotyp>"]

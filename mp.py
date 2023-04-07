@@ -23,8 +23,8 @@ gc.disable()
 
 def print_data(text):
 	"""
-	Used to print data for debugging.
-	:param text: Needs a text as string (Do not pass as list).
+	Print data for debugging
+	:param text: Needs a text as string (Do not pass as list)
 	"""
 	print("Phaenotyp |", text)
 

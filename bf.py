@@ -4,9 +4,17 @@ import random
 from phaenotyp import basics, geometry, calculation, progress
 
 def print_data(text):
+	"""
+	Print data for debugging
+	:param text: Needs a text as string (Do not pass as list)
+	"""
 	print("Phaenotyp |", text)
 
 def create_indivdual(chromosome):
+	"""
+	Creates an individual for bruteforce mode.
+	:param chromosome: The chromosome is a list of floats from 0 to 10.
+	"""
 	scene = bpy.context.scene
 	phaenotyp = scene.phaenotyp
 	data = scene["<Phaenotyp>"]
@@ -31,6 +39,10 @@ def create_indivdual(chromosome):
 	individuals[str(frame)] = individual
 
 def generate_basis():
+	"""
+	Creates the basis individual for bruteforce mode.
+	It is the basis for calculating the weighted fitness of all other individuals.
+	"""
 	scene = bpy.context.scene
 	phaenotyp = scene.phaenotyp
 	data = scene["<Phaenotyp>"]
@@ -83,6 +95,10 @@ def generate_basis():
 		interweave_results(feas, members)
 
 def bruteforce(chromosomes):
+	"""
+	Mainfunction to run brutforce.
+	:param chromosomes: List of chromosomes as lists of floats from 0 to 10.
+	"""
 	scene = bpy.context.scene
 	phaenotyp = scene.phaenotyp
 	data = scene["<Phaenotyp>"]

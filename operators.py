@@ -7,6 +7,10 @@ from phaenotyp import basics, material, geometry, calculation, bf, ga, gd, panel
 import itertools
 
 def print_data(text):
+	"""
+	Print data for debugging
+	:param text: Needs a text as string (Do not pass as list)
+	"""
 	print("Phaenotyp |", text)
 
 def set_structure():
