@@ -22,6 +22,10 @@ class grayed_out:
 	laods = False
 
 def structure(layout):
+	'''
+	Panel for structure.
+	:param layout: Passed layout of phaenotyp panel.
+	'''
 	context = bpy.context
 	scene = context.scene
 	phaenotyp = scene.phaenotyp
@@ -66,6 +70,10 @@ def structure(layout):
 		box_structure.enabled = False
 
 def scipy(layout):
+	'''
+	Panel for scipy.
+	:param layout: Passed layout of phaenotyp panel.
+	'''
 	context = bpy.context
 	scene = context.scene
 	phaenotyp = scene.phaenotyp
@@ -84,6 +92,10 @@ def scipy(layout):
 				box_scipy.enabled = False
 
 def calculation_type(layout):
+	'''
+	Panel for calculation type.
+	:param layout: Passed layout of phaenotyp panel.
+	'''
 	context = bpy.context
 	scene = context.scene
 	phaenotyp = scene.phaenotyp
@@ -101,6 +113,10 @@ def calculation_type(layout):
 			box_calculation_type.enabled = False
 
 def supports(layout):
+	'''
+	Panel for supports.
+	:param layout: Passed layout of phaenotyp panel.
+	'''
 	context = bpy.context
 	scene = context.scene
 	phaenotyp = scene.phaenotyp
@@ -140,6 +156,10 @@ def supports(layout):
 			box_supports.enabled = False
 
 def members(layout):
+	'''
+	Panel for members.
+	:param layout: Passed layout of phaenotyp panel.
+	'''
 	context = bpy.context
 	scene = context.scene
 	phaenotyp = scene.phaenotyp
@@ -252,6 +272,10 @@ def members(layout):
 			box_members.enabled = False
 
 def loads(layout):
+	'''
+	Panel for loads.
+	:param layout: Passed layout of phaenotyp panel.
+	'''
 	context = bpy.context
 	scene = context.scene
 	phaenotyp = scene.phaenotyp
@@ -292,6 +316,10 @@ def loads(layout):
 			box_loads.enabled = False
 
 def file(layout):
+	'''
+	Panel for file.
+	:param layout: Passed layout of phaenotyp panel.
+	'''
 	context = bpy.context
 	scene = context.scene
 	phaenotyp = scene.phaenotyp
@@ -307,6 +335,10 @@ def file(layout):
 			state.file = True
 
 def mode(layout):
+	'''
+	Panel for mode.
+	:param layout: Passed layout of phaenotyp panel.
+	'''
 	context = bpy.context
 	scene = context.scene
 	phaenotyp = scene.phaenotyp
@@ -319,6 +351,10 @@ def mode(layout):
 		box_start.prop(phaenotyp, "mode", text="")
 
 def transformation(layout):
+	'''
+	Panel for transformation.
+	:param layout: Passed layout of phaenotyp panel.
+	'''
 	context = bpy.context
 	scene = context.scene
 	phaenotyp = scene.phaenotyp
@@ -341,6 +377,10 @@ def transformation(layout):
 		box_goal.operator("wm.reach_goal", text="Start")
 
 def single_frame(layout):
+	'''
+	Panel for single frame.
+	:param layout: Passed layout of phaenotyp panel.
+	'''
 	context = bpy.context
 	scene = context.scene
 	phaenotyp = scene.phaenotyp
@@ -384,6 +424,10 @@ def single_frame(layout):
 			box_analysis.label(text="Only genetic algorithm is available for geometrical mode.")
 
 def animation(layout):
+	'''
+	Panel for animation.
+	:param layout: Passed layout of phaenotyp panel.
+	'''
 	context = bpy.context
 	scene = context.scene
 	phaenotyp = scene.phaenotyp
@@ -412,6 +456,10 @@ def animation(layout):
 			box_optimization.label(text="Only genetic algorithm is available for geometrical mode.")
 
 def bruteforce(layout):
+	'''
+	Panel for bruteforce.
+	:param layout: Passed layout of phaenotyp panel.
+	'''
 	context = bpy.context
 	scene = context.scene
 	phaenotyp = scene.phaenotyp
@@ -503,6 +551,10 @@ def bruteforce(layout):
 				box_rendering.operator("wm.render_animation", text="Generate")
 
 def genetic_algorithm(layout):
+	'''
+	Panel for genetic algorithm.
+	:param layout: Passed layout of phaenotyp panel.
+	'''
 	context = bpy.context
 	scene = context.scene
 	phaenotyp = scene.phaenotyp
@@ -605,6 +657,10 @@ def genetic_algorithm(layout):
 				box_rendering.operator("wm.render_animation", text="Generate")
 
 def gradient_descent(layout):
+	'''
+	Panel for gradient descent.
+	:param layout: Passed layout of phaenotyp panel.
+	'''
 	context = bpy.context
 	scene = context.scene
 	phaenotyp = scene.phaenotyp
@@ -688,6 +744,10 @@ def gradient_descent(layout):
 			box_gd_start.operator("wm.gd_start", text="Start")
 
 def visualization(layout):
+	'''
+	Panel for visualization.
+	:param layout: Passed layout of phaenotyp panel.
+	'''
 	context = bpy.context
 	scene = context.scene
 	phaenotyp = scene.phaenotyp
@@ -713,6 +773,10 @@ def visualization(layout):
 			box_viz.prop(phaenotyp, "viz_deflection", text="deflected / original", slider=True)
 
 def text(layout):
+	'''
+	Panel for text.
+	:param layout: Passed layout of phaenotyp panel.
+	'''
 	context = bpy.context
 	scene = context.scene
 	phaenotyp = scene.phaenotyp
@@ -730,6 +794,10 @@ def text(layout):
 	box_text.label(text="Cantilever: "+str(round(data["frames"][str(frame)]["cantilever"],3)) + " m")
 
 def info(layout):
+	'''
+	Panel for info.
+	:param layout: Passed layout of phaenotyp panel.
+	'''
 	context = bpy.context
 	scene = context.scene
 	phaenotyp = scene.phaenotyp
@@ -764,6 +832,10 @@ def info(layout):
 				box_info.label(text="Switch to edit-mode")
 
 def selection(layout):
+	'''
+	Panel for selection.
+	:param layout: Passed layout of phaenotyp panel.
+	'''
 	context = bpy.context
 	scene = context.scene
 	phaenotyp = scene.phaenotyp
@@ -783,6 +855,10 @@ def selection(layout):
 		box_selection.operator("wm.selection", text="Start")
 
 def report(layout):
+	'''
+	Panel for report.
+	:param layout: Passed layout of phaenotyp panel.
+	'''
 	context = bpy.context
 	scene = context.scene
 	phaenotyp = scene.phaenotyp
@@ -810,6 +886,10 @@ def report(layout):
 			box_report.operator("wm.report_tree", text="tree")
 
 def reset(layout):
+	'''
+	Panel for reset.
+	:param layout: Passed layout of phaenotyp panel.
+	'''
 	context = bpy.context
 	scene = context.scene
 	phaenotyp = scene.phaenotyp
