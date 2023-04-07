@@ -79,9 +79,9 @@ def scipy(layout):
 			box_scipy.label(text = "Sparse matrix:")
 			box_scipy.prop(phaenotyp, "use_scipy", text="Use scipy")
 
-		# disable box
-		if grayed_out.scipy:
-			box_scipy.enabled = False
+			# disable box
+			if grayed_out.scipy:
+				box_scipy.enabled = False
 
 def calculation_type(layout):
 	context = bpy.context
