@@ -137,11 +137,10 @@ def revert_vertex_colors():
 	'''
 	bpy.context.space_data.shading.type = 'SOLID'
 
-# based on answer from ChameleonScales
-# https://blender.stackexchange.com/questions/169844/multi-line-text-box-with-popup-menu
 def popup(title = "Phaenotyp", lines=""):
 	'''
-	Create popup to inform user.
+	Create popup to inform user. The function is based on the answer from ChameleonScales at:
+	https://blender.stackexchange.com/questions/169844/multi-line-text-box-with-popup-menu
 	:param lines: List of strings to be written.
 	'''
 	def draw(self, context):
@@ -151,7 +150,8 @@ def popup(title = "Phaenotyp", lines=""):
 
 def popup_operator(title = "Phaenotyp", lines="", operator=None, text=""):
 	'''
-	Create popup to inform user and to run an operator.
+	Create popup to inform user and to run an operator. Based on the answer from ChameleonScales at:
+	https://blender.stackexchange.com/questions/169844/multi-line-text-box-with-popup-menu
 	:param lines: List of strings to be written.
 	:param operator: Operator to start.
 	:param text: Name of the operator.

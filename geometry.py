@@ -7,9 +7,12 @@ c = Color()
 # variable to pass all stuff that needs to be fixed
 to_be_fixed = None
 
-# Answer from BlackCutpoint
-# https://blender.stackexchange.com/questions/75332/how-to-find-the-number-of-loose-parts-with-blenders-python-api
 def amount_of_mesh_parts():
+	'''
+	Is checking for the amount of parts in the mesh. Is based on the answer from BlackCutpoint
+	https://blender.stackexchange.com/questions/75332/how-to-find-the-number-of-loose-parts-with-blenders-python-api
+	:return len(parts): Is returning the amount of parts as integer. 
+	'''
 	obj = bpy.context.object
 	mesh = obj.data
 	paths = {v.index:set() for v in mesh.vertices}
@@ -43,6 +46,10 @@ def amount_of_mesh_parts():
 	return len(parts)
 
 def amount_of_loose_parts():
+	'''
+	Is returning the amount of loose parts.
+	:return total_vert_sel: The amount of loose parts as integer.
+	'''
 	obj = bpy.context.active_object
 
 	bpy.ops.mesh.select_mode(use_extend=False, use_expand=False, type='VERT')
@@ -50,8 +57,12 @@ def amount_of_loose_parts():
 	bpy.ops.mesh.select_loose()
 	return obj.data.total_vert_sel
 
-# check if the model is triangulated
 def triangulation():
+	'''
+	The function is iterating trough all faces and checks the amount of vertices.
+	This function is only working for triangulated faces and not edges.
+	:return triangulated: Bool True of triangulated or False if not.
+	'''
 	# get selected faces
 	obj = bpy.context.active_object
 	mode = bpy.context.object.mode
@@ -68,6 +79,10 @@ def triangulation():
 	return triangulated
 
 def amount_of_selected_faces():
+	'''
+	Is iterating trough all faces and check if the selction is True.
+	:return selected_faces: The amount of selected faces as integer.
+	'''
 	obj = bpy.context.active_object
 	bpy.ops.object.mode_set(mode = 'OBJECT')
 	selected_faces = []
@@ -77,9 +92,11 @@ def amount_of_selected_faces():
 			selected_faces.append(face)
 
 	return len(selected_faces)
-	print(selected_faces)
 
 def delete_selected_faces():
+	'''
+	Is handling the mode-switch and deletes all selected faces.
+	'''
 	obj = bpy.context.active_object
 	bpy.ops.object.mode_set(mode = 'OBJECT')
 	selected_faces = []
@@ -93,6 +110,11 @@ def delete_selected_faces():
 	bpy.ops.mesh.delete(type='EDGE_FACE')
 
 def volume(mesh):
+	'''
+	Volume of the structure via bmesh at current frame.
+	:param mesh: Mesh of the structure as basis.
+	:return frame_volume: Volume as float.
+	'''
 	bm = bmesh.new()
 	bm.from_mesh(mesh)
 	frame_volume = bm.calc_volume()
@@ -100,9 +122,12 @@ def volume(mesh):
 	return frame_volume
 
 def area(faces):
-	# get area of the frame
-	# overall sum of faces
-	# user can delete faces to influence this as fitness in ga
+	'''
+	Area of the frame as overall sum of faces. Users can delete faces to
+	influence this as fitness in ga.
+	:param faces: Faces of the mesh as basis.
+	:return frame_area: Area as float.
+	'''
 	frame_area = 0
 	for face in faces:
 		frame_area += face.area
@@ -110,9 +135,13 @@ def area(faces):
 	return frame_area
 
 def area_projected(face, vertices):
-	# get projected area
-	# based on answer from Nikos Athanasiou:
-	# https://stackoverflow.com/questions/24467972/calculate-area-of-polygon-given-x-y-coordinates
+	'''
+	Get projected area of a given face. Based on answer from Nikos Athanasiou:
+	https://stackoverflow.com/questions/24467972/calculate-area-of-polygon-given-x-y-coordinates
+	:param face: Face to work with.
+	:param vertices: Vertices of the face to work with.
+	:return area_projected: Projected area as float.
+	'''
 	vertex_ids = face.vertices
 	vertices_temp = []
 	for vertex_id in vertex_ids:
@@ -134,7 +163,13 @@ def area_projected(face, vertices):
 	return area_projected
 
 def perimeter(edge_keys, vertices):
-	# get distances and perimeter
+	'''
+	Get distances and perimeter of the given face.
+	:param edge_keys: Edge_keys from the face as list.
+	:param vertices: Vertices of the face.
+	:return distances: Distance as list of floats.
+	:return perimeter: Perimeter as float.
+	'''
 	distances = []
 	for edge_key in edge_keys:
 		vertex_0_id = edge_key[0]
@@ -152,6 +187,13 @@ def perimeter(edge_keys, vertices):
 	return distances, perimeter
 
 def rise(vertices):
+	'''
+	Rise of the structure as fitness. The function is iterating through
+	all vertices and returns the distance between the highest and lowest
+	point.
+	:param vertices: Vertices of the given structure.
+	:return frame_rise: Rise as float
+	'''
 	highest = 0
 	lowest = 0
 
@@ -170,8 +212,13 @@ def rise(vertices):
 	return frame_rise
 
 def span(vertices, supports):
-	# get span of frame
-	# (highest distance between supports)
+	'''
+	Span of the structure as fitness. The function is iterating through
+	all vertices and returns the highest distance between all supports.
+	:param vertices: Vertices of the given structure.
+	:param supports: Supports of the given structure.
+	:return frame_span: Span as float
+	'''
 	highest = 0
 
 	for current in supports:

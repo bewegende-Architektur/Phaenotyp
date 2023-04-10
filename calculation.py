@@ -36,6 +36,10 @@ def check_scipy():
 		data["scipy_available"] = False
 
 def prepare_fea_pn():
+	'''
+	Is preparing the calculaton of the current frame for for PyNite.
+	:return truss: FEModel3D function of PyNite
+	'''
 	scene = bpy.context.scene
 	phaenotyp = scene.phaenotyp
 	data = scene["<Phaenotyp>"]
@@ -230,6 +234,10 @@ def prepare_fea_pn():
 	return truss
 
 def prepare_fea_fd():
+	'''
+	Is preparing the calculaton of the current frame for for force disbribution.
+	:return truss: List of [points_array, supports_ids, edges_array, forces_array].
+	'''
 	scene = bpy.context.scene
 	phaenotyp = scene.phaenotyp
 	data = scene["<Phaenotyp>"]
@@ -445,6 +453,12 @@ def prepare_fea_fd():
 	return truss
 
 def run_st_pn(truss, frame):
+	'''
+	Is calculating a given truss.
+	:param truss: Needs a truss from prepare_fea_pn.
+	:param frame: Needs the current frame for identification.
+	:return fea: The calculated truss from PyNite as dict with key frame.
+	'''
 	scene = bpy.context.scene
 	scipy_available = scene["<Phaenotyp>"]["scipy_available"]
 
@@ -472,6 +486,12 @@ def run_st_pn(truss, frame):
 	return feas
 
 def run_st_fd(truss, frame):
+	'''
+	Is calculating a given truss.
+	:param truss: Needs a truss from prepare_fea_fd.
+	:param frame: Needs the current frame for identification.
+	:return fea: The calculated truss from force distribution as dict with key frame.
+	'''
 	scene = bpy.context.scene
 	scipy_available = scene["<Phaenotyp>"]["scipy_available"]
 
@@ -539,6 +559,11 @@ def run_st_fd(truss, frame):
 	return feas
 
 def run_mp(trusses):
+	'''
+	Is calculating the given trusses, pickles them for mp.
+	:param trusses: Needs a list of trusses from any prepare_fea as dict with frame as key.
+	:return trusses: Returns the calculated trusses as dict with the frame as key.
+	'''
 	# get pathes
 	path_addons = os.path.dirname(__file__) # path to the folder of addons
 	path_script = path_addons + "/mp.py"
@@ -584,6 +609,11 @@ def run_mp(trusses):
 	return imported_trusses
 
 def interweave_results_pn(feas, members):
+	'''
+	Function to integrate the results of PyNite.
+	:param feas: Feas as dict with frame as key.
+	:param members: Pass the members from <Phaenotyp>
+	'''
 	scene = bpy.context.scene
 	data = scene["<Phaenotyp>"]
 
@@ -866,6 +896,11 @@ def interweave_results_pn(feas, members):
 		data["done"][str(frame)] = True
 
 def interweave_results_fd(feas, members):
+	'''
+	Function to integrate the results of force distribution.
+	:param feas: Feas as dict with frame as key.
+	:param members: Pass the members from <Phaenotyp>
+	'''
 	scene = bpy.context.scene
 	data = scene["<Phaenotyp>"]
 
@@ -930,8 +965,12 @@ def interweave_results_fd(feas, members):
 
 		data["done"][str(frame)] = True
 
-# sectional performance or force distribution
 def approximate_sectional():
+	'''
+	Is adapting the diameters of force distribution step by step.
+	Overstressed elements are sized by a factor of 1.05 and
+	non overstressed are sized by 0.95.
+	'''
 	scene = bpy.context.scene
 	phaenotyp = scene.phaenotyp
 	data = scene["<Phaenotyp>"]
@@ -953,8 +992,12 @@ def approximate_sectional():
 			member["Di"][str(frame)] = 0.1
 			member["Do"][str(frame)] = member["Di"][str(frame)] * Do_Di_ratio
 
-# sectional performance for PyNite
 def simple_sectional():
+	'''
+	Is adapting the diameters of PyNite step by step.
+	Overloaded Elements are sized by a factor of 1.2 and
+	non overstressed are sized by 0.8.
+	'''
 	scene = bpy.context.scene
 	phaenotyp = scene.phaenotyp
 	data = scene["<Phaenotyp>"]
@@ -977,6 +1020,10 @@ def simple_sectional():
 			member["Do"][str(frame)] = member["Di"][str(frame)] * Do_Di_ratio
 
 def utilization_sectional():
+	'''
+	Is adapting the diameters of force distribution step by step.
+	The reduction is based on the utilization of the elements.
+	'''
 	scene = bpy.context.scene
 	phaenotyp = scene.phaenotyp
 	data = scene["<Phaenotyp>"]
@@ -1003,6 +1050,10 @@ def utilization_sectional():
 			member["Do"][str(frame)] = member["Di"][str(frame)] * Do_Di_ratio
 
 def complex_sectional():
+	'''
+	Is adapting the diameters of force distribution step by step.
+	The reduction is based on the max_long_stress of the elements.
+	'''
 	scene = bpy.context.scene
 	phaenotyp = scene.phaenotyp
 	data = scene["<Phaenotyp>"]
@@ -1034,8 +1085,12 @@ def complex_sectional():
 			member["Di"][str(frame)] = 0.1
 			member["Do"][str(frame)] = member["Di"][str(frame)] * Do_Di_ratio
 
-# is working for fd and pn
 def decimate_topology():
+	'''
+	Is creating a vertex-group with the utilization of each member.
+	This vertex-group is used with a decimation modifiere to remove
+	the elements with less load by given factor in the modifiers tab.
+	'''
 	scene = bpy.context.scene
 	phaenotyp = scene.phaenotyp
 	data = scene["<Phaenotyp>"]
@@ -1097,8 +1152,14 @@ def decimate_topology():
 	mod.ratio = 0.1
 	mod.vertex_group = "<Phaenotyp>decimate"
 
-# is used in ga, gd and bf
 def sectional_optimization(start, end):
+	'''
+	Is handling the different types of optimization for animation, bf,
+	gd and ga. The function is reading the type of calculation from
+	phaenotyp directly.
+	:param start: Start frame to begin at.
+	:param end: End frame to stop with.
+	'''
 	scene = bpy.context.scene
 	phaenotyp = scene.phaenotyp
 	data = scene["<Phaenotyp>"]
@@ -1163,8 +1224,12 @@ def sectional_optimization(start, end):
 	# wait for it and interweave results to data
 	interweave_results(feas, members)
 
-# is used in ga, gd and bf
 def calculate_fitness(start, end):
+	'''
+	Is calculating the fitness fo the given frames.
+	:param start: Start frame to begin at.
+	:param end: End frame to stop with.
+	'''
 	scene = bpy.context.scene
 	phaenotyp = scene.phaenotyp
 	data = scene["<Phaenotyp>"]

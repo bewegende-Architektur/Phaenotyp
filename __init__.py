@@ -8,10 +8,10 @@ bl_info = {
 }
 
 
-# With Support from Karl Deix
-# Analysis with: https://github.com/JWock82/PyNite
-# GA based on: https://www.geeksforgeeks.org/genetic-algorithms/
-
+'''
+The __init__ file is the main-file to be registert from blender.
+It contains and handles all blender properties as well as the panel.
+'''
 import bpy
 from bpy.props import (IntProperty, FloatProperty, BoolProperty, StringProperty, EnumProperty, PointerProperty)
 from bpy.types import (Panel, Menu, Operator, PropertyGroup)
@@ -20,11 +20,19 @@ from bpy.app.handlers import persistent
 from phaenotyp import basics, panel, operators, material, geometry, calculation, ga, report, progress
 
 def viz_update(self, context):
+	'''
+	Triggers the update of the vizulisation.
+	:param self: Passed from the panel.
+	:param context: Passed from the panel.
+	'''
 	scene = context.scene
 	phaenotyp = scene.phaenotyp
 	geometry.update_members_post()
 
 class phaenotyp_properties(PropertyGroup):
+	'''
+	Is holding all variables for the panel.
+	'''
 	use_scipy: BoolProperty(
 		name = 'use_scipy',
 		description = "Scipy is available! Calculation will be much faster. Anyway: Try to uncheck if something is crashing.",
@@ -545,6 +553,10 @@ class phaenotyp_properties(PropertyGroup):
 		)
 
 class WM_OT_set_structure(Operator):
+	'''
+	Is calling set_structure from the module called operators.
+	Check out further info in there.
+	'''
 	bl_label = "set_structure"
 	bl_idname = "wm.set_structure"
 	bl_description = "Please select an object in Object-Mode and press set"
@@ -554,6 +566,10 @@ class WM_OT_set_structure(Operator):
 		return {"FINISHED"}
 
 class WM_OT_fix_structure(Operator):
+	'''
+	Is calling fix_structure from the module called operators.
+	Check out further info in there.
+	'''
 	bl_label = "fix_structure"
 	bl_idname = "wm.fix_structure"
 	bl_description = "Is running delete loose parts and merge by distance."
@@ -563,6 +579,10 @@ class WM_OT_fix_structure(Operator):
 		return {"FINISHED"}
 
 class WM_OT_set_support(Operator):
+	'''
+	Is calling set_supports from the module called operators.
+	Check out further info in there.
+	'''
 	bl_label = "set_support"
 	bl_idname = "wm.set_support"
 	bl_description = "Please select vertices and press set, to define them as support (Be sure, that you are in Edit Mode of the Structure)"
@@ -572,6 +592,10 @@ class WM_OT_set_support(Operator):
 		return {"FINISHED"}
 
 class WM_OT_set_member(Operator):
+	'''
+	Is calling set_member from the module called operators.
+	Check out further info in there.
+	'''
 	bl_label = "set_member"
 	bl_idname = "wm.set_member"
 	bl_description = "Please select edges in Edit-Mode and press set, to define profiles"
@@ -581,6 +605,10 @@ class WM_OT_set_member(Operator):
 		return {"FINISHED"}
 
 class WM_OT_set_load(Operator):
+	'''
+	Is calling set_load from the module called operators.
+	Check out further info in there.
+	'''
 	bl_label = "set_load"
 	bl_idname = "wm.set_load"
 	bl_description = "Add load to selected vertices, edges, or faces"
@@ -590,6 +618,10 @@ class WM_OT_set_load(Operator):
 		return {"FINISHED"}
 
 class WM_OT_assimilate(Operator):
+	'''
+	Is calling assimilate from the module called operators.
+	Check out further info in there.
+	'''
 	bl_label = "assimilate"
 	bl_idname = "wm.assimilate"
 	bl_description = "Assimilate length of members."
@@ -599,6 +631,10 @@ class WM_OT_assimilate(Operator):
 		return {"FINISHED"}
 
 class WM_OT_actuator(Operator):
+	'''
+	Is calling actuator from the module called operators.
+	Check out further info in there.
+	'''
 	bl_label = "actuator"
 	bl_idname = "wm.actuator"
 	bl_description = "Extend or retract to given length."
@@ -608,6 +644,10 @@ class WM_OT_actuator(Operator):
 		return {"FINISHED"}
 
 class WM_OT_reach_goal(Operator):
+	'''
+	Is calling reach_goal from the module called operators.
+	Check out further info in there.
+	'''
 	bl_label = "reach_goal"
 	bl_idname = "wm.reach_goal"
 	bl_description = "Reach goal."
@@ -617,6 +657,10 @@ class WM_OT_reach_goal(Operator):
 		return {"FINISHED"}
 
 class WM_OT_calculate_single_frame(Operator):
+	'''
+	Is calling calculate_single_frame from the module called operators.
+	Check out further info in there.
+	'''
 	bl_label = "calculate_single_frame"
 	bl_idname = "wm.calculate_single_frame"
 	bl_description = "Calulate single frame"
@@ -626,6 +670,10 @@ class WM_OT_calculate_single_frame(Operator):
 		return {"FINISHED"}
 
 class WM_OT_calculate_animation(Operator):
+	'''
+	Is calling animation from the module called operators.
+	Check out further info in there.
+	'''
 	bl_label = "calculate_animation"
 	bl_idname = "wm.calculate_animation"
 	bl_description = "Calulate animation"
@@ -635,6 +683,10 @@ class WM_OT_calculate_animation(Operator):
 		return {"FINISHED"}
 
 class WM_OT_optimize_approximate(Operator):
+	'''
+	Is calling optimize_approximate from the module called operators.
+	Check out further info in there.
+	'''
 	bl_label = "optimize_approximate"
 	bl_idname = "wm.optimize_approximate"
 	bl_description = "Approximate sectional performance"
@@ -644,6 +696,10 @@ class WM_OT_optimize_approximate(Operator):
 		return {"FINISHED"}
 
 class WM_OT_optimize_simple(Operator):
+	'''
+	Is calling optimize_simple from the module called operators.
+	Check out further info in there.
+	'''
 	bl_label = "optimize_simple"
 	bl_idname = "wm.optimize_simple"
 	bl_description = "Simple sectional performance"
@@ -653,6 +709,10 @@ class WM_OT_optimize_simple(Operator):
 		return {"FINISHED"}
 
 class WM_OT_optimize_utilization(Operator):
+	'''
+	Is calling optimize_utilization from the module called operators.
+	Check out further info in there.
+	'''
 	bl_label = "optimize_utilization"
 	bl_idname = "wm.optimize_utilization"
 	bl_description = "utilization sectional performance"
@@ -662,6 +722,10 @@ class WM_OT_optimize_utilization(Operator):
 		return {"FINISHED"}
 
 class WM_OT_optimize_complex(Operator):
+	'''
+	Is calling optimize_complex from the module called operators.
+	Check out further info in there.
+	'''
 	bl_label = "optimize_complex"
 	bl_idname = "wm.optimize_complex"
 	bl_description = "Complex sectional performance"
@@ -671,6 +735,10 @@ class WM_OT_optimize_complex(Operator):
 		return {"FINISHED"}
 
 class WM_OT_decimate(Operator):
+	'''
+	Is calling decimate from the module called operators.
+	Check out further info in there.
+	'''
 	bl_label = "topolgy_decimate"
 	bl_idname = "wm.topolgy_decimate"
 	bl_description = "Decimate topological performance"
@@ -680,6 +748,10 @@ class WM_OT_decimate(Operator):
 		return {"FINISHED"}
 
 class WM_OT_bf_start(Operator):
+	'''
+	Is calling bf_start from the module called operators.
+	Check out further info in there.
+	'''
 	bl_label = "bf_start"
 	bl_idname = "wm.bf_start"
 	bl_description = "Start bruteforce over selected shape keys."
@@ -689,6 +761,10 @@ class WM_OT_bf_start(Operator):
 		return {"FINISHED"}
 
 class WM_OT_ga_start(Operator):
+	'''
+	Is calling ga_start from the module called operators.
+	Check out further info in there.
+	'''
 	bl_label = "ga_start"
 	bl_idname = "wm.ga_start"
 	bl_description = "Start genetic muatation over selected shape keys."
@@ -698,6 +774,10 @@ class WM_OT_ga_start(Operator):
 		return {"FINISHED"}
 
 class WM_OT_gd_start(Operator):
+	'''
+	Is calling gd_start from the module called operators.
+	Check out further info in there.
+	'''
 	bl_label = "gd_start"
 	bl_idname = "wm.gd_start"
 	bl_description = "Start gradient descent over selected shape keys."
@@ -707,6 +787,10 @@ class WM_OT_gd_start(Operator):
 		return {"FINISHED"}
 
 class WM_OT_ranking(Operator):
+	'''
+	Is calling ranking from the module called operators.
+	Check out further info in there.
+	'''
 	bl_label = "ranking"
 	bl_idname = "wm.ranking"
 	bl_description = "Go to indivual by ranking."
@@ -716,6 +800,10 @@ class WM_OT_ranking(Operator):
 		return {"FINISHED"}
 
 class WM_OT_render_animation(Operator):
+	'''
+	Is calling render_animation from the module called operators.
+	Check out further info in there.
+	'''
 	bl_label = "render_animation"
 	bl_idname = "wm.render_animation"
 	bl_description = "Go to indivual by ranking."
@@ -725,6 +813,10 @@ class WM_OT_render_animation(Operator):
 		return {"FINISHED"}
 
 class WM_OT_text(Operator):
+	'''
+	Is calling text from the module called operators.
+	Check out further info in there.
+	'''
 	bl_label = "text"
 	bl_idname = "wm.text"
 	bl_description = "Generate output at the selected vertex"
@@ -734,6 +826,10 @@ class WM_OT_text(Operator):
 		return {"FINISHED"}
 
 class WM_OT_selection(Operator):
+	'''
+	Is calling selection from the module called operators.
+	Check out further info in there.
+	'''
 	bl_label = "selection"
 	bl_idname = "wm.selection"
 	bl_description = "Select edges by given key and value"
@@ -743,6 +839,10 @@ class WM_OT_selection(Operator):
 		return {"FINISHED"}
 
 class WM_OT_report_members(Operator):
+	'''
+	Is calling report_members from the module called operators.
+	Check out further info in there.
+	'''
 	bl_label = "report_members"
 	bl_idname = "wm.report_members"
 	bl_description = "Generate report as html-format"
@@ -752,6 +852,10 @@ class WM_OT_report_members(Operator):
 		return {"FINISHED"}
 
 class WM_OT_report_frames(Operator):
+	'''
+	Is calling report_frames from the module called operators.
+	Check out further info in there.
+	'''
 	bl_label = "report_frames"
 	bl_idname = "wm.report_frames"
 	bl_description = "Generate report as html-format"
@@ -761,6 +865,10 @@ class WM_OT_report_frames(Operator):
 		return {"FINISHED"}
 
 class WM_OT_report_combined(Operator):
+	'''
+	Is calling report_combined from the module called operators.
+	Check out further info in there.
+	'''
 	bl_label = "report_combined"
 	bl_idname = "wm.report_combined"
 	bl_description = "Generate report as html-format"
@@ -770,6 +878,10 @@ class WM_OT_report_combined(Operator):
 		return {"FINISHED"}
 
 class WM_OT_report_chromosomes(Operator):
+	'''
+	Is calling report_chromosomes from the module called operators.
+	Check out further info in there.
+	'''
 	bl_label = "report_chromosomes"
 	bl_idname = "wm.report_chromosomes"
 	bl_description = "Generate report as html-format"
@@ -779,6 +891,10 @@ class WM_OT_report_chromosomes(Operator):
 		return {"FINISHED"}
 
 class WM_OT_report_tree(Operator):
+	'''
+	Is calling report_tree from the module called operators.
+	Check out further info in there.
+	'''
 	bl_label = "report_tree"
 	bl_idname = "wm.report_tree"
 	bl_description = "Generate report as html-format"
@@ -788,6 +904,10 @@ class WM_OT_report_tree(Operator):
 		return {"FINISHED"}
 
 class WM_OT_reset(Operator):
+	'''
+	Is calling reset from the module called operators.
+	Check out further info in there.
+	'''
 	bl_label = "reset"
 	bl_idname = "wm.reset"
 	bl_description = "Reset Phaenotyp"
@@ -797,6 +917,9 @@ class WM_OT_reset(Operator):
 		return {"FINISHED"}
 
 class OBJECT_PT_Phaenotyp(Panel):
+	'''
+	Panel for Phaenotyp.
+	'''
 	bl_label = "Phänotyp 0.1.9"
 	bl_idname = "OBJECT_PT_custom_panel"
 	bl_space_type = "VIEW_3D"
@@ -805,9 +928,15 @@ class OBJECT_PT_Phaenotyp(Panel):
 
 	@classmethod
 	def poll(self,context):
+		'''
+		To hide the panel if no object is available.
+		'''
 		return context.object is not None
 
 	def draw(self, context):
+		'''
+		Is running all functions from the module called panel.
+		'''
 		layout = self.layout
 		scene = context.scene
 		phaenotyp = scene.phaenotyp
@@ -924,6 +1053,9 @@ def update_post(scene):
 # disabled because of weird results
 @persistent
 def undo(scene):
+	'''
+	Is handeling the steps when a user is running undo.
+	'''
 	# only run if Phanotyp is used
 	scene = bpy.context.scene
 	data_available = scene.get("<Phaenotyp>")
@@ -941,6 +1073,9 @@ def undo(scene):
 			bpy.ops.ed.undo_push()
 
 def register():
+	'''
+	Register all blender specific stuff.
+	'''
 	from bpy.utils import register_class
 	for cls in classes:
 		register_class(cls)
@@ -950,6 +1085,9 @@ def register():
 	bpy.app.handlers.undo_pre.append(undo)
 
 def unregister():
+	'''
+	Unregister all blender specific stuff.
+	'''
 	from bpy.utils import unregister_class
 	for cls in reversed(classes):
 		unregister_class(cls)
@@ -959,4 +1097,7 @@ def unregister():
 	bpy.app.handlers.undo_pre.remove(undo)
 
 if __name__ == "__main__":
+	'''
+	Run mainloop and register all blender specific stuff.
+	'''
 	register()
