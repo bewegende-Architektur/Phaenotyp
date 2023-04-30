@@ -43,13 +43,14 @@ class phaenotyp_properties(PropertyGroup):
 		name = "calculation_type",
 		description = "Calculation types",
 		items = [
+				("-", "-", ""),
 				("geometrical", "Geometrical", ""),
 				("force_distribution", "Force distribution", ""),
 				("first_order", "First order", ""),
 				("first_order_linear", "First order linear", ""),
 				("second_order", "Second order", "")
 				],
-		default = "first_order",
+		default = "-",
 		update = basics.force_distribution_info
 		)
 

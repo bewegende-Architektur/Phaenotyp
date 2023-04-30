@@ -37,62 +37,63 @@ def set_structure():
 		else:
 			text = ["Select multiple curves or a mesh only."]
 			basics.popup(lines = text)
-
+	
+	# convert if meta
 	if obj.type == 'META':
 		text = ["The selection is of type meta.",
 			"Should Phaenotyp try to convert the selection to mesh?"]
 		basics.popup_operator(lines=text, operator="wm.fix_structure", text="Meta to mesh")
 		geometry.to_be_fixed = "meta_to_mesh"
 
-	# one object
+	# convert if curve
+	elif obj.type == 'CURVE':
+		text = ["The selection is of typ curve.",
+			"Should Phaenotyp try to convert the selection to mesh?"]
+		basics.popup_operator(lines=text, operator="wm.fix_structure", text="Convert curve to mesh")
+		geometry.to_be_fixed = "curve_to_mesh"
+		
+	# continue
 	else:
-		# mesh or curve
-		if obj.type not in ['CURVE', 'MESH']:
-			text = ["Select multiple curves or a mesh only."]
+		# if not mesh (camera, lamp, ...)
+		if obj.type != 'MESH':
+			text = ["Select multiple curves, metaball or a mesh only."]
 			basics.popup(lines = text)
 
 		else:
-			if obj.type == 'CURVE':
-				text = ["The selection is of typ curve.",
-					"Should Phaenotyp try to convert the selection to mesh?"]
-				basics.popup_operator(lines=text, operator="wm.fix_structure", text="Convert curve to mesh")
-				geometry.to_be_fixed = "curve_to_mesh"
+			bpy.ops.object.mode_set(mode="EDIT")
 
+			amount_of_mesh_parts = geometry.amount_of_mesh_parts()
+			amount_of_loose_parts = geometry.amount_of_loose_parts()
+			
+			if amount_of_mesh_parts > 1:
+				text = [
+					"The mesh contains " + str(amount_of_mesh_parts) + " parts.",
+					"Should Phaenotyp try to fix this?"]
+				basics.popup_operator(lines=text, operator="wm.fix_structure", text="Delete or seperate loose parts")
+				geometry.to_be_fixed = "seperate_by_loose"
+
+			elif amount_of_loose_parts > 0:
+				text = [
+					"The mesh contains loose elements: " + str(amount_of_loose_parts),
+					"Should Phaenotyp try to fix this?"]
+				basics.popup_operator(lines=text, operator="wm.fix_structure", text="Delete loose parts")
+				geometry.to_be_fixed = "delete_loose"
+
+			# everything looks ok
 			else:
-				bpy.ops.object.mode_set(mode="EDIT")
+				# crete / recreate collection
+				basics.delete_col_if_existing("<Phaenotyp>")
+				collection = bpy.data.collections.new("<Phaenotyp>")
+				bpy.context.scene.collection.children.link(collection)
 
-				amount_of_mesh_parts = geometry.amount_of_mesh_parts()
-				amount_of_loose_parts = geometry.amount_of_loose_parts()
+				basics.create_data()
 
-				if amount_of_mesh_parts > 1:
-					text = [
-						"The mesh contains " + str(amount_of_mesh_parts) + " parts.",
-						"Should Phaenotyp try to fix this?"]
-					basics.popup_operator(lines=text, operator="wm.fix_structure", text="Delete or seperate loose parts")
-					geometry.to_be_fixed = "seperate_by_loose"
+				geometry.to_be_fixed = None
+				data = scene["<Phaenotyp>"]
+				data["structure"] = obj
 
-				elif amount_of_loose_parts > 0:
-					text = [
-						"The mesh contains loose elements: " + str(amount_of_loose_parts),
-						"Should Phaenotyp try to fix this?"]
-					basics.popup_operator(lines=text, operator="wm.fix_structure", text="Delete loose parts")
-					geometry.to_be_fixed = "delete_loose"
-
-				# everything looks ok
-				else:
-					# crete / recreate collection
-					basics.delete_col_if_existing("<Phaenotyp>")
-					collection = bpy.data.collections.new("<Phaenotyp>")
-					bpy.context.scene.collection.children.link(collection)
-
-					basics.create_data()
-
-					geometry.to_be_fixed = None
-					data = scene["<Phaenotyp>"]
-					data["structure"] = obj
-
-					# check for scipy
-					calculation.check_scipy()
+				# check for scipy
+				calculation.check_scipy()
 
 def fix_structure():
 	if geometry.to_be_fixed == "seperate_by_loose":
@@ -1809,7 +1810,7 @@ def reset():
 	basics.revert_vertex_colors()
 
 	# change props
-	phaenotyp.calculation_type = "first_order"
+	phaenotyp.calculation_type = "-"
 
 	# reset panel
 	panel.state.structure = False

@@ -17,6 +17,7 @@ class grayed_out:
 	and can not be hidden from within the function
 	'''
 	scipy = False
+	calculation_type = False
 	supports = False
 	members = False
 	laods = False
@@ -108,8 +109,11 @@ def calculation_type(layout):
 		box_calculation_type.prop(phaenotyp, "calculation_type", text="")
 
 		calculation_type = phaenotyp.calculation_type
-
-		if state.calculation_type == False:
+		
+		# gray out panel if defined
+		if calculation_type != "-":
+			state.calculation_type = True
+			grayed_out.calculation_type = True
 			box_calculation_type.enabled = False
 
 def supports(layout):
@@ -123,7 +127,7 @@ def supports(layout):
 	frame = scene.frame_current
 	data = bpy.context.scene.get("<Phaenotyp>")
 
-	if state.structure:
+	if state.structure and state.calculation_type:
 		# define support
 		box_supports = layout.box()
 		box_supports.label(text="Support:")
@@ -386,6 +390,7 @@ def single_frame(layout):
 	phaenotyp = scene.phaenotyp
 	frame = scene.frame_current
 	data = bpy.context.scene.get("<Phaenotyp>")
+	calculation_type = phaenotyp.calculation_type
 
 	if state.file and state.members:
 		if calculation_type != "geometrical":
@@ -433,6 +438,7 @@ def animation(layout):
 	phaenotyp = scene.phaenotyp
 	frame = scene.frame_current
 	data = bpy.context.scene.get("<Phaenotyp>")
+	calculation_type = phaenotyp.calculation_type
 
 	if state.file and state.members:
 		if calculation_type != "geometrical":
@@ -465,6 +471,7 @@ def bruteforce(layout):
 	phaenotyp = scene.phaenotyp
 	frame = scene.frame_current
 	data = bpy.context.scene.get("<Phaenotyp>")
+	calculation_type = phaenotyp.calculation_type
 
 	if state.file and state.members:
 		shape_key = data["structure"].data.shape_keys
@@ -473,7 +480,7 @@ def bruteforce(layout):
 			box_ga.label(text="Bruteforce:")
 			box_ga.label(text="Please set shape keys first.")
 		else:
-			if phaenotyp.calculation_type != "geometrical":
+			if calculation_type != "geometrical":
 				box_optimization = layout.box()
 				box_optimization.label(text="Optimization:")
 				if calculation_type == "force_distribution":
@@ -560,6 +567,7 @@ def genetic_algorithm(layout):
 	phaenotyp = scene.phaenotyp
 	frame = scene.frame_current
 	data = bpy.context.scene.get("<Phaenotyp>")
+	calculation_type = phaenotyp.calculation_type
 
 	if state.file and state.members:
 		shape_key = data["structure"].data.shape_keys
@@ -576,7 +584,7 @@ def genetic_algorithm(layout):
 			box_ga.prop(phaenotyp, "elitism", text="Size of elitism for GA")
 			box_ga.prop(phaenotyp, "generation_amount", text="Amount of generations")
 
-			if phaenotyp.calculation_type != "geometrical":
+			if calculation_type != "geometrical":
 				box_optimization = layout.box()
 				box_optimization.label(text="Optimization:")
 				if calculation_type == "force_distribution":
@@ -666,6 +674,7 @@ def gradient_descent(layout):
 	phaenotyp = scene.phaenotyp
 	frame = scene.frame_current
 	data = bpy.context.scene.get("<Phaenotyp>")
+	calculation_type = phaenotyp.calculation_type
 
 	if state.file and state.members:
 		shape_key = data["structure"].data.shape_keys
@@ -682,7 +691,7 @@ def gradient_descent(layout):
 			box_gd.prop(phaenotyp, "gd_abort", text="Abort")
 			box_gd.prop(phaenotyp, "gd_max_iteration", text="Max iteration")
 
-			if phaenotyp.calculation_type != "geometrical":
+			if calculation_type != "geometrical":
 				box_optimization = layout.box()
 				box_optimization.label(text="Optimization:")
 				if calculation_type == "force_distribution":
