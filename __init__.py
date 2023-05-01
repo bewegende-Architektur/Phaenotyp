@@ -524,17 +524,17 @@ class phaenotyp_properties(PropertyGroup):
 	gd_delta: FloatProperty(
 		name = "gd_delta",
 		description="Step size for gradient.",
-		default = 0.01,
-		min = 0.001,
-		max = 0.1
+		default = 0.1,
+		min = 0.01,
+		max = 0.2
 		)
 
 	gd_learning_rate: FloatProperty(
 		name = "gd_learning_rate",
 		description="Learning rate.",
-		default = 0.005,
-		min = 0.001,
-		max = 0.01
+		default = 0.05,
+		min = 0.01,
+		max = 0.1
 		)
 
 	gd_abort: FloatProperty(
@@ -1042,17 +1042,14 @@ def update_post(scene):
 			if result:
 				geometry.update_members_post()
 
-		# apply chromosome if available
-		individuals = data.get("individuals")
-		if individuals:
-			try:
-				shape_keys = data.shape_keys
-				chromosome = data.chromosome[str(frame)]
-				geometry.set_shape_keys(shape_keys, chromosome)
-			except:
-				pass
+	# apply chromosome if available
+	# (to change the shape-key, the result will be correct allready)
+	individuals = data.get("individuals")
+	if individuals:
+		shape_keys = data["structure"].data.shape_keys.key_blocks
+		chromosome = individuals[str(frame)]["chromosome"]
+		geometry.set_shape_keys(shape_keys, chromosome)
 
-# disabled because of weird results
 @persistent
 def undo(scene):
 	'''

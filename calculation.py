@@ -48,12 +48,11 @@ def prepare_fea_pn():
 	truss = FEModel3D()
 
 	# apply chromosome if available
-	try:
-		shape_keys = data.shape_keys
-		chromosome = data.chromosome[str(frame)]
+	individuals = data.get("individuals")
+	if individuals:
+		shape_keys = data["structure"].data.shape_keys.key_blocks
+		chromosome = individuals[str(frame)]["chromosome"]
 		geometry.set_shape_keys(shape_keys, chromosome)
-	except:
-		pass
 
 	# get absolute position of vertex (when using shape-keys, animation et cetera)
 	dg = bpy.context.evaluated_depsgraph_get()
@@ -249,12 +248,11 @@ def prepare_fea_fd():
 	frame = bpy.context.scene.frame_current
 
 	# apply chromosome if available
-	try:
-		shape_keys = data.shape_keys
-		chromosome = data.chromosome[str(frame)]
+	individuals = data.get("individuals")
+	if individuals:
+		shape_keys = data["structure"].data.shape_keys.key_blocks
+		chromosome = individuals[str(frame)]["chromosome"]
 		geometry.set_shape_keys(shape_keys, chromosome)
-	except:
-		pass
 
 	# get absolute position of vertex (when using shape-keys, animation et cetera)
 	dg = bpy.context.evaluated_depsgraph_get()

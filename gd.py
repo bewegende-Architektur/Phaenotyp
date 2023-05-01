@@ -9,7 +9,7 @@ def print_data(text):
 	"""
 	print("Phaenotyp |", text)
 
-def generate_basis():
+def generate_basis(chromosome):
 	'''
 	Generate the basis individual to work with.
 	The fitness of all others are weighted with this first individual.
@@ -36,18 +36,14 @@ def generate_basis():
 		run_st = calculation.run_st_fd
 		interweave_results = calculation.interweave_results_fd
 
-	# create chromosome
-	chromosome = []
-	for id, key in enumerate(shape_keys):
-		if id > 0: # to exlude basis
-			gene = 0.5
-			chromosome.append(gene)
-
 	# update scene
 	frame = 0
 	bpy.context.scene.frame_start = frame
 	bpy.context.scene.frame_current = frame
 	bpy.context.view_layer.update()
+
+	# apply shape keys
+	geometry.set_shape_keys(shape_keys, chromosome)
 
 	# create indiviual
 	individual = {}
@@ -114,6 +110,9 @@ def make_step(chromosome, frame):
 	bpy.context.scene.frame_current = frame
 	bpy.context.view_layer.update()
 	
+	# apply shape keys
+	geometry.set_shape_keys(shape_keys, chromosome)
+	
 	# create indivual
 	individual = {}
 	individual["name"] = str(frame) # individuals are identified by frame
@@ -159,7 +158,7 @@ def make_step(chromosome, frame):
 	gd = individuals[str(frame)]
 	fitness = gd["fitness"]["weighted"]
 
-	text = "Step " + gd["name"] + " with fitness: " + str(fitness) + "\n"
+	text = "Step " + gd["name"] + " with fitness: " + str(fitness)
 	print_data(text)
 
 	return gd, fitness
@@ -179,18 +178,15 @@ def start():
 	individuals = data["individuals"]
 
 	# get data from gui
-	delta = phaenotyp.gd_delta * 10 # scale from 0.0 and 1.0 to 0 and 10
-	learning_rate = phaenotyp.gd_learning_rate * 10
+	delta = phaenotyp.gd_delta
+	learning_rate = phaenotyp.gd_learning_rate
 	abort = phaenotyp.gd_abort
 	maxiteration = phaenotyp.gd_max_iteration
 
-	progress.http.reset_pci(phaenotyp.gd_max_iteration+1)
+	progress.http.reset_pci(maxiteration * (len(shape_keys)-1) + 1 + maxiteration)
 	if phaenotyp.optimization_pn != "none" or phaenotyp.optimization_fd != "none":
 		progress.http.reset_o(phaenotyp.optimization_amount)
 	
-	# generate_basis for fitness
-	generate_basis()
-
 	# set frame to 0
 	frame = 0
 
@@ -200,8 +196,11 @@ def start():
 	chromosome_start = []
 	slope = [0]
 	for i in range(len(shape_keys)-1):
-		chromosome_start.append(5)
+		chromosome_start.append(0.5)
 		slope.append(0)
+
+	# generate_basis for fitness
+	generate_basis(chromosome_start)
 
 	text = "Starting at: " + str(chromosome_start) + "\n"
 	print_data(text)
@@ -251,12 +250,13 @@ def start():
 		print_data(text)
 
 		vector = (np.linalg.norm(slope))*learning_rate
-		text = "Vector: " + str(vector)
+		text = "Vector: " + str(vector) + "\n"
 		print_data(text)
 
 		iteration += 1
 
-		#if vector < abort:
+		if vector < abort:
 			# set frame to end
-			#bpy.context.scene.frame_end = frame
-			#break
+			break
+		
+	bpy.context.scene.frame_end = frame
