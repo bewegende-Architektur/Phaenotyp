@@ -48,7 +48,12 @@ def prepare_fea_pn():
 	truss = FEModel3D()
 
 	# apply chromosome if available
-	geometry.set_shape_keys(data)
+	try:
+		shape_keys = data.shape_keys
+		chromosome = data.chromosome[str(frame)]
+		geometry.set_shape_keys(shape_keys, chromosome)
+	except:
+		pass
 
 	# get absolute position of vertex (when using shape-keys, animation et cetera)
 	dg = bpy.context.evaluated_depsgraph_get()
@@ -244,7 +249,12 @@ def prepare_fea_fd():
 	frame = bpy.context.scene.frame_current
 
 	# apply chromosome if available
-	geometry.set_shape_keys(data)
+	try:
+		shape_keys = data.shape_keys
+		chromosome = data.chromosome[str(frame)]
+		geometry.set_shape_keys(shape_keys, chromosome)
+	except:
+		pass
 
 	# get absolute position of vertex (when using shape-keys, animation et cetera)
 	dg = bpy.context.evaluated_depsgraph_get()
@@ -1206,10 +1216,12 @@ def sectional_optimization(start, end):
 				complex_sectional()
 
 		# apply shape keys
-		chromosome = individuals[str(frame)]["chromosome"]
-		for id, key in enumerate(shape_keys):
-			if id > 0: # to exlude basis
-				key.value = chromosome[id-1]*0.1
+		try:
+			shape_keys = data.shape_keys
+			chromosome = data.chromosome[str(frame)]
+			geometry.set_shape_keys(shape_keys, chromosome)
+		except:
+			pass
 
 		# calculate new properties for each member
 		geometry.update_members_pre()

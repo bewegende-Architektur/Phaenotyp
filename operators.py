@@ -1088,7 +1088,7 @@ def bf_start():
 
 	print_data("Start bruteforce over selected shape keys")
 
-	data["environment"]["genes"] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+	data["environment"]["genes"] = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
 	data["individuals"] = {}
 	individuals = data["individuals"]
 
@@ -1186,7 +1186,7 @@ def ga_start():
 	# clear to restart
 	data["environment"]["generations"] = {}
 	data["environment"]["generation_id"] = 0
-	data["environment"]["genes"] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+	data["environment"]["genes"] = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
 	data["individuals"] = {}
 
 	# shorten
@@ -1326,7 +1326,7 @@ def ranking():
 
 	scene = bpy.context.scene
 	phaenotyp = scene.phaenotyp
-	ranking_pos = phaenotyp.ga_ranking
+	ranking_pos = phaenotyp.ranking
 
 	data = scene["<Phaenotyp>"]
 	# turns ga off, if user interrupted the process

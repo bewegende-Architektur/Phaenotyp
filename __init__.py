@@ -1045,11 +1045,12 @@ def update_post(scene):
 		# apply chromosome if available
 		individuals = data.get("individuals")
 		if individuals:
-			shape_keys = data["structure"].data.shape_keys.key_blocks
-			chromosome = individuals[str(frame)]["chromosome"]
-			for id, key in enumerate(shape_keys):
-				if id > 0: # to exlude basis
-					key.value = chromosome[id-1]*0.1
+			try:
+				shape_keys = data.shape_keys
+				chromosome = data.chromosome[str(frame)]
+				geometry.set_shape_keys(shape_keys, chromosome)
+			except:
+				pass
 
 # disabled because of weird results
 @persistent

@@ -268,14 +268,11 @@ def cantilever(vertices, supports):
 
 	return frame_cantilever
 
-def set_shape_keys(data):
-	try:
-		for id, key in enumerate(data.shape_keys):
-			v = data.chromosome[str(frame)][id]
-			key.value = v
-	except:
-		pass
-
+def set_shape_keys(shape_keys, chromosome):
+	for id, key in enumerate(shape_keys):
+		if id > 0: # to exlude basis
+			key.value = chromosome[id-1]
+			
 def create_supports(structure_obj, supports):
 	mesh = bpy.data.meshes.new("<Phaenotyp>support")
 	obj = bpy.data.objects.new(mesh.name, mesh)

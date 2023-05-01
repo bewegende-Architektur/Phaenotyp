@@ -36,14 +36,12 @@ def generate_basis():
 		run_st = calculation.run_st_fd
 		interweave_results = calculation.interweave_results_fd
 
-	# create list of trusses
-	trusses = {}
-
-	# create chromosome all set to 0
+	# create chromosome
 	chromosome = []
-	for gnome_len in range(len(shape_keys)-1): # -1 to exlude basis
-		gene = 0
-		chromosome.append(gene)
+	for id, key in enumerate(shape_keys):
+		if id > 0: # to exlude basis
+			gene = 0.5
+			chromosome.append(gene)
 
 	# update scene
 	frame = 0
@@ -74,7 +72,7 @@ def generate_basis():
 		interweave_results = calculation.interweave_results_fd
 		
 		optimization_type = phaenotyp.optimization_fd
-
+	
 	# calculate frame
 	geometry.update_members_pre()
 	truss = prepare_fea()
@@ -112,11 +110,10 @@ def make_step(chromosome, frame):
 	bpy.context.scene.frame_current = frame
 	bpy.context.view_layer.update()
 
-	# apply shape keys
-	for id, key in enumerate(shape_keys):
-		if id > 0: # to exlude basis
-			key.value = chromosome[id-1]*0.1
-
+	# update frame
+	bpy.context.scene.frame_current = frame
+	bpy.context.view_layer.update()
+	
 	# create indivual
 	individual = {}
 	individual["name"] = str(frame) # individuals are identified by frame
@@ -140,7 +137,7 @@ def make_step(chromosome, frame):
 		interweave_results = calculation.interweave_results_fd
 		
 		optimization_type = phaenotyp.optimization_fd
-
+	
 	# calculate frame
 	geometry.update_members_pre()
 	truss = prepare_fea()
@@ -182,8 +179,8 @@ def start():
 	individuals = data["individuals"]
 
 	# get data from gui
-	delta = phaenotyp.gd_delta
-	learning_rate = phaenotyp.gd_learning_rate
+	delta = phaenotyp.gd_delta * 10 # scale from 0.0 and 1.0 to 0 and 10
+	learning_rate = phaenotyp.gd_learning_rate * 10
 	abort = phaenotyp.gd_abort
 	maxiteration = phaenotyp.gd_max_iteration
 
@@ -203,7 +200,7 @@ def start():
 	chromosome_start = []
 	slope = [0]
 	for i in range(len(shape_keys)-1):
-		chromosome_start.append(0.5)
+		chromosome_start.append(5)
 		slope.append(0)
 
 	text = "Starting at: " + str(chromosome_start) + "\n"
@@ -259,5 +256,7 @@ def start():
 
 		iteration += 1
 
-		if vector < abort:
-			break
+		#if vector < abort:
+			# set frame to end
+			#bpy.context.scene.frame_end = frame
+			#break

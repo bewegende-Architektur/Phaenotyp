@@ -13,7 +13,7 @@ def print_data(text):
 def create_indivdual(chromosome, parent_1, parent_2):
 	"""
 	Creates an individual for bruteforce mode.
-	:param chromosome: The chromosome is a list of floats from 0 to 10.
+	:param chromosome: The chromosome is a list of floats from 0 to 1.
 	:parent_1: The first parent as class instance individual.
 	:parent_2: The second parent as class instance individual.
 	"""
@@ -29,9 +29,7 @@ def create_indivdual(chromosome, parent_1, parent_2):
 	individuals = data["individuals"]
 
 	# apply shape keys
-	for id, key in enumerate(shape_keys):
-		if id > 0: # to exlude basis
-			key.value = chromosome[id-1]*0.1
+	geometry.set_shape_keys(shape_keys, chromosome)
 
 	individual = {}
 	individual["name"] = str(frame) # individuals are identified by frame

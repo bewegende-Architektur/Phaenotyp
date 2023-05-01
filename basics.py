@@ -130,12 +130,16 @@ def view_vertex_colors():
 	Change view to show colored material.
 	'''
 	bpy.context.space_data.shading.type = 'MATERIAL'
+	# go to object-mode to avoid confusion
+	bpy.ops.object.mode_set(mode="OBJECT")
 
 def revert_vertex_colors():
 	'''
 	Change view to solid.
 	'''
 	bpy.context.space_data.shading.type = 'SOLID'
+	# go to object-mode to avoid confusion
+	bpy.ops.object.mode_set(mode="OBJECT")
 
 def popup(title = "Phaenotyp", lines=""):
 	'''
