@@ -134,7 +134,24 @@ def prepare_fea_pn():
 		node_1 = str("node_") + str(vertex_1_id)
 		material_name = member["material_name"]
 		
-		truss.add_member(name, node_0, node_1, material_name, member["Iy"][str(frame)], member["Iz"][str(frame)], member["J"][str(frame)], member["A"][str(frame)])
+		if member["type"] == "full":
+			tension_only = False
+			comp_only = False
+
+		if member["type"] == "tension_only":
+			tension_only = True
+			comp_only = False
+		
+		if member["type"] == "comp_only":
+			tension_only = False
+			comp_only = True
+				
+		truss.add_member(
+			name, node_0, node_1, material_name,
+			member["Iy"][str(frame)], member["Iz"][str(frame)],
+			member["J"][str(frame)], member["A"][str(frame)],
+			tension_only=tension_only, comp_only=comp_only,
+			)
 
 		# add self weight
 		kg_A = member["kg_A"][str(frame)]

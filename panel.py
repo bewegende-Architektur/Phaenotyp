@@ -182,6 +182,8 @@ def members(layout):
 		# (because a property can not be set in gui)
 		material.current["Do"] = phaenotyp.Do * 0.1
 		material.current["Di"] = phaenotyp.Di * 0.1
+		
+		box_members.prop(phaenotyp, "member_type", text="")
 
 		box_members.prop(phaenotyp, "material", text="")
 		if phaenotyp.material == "custom":

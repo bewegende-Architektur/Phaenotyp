@@ -2,7 +2,7 @@ bl_info = {
 	"name": "Phänotyp",
 	"description": "Genetic algorithm for architectural structures",
 	"author": "bewegende Architektur e.U. and Karl Deix",
-	"version": (0, 1, 9),
+	"version": (0, 2, 0),
 	"blender": (3, 5, 0),
 	"location": "3D View > Tools",
 }
@@ -70,6 +70,16 @@ class phaenotyp_properties(PropertyGroup):
 		max = 1000.0
 		)
 
+	member_type: EnumProperty(
+		name = "member_type",
+		description = "Type of member",
+		items = [
+				("full", "Full", ""),
+				("tension_only", "Tension only", ""),
+				("comp_only", "Compression only", "")
+			   ]
+		)
+	
 	material: EnumProperty(
 		name = "material",
 		description = "Predefined materials",
@@ -921,7 +931,7 @@ class OBJECT_PT_Phaenotyp(Panel):
 	'''
 	Panel for Phaenotyp.
 	'''
-	bl_label = "Phänotyp 0.1.9"
+	bl_label = "Phänotyp 0.2.0"
 	bl_idname = "OBJECT_PT_custom_panel"
 	bl_space_type = "VIEW_3D"
 	bl_region_type = "UI"

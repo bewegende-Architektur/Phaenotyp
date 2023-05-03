@@ -295,6 +295,8 @@ def set_member():
 				member["Do_first"] = material.current["Do"] # from gui
 				member["Di_first"] = material.current["Di"] # from fui
 
+				member["type"] = phaenotyp.member_type # from gui
+				
 				member["Iy"] = {}
 				member["Iz"] = {}
 				member["J"] = {}
