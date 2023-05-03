@@ -246,6 +246,9 @@ def start():
 				chromosome_current[key_id] = 1
 				slope[key_id] = 0
 
+		text = "Iteration: " + str(iteration) + "|"+  str(maxiteration)
+		print_data(text)
+		
 		text = "New step: " + str(chromosome_current)
 		print_data(text)
 
@@ -256,7 +259,8 @@ def start():
 		iteration += 1
 
 		if vector < abort:
-			# set frame to end
+			text = "Goal reached"
+			print_data(text)
 			break
 		
 	bpy.context.scene.frame_end = frame
