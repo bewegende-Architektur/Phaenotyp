@@ -44,7 +44,7 @@ https://youtu.be/F5ilsBDoIkY
 * follow steps from Installation
 
 ## Compatibility
-Please be aware that the we focuse on the latest version of Blender 3D only. Right now this is 3.4.1. Any version before geometry nodes is not supported. We are testing Phänotyp on linux and windows only. Anyway: We recevied possitive feedback, that it is running on mac also. Just drop an issue via github, if you face any issues.
+Please be aware that we focuse on the latest version of Blender 3D only. Right now this is 3.5. Any version before geometry nodes is not supported. We are testing Phänotyp on linux and windows only. Anyway: We recevied possitive feedback, that it is running on mac also. Just drop an issue via github, if you face any issues.
 
 ## Wiki
 Finde further infos and examples:  
