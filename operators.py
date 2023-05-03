@@ -279,7 +279,8 @@ def set_member():
 				member["acceptable_torsion"] = material.current["acceptable_torsion"] # from gui
 				member["acceptable_sigmav"] = material.current["acceptable_sigmav"] # from gui
 				member["knick_model"] = material.current["knick_model"] # from gui
-
+				
+				member["material_name"] = material.current["material_name"]
 				member["E"] = material.current["E"] # from gui
 				member["G"] = material.current["G"] # from gui
 				member["d"] = material.current["d"] # from gui

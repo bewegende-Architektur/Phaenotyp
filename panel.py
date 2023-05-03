@@ -194,7 +194,8 @@ def members(layout):
 			box_members.prop(phaenotyp, "acceptable_torsion", text="Acceptable torsion")
 			box_members.prop(phaenotyp, "acceptable_sigmav", text="Acceptable sigmav")
 			box_members.prop(phaenotyp, "ir", text="Ir")
-
+			
+			material.current["material_name"] = "custom"
 			material.current["E"] = phaenotyp.E
 			material.current["G"] = phaenotyp.G
 			material.current["d"] = phaenotyp.d
@@ -210,6 +211,8 @@ def members(layout):
 				if phaenotyp.material == mat[0]: # select correct material
 					# current setting passed from gui
 					# (because a property can not be set in gui)
+					
+					material.current["material_name"] = mat[0]					
 					material.current["E"] = mat[2]
 					material.current["G"] = mat[3]
 					material.current["d"] = mat[4]

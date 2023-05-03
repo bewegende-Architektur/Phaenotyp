@@ -47,6 +47,14 @@ def prepare_fea_pn():
 
 	truss = FEModel3D()
 
+	for mat in material.library:
+		name = mat[0]
+		E = mat[2]
+		G = mat[3]
+		nu = None # replace later
+		rho = None # replace later
+		truss.add_material(name, E, G, nu, rho)
+
 	# apply chromosome if available
 	individuals = data.get("individuals")
 	if individuals:
@@ -124,8 +132,9 @@ def prepare_fea_pn():
 
 		node_0 = str("node_") + str(vertex_0_id)
 		node_1 = str("node_") + str(vertex_1_id)
-
-		truss.add_member(name, node_0, node_1, member["E"], member["G"], member["Iy"][str(frame)], member["Iz"][str(frame)], member["J"][str(frame)], member["A"][str(frame)])
+		material_name = member["material_name"]
+		
+		truss.add_member(name, node_0, node_1, material_name, member["Iy"][str(frame)], member["Iz"][str(frame)], member["J"][str(frame)], member["A"][str(frame)])
 
 		# add self weight
 		kg_A = member["kg_A"][str(frame)]
