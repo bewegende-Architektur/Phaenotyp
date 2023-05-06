@@ -543,8 +543,8 @@ class phaenotyp_properties(PropertyGroup):
 		name = "gd_learning_rate",
 		description="Learning rate.",
 		default = 0.05,
-		min = 0.01,
-		max = 0.1
+		min = 0.05,
+		max = 0.5
 		)
 
 	gd_abort: FloatProperty(
@@ -558,9 +558,9 @@ class phaenotyp_properties(PropertyGroup):
 	gd_max_iteration: IntProperty(
 		name = "gd_max_iteration",
 		description="Max number of iteration to avoid endless loop.",
-		default = 20,
+		default = 100,
 		min = 10,
-		max = 100
+		max = 1000
 		)
 
 class WM_OT_set_structure(Operator):
