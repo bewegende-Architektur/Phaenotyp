@@ -87,7 +87,7 @@ def generate_basis(chromosome):
 	calculation.calculate_fitness(frame, frame+1)
 	individuals["0"]["fitness"]["weighted"] = 1
 
-def make_step(chromosome, frame):
+def make_step_st(chromosome, frame):
 	'''
 	Make a step with the adapted chromosome.
 	:paramm chromosome: List of floats from 0 to 10.
@@ -158,7 +158,7 @@ def make_step(chromosome, frame):
 	gd = individuals[str(frame)]
 	fitness = gd["fitness"]["weighted"]
 
-	text = "Step " + gd["name"] + " with fitness: " + str(fitness)
+	text = "Step " + gd["name"] + " with fitness: " + str(round(fitness, 3))
 	print_data(text)
 
 	return gd, fitness
@@ -201,8 +201,9 @@ def start():
 
 	# generate_basis for fitness
 	generate_basis(chromosome_start)
-
-	text = "Starting at: " + str(chromosome_start) + "\n"
+	
+	rounded_chromosome = [round(num, 3) for num in chromosome_start]
+	text = "Starting at: " + str(rounded_chromosome) + "\n"
 	print_data(text)
 	chromosome_current = chromosome_start
 
@@ -212,7 +213,7 @@ def start():
 		frame += 1
 
 		# make step
-		gd, fitness = make_step(chromosome_current, frame)
+		gd, fitness = make_step_st(chromosome_current, frame)
 
 		# pass old fitness
 		fitness_old = fitness
@@ -229,7 +230,7 @@ def start():
 			chromosome[key_id] += delta
 
 			# make next step
-			gd, fitness = make_step(chromosome, frame)
+			gd, fitness = make_step_st(chromosome, frame)
 			
 			# with  multiprocessing
 			#truss = make_step(chromosome, frame)
@@ -237,7 +238,7 @@ def start():
 			# calculate slope
 			# (in new loop with multiprocessing)
 			slope[key_id] = (fitness - fitness_old) / delta
-			text = "Slope of key " + str(key_id) + str(slope[key_id])
+			text = "Slope of key " + str(key_id) + " = " + str(round(slope[key_id], 3))
 			print_data(text)
 
 			# new direction
@@ -257,11 +258,12 @@ def start():
 		text = "Iteration: " + str(iteration) + "|"+  str(maxiteration)
 		print_data(text)
 		
-		text = "New step: " + str(chromosome_current)
+		rounded_chromosome = [round(num, 3) for num in chromosome_current]
+		text = "New step: " + str(rounded_chromosome)
 		print_data(text)
 
 		vector = (np.linalg.norm(slope))*learning_rate
-		text = "Vector: " + str(vector) + "\n"
+		text = "Vector: " + str(round(vector, 3)) + "\n"
 		print_data(text)
 
 		iteration += 1
