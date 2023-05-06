@@ -429,8 +429,8 @@ class phaenotyp_properties(PropertyGroup):
 					("single_frame", "Single frame", ""),
 					("animation", "Animation", ""),
 					("bruteforce", "Bruteforce", ""),
-					("genetic_algorithm", "Genetic algorithm", ""),
-					("gradient_descent", "Gradient descent", "")
+					("gradient_descent", "Gradient descent", ""),
+					("genetic_algorithm", "Genetic algorithm", "")
 			   ],
 		default = "single_frame"
 		)

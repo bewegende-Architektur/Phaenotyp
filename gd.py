@@ -190,14 +190,14 @@ def start():
 	# set frame to 0
 	frame = 0
 
-	# starting point with all genes set to 0.5
-	# for three shape keys this is [0.5, 0.5, 0.5]
-	# (unlike the basis for fitness with all genes 0)
+	# starting point the current set of values
 	chromosome_start = []
-	slope = [0]
-	for i in range(len(shape_keys)-1):
-		chromosome_start.append(0.5)
-		slope.append(0)
+	slope = []
+	for id, key in enumerate(shape_keys):
+		if id > 0:
+			v = key.value
+			chromosome_start.append(v)
+			slope.append(0)
 
 	# generate_basis for fitness
 	generate_basis(chromosome_start)
