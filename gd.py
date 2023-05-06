@@ -230,8 +230,12 @@ def start():
 
 			# make next step
 			gd, fitness = make_step(chromosome, frame)
+			
+			# with  multiprocessing
+			#truss = make_step(chromosome, frame)
 
 			# calculate slope
+			# (in new loop with multiprocessing)
 			slope[key_id] = (fitness - fitness_old) / delta
 			text = "Slope of key " + str(key_id) + str(slope[key_id])
 			print_data(text)
@@ -245,6 +249,10 @@ def start():
 			if chromosome_current[key_id] > 1:
 				chromosome_current[key_id] = 1
 				slope[key_id] = 0
+		
+		# with multiprocessing
+		# second loop
+		# current_frame - frame of fea = id of slope
 
 		text = "Iteration: " + str(iteration) + "|"+  str(maxiteration)
 		print_data(text)
