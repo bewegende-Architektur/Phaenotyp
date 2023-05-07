@@ -891,14 +891,17 @@ def report(layout):
 	else:
 		box_report.label(text="No report for members, frames or combined available in geometrical mode.")
 
-	# if ga
-	environment = data.get("environment")
-	if environment:
+	# if ga or gd
+	individuals = data.get("individuals")
+	if individuals:
+		box_report.operator("wm.report_chromosomes", text="chromosomes")
+	
+		# if ga
+		environment = data.get("environment")
 		ga_available = environment.get("generations")
 		if ga_available:
-			box_report.operator("wm.report_chromosomes", text="chromosomes")
 			box_report.operator("wm.report_tree", text="tree")
-
+			
 def reset(layout):
 	'''
 	Panel for reset.
