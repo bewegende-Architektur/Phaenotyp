@@ -396,4 +396,10 @@ def start():
 			print_data(text)
 			break
 		
+	# update frame
+	frame += 1
+	
+	# make step and optimize afterwards
+	gd, fitness = make_step_st(chromosome_current, frame)
+		
 	bpy.context.scene.frame_end = frame
