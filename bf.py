@@ -54,13 +54,11 @@ def generate_basis():
 	# for PyNite
 	if phaenotyp.calculation_type != "force_distribution":
 		prepare_fea = calculation.prepare_fea_pn
-		run_st = calculation.run_st_pn
 		interweave_results = calculation.interweave_results_pn
 
 	# for force distribuion
 	else:
 		prepare_fea = calculation.prepare_fea_fd
-		run_st = calculation.run_st_fd
 		interweave_results = calculation.interweave_results_fd
 
 	# create list of trusses
@@ -113,13 +111,11 @@ def bruteforce(chromosomes):
 	# for PyNite
 	if phaenotyp.calculation_type != "force_distribution":
 		prepare_fea = calculation.prepare_fea_pn
-		run_st = calculation.run_st_pn
 		interweave_results = calculation.interweave_results_pn
 
 	# for force distribuion
 	else:
 		prepare_fea = calculation.prepare_fea_fd
-		run_st = calculation.run_st_fd
 		interweave_results = calculation.interweave_results_fd
 
 	# for progress

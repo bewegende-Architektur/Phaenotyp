@@ -751,23 +751,22 @@ def calculate_single_frame():
 	# for PyNite
 	if phaenotyp.calculation_type != "force_distribution":
 		prepare_fea = calculation.prepare_fea_pn
-		run_st = calculation.run_st_pn
 		interweave_results = calculation.interweave_results_pn
 
 	# for force distribuion
 	else:
 		prepare_fea = calculation.prepare_fea_fd
-		run_st = calculation.run_st_fd
 		interweave_results = calculation.interweave_results_fd
 
 	# calculate new properties for each member
 	geometry.update_members_pre()
 
-	# created a truss object of PyNite and add to dict
-	truss = prepare_fea()
+	# created a truss object
+	trusses = {}
+	trusses[str(frame)] = prepare_fea()
 
 	# run singlethread and get results
-	feas = run_st(truss, frame)
+	feas = calculation.run_mp(trusses)
 
 	# wait for it and interweave results to data
 	interweave_results(feas, members)
@@ -787,13 +786,11 @@ def calculate_animation():
 	# for PyNite
 	if phaenotyp.calculation_type != "force_distribution":
 		prepare_fea = calculation.prepare_fea_pn
-		run_st = calculation.run_st_pn
 		interweave_results = calculation.interweave_results_pn
 
 	# for force distribuion
 	else:
 		prepare_fea = calculation.prepare_fea_fd
-		run_st = calculation.run_st_fd
 		interweave_results = calculation.interweave_results_fd
 
 	# if optimization
@@ -981,11 +978,12 @@ def optimize_approximate():
 	# calculate new properties for each member
 	geometry.update_members_pre()
 
-	# created a truss object of PyNite and add to dict
-	truss = calculation.prepare_fea_fd()
+	# created a truss object
+	trusses = {}
+	trusses[str(frame)] = calculation.prepare_fea_fd()
 
 	# run singlethread and get results
-	feas = calculation.run_st_fd(truss, frame)
+	feas = calculation.run_mp(trusses)
 
 	# wait for it and interweave results to data
 	calculation.interweave_results_fd(feas, members)
@@ -1003,17 +1001,18 @@ def optimize_simple():
 	frame = bpy.context.scene.frame_current
 
 	print_data("simple sectional performance")
-
+	
 	calculation.simple_sectional()
 
 	# calculate new properties for each member
 	geometry.update_members_pre()
 
-	# created a truss object of PyNite and add to dict
-	truss = calculation.prepare_fea_pn()
+	# created a truss object
+	trusses = {}
+	trusses[str(frame)] = calculation.prepare_fea_pn()
 
 	# run singlethread and get results
-	feas = calculation.run_st_pn(truss, frame)
+	feas = calculation.run_mp(trusses)
 
 	# wait for it and interweave results to data
 	calculation.interweave_results_pn(feas, members)
@@ -1037,11 +1036,12 @@ def optimize_utilization():
 	# calculate new properties for each member
 	geometry.update_members_pre()
 
-	# created a truss object of PyNite and add to dict
-	truss = calculation.prepare_fea_pn()
+	# created a truss object
+	trusses = {}
+	trusses[str(frame)] = calculation.prepare_fea_pn()
 
 	# run singlethread and get results
-	feas = calculation.run_st_pn(truss, frame)
+	feas = calculation.run_mp(trusses)
 
 	# wait for it and interweave results to data
 	calculation.interweave_results_pn(feas, members)
@@ -1065,11 +1065,12 @@ def optimize_complex():
 	# calculate new properties for each member
 	geometry.update_members_pre()
 
-	# created a truss object of PyNite and add to dict
-	truss = calculation.prepare_fea_pn()
+	# created a truss object
+	trusses = {}
+	trusses[str(frame)] = calculation.prepare_fea_pn()
 
 	# run singlethread and get results
-	feas = calculation.run_st_pn(truss, frame)
+	feas = calculation.run_mp(trusses)
 
 	# wait for it and interweave results to data
 	calculation.interweave_results_pn(feas, members)

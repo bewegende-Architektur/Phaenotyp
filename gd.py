@@ -27,13 +27,11 @@ def generate_basis(chromosome):
 	# for PyNite
 	if phaenotyp.calculation_type != "force_distribution":
 		prepare_fea = calculation.prepare_fea_pn
-		run_st = calculation.run_st_pn
 		interweave_results = calculation.interweave_results_pn
 
 	# for force distribuion
 	else:
 		prepare_fea = calculation.prepare_fea_fd
-		run_st = calculation.run_st_fd
 		interweave_results = calculation.interweave_results_fd
 
 	# update scene
@@ -56,7 +54,6 @@ def generate_basis(chromosome):
 	# for PyNite
 	if phaenotyp.calculation_type != "force_distribution":
 		prepare_fea = calculation.prepare_fea_pn
-		run_st = calculation.run_st_pn
 		interweave_results = calculation.interweave_results_pn
 		
 		optimization_type = phaenotyp.optimization_pn
@@ -64,15 +61,19 @@ def generate_basis(chromosome):
 	# for force distribuion
 	else:
 		prepare_fea = calculation.prepare_fea_fd
-		run_st = calculation.run_st_fd
 		interweave_results = calculation.interweave_results_fd
 		
 		optimization_type = phaenotyp.optimization_fd
 	
 	# calculate frame
 	geometry.update_members_pre()
-	truss = prepare_fea()
-	fea = run_st(truss, frame)
+	
+	trusses = {}
+	trusses[str(frame)] = prepare_fea()
+
+	# run singlethread and get results
+	feas = calculation.run_mp(trusses)
+	
 	interweave_results(fea, members)
 	geometry.update_members_post()
 
@@ -124,7 +125,6 @@ def make_step_st(chromosome, frame):
 	# for PyNite
 	if phaenotyp.calculation_type != "force_distribution":
 		prepare_fea = calculation.prepare_fea_pn
-		run_st = calculation.run_st_pn
 		interweave_results = calculation.interweave_results_pn
 		
 		optimization_type = phaenotyp.optimization_pn
@@ -132,15 +132,20 @@ def make_step_st(chromosome, frame):
 	# for force distribuion
 	else:
 		prepare_fea = calculation.prepare_fea_fd
-		run_st = calculation.run_st_fd
 		interweave_results = calculation.interweave_results_fd
 		
 		optimization_type = phaenotyp.optimization_fd
 	
 	# calculate frame
 	geometry.update_members_pre()
-	truss = prepare_fea()
-	fea = run_st(truss, frame)
+	
+	# created a truss object
+	trusses = {}
+	trusses[str(frame)] = prepare_fea()
+
+	# run singlethread and get results
+	feas = calculation.run_mp(trusses)
+	
 	interweave_results(fea, members)
 	geometry.update_members_post()
 
@@ -259,13 +264,11 @@ def start():
 	# for PyNite
 	if phaenotyp.calculation_type != "force_distribution":
 		prepare_fea = calculation.prepare_fea_pn
-		run_st = calculation.run_st_pn
 		interweave_results = calculation.interweave_results_pn
 
 	# for force distribuion
 	else:
 		prepare_fea = calculation.prepare_fea_fd
-		run_st = calculation.run_st_fd
 		interweave_results = calculation.interweave_results_fd
 	
 	# optimization

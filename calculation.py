@@ -486,112 +486,6 @@ def prepare_fea_fd():
 	truss = [points_array, supports_ids, edges_array, forces_array]
 	return truss
 
-def run_st_pn(truss, frame):
-	'''
-	Is calculating a given truss.
-	:param truss: Needs a truss from prepare_fea_pn.
-	:param frame: Needs the current frame for identification.
-	:return fea: The calculated truss from PyNite as dict with key frame.
-	'''
-	scene = bpy.context.scene
-	scipy_available = scene["<Phaenotyp>"]["scipy_available"]
-
-	phaenotyp = scene.phaenotyp
-	calculation_type = phaenotyp.calculation_type
-
-	# scipy_available to pass forward
-	if calculation_type == "first_order":
-		truss.analyze(check_statics=False, sparse=scipy_available)
-
-	elif calculation_type == "first_order_linear":
-		truss.analyze_linear(check_statics=False, sparse=scipy_available)
-
-	else:
-		truss.analyze_PDelta(check_stability=False, sparse=scipy_available)
-
-	feas = {}
-	feas[str(frame)] = truss
-
-	text = calculation_type + " singlethread job for frame " + str(frame) + " done"
-	print_data(text)
-
-	progress.http.update_c()
-
-	return feas
-
-def run_st_fd(truss, frame):
-	'''
-	Is calculating a given truss.
-	:param truss: Needs a truss from prepare_fea_fd.
-	:param frame: Needs the current frame for identification.
-	:return fea: The calculated truss from force distribution as dict with key frame.
-	'''
-	scene = bpy.context.scene
-	scipy_available = scene["<Phaenotyp>"]["scipy_available"]
-
-	phaenotyp = scene.phaenotyp
-	calculation_type = phaenotyp.calculation_type
-
-	# based on:
-	# Oliver Natt
-	# Physik mit Python
-	# Simulationen, Visualisierungen und Animationen von Anfang an
-	# 1. Auflage, Springer Spektrum, 2020
-	# https://pyph.de/1/1/index.php?name=code&kap=5&pgm=4
-
-	# amount of dimensions
-	dim = 3
-
-	points_array = truss[0]
-	supports_ids = truss[1]
-	edges_array = truss[2]
-	forces_array = truss[3]
-
-	# amount of points, edges, supports, verts
-	n_points_array = points_array.shape[0]
-	n_edges_array = edges_array.shape[0]
-	n_supports = len(supports_ids)
-	n_verts = n_points_array - n_supports
-	n_equation = n_verts * dim
-
-	# create list of indicies
-	verts_id = list(set(range(n_points_array)) - set(supports_ids))
-
-	def vector(vertices, edge):
-		v_0, v_1 = edges_array[edge]
-		if vertices == v_0:
-			vec = points_array[v_1] - points_array[v_0]
-		else:
-			vec = points_array[v_0] - points_array[v_1]
-		return vec / linalg.norm(vec)
-
-
-	# create equation
-	truss = zeros((n_equation, n_equation))
-	for id, edge in enumerate(edges_array):
-		for k in intersect1d(edge, verts_id):
-			n = verts_id.index(k)
-			truss[n * dim:(n + 1) * dim, id] = vector(k, id)
-
-	# Löse das Gleichungssystem A @ F = -forces_array nach den Kräften F.
-	b = -forces_array[verts_id].reshape(-1)
-	F = linalg.solve(truss, b)
-
-	# Berechne die äußeren Kräfte.
-	for id, edge in enumerate(edges_array):
-		for k in intersect1d(edge, supports_ids):
-			forces_array[k] -= F[id] * vector(k, id)
-
-	feas = {}
-	feas[str(frame)] = F
-
-	text = calculation_type + " singlethread job for frame " + str(frame) + " done"
-	print_data(text)
-
-	progress.http.update_c()
-
-	return feas
-
 def run_mp(trusses):
 	'''
 	Is calculating the given trusses, pickles them for mp.
@@ -1010,7 +904,7 @@ def approximate_sectional():
 	data = scene["<Phaenotyp>"]
 	members = data["members"]
 	frame = bpy.context.scene.frame_current
-
+	
 	for id, member in members.items():
 		if member["overstress"][str(frame)] == True:
 			member["Do"][str(frame)] = member["Do"][str(frame)] * 1.05
@@ -1037,7 +931,7 @@ def simple_sectional():
 	data = scene["<Phaenotyp>"]
 	members = data["members"]
 	frame = bpy.context.scene.frame_current
-
+		
 	for id, member in members.items():
 		if abs(member["max_long_stress"][str(frame)]/member["acceptable_sigma_buckling"][str(frame)]) > 1:
 			member["Do"][str(frame)] = member["Do"][str(frame)] * 1.2
@@ -1063,7 +957,7 @@ def utilization_sectional():
 	data = scene["<Phaenotyp>"]
 	members = data["members"]
 	frame = bpy.context.scene.frame_current
-
+		
 	for id, member in members.items():
 		ang = member["utilization"][str(frame)]
 
@@ -1210,13 +1104,11 @@ def sectional_optimization(start, end):
 	# for PyNite
 	if phaenotyp.calculation_type != "force_distribution":
 		prepare_fea = prepare_fea_pn
-		run_st = run_st_pn
 		interweave_results = interweave_results_pn
 
 	# for force distribuion
 	else:
 		prepare_fea = prepare_fea_fd
-		run_st = run_st_fd
 		interweave_results = interweave_results_fd
 
 	# run for all frames
