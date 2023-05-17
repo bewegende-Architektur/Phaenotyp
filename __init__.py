@@ -420,7 +420,55 @@ class phaenotyp_properties(PropertyGroup):
 		min = 0.1,
 		max = 100
 		)
+    
+	gravity_strength: FloatProperty(
+		name = "gravity_strength",
+		description = "Gravity of wool.",
+		default = 0.001,
+		min = 0.0001,
+		max = 1.0
+		)
 
+	link_strength: FloatProperty(
+		name = "link_strength",
+		description = "Strength of links.",
+		default = 0.1,
+		min = 0.01,
+		max = 10.0
+		)
+		
+	bonding_threshold: FloatProperty(
+		name = "bonding_threshold",
+		description = "Threshold of bonding.",
+		default = 0.25,
+		min = 0.0001,
+		max = 10.0
+		)
+		
+	bonding_strength: FloatProperty(
+		name = "bonding_strength",
+		description = "Target length for actuator.",
+		default = 0.0001,
+		min = 0.000001,
+		max = 10.0
+		)
+		
+	bonding_spacing: FloatProperty(
+		name = "bonding_spacing",
+		description = "Influence of bonding.",
+		default = 4,
+		min = 0.1,
+		max = 100
+		)
+		
+	wool_iterations: IntProperty(
+		name = "wool_iterations",
+		description = "Iterations of wool.",
+		default = 10,
+		min = 1,
+		max = 100
+		)
+    
 	mode: EnumProperty(
 		name = "mode",
 		description = "Select mode to start",
@@ -667,6 +715,19 @@ class WM_OT_reach_goal(Operator):
 		operators.reach_goal()
 		return {"FINISHED"}
 
+class WM_OT_wool(Operator):
+	'''
+	Is calling wool threads inspired by Frei Otto from the module called operators.
+	Check out further info in there.
+	'''
+	bl_label = "wool"
+	bl_idname = "wm.wool"
+	bl_description = "Wool threads."
+
+	def execute(self, context):
+		operators.wool()
+		return {"FINISHED"}
+		
 class WM_OT_calculate_single_frame(Operator):
 	'''
 	Is calling calculate_single_frame from the module called operators.
@@ -1004,6 +1065,7 @@ classes = (
 	WM_OT_assimilate,
 	WM_OT_actuator,
 	WM_OT_reach_goal,
+	WM_OT_wool,
 
 	WM_OT_calculate_single_frame,
 	WM_OT_calculate_animation,

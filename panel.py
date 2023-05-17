@@ -384,7 +384,17 @@ def transformation(layout):
 		box_goal = layout.box()
 		box_goal.label(text="Reach goal:")
 		box_goal.operator("wm.reach_goal", text="Start")
-
+		
+		box_wool = layout.box()
+		box_wool.label(text="Wool threads:")
+		box_wool.prop(phaenotyp, "gravity_strength", text="")
+		box_wool.prop(phaenotyp, "link_strength", text="")
+		box_wool.prop(phaenotyp, "bonding_threshold", text="")
+		box_wool.prop(phaenotyp, "bonding_strength", text="")
+		box_wool.prop(phaenotyp, "bonding_spacing", text="")
+		box_wool.prop(phaenotyp, "wool_iterations", text="")		
+		box_wool.operator("wm.wool", text="Start")
+    
 def single_frame(layout):
 	'''
 	Panel for single frame.

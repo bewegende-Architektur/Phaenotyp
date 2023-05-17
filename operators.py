@@ -644,7 +644,100 @@ def actuator():
 					vertices[v_0_id].co = v_0 - dist_v*0.01
 				if v_1_id not in support_ids:
 					vertices[v_1_id].co = v_1 + dist_v*0.01
+					
+def wool():
+    scene = bpy.context.scene
+    phaenotyp = scene.phaenotyp
+    data = scene["<Phaenotyp>"]
+    supports = scene["<Phaenotyp>"]["supports"]
+    frame = bpy.context.scene.frame_current
 
+    obj = data["structure"]
+    vertices = obj.data.vertices
+    edges = obj.data.edges
+    members = data["members"]
+
+    bpy.ops.object.mode_set(mode="OBJECT")
+
+    # get ids of supports
+    support_ids = []
+    for id, support in supports.items():
+        support_id = int(id)
+        support_ids.append(support_id)
+    
+    # get list of distances at start
+    length = members["0"]["length"].get("0")
+    if length:
+        # only create distances if not available
+        pass
+    
+    else:
+        # create lengthes at first frame
+        # this is necessary because the wool is
+        # using the link length of the beginning
+        for id, member in members.items():
+            edge = edges[int(id)]
+            v_0 = vertices[edge.vertices[0]].co
+            v_1 = vertices[edge.vertices[1]].co
+            v = v_1 - v_0
+            dist = v.length
+            member["length"]["0"] = dist
+    
+    # parameters
+    gravity_strength = phaenotyp.gravity_strength
+    link_strength = phaenotyp.link_strength * (-1)
+    bonding_threshold = phaenotyp.bonding_threshold
+    bonding_strength = phaenotyp.bonding_strength
+    bonding_spacing = phaenotyp.bonding_spacing
+    wool_iterations = phaenotyp.wool_iterations
+        
+    # wool
+    for i in range(wool_iterations):
+        # links
+        for id, edge in enumerate(edges):
+            # get current distance
+            v_0 = vertices[edge.vertices[0]].co
+            v_1 = vertices[edge.vertices[1]].co
+            v = v_1 - v_0
+            dist = v.length
+
+            # gravity
+            if edge.vertices[0] not in support_ids:
+                v_0 += (v_1 - v_0) * dist * gravity_strength
+            if edge.vertices[1] not in support_ids:
+                v_1 += (v_0 - v_1) * dist * gravity_strength
+                   
+            # shrink
+            strength = members[str(id)]["length"]["0"] - dist
+            if strength < 0:
+                if edge.vertices[0] not in support_ids:
+                    v_0 -= (v_1 - v_0) * strength * link_strength
+                if edge.vertices[1] not in support_ids:
+                    v_1 -= (v_0 - v_1) * strength * link_strength
+
+            # expand
+            else:
+                if edge.vertices[0] not in support_ids:
+                    v_0 += (v_1 - v_0) * strength * link_strength
+                if edge.vertices[1] not in support_ids:
+                    v_1 += (v_0 - v_1) * strength * link_strength
+        
+        # bonding
+        for vertex in vertices:
+            for other in vertices:
+                v_0 = vertex.co
+                v_1 = other.co
+                v = v_1 - v_0
+                dist = v.length
+                
+                if abs(dist) > bonding_spacing:
+                    if dist < bonding_threshold:
+                        # move points towards each other
+                        if vertex.index not in support_ids:
+                            v_0 -= (v_1 - v_0) * bonding_strength
+                        if other.index not in support_ids:
+                            v_1 -= (v_0 - v_1) * bonding_strength
+                            
 def reach_goal():
 	scene = bpy.context.scene
 	phaenotyp = scene.phaenotyp
