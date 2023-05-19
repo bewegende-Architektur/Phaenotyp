@@ -35,7 +35,7 @@ class phaenotyp_properties(PropertyGroup):
 	'''
 	use_scipy: BoolProperty(
 		name = 'use_scipy',
-		description = "Scipy is available! Calculation will be much faster. Anyway: Try to uncheck if something is crashing.",
+		description = "Scipy is available! Calculation will be much faster. Anyway: Try to uncheck if something is crashing",
 		default = True
 	)
 
@@ -267,7 +267,7 @@ class phaenotyp_properties(PropertyGroup):
 
 	fitness_kg: FloatProperty(
 		name = "kg",
-		description = "Weight the structure (without loads).",
+		description = "Weight the structure (without loads)",
 		default = 0.0,
 		min = 0.0,
 		max = 1.0
@@ -275,13 +275,13 @@ class phaenotyp_properties(PropertyGroup):
 
 	fitness_kg_invert: BoolProperty(
 		name = 'kg invert',
-		description = "Activate to maximize the kg.",
+		description = "Activate to maximize the kg",
 		default = False
 	)
 
 	fitness_rise: FloatProperty(
 		name = "rise",
-		description = "Rise of the structure (distances between lowest and highest vertex).",
+		description = "Rise of the structure (distances between lowest and highest vertex)",
 		default = 0.0,
 		min = 0.0,
 		max = 1.0
@@ -289,13 +289,13 @@ class phaenotyp_properties(PropertyGroup):
 
 	fitness_rise_invert: BoolProperty(
 		name = 'rise invert',
-		description = "Activate to maximize the rise.",
+		description = "Activate to maximize the rise",
 		default = False
 	)
 
 	fitness_span: FloatProperty(
 		name = "span",
-		description = "Span distance of the structure (highest distance between supports).",
+		description = "Span distance of the structure (highest distance between supports)",
 		default = 0.0,
 		min = 0.0,
 		max = 1.0
@@ -303,13 +303,13 @@ class phaenotyp_properties(PropertyGroup):
 
 	fitness_span_invert: BoolProperty(
 		name = 'span invert',
-		description = "Activate to maximize the span.",
+		description = "Activate to maximize the span",
 		default = False
 	)
 
 	fitness_cantilever: FloatProperty(
 		name = "cantilever",
-		description = "Cantilever of the structure (lowest distance from all vertices to all supports).",
+		description = "Cantilever of the structure (lowest distance from all vertices to all supports)",
 		default = 0.0,
 		min = 0.0,
 		max = 1.0
@@ -317,13 +317,13 @@ class phaenotyp_properties(PropertyGroup):
 
 	fitness_cantilever_invert: BoolProperty(
 		name = 'cantilever invert',
-		description = "Activate to maximize the cantilever.",
+		description = "Activate to maximize the cantilever",
 		default = False
 	)
 
 	fitness_average_sigma: FloatProperty(
 		name = "average sigma",
-		description = "Average sigma of all members.",
+		description = "Average sigma of all members",
 		default = 0.0,
 		min = 0.0,
 		max = 1.0
@@ -331,7 +331,7 @@ class phaenotyp_properties(PropertyGroup):
 
 	fitness_average_strain_energy: FloatProperty(
 		name = "average strain energy",
-		description = "Average strain energy of all members.",
+		description = "Average strain energy of all members",
 		default = 1.0,
 		min = 0.0,
 		max = 1.0
@@ -348,7 +348,7 @@ class phaenotyp_properties(PropertyGroup):
 
 	ranking: IntProperty(
 		name = "ranking",
-		description="Show results from best to worth fitness.",
+		description="Show results from best to worth fitness",
 		default = 0,
 		min = 0,
 		max = 250
@@ -407,7 +407,7 @@ class phaenotyp_properties(PropertyGroup):
 
 	assimilate_length: FloatProperty(
 		name = "assimilate_length",
-		description = "Target length for assimilation.",
+		description = "Target length for assimilation",
 		default = 4,
 		min = 0.1,
 		max = 100
@@ -415,7 +415,7 @@ class phaenotyp_properties(PropertyGroup):
 
 	actuator_length: FloatProperty(
 		name = "actuator_length",
-		description = "Target length for actuator.",
+		description = "Target length for actuator",
 		default = 4,
 		min = 0.1,
 		max = 100
@@ -423,7 +423,7 @@ class phaenotyp_properties(PropertyGroup):
     
 	gravity_strength: FloatProperty(
 		name = "gravity_strength",
-		description = "Gravity of wool.",
+		description = "Gravity of wool",
 		default = 0.001,
 		min = 0.0001,
 		max = 1.0
@@ -431,7 +431,7 @@ class phaenotyp_properties(PropertyGroup):
 
 	link_strength: FloatProperty(
 		name = "link_strength",
-		description = "Strength of links.",
+		description = "Strength of links",
 		default = 0.1,
 		min = 0.01,
 		max = 10.0
@@ -439,7 +439,7 @@ class phaenotyp_properties(PropertyGroup):
 		
 	bonding_threshold: FloatProperty(
 		name = "bonding_threshold",
-		description = "Threshold of bonding.",
+		description = "Threshold of bonding",
 		default = 0.25,
 		min = 0.0001,
 		max = 10.0
@@ -447,23 +447,15 @@ class phaenotyp_properties(PropertyGroup):
 		
 	bonding_strength: FloatProperty(
 		name = "bonding_strength",
-		description = "Target length for actuator.",
+		description = "Target length for actuator",
 		default = 0.0001,
 		min = 0.000001,
 		max = 10.0
 		)
 		
-	bonding_spacing: FloatProperty(
-		name = "bonding_spacing",
-		description = "Influence of bonding.",
-		default = 4,
-		min = 0.1,
-		max = 100
-		)
-		
 	wool_iterations: IntProperty(
 		name = "wool_iterations",
-		description = "Iterations of wool.",
+		description = "Iterations of wool",
 		default = 10,
 		min = 1,
 		max = 100
@@ -513,7 +505,7 @@ class phaenotyp_properties(PropertyGroup):
 
 	animation_optimization_type: EnumProperty(
 		name = "animation_optimization_type",
-		description = "Optimize each frame by amount or create gradient with amount.",
+		description = "Optimize each frame by amount or create gradient with amount",
 		items = [
 				("each_frame", "Each frame", ""),
 				("gradient", "Gradient", "")
@@ -522,7 +514,7 @@ class phaenotyp_properties(PropertyGroup):
 
 	selection_key_fd: EnumProperty(
 		name = "selection_key_fd",
-		description = "Key for selection.",
+		description = "Key for selection",
 		items = [
 					("id", "id", ""),
 					("Do", "Do", ""),
@@ -538,7 +530,7 @@ class phaenotyp_properties(PropertyGroup):
 
 	selection_key_pn: EnumProperty(
 		name = "selection_key_pn",
-		description = "Key for selection.",
+		description = "Key for selection",
 		items = [
 					("id", "Id", ""),
 					("Do", "Do", ""),
@@ -559,7 +551,7 @@ class phaenotyp_properties(PropertyGroup):
 
 	selection_compare: EnumProperty(
 		name = "selection_compare",
-		description = "Type of comparsion.",
+		description = "Type of comparsion",
 		items = [
 					("Equal", "Equal", ""),
 					("Greater", "Greater", ""),
@@ -569,19 +561,19 @@ class phaenotyp_properties(PropertyGroup):
 
 	selection_value: StringProperty(
 		name = "selection_value",
-		description = "Value for selection.",
+		description = "Value for selection",
 		default = "0"
 		)
 
 	selection_threshold: StringProperty(
 		name = "selection_threshold",
-		description = "Threshold for selection.",
+		description = "Threshold for selection",
 		default = "0"
 		)
 
 	gd_delta: FloatProperty(
 		name = "gd_delta",
-		description="Step size for gradient.",
+		description="Step size for gradient",
 		default = 0.1,
 		min = 0.01,
 		max = 0.2
@@ -597,7 +589,7 @@ class phaenotyp_properties(PropertyGroup):
 
 	gd_abort: FloatProperty(
 		name = "gd_abort",
-		description="Abort criterion.",
+		description="Abort criterion",
 		default = 0.01,
 		min = 0.001,
 		max = 0.1
@@ -605,7 +597,7 @@ class phaenotyp_properties(PropertyGroup):
 
 	gd_max_iteration: IntProperty(
 		name = "gd_max_iteration",
-		description="Max number of iteration to avoid endless loop.",
+		description="Max number of iteration to avoid endless loop",
 		default = 100,
 		min = 10,
 		max = 1000

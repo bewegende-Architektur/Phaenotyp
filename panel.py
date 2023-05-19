@@ -297,9 +297,9 @@ def loads(layout):
 		if phaenotyp.calculation_type != "force_distribution":
 			box_loads.prop(phaenotyp, "load_type", text="")
 			if phaenotyp.load_type == "faces": # if faces
-				box_loads.prop(phaenotyp, "load_normal", text="normal (like wind)")
-				box_loads.prop(phaenotyp, "load_projected", text="projected (like snow)")
-				box_loads.prop(phaenotyp, "load_area_z", text="area z (like weight of facade)")
+				box_loads.prop(phaenotyp, "load_normal", text="Normal (Like wind)")
+				box_loads.prop(phaenotyp, "load_projected", text="Projected (Like snow)")
+				box_loads.prop(phaenotyp, "load_area_z", text="Area z (Like weight of facade)")
 
 			# if vertices or edges
 			else:
@@ -387,12 +387,11 @@ def transformation(layout):
 		
 		box_wool = layout.box()
 		box_wool.label(text="Wool threads:")
-		box_wool.prop(phaenotyp, "gravity_strength", text="")
-		box_wool.prop(phaenotyp, "link_strength", text="")
-		box_wool.prop(phaenotyp, "bonding_threshold", text="")
-		box_wool.prop(phaenotyp, "bonding_strength", text="")
-		box_wool.prop(phaenotyp, "bonding_spacing", text="")
-		box_wool.prop(phaenotyp, "wool_iterations", text="")		
+		box_wool.prop(phaenotyp, "gravity_strength", text="Gravity strength")
+		box_wool.prop(phaenotyp, "link_strength", text="Link strength")
+		box_wool.prop(phaenotyp, "bonding_threshold", text="Bonding threshold")
+		box_wool.prop(phaenotyp, "bonding_strength", text="Bonding strength")
+		box_wool.prop(phaenotyp, "wool_iterations", text="Wool iterations")		
 		box_wool.operator("wm.wool", text="Start")
     
 def single_frame(layout):
