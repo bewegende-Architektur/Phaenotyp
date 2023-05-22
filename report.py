@@ -509,13 +509,34 @@ def append_head(file, report_type):
 		file.write("a:hover {color: rgb(0,0,0); background-color: transparent; text-decoration: underline;}\n")
 		file.write("a:active {color: rgb(0,0,0); background-color: transparent; text-decoration: underline;}\n")
 		file.write("</style>\n")
+		file.write("\n")
 
 		# from https://www.kryogenix.org/
 		# as suggested by smilyface
 		# https://stackoverflow.com/questions/10683712/html-table-sort
-		file.write('<script src="sorttable.js"></script>')
-
-		file.write('<table class="sortable">')
+		file.write('<script src="sorttable.js"></script>\n')
+		file.write("\n")
+		
+		# based on the answer of Niente0
+		# https://stackoverflow.com/questions/26053004/copy-whole-html-table-to-clipboard-javascript
+		file.write('<script type="text/javascript">\n')
+		file.write('function copytable(el) {\n')
+		file.write('var urlField = document.getElementById(el)\n')
+		file.write('var range = document.createRange()\n')
+		file.write('range.selectNode(urlField)\n')
+		file.write('window.getSelection().addRange(range)\n')
+		file.write('document.execCommand("copy")\n')
+		file.write('}\n')
+		file.write('</script>\n')
+		file.write("\n")
+		
+		file.write('<a onClick="copytable(')
+		file.write("'stats')")
+		file.write('">copy to clipboard</a>\n')
+		file.write('<br>\n')
+		file.write('<br>\n')
+		
+		file.write('<table class="sortable" id=stats>\n')
 		file.write('<tr class="item">')
 
 		# empty part in the top-left
@@ -550,13 +571,34 @@ def append_head(file, report_type):
 		file.write("a:hover {color: rgb(0,0,0); background-color: transparent; text-decoration: underline;}\n")
 		file.write("a:active {color: rgb(0,0,0); background-color: transparent; text-decoration: underline;}\n")
 		file.write("</style>\n")
+		file.write("\n")
 
 		# from https://www.kryogenix.org/
 		# as suggested by smilyface
 		# https://stackoverflow.com/questions/10683712/html-table-sort
-		file.write('<script src="sorttable.js"></script>')
-
-		file.write('<table class="sortable">')
+		file.write('<script src="sorttable.js"></script>\n')
+		file.write("\n")
+		
+		# based on the answer of Niente0
+		# https://stackoverflow.com/questions/26053004/copy-whole-html-table-to-clipboard-javascript
+		file.write('<script type="text/javascript">\n')
+		file.write('function copytable(el) {\n')
+		file.write('var urlField = document.getElementById(el)\n')
+		file.write('var range = document.createRange()\n')
+		file.write('range.selectNode(urlField)\n')
+		file.write('window.getSelection().addRange(range)\n')
+		file.write('document.execCommand("copy")\n')
+		file.write('}\n')
+		file.write('</script>\n')
+		file.write("\n")
+		
+		file.write('<a onClick="copytable(')
+		file.write("'stats')")
+		file.write('">copy to clipboard</a>\n')
+		file.write('<br>\n')
+		file.write('<br>\n')
+		
+		file.write('<table class="sortable" id=stats>\n')
 		file.write('<tr class="item">')
 
 		# empty part in the top-left
@@ -586,13 +628,34 @@ def append_head(file, report_type):
 		file.write("a:hover {color: rgb(0,0,0); background-color: transparent; text-decoration: underline;}\n")
 		file.write("a:active {color: rgb(0,0,0); background-color: transparent; text-decoration: underline;}\n")
 		file.write("</style>\n")
+		file.write("\n")
 
 		# from https://www.kryogenix.org/
 		# as suggested by smilyface
 		# https://stackoverflow.com/questions/10683712/html-table-sort
-		file.write('<script src="sorttable.js"></script>')
-
-		file.write('<table class="sortable">')
+		file.write('<script src="sorttable.js"></script>\n')
+		file.write("\n")
+		
+		# based on the answer of Niente0
+		# https://stackoverflow.com/questions/26053004/copy-whole-html-table-to-clipboard-javascript
+		file.write('<script type="text/javascript">\n')
+		file.write('function copytable(el) {\n')
+		file.write('var urlField = document.getElementById(el)\n')
+		file.write('var range = document.createRange()\n')
+		file.write('range.selectNode(urlField)\n')
+		file.write('window.getSelection().addRange(range)\n')
+		file.write('document.execCommand("copy")\n')
+		file.write('}\n')
+		file.write('</script>\n')
+		file.write("\n")
+		
+		file.write('<a onClick="copytable(')
+		file.write("'stats')")
+		file.write('">copy to clipboard</a>\n')
+		file.write('<br>\n')
+		file.write('<br>\n')
+		
+		file.write('<table class="sortable" id=stats>\n')
 		file.write('<tr class="item">')
 
 		# empty part in the top-left
@@ -608,14 +671,35 @@ def append_head(file, report_type):
 		file.write("a:hover {color: rgb(0,0,0); background-color: transparent; text-decoration: underline;}\n")
 		file.write("a:active {color: rgb(0,0,0); background-color: transparent; text-decoration: underline;}\n")
 		file.write("</style>\n")
+		file.write("\n")
 
 		# from https://www.kryogenix.org/
 		# as suggested by smilyface
 		# https://stackoverflow.com/questions/10683712/html-table-sort
 		file.write('<script src="sorttable.js"></script>\n')
-
-		file.write('<table class="sortable">\n')
-		file.write('<tr class="item">\n')
+		file.write("\n")
+		
+		# based on the answer of Niente0
+		# https://stackoverflow.com/questions/26053004/copy-whole-html-table-to-clipboard-javascript
+		file.write('<script type="text/javascript">\n')
+		file.write('function copytable(el) {\n')
+		file.write('var urlField = document.getElementById(el)\n')
+		file.write('var range = document.createRange()\n')
+		file.write('range.selectNode(urlField)\n')
+		file.write('window.getSelection().addRange(range)\n')
+		file.write('document.execCommand("copy")\n')
+		file.write('}\n')
+		file.write('</script>\n')
+		file.write("\n")
+		
+		file.write('<a onClick="copytable(')
+		file.write("'stats')")
+		file.write('">copy to clipboard</a>\n')
+		file.write('<br>\n')
+		file.write('<br>\n')
+		
+		file.write('<table class="sortable" id=stats>\n')
+		file.write('<tr class="item">')
 
 		# empty part in the top-left
 		text = '<td height="20" width="20" bgcolor="FFFFFF">Individual</td>\n'
