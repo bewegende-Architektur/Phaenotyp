@@ -179,10 +179,35 @@ def create_initial_individuals(start, end):
 	# calculate all frames
 	for frame in range(start, end):
 		# create chromosome with set of shapekeys (random for first generation)
-		chromosome = []
-		for gnome_len in range(len(shape_keys)-1): # -1 to exlude basis
-			gene = random.choice(environment["genes"])
-			chromosome.append(gene)
+		new_chromosome_found = False
+		for i in range(100): # run for max 100 times, if no new chromosome is found
+			# create new chromosome
+			chromosome = []
+			for gnome_len in range(len(shape_keys)-1): # -1 to exlude basis
+				gene = random.choice(environment["genes"])
+				chromosome.append(gene)
+			
+			# check if existing
+			for id, individual in individuals.items():
+				if individual["chromosome"].to_list() == chromosome:
+					if i < 100:
+						text = "chromosome" + str(chromosome) + " allready exists. I try again ..."
+						print_data(text)
+					else:
+						print_data("No new chromosome after retrying for 100 times. Maybe you want to run bruteforce?")
+						
+					new_chromosome_found = False
+					break
+					
+				else:
+					new_chromosome_found = True
+			
+			# break if a new chromosome was found
+			if new_chromosome_found == True:
+				# exit, because a new key was found
+				text = "new individual with chromosome" + str(chromosome)
+				print_data(text)
+				break
 
 		# update scene
 		bpy.context.scene.frame_current = frame
@@ -358,17 +383,43 @@ def create_new_individuals(start, end):
 		interweave_results = calculation.interweave_results_fd
 
 	for frame in range(start, end):
-		# pair best 50 % of the previous generation
-		# sample is used to avoid same random numbers
-		random_numbers = random.sample(range(int(new_generation_size*0.5)), 2)
-		parent_1_name = sorted_list[random_numbers[0]][0]
-		parent_2_name = sorted_list[random_numbers[1]][0]
+		# create chromosome from two parents
+		new_chromosome_found = False
+		for i in range(100): # run for max 100 times, if no new chromosome is found
+			# create new chromosome
+			# pair best 50 % of the previous generation
+			# sample is used to avoid same random numbers
+			random_numbers = random.sample(range(int(new_generation_size*0.5)), 2)
+			parent_1_name = sorted_list[random_numbers[0]][0]
+			parent_2_name = sorted_list[random_numbers[1]][0]
 
-		parent_1 = individuals[parent_1_name]
-		parent_2 = individuals[parent_2_name]
+			parent_1 = individuals[parent_1_name]
+			parent_2 = individuals[parent_2_name]
 
-		chromosome = mate_chromosomes(parent_1["chromosome"], parent_2["chromosome"])
-
+			chromosome = mate_chromosomes(parent_1["chromosome"], parent_2["chromosome"])
+			
+			# check if existing
+			for id, individual in individuals.items():
+				if individual["chromosome"].to_list() == chromosome:
+					if i < 100:
+						text = "chromosome" + str(chromosome) + " allready exists. I try again ..."
+						print_data(text)
+					else:
+						print_data("No new chromosome after retrying for 100 times. Maybe you want to run bruteforce?")
+						
+					new_chromosome_found = False
+					break
+					
+				else:
+					new_chromosome_found = True
+			
+			# break if a new chromosome was found
+			if new_chromosome_found == True:
+				# exit, because a new key was found
+				text = "new individual with chromosome" + str(chromosome)
+				print_data(text)
+				break
+		
 		# update scene
 		bpy.context.scene.frame_current = frame
 		bpy.context.view_layer.update()

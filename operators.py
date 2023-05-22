@@ -1270,7 +1270,7 @@ def ga_start():
 	data = scene["<Phaenotyp>"]
 	obj = data["structure"]
 
-	print_data("Start genetic muataion over selected shape keys")
+	print_data("Start genetic mutation over selected shape keys")
 
 	# pass from gui
 	data["environment"]["generation_size"] = phaenotyp.generation_size
