@@ -424,9 +424,9 @@ class phaenotyp_properties(PropertyGroup):
 	gravity_strength: FloatProperty(
 		name = "gravity_strength",
 		description = "Gravity of wool",
-		default = 0.001,
-		min = 0.0001,
-		max = 1.0
+		default = 1.0,
+		min = 0.01,
+		max = 10.0
 		)
 
 	link_strength: FloatProperty(
@@ -440,16 +440,16 @@ class phaenotyp_properties(PropertyGroup):
 	bonding_threshold: FloatProperty(
 		name = "bonding_threshold",
 		description = "Threshold of bonding",
-		default = 0.25,
-		min = 0.0001,
+		default = 1.0,
+		min = 0.01,
 		max = 10.0
 		)
 		
 	bonding_strength: FloatProperty(
 		name = "bonding_strength",
 		description = "Target length for actuator",
-		default = 0.0001,
-		min = 0.000001,
+		default = 1.0,
+		min = 0.01,
 		max = 10.0
 		)
 		

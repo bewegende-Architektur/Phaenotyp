@@ -684,11 +684,11 @@ def wool():
 			member["length"]["0"] = dist
 	
 	# parameters
-	gravity_strength = phaenotyp.gravity_strength
+	gravity_strength = phaenotyp.gravity_strength * 0.01 # to make readable slider
 	link_strength = phaenotyp.link_strength
 	bonding_threshold = phaenotyp.bonding_threshold
-	bonding_strength = phaenotyp.bonding_strength
-	wool_iterations = phaenotyp.wool_iterations
+	bonding_strength = phaenotyp.bonding_strength * 0.0001 # to make readable slider
+	wool_iterations = phaenotyp.wool_iterations	# 10.0
 		
 	# wool
 	for i in range(wool_iterations):
