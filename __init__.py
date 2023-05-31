@@ -1032,10 +1032,10 @@ class OBJECT_PT_Phaenotyp(Panel):
 				# the setup and the result would not match
 				# new setup needs new calculation by pressing reset
 				# or by changing frame)
-				panel.grayed_out.scipy = True
-				panel.grayed_out.supports = True
-				panel.grayed_out.members = True
-				panel.grayed_out.loads = True
+				data["panel_grayed"]["scipy"] = True
+				data["panel_grayed"]["supports"] = True
+				data["panel_grayed"]["members"] = True
+				data["panel_grayed"]["loads"] = True
 
 				panel.visualization(layout)
 				panel.text(layout)

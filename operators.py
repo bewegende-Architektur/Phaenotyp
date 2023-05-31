@@ -1872,24 +1872,9 @@ def reset():
 
 	scene = bpy.context.scene
 	phaenotyp = scene.phaenotyp
-	data = scene["<Phaenotyp>"]
-
-	# copied from create_data
-	data["structure"] = None
-	data["supports"] = {}
-	data["members"] = {}
-	data["frames"] = {}
-	data["loads_v"] = {}
-	data["loads_e"] = {}
-	data["loads_f"] = {}
-
-	data["process"]["scipy_available"] = False
-	data["done"] = {}
-
-	data["environment"] = {}
-	data["individuals"] = {}
-
-	data["texts"] = []
+	
+	# create / recreate data
+	basics.create_data()
 
 	# delete obj and meshes
 	basics.delete_obj_if_existing("<Phaenotyp>support")
@@ -1906,15 +1891,3 @@ def reset():
 
 	# change props
 	phaenotyp.calculation_type = "-"
-
-	# reset panel
-	panel.state.structure = False
-	panel.state.calculation_type = False
-	panel.state.supports = False
-	panel.state.members = False
-	panel.state.file = False
-
-	panel.grayed_out.scipy = False
-	panel.grayed_out.supports = False
-	panel.grayed_out.members = False
-	panel.grayed_out.laods = False

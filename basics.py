@@ -17,38 +17,34 @@ def create_data():
 	Data that does not need to be available after restart is generated,
 	handeled and stored by the specific function or class.
 	"""
-	data = bpy.context.scene.get("<Phaenotyp>")
-	if not data:
-		data = bpy.context.scene["<Phaenotyp>"] = {
-			"structure":{},
-			"supports":{},
-			"members":{},
-			"frames":{},
-			"loads_v":{},
-			"loads_e":{},
-			"loads_f":{},
-			"process":{},
-			"done":{},
-			"environment":{},
-			"individuals":{},
-			"texts":{}
-		}
-
-		data["structure"] = None
-		data["supports"] = {}
-		data["members"] = {}
-		data["frames"] = {}
-		data["loads_v"] = {}
-		data["loads_e"] = {}
-		data["loads_f"] = {}
-
-		data["process"]["scipy_available"] = False
-		data["done"] = {}
-
-		data["environment"] = {}
-		data["individuals"] = {}
-
-		data["texts"] = []
+	data = bpy.context.scene["<Phaenotyp>"] = {
+		"structure": None,
+		"supports": {},
+		"members": {},
+		"frames": {},
+		"loads_v": {},
+		"loads_e": {},
+		"loads_f": {},
+		"process": {"scipy_available": False},
+		"done": {},
+		"environment": {},
+		"individuals": {},
+		"panel_state": {
+			"structure": False,
+			"calculation_type": False,
+			"supports": False,
+			"members": False,
+			"file": False
+			},
+		"panel_grayed": {
+			"scipy": False,
+			"calculation_type": False,
+			"supports": False,
+			"members": False,
+			"loads": False
+			},
+		"texts": {}
+	}
 
 def sorted_keys(dict):
 	'''
