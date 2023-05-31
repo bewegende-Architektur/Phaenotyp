@@ -46,7 +46,7 @@ class phaenotyp_properties(PropertyGroup):
 				("-", "-", ""),
 				("geometrical", "Geometrical", ""),
 				("force_distribution", "Force distribution", ""),
-				("first_order", "First order", ""),
+				("first_order", "First order (choose this if unsure)", ""),
 				("first_order_linear", "First order linear", ""),
 				("second_order", "Second order", "")
 				],

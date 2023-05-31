@@ -57,6 +57,29 @@ def amount_of_loose_parts():
 	bpy.ops.mesh.select_loose()
 	return obj.data.total_vert_sel
 
+def amount_of_doubles():
+	'''
+	Is returning the amount vertices at same position with threshold of 0.001.
+	:return total_vert_sel: The amount of loose parts as integer.
+	'''
+	obj = bpy.context.active_object
+	vertices = obj.data.vertices
+	
+	amount = 0
+	for vertex in vertices:
+		for other in vertices:
+			if vertex != other:
+				v_0 = vertex.co
+				v_1 = other.co
+				
+				v = v_1 - v_0
+				dist = v.length
+				
+				if v.length < 0.001:
+					amount += 1
+	
+	return amount
+		
 def triangulation():
 	'''
 	The function is iterating trough all faces and checks the amount of vertices.

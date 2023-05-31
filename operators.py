@@ -34,12 +34,15 @@ def set_structure():
 			basics.popup_operator(lines=text, operator="wm.fix_structure", text="Convert curves to mesh")
 			geometry.to_be_fixed = "curve_to_mesh"
 
+		# uncommented to work with crown shyness
+		'''
 		else:
 			text = ["Select multiple curves or a mesh only."]
 			basics.popup(lines = text)
+		'''
 	
 	# convert if meta
-	if obj.type == 'META':
+	elif obj.type == 'META':
 		text = ["The selection is of type meta.",
 			"Should Phaenotyp try to convert the selection to mesh?"]
 		basics.popup_operator(lines=text, operator="wm.fix_structure", text="Meta to mesh")
@@ -64,21 +67,33 @@ def set_structure():
 
 			amount_of_mesh_parts = geometry.amount_of_mesh_parts()
 			amount_of_loose_parts = geometry.amount_of_loose_parts()
-			
+			amount_of_doubles = geometry.amount_of_doubles()
+
+			# uncommented to work with crown shyness
+			# amount_of_doubles is checked instead
+			'''			
 			if amount_of_mesh_parts > 1:
 				text = [
 					"The mesh contains " + str(amount_of_mesh_parts) + " parts.",
 					"Should Phaenotyp try to fix this?"]
 				basics.popup_operator(lines=text, operator="wm.fix_structure", text="Delete or seperate loose parts")
 				geometry.to_be_fixed = "seperate_by_loose"
-
-			elif amount_of_loose_parts > 0:
+			'''
+			
+			if amount_of_loose_parts > 0:
 				text = [
 					"The mesh contains loose elements: " + str(amount_of_loose_parts),
 					"Should Phaenotyp try to fix this?"]
 				basics.popup_operator(lines=text, operator="wm.fix_structure", text="Delete loose parts")
 				geometry.to_be_fixed = "delete_loose"
-
+			
+			elif amount_of_doubles > 0:
+				text = [
+					"The mesh contains vertices sharing the same position: " + str(amount_of_doubles),
+					"Should Phaenotyp try to fix this?"]
+				basics.popup_operator(lines=text, operator="wm.fix_structure", text="Remove doubles")
+				geometry.to_be_fixed = "remove_doubles"
+				
 			# everything looks ok
 			else:
 				# crete / recreate collection
@@ -134,10 +149,19 @@ def fix_structure():
 		bpy.ops.mesh.quads_convert_to_tris(quad_method='BEAUTY', ngon_method='BEAUTY')
 		bpy.ops.mesh.select_all(action='DESELECT')
 
+	elif geometry.to_be_fixed == "remove_doubles":
+		print_data("Remove doubles")
+		bpy.ops.object.mode_set(mode="EDIT")
+		bpy.ops.mesh.select_all(action='SELECT')
+		bpy.ops.mesh.remove_doubles()
+		bpy.ops.object.mode_set(mode='OBJECT')
 
 	else:
-		print_data("No idea how to fix this")
-
+		text = ["No idea how to fix this"]
+		basics.popup(lines = text)
+	
+	set_structure()
+				
 def set_support():
 	context = bpy.context
 	scene = context.scene
