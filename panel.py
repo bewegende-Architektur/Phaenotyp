@@ -378,9 +378,17 @@ def transformation(layout):
 			box_wool.prop(phaenotyp, "link_strength", text="Link strength")
 			box_wool.prop(phaenotyp, "bonding_threshold", text="Bonding threshold")
 			box_wool.prop(phaenotyp, "bonding_strength", text="Bonding strength")
-			box_wool.prop(phaenotyp, "wool_iterations", text="Wool iterations")		
+			box_wool.prop(phaenotyp, "wool_iterations", text="Iterations")		
 			box_wool.operator("wm.wool", text="Start")
-		
+
+			box_crown = layout.box()
+			box_crown.label(text="Crown shyness:")
+			box_crown.prop(phaenotyp, "shyness_threshold", text="Shyness threshold")
+			box_crown.prop(phaenotyp, "shyness_strength", text="Shyness strength")
+			box_crown.prop(phaenotyp, "growth_strength", text="Growth strength")
+			box_crown.prop(phaenotyp, "crown_iterations", text="Iterations")		
+			box_crown.operator("wm.crown_shyness", text="Start")
+	
 def single_frame(layout):
 	'''
 	Panel for single frame.

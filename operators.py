@@ -760,6 +760,90 @@ def wool():
 					if other.index not in support_ids:
 						v_1 += (v_0 - v_1) * bonding_strength
 
+def crown_shyness():
+	scene = bpy.context.scene
+	phaenotyp = scene.phaenotyp
+	data = scene["<Phaenotyp>"]
+	supports = scene["<Phaenotyp>"]["supports"]
+	frame = bpy.context.scene.frame_current
+
+	obj = data["structure"]
+	vertices = obj.data.vertices
+	edges = obj.data.edges
+
+	bpy.ops.object.mode_set(mode="OBJECT")
+	
+	# get ids of supports
+	support_ids = []
+	for id, support in supports.items():
+		support_id = int(id)
+		support_ids.append(support_id)
+	
+	# parameters
+	shyness_threshold = phaenotyp.shyness_threshold
+	shyness_strength = phaenotyp.shyness_strength * (-1)
+	growth_strength = phaenotyp.growth_strength * 0.001
+	crown_iterations = phaenotyp.crown_iterations
+	
+	# get lists of indices from connected vertices
+	# Is checking for the amount of parts in the mesh. Is based on the answer from BlackCutpoint
+	# https://blender.stackexchange.com/questions/75332/how-to-find-the-number-of-loose-parts-with-blenders-python-api
+	mesh = obj.data
+	paths = {v.index:set() for v in mesh.vertices}
+
+	for e in mesh.edges:
+		paths[e.vertices[0]].add(e.vertices[1])
+		paths[e.vertices[1]].add(e.vertices[0])
+
+	parts = []
+
+	while True:
+		try:
+			i=next(iter(paths.keys()))
+		except StopIteration:
+			break
+
+		part = {i}
+		cur = {i}
+
+		while True:
+			eligible = {sc for sc in cur if sc in paths}
+			if not eligible:
+				break
+
+			cur = {ve for sc in eligible for ve in paths[sc]}
+			part.update(cur)
+			for key in eligible: paths.pop(key)
+
+		parts.append(part)
+	
+	# crown shyness
+	for i in range(crown_iterations):
+		for part in parts:
+			for vertex_id in part:
+				vertex = vertices[vertex_id]
+				normal = vertex.normal
+				
+				for other in vertices:
+					other_id = other.index
+					
+					# if not in same part
+					if other_id not in part:
+						v_0 = vertex.co
+						v_1 = other.co
+						v = v_1 - v_0
+						dist = v.length
+						
+						if dist < shyness_threshold:
+							# avoid
+							if vertex.index not in support_ids:
+								v_0 += (v_1 - v_0) * shyness_strength
+						
+						else:
+							# grow
+							if vertex.index not in support_ids:
+								v_0 += normal * growth_strength
+
 def reach_goal():
 	scene = bpy.context.scene
 	phaenotyp = scene.phaenotyp

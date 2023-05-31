@@ -460,7 +460,39 @@ class phaenotyp_properties(PropertyGroup):
 		min = 1,
 		max = 100
 		)
-    
+
+	shyness_threshold: FloatProperty(
+		name = "shyness_threshold",
+		description = "Threshold of crown shyness",
+		default = 1.0,
+		min = 0.01,
+		max = 10.0
+		)
+
+	shyness_strength: FloatProperty(
+		name = "shyness_strength",
+		description = "Strength of crown shyness",
+		default = 0.2,
+		min = 0.01,
+		max = 10.0
+		)
+
+	growth_strength: FloatProperty(
+		name = "growth_strength",
+		description = "Strength of growth",
+		default = 0.1,
+		min = 0.01,
+		max = 10.0
+		)
+	
+	crown_iterations: IntProperty(
+		name = "crown_iterations",
+		description = "Iterations of crown shyness",
+		default = 10,
+		min = 1,
+		max = 100
+		)
+		
 	mode: EnumProperty(
 		name = "mode",
 		description = "Select mode to start",
@@ -719,7 +751,20 @@ class WM_OT_wool(Operator):
 	def execute(self, context):
 		operators.wool()
 		return {"FINISHED"}
-		
+
+class WM_OT_crown_shyness(Operator):
+	'''
+	Is calling crown_shyness from the module called operators.
+	Check out further info in there.
+	'''
+	bl_label = "crown_shyness"
+	bl_idname = "wm.crown_shyness"
+	bl_description = "Crown_shyness."
+
+	def execute(self, context):
+		operators.crown_shyness()
+		return {"FINISHED"}
+	
 class WM_OT_calculate_single_frame(Operator):
 	'''
 	Is calling calculate_single_frame from the module called operators.
@@ -1058,6 +1103,7 @@ classes = (
 	WM_OT_actuator,
 	WM_OT_reach_goal,
 	WM_OT_wool,
+	WM_OT_crown_shyness,
 
 	WM_OT_calculate_single_frame,
 	WM_OT_calculate_animation,
