@@ -1,6 +1,7 @@
 import bpy
 import bmesh
 from math import sqrt, pi
+from phaenotyp import operators
 from mathutils import Color, Vector
 c = Color()
 
@@ -624,6 +625,25 @@ def create_members(structure_obj, members):
 		radius = member["Do"][str(frame)]*0.01
 		radius_group.add(vertex_ids, radius, 'REPLACE')
 
+def update_translation():
+	phaenotyp = bpy.context.scene.phaenotyp
+	
+	# update translation if activated
+	if phaenotyp.assimilate_update == True:
+		operators.assimilate()
+		
+	if phaenotyp.actuator_update == True:
+		operators.actuator()
+		
+	if phaenotyp.goal_update == True:
+		operators.reach_goal()
+		
+	if phaenotyp.wool_update == True:
+		operators.wool_threads()
+		
+	if phaenotyp.crown_update == True:
+		operators.crown_shyness()
+
 def update_members_pre():
 	scene = bpy.context.scene
 	phaenotyp = scene.phaenotyp
@@ -653,7 +673,9 @@ def update_members_pre():
 		member["A"][str(frame)]  = ((pi * (member["Do"][str(frame)]*0.5)**2) - (pi * (member["Di"][str(frame)]*0.5)**2))
 		member["kg_A"][str(frame)] =  member["A"][str(frame)]*member["d"] * 0.1
 		member["ir"][str(frame)] = sqrt(member["Iy"][str(frame)]/member["A"][str(frame)])
-
+	
+	update_translation()
+		
 def update_members_post():
 	scene = bpy.context.scene
 	phaenotyp = scene.phaenotyp
@@ -666,7 +688,7 @@ def update_members_post():
 
 	radius_group = mesh_for_viz.vertex_groups.get("radius")
 	attribute = mesh_for_viz.data.attributes.get("force")
-
+			
 	for id, member in members.items():
 		id = int(id)
 

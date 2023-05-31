@@ -1232,22 +1232,11 @@ def update_post(scene):
 			shape_keys = data["structure"].data.shape_keys.key_blocks
 			chromosome = individuals[str(frame)]["chromosome"]
 			geometry.set_shape_keys(shape_keys, chromosome)
-	
-	# run translation if available
-	if phaenotyp.assimilate_update == True:
-		operators.assimilate()
 		
-	if phaenotyp.actuator_update == True:
-		operators.actuator()
-		
-	if phaenotyp.goal_update == True:
-		operators.reach_goal()
-		
-	if phaenotyp.wool_update == True:
-		operators.wool_threads()
-		
-	if phaenotyp.crown_update == True:
-		operators.crown_shyness()
+		# update translation
+		obj = data.get("structure")
+		if obj:
+			geometry.update_translation()
 	
 @persistent
 def undo(scene):
