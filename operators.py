@@ -575,9 +575,11 @@ def assimilate():
 		support_ids.append(support_id)
 
 	target = phaenotyp.assimilate_length
-
+	strength = phaenotyp.assimilate_strength * 0.01
+	iterations = phaenotyp.assimilate_iterations
+	
 	# assimilate all edges
-	for i in range(10):
+	for i in range(iterations):
 		for edge in edges:
 			v_0_id = edge.vertices[0]
 			v_1_id = edge.vertices[1]
@@ -590,15 +592,15 @@ def assimilate():
 
 			if dist > target:
 				if v_0_id not in support_ids:
-					vertices[v_0_id].co = v_0 + dist_v*0.01
+					vertices[v_0_id].co = v_0 + dist_v*strength
 				if v_1_id not in support_ids:
-					vertices[v_1_id].co = v_1 - dist_v*0.01
+					vertices[v_1_id].co = v_1 - dist_v*strength
 
 			else:
 				if v_0_id not in support_ids:
-					vertices[v_0_id].co = v_0 - dist_v*0.01
+					vertices[v_0_id].co = v_0 - dist_v*strength
 				if v_1_id not in support_ids:
-					vertices[v_1_id].co = v_1 + dist_v*0.01
+					vertices[v_1_id].co = v_1 + dist_v*strength
 
 def actuator():
 	scene = bpy.context.scene
@@ -615,10 +617,12 @@ def actuator():
 
 	# target lenght from gui
 	length = phaenotyp.actuator_length
-
+	strength = phaenotyp.actuator_strength * 0.01
+	iterations = phaenotyp.actuator_iterations
+	
 	# get current length of each edge
 	lengthes = {}
-
+	
 	for edge in edges:
 		v_0_id = edge.vertices[0]
 		v_1_id = edge.vertices[1]
@@ -644,7 +648,7 @@ def actuator():
 			lengthes[str(id)] = length
 
 	# change lengthes
-	for i in range(10):
+	for i in range(iterations):
 		for edge in edges:
 			v_0_id = edge.vertices[0]
 			v_1_id = edge.vertices[1]
@@ -659,17 +663,121 @@ def actuator():
 				# move only if no support
 				# allow to move if only fixed in other direction?
 				if v_0_id not in support_ids:
-					vertices[v_0_id].co = v_0 + dist_v*0.01
+					vertices[v_0_id].co = v_0 + dist_v*strength
 				if v_1_id not in support_ids:
-					vertices[v_1_id].co = v_1 - dist_v*0.01
+					vertices[v_1_id].co = v_1 - dist_v*strength
 
 			else:
 				if v_0_id not in support_ids:
-					vertices[v_0_id].co = v_0 - dist_v*0.01
+					vertices[v_0_id].co = v_0 - dist_v*strength
 				if v_1_id not in support_ids:
-					vertices[v_1_id].co = v_1 + dist_v*0.01
-					
-def wool():
+					vertices[v_1_id].co = v_1 + dist_v*strength
+
+def reach_goal():
+	scene = bpy.context.scene
+	phaenotyp = scene.phaenotyp
+	data = scene["<Phaenotyp>"]
+	members = scene["<Phaenotyp>"]["members"]
+	frame = bpy.context.scene.frame_current
+
+	scene = bpy.context.scene
+	phaenotyp = scene.phaenotyp
+	data = scene["<Phaenotyp>"]
+	supports = scene["<Phaenotyp>"]["supports"]
+	frame = bpy.context.scene.frame_current
+
+	obj = data["structure"]
+	vertices = obj.data.vertices
+	edges = obj.data.edges
+
+	bpy.ops.object.mode_set(mode="OBJECT")
+
+	strength = phaenotyp.goal_strength * 0.01
+	iterations = phaenotyp.goal_iterations
+	
+	# get empties
+	empties = []
+	for selected_obj in bpy.context.selected_objects:
+		if selected_obj.type == "EMPTY":
+			empties.append(selected_obj)
+
+	# check conditions
+	if len(empties) != 1:
+		# stop animation if it is playing
+		if bpy.context.screen.is_animation_playing:
+			bpy.ops.screen.animation_play()
+		
+		# drop message for user
+		text = ["Select one empty only."]
+		basics.popup(lines = text)
+
+	else:
+		empty = empties[0]
+
+		# target lenght from gui
+		length = phaenotyp.actuator_length
+
+		# get current length of each edge
+		lengthes = {}
+
+		for edge in edges:
+			v_0_id = edge.vertices[0]
+			v_1_id = edge.vertices[1]
+
+			v_0 = vertices[v_0_id].co
+			v_1 = vertices[v_1_id].co
+
+			dist_v = v_1 - v_0
+			dist = dist_v.length
+
+			lengthes[str(edge.index)] = dist
+
+		# get id of supports
+		support_ids = []
+		for id, support in supports.items():
+			support_id = int(id)
+			support_ids.append(support_id)
+
+		# towards empty
+		for i in range(iterations):
+			for vertex in vertices:
+				vertex_co = vertex.co
+				empty_loc = empty.location
+
+				dist_v = vertex_co - empty_loc
+				dist = dist_v.length
+
+				if dist > 1:
+					if vertex.index not in support_ids:
+						vertex.co = vertex_co - dist_v*strength
+
+
+			# keep lenghtes
+			for edge in edges:
+				v_0_id = edge.vertices[0]
+				v_1_id = edge.vertices[1]
+
+				v_0 = vertices[v_0_id].co
+				v_1 = vertices[v_1_id].co
+
+				dist_v = v_1 - v_0
+				dist = dist_v.length
+
+				if dist > lengthes[str(edge.index)]:
+					# move only if no support
+					# allow to move if only fixed in other direction?
+					if v_0_id not in support_ids:
+						vertices[v_0_id].co = v_0 + dist_v*strength
+					if v_1_id not in support_ids:
+						vertices[v_1_id].co = v_1 - dist_v*strength
+
+				else:
+					if v_0_id not in support_ids:
+						vertices[v_0_id].co = v_0 - dist_v*strength
+					if v_1_id not in support_ids:
+						vertices[v_1_id].co = v_1 + dist_v*strength
+			
+def wool_threads():
 	scene = bpy.context.scene
 	phaenotyp = scene.phaenotyp
 	data = scene["<Phaenotyp>"]
@@ -712,10 +820,10 @@ def wool():
 	link_strength = phaenotyp.link_strength
 	bonding_threshold = phaenotyp.bonding_threshold
 	bonding_strength = phaenotyp.bonding_strength * 0.0001 # to make readable slider
-	wool_iterations = phaenotyp.wool_iterations	# 10.0
+	iterations = phaenotyp.wool_iterations	# 10.0
 		
 	# wool
-	for i in range(wool_iterations):
+	for i in range(iterations):
 		# links
 		for id, edge in enumerate(edges):
 			# get current distance
@@ -783,7 +891,7 @@ def crown_shyness():
 	shyness_threshold = phaenotyp.shyness_threshold
 	shyness_strength = phaenotyp.shyness_strength * (-1)
 	growth_strength = phaenotyp.growth_strength * 0.001
-	crown_iterations = phaenotyp.crown_iterations
+	iterations = phaenotyp.crown_iterations
 	
 	# get lists of indices from connected vertices
 	# Is checking for the amount of parts in the mesh. Is based on the answer from BlackCutpoint
@@ -818,7 +926,7 @@ def crown_shyness():
 		parts.append(part)
 	
 	# crown shyness
-	for i in range(crown_iterations):
+	for i in range(iterations):
 		for part in parts:
 			for vertex_id in part:
 				vertex = vertices[vertex_id]
@@ -843,102 +951,6 @@ def crown_shyness():
 							# grow
 							if vertex.index not in support_ids:
 								v_0 += normal * growth_strength
-
-def reach_goal():
-	scene = bpy.context.scene
-	phaenotyp = scene.phaenotyp
-	data = scene["<Phaenotyp>"]
-	members = scene["<Phaenotyp>"]["members"]
-	frame = bpy.context.scene.frame_current
-
-	scene = bpy.context.scene
-	phaenotyp = scene.phaenotyp
-	data = scene["<Phaenotyp>"]
-	supports = scene["<Phaenotyp>"]["supports"]
-	frame = bpy.context.scene.frame_current
-
-	obj = data["structure"]
-	vertices = obj.data.vertices
-	edges = obj.data.edges
-
-	bpy.ops.object.mode_set(mode="OBJECT")
-
-	# get empties
-	empties = []
-	for selected_obj in bpy.context.selected_objects:
-		if selected_obj.type == "EMPTY":
-			empties.append(selected_obj)
-
-	# check conditions
-	if len(empties) != 1:
-		text = ["Select one empty only."]
-		basics.popup(lines = text)
-
-	else:
-		empty = empties[0]
-
-		# target lenght from gui
-		length = phaenotyp.actuator_length
-
-		# get current length of each edge
-		lengthes = {}
-
-		for edge in edges:
-			v_0_id = edge.vertices[0]
-			v_1_id = edge.vertices[1]
-
-			v_0 = vertices[v_0_id].co
-			v_1 = vertices[v_1_id].co
-
-			dist_v = v_1 - v_0
-			dist = dist_v.length
-
-			lengthes[str(edge.index)] = dist
-
-		# get id of supports
-		support_ids = []
-		for id, support in supports.items():
-			support_id = int(id)
-			support_ids.append(support_id)
-
-		# towards empty
-		for i in range(10):
-			for vertex in vertices:
-				vertex_co = vertex.co
-				empty_loc = empty.location
-
-				dist_v = vertex_co - empty_loc
-				dist = dist_v.length
-
-				if dist > 1:
-					if vertex.index not in support_ids:
-						vertex.co = vertex_co - dist_v*0.01
-
-
-			# keep lenghtes
-			for edge in edges:
-				v_0_id = edge.vertices[0]
-				v_1_id = edge.vertices[1]
-
-				v_0 = vertices[v_0_id].co
-				v_1 = vertices[v_1_id].co
-
-				dist_v = v_1 - v_0
-				dist = dist_v.length
-
-				if dist > lengthes[str(edge.index)]:
-					# move only if no support
-					# allow to move if only fixed in other direction?
-					if v_0_id not in support_ids:
-						vertices[v_0_id].co = v_0 + dist_v*0.01
-					if v_1_id not in support_ids:
-						vertices[v_1_id].co = v_1 - dist_v*0.01
-
-				else:
-					if v_0_id not in support_ids:
-						vertices[v_0_id].co = v_0 - dist_v*0.01
-					if v_1_id not in support_ids:
-						vertices[v_1_id].co = v_1 + dist_v*0.01
 
 def calculate_single_frame():
 	scene = bpy.context.scene

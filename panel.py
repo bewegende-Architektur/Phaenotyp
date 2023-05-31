@@ -360,16 +360,22 @@ def transformation(layout):
 		if data["panel_state"]["file"] and data["panel_state"]["members"]:
 			box_assimilation = layout.box()
 			box_assimilation.label(text="Assimilation:")
-			box_assimilation.prop(phaenotyp, "assimilate_length", text="")
+			box_assimilation.prop(phaenotyp, "assimilate_length", text="Length")
+			box_assimilation.prop(phaenotyp, "assimilate_strength", text="Strength")
+			box_assimilation.prop(phaenotyp, "assimilate_iterations", text="Iterations")
 			box_assimilation.operator("wm.assimilate", text="Start")
 
 			box_actuator = layout.box()
 			box_actuator.label(text="Actuator:")
-			box_actuator.prop(phaenotyp, "actuator_length", text="")
+			box_actuator.prop(phaenotyp, "actuator_length", text="Length")
+			box_actuator.prop(phaenotyp, "actuator_strength", text="Strength")
+			box_actuator.prop(phaenotyp, "actuator_iterations", text="Iterations")
 			box_actuator.operator("wm.actuator", text="Start")
 
 			box_goal = layout.box()
 			box_goal.label(text="Reach goal:")
+			box_goal.prop(phaenotyp, "goal_strength", text="Strength")
+			box_goal.prop(phaenotyp, "goal_iterations", text="Iterations")
 			box_goal.operator("wm.reach_goal", text="Start")
 			
 			box_wool = layout.box()
@@ -379,7 +385,7 @@ def transformation(layout):
 			box_wool.prop(phaenotyp, "bonding_threshold", text="Bonding threshold")
 			box_wool.prop(phaenotyp, "bonding_strength", text="Bonding strength")
 			box_wool.prop(phaenotyp, "wool_iterations", text="Iterations")		
-			box_wool.operator("wm.wool", text="Start")
+			box_wool.operator("wm.wool_threads", text="Start")
 
 			box_crown = layout.box()
 			box_crown.label(text="Crown shyness:")
@@ -388,7 +394,19 @@ def transformation(layout):
 			box_crown.prop(phaenotyp, "growth_strength", text="Growth strength")
 			box_crown.prop(phaenotyp, "crown_iterations", text="Iterations")		
 			box_crown.operator("wm.crown_shyness", text="Start")
-	
+			
+			box_animation = layout.box()
+			box_animation.label(text="Animation:")
+			box_animation.prop(phaenotyp, "assimilate_update", text="Assimilate")
+			box_animation.prop(phaenotyp, "actuator_update", text="Actuator")
+			box_animation.prop(phaenotyp, "goal_update", text="Goal")
+			box_animation.prop(phaenotyp, "wool_update", text="Wool threads")
+			box_animation.prop(phaenotyp, "crown_update", text="Crown shyness")
+			if bpy.context.screen.is_animation_playing:
+				box_animation.operator("screen.animation_play", text="Stop")
+			else:
+				box_animation.operator("screen.animation_play", text="Start")
+
 def single_frame(layout):
 	'''
 	Panel for single frame.

@@ -413,6 +413,27 @@ class phaenotyp_properties(PropertyGroup):
 		max = 100
 		)
 
+	assimilate_strength: FloatProperty(
+		name = "assimilate_strength",
+		description = "Strength of assimilation",
+		default = 1,
+		min = 0.1,
+		max = 10
+		)
+
+	assimilate_iterations: IntProperty(
+		name = "assimilate_iterations",
+		description = "Iterations of assimilation",
+		default = 10,
+		min = 1,
+		max = 100
+		)
+	
+	assimilate_update: BoolProperty(
+		name = 'Update after frame change',
+		default = False
+	)
+	
 	actuator_length: FloatProperty(
 		name = "actuator_length",
 		description = "Target length for actuator",
@@ -420,7 +441,49 @@ class phaenotyp_properties(PropertyGroup):
 		min = 0.1,
 		max = 100
 		)
-    
+ 
+	actuator_strength: FloatProperty(
+		name = "actuator_strength",
+		description = "Strength of actuator",
+		default = 1,
+		min = 0.1,
+		max = 10
+		)
+
+	actuator_iterations: IntProperty(
+		name = "actuator_iterations",
+		description = "Iterations of actuator",
+		default = 10,
+		min = 1,
+		max = 100
+		)
+	
+	actuator_update: BoolProperty(
+		name = 'Update after frame change',
+		default = False
+	)
+
+	goal_strength: FloatProperty(
+		name = "goal_strength",
+		description = "Strength of goal",
+		default = 1,
+		min = 0.1,
+		max = 10
+		)
+
+	goal_iterations: IntProperty(
+		name = "goal_iterations",
+		description = "Iterations of goal",
+		default = 10,
+		min = 1,
+		max = 100
+		)
+	
+	goal_update: BoolProperty(
+		name = 'Update after frame change',
+		default = False
+	)
+		
 	gravity_strength: FloatProperty(
 		name = "gravity_strength",
 		description = "Gravity of wool",
@@ -461,6 +524,11 @@ class phaenotyp_properties(PropertyGroup):
 		max = 100
 		)
 
+	wool_update: BoolProperty(
+		name = 'Update after frame change',
+		default = False
+	)
+	
 	shyness_threshold: FloatProperty(
 		name = "shyness_threshold",
 		description = "Threshold of crown shyness",
@@ -492,7 +560,12 @@ class phaenotyp_properties(PropertyGroup):
 		min = 1,
 		max = 100
 		)
-		
+
+	crown_update: BoolProperty(
+		name = 'Update after frame change',
+		default = False
+	)
+	
 	mode: EnumProperty(
 		name = "mode",
 		description = "Select mode to start",
@@ -739,17 +812,17 @@ class WM_OT_reach_goal(Operator):
 		operators.reach_goal()
 		return {"FINISHED"}
 
-class WM_OT_wool(Operator):
+class WM_OT_wool_threads(Operator):
 	'''
 	Is calling wool threads inspired by Frei Otto from the module called operators.
 	Check out further info in there.
 	'''
-	bl_label = "wool"
-	bl_idname = "wm.wool"
+	bl_label = "wool_threads"
+	bl_idname = "wm.wool_threads"
 	bl_description = "Wool threads."
 
 	def execute(self, context):
-		operators.wool()
+		operators.wool_threads()
 		return {"FINISHED"}
 
 class WM_OT_crown_shyness(Operator):
@@ -1102,7 +1175,7 @@ classes = (
 	WM_OT_assimilate,
 	WM_OT_actuator,
 	WM_OT_reach_goal,
-	WM_OT_wool,
+	WM_OT_wool_threads,
 	WM_OT_crown_shyness,
 
 	WM_OT_calculate_single_frame,
@@ -1159,7 +1232,23 @@ def update_post(scene):
 			shape_keys = data["structure"].data.shape_keys.key_blocks
 			chromosome = individuals[str(frame)]["chromosome"]
 			geometry.set_shape_keys(shape_keys, chromosome)
-
+	
+	# run translation if available
+	if phaenotyp.assimilate_update == True:
+		operators.assimilate()
+		
+	if phaenotyp.actuator_update == True:
+		operators.actuator()
+		
+	if phaenotyp.goal_update == True:
+		operators.reach_goal()
+		
+	if phaenotyp.wool_update == True:
+		operators.wool_threads()
+		
+	if phaenotyp.crown_update == True:
+		operators.crown_shyness()
+	
 @persistent
 def undo(scene):
 	'''
