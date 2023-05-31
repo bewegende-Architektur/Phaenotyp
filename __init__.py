@@ -2,7 +2,7 @@ bl_info = {
 	"name": "Phänotyp",
 	"description": "Genetic algorithm for architectural structures",
 	"author": "bewegende Architektur e.U. and Karl Deix",
-	"version": (0, 2, 1),
+	"version": (0, 2, 2),
 	"blender": (3, 5, 1),
 	"location": "3D View > Tools",
 }
@@ -984,7 +984,7 @@ class OBJECT_PT_Phaenotyp(Panel):
 	'''
 	Panel for Phaenotyp.
 	'''
-	bl_label = "Phänotyp 0.2.1"
+	bl_label = "Phänotyp 0.2.2"
 	bl_idname = "OBJECT_PT_custom_panel"
 	bl_space_type = "VIEW_3D"
 	bl_region_type = "UI"
@@ -1106,13 +1106,13 @@ def update_post(scene):
 			if result:
 				geometry.update_members_post()
 
-	# apply chromosome if available
-	# (to change the shape-key, the result will be correct allready)
-	individuals = data.get("individuals")
-	if individuals:
-		shape_keys = data["structure"].data.shape_keys.key_blocks
-		chromosome = individuals[str(frame)]["chromosome"]
-		geometry.set_shape_keys(shape_keys, chromosome)
+		# apply chromosome if available
+		# (to change the shape-key, the result will be correct allready)
+		individuals = data.get("individuals")
+		if individuals:
+			shape_keys = data["structure"].data.shape_keys.key_blocks
+			chromosome = individuals[str(frame)]["chromosome"]
+			geometry.set_shape_keys(shape_keys, chromosome)
 
 @persistent
 def undo(scene):
