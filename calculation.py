@@ -299,6 +299,11 @@ def prepare_fea_fd():
 	frame_rise = 0
 	frame_span = 0
 	frame_cantilever = 0
+	
+	# to sum up loads
+	forces = []
+	for i in range(len(vertices)):
+		forces.append(array([0.0, 0.0, 0.0]))
 
 	# like suggested here by Gorgious and CodeManX:
 	# https://blender.stackexchange.com/questions/6155/how-to-convert-coordinates-from-vertex-to-world-space
@@ -334,14 +339,14 @@ def prepare_fea_fd():
 
 	# create members
 	members = data["members"]
-	edges = []
+	keys = []
 	lenghtes = []
 	for id, member in members.items():
 		vertex_0_id = member["vertex_0_id"]
 		vertex_1_id = member["vertex_1_id"]
 
 		key = [vertex_0_id, vertex_1_id]
-		edges.append(key)
+		keys.append(key)
 
 		v_0 = vertices[vertex_0_id].co
 		v_1 = vertices[vertex_1_id].co
@@ -358,10 +363,6 @@ def prepare_fea_fd():
 		# add self weight
 		kg_A = member["kg_A"][str(frame)]
 		kN = kg_A * -0.0000981
-		'''
-		# add self weight as distributed load
-		truss.add_member_dist_load(name, "FZ", kN, kN)
-		'''
 
 		# calculate lenght of parts (maybe usefull later ...)
 		length = (v_0 - v_1).length
@@ -373,41 +374,33 @@ def prepare_fea_fd():
 
 		# for calculation
 		lenghtes.append(length)
+		
+		# add self weight
+		self_weight = kN * length * 100
+		forces[vertex_0_id] += array([0.0, 0.0, self_weight*0.5])
+		forces[vertex_1_id] += array([0.0, 0.0, self_weight*0.5])
 
 		# store in member
 		member["kg"][str(frame)] = kg
 		member["length"][str(frame)] = length
 
-	edges_array = array(edges)
+	edges_array = array(keys)
 
 	# add loads
 	loads_v = data["loads_v"]
-	forces = []
-	for vertex in vertices:
-		id = str(vertex.index)
-		if id in loads_v:
-			load_v = loads_v[id]
-			x = load_v[0]
-			y = load_v[1]
-			z = load_v[2]
-
-		else:
-			x = 0
-			y = 0
-			z = 0
-
-		load = [x,y,z]
-		forces.append(load)
-
-	forces_array = array(forces)
+	for id, load in loads_v.items():
+		forces[int(id)] += array([load[0], load[1], load[2]])
 
 	loads_e = data["loads_e"]
 	for id, load in loads_e.items():
-		name = "member_" + str(id)
-		#truss.add_member_dist_load(name, 'FX', load[0]*0.01, load[0]*0.01) # m to cm
-		#truss.add_member_dist_load(name, 'FY', load[1]*0.01, load[1]*0.01) # m to cm
-		#truss.add_member_dist_load(name, 'FZ', load[2]*0.01, load[2]*0.01) # m to cm
-
+		member = members[id]
+		vertex_0_id = member["vertex_0_id"]
+		vertex_1_id = member["vertex_1_id"]
+		length = lenghtes[int(id)]
+		f = length * 0.5 * 0.01 # half of the member, m to cm
+		forces[int(vertex_0_id)] += array([load[0]*f, load[1]*f, load[2]*f])
+		forces[int(vertex_1_id)] += array([load[0]*f, load[1]*f, load[2]*f])
+	
 	loads_f = data["loads_f"]
 	for id, load in loads_f.items():
 		# int(id), otherwise crashing Speicherzugriffsfehler
@@ -453,25 +446,45 @@ def prepare_fea_fd():
 			for edge in edges:
 				if edge.vertices[0] in edge_key:
 					if edge.vertices[1] in edge_key:
-						name = "member_" + str(edge.index)
+						id = edge.index
 
 			# edge_load_normal <--------------------------------- to be tested / checked
 			x = edge_load_normal[i] * normal[0]
 			y = edge_load_normal[i] * normal[1]
 			z = edge_load_normal[i] * normal[2]
 
-			#truss.add_member_dist_load(name, 'FX', x, x)
-			#truss.add_member_dist_load(name, 'FY', y, y)
-			#truss.add_member_dist_load(name, 'FZ', z, z)
+			member = members[id]
+			vertex_0_id = member["vertex_0_id"]
+			vertex_1_id = member["vertex_1_id"]
+			length = lenghtes[int(id)]
+			f = length * 0.5 # half of the member
+			forces[int(vertex_0_id)] += array([x*f, y*f, z*f])
+			forces[int(vertex_1_id)] += array([x*f, y*f, z*f])
 
 			# edge_load_projected
 			z = edge_load_projected[i]
-			#truss.add_member_dist_load(name, 'FZ', z, z)
+			forces[int(vertex_0_id)] += array([0.0, 0.0, z*f])
+			forces[int(vertex_1_id)] += array([0.0, 0.0, z*f])
 
 			# edge_load_area_z
 			z = edge_load_area_z[i]
-			#truss.add_member_dist_load(name, 'FZ', z, z)
-
+			forces[int(vertex_0_id)] += array([0.0, 0.0, z*f])
+			forces[int(vertex_1_id)] += array([0.0, 0.0, z*f])
+	
+	# move all forces from the supports to the next load
+	# (is ignored if the both vertices are supports)
+	for id, member in members.items():
+		vertex_0_id = member["vertex_0_id"]
+		vertex_1_id = member["vertex_1_id"]
+		
+		if vertex_0_id in supports_ids:
+			forces[int(vertex_1_id)] += forces[int(vertex_0_id)]
+	
+		if vertex_1_id in supports_ids:
+			forces[int(vertex_0_id)] += forces[int(vertex_1_id)]
+	
+	forces_array = array(forces)
+	
 	# store frame based data
 	data["frames"][str(frame)]["volume"] = geometry.volume(mesh)
 	data["frames"][str(frame)]["area"] = geometry.area(faces)
