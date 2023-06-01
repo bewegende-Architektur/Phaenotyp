@@ -453,7 +453,7 @@ def prepare_fea_fd():
 			y = edge_load_normal[i] * normal[1]
 			z = edge_load_normal[i] * normal[2]
 
-			member = members[id]
+			member = members[str(id)]
 			vertex_0_id = member["vertex_0_id"]
 			vertex_1_id = member["vertex_1_id"]
 			length = lenghtes[int(id)]
