@@ -607,8 +607,7 @@ def append_head(file, report_type):
 
 	elif report_type == "combined":
 		file.write("<a href='axial.html'>axial</a> |\n")
-		file.write("<a href='sigma.html'>sigma</a>\n")
-
+		file.write("<a href='sigma.html'>sigma</a> |\n")
 		file.write("<a href='Do.html'>Do</a> |\n")
 		file.write("<a href='Di.html'>Di</a> |\n")
 		file.write("<a href='utilization.html'>utilization</a> |\n")
