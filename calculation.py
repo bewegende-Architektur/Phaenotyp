@@ -397,7 +397,7 @@ def prepare_fea_fd():
 		vertex_0_id = member["vertex_0_id"]
 		vertex_1_id = member["vertex_1_id"]
 		length = lenghtes[int(id)]
-		f = length * 0.5 * 0.01 # half of the member, m to cm
+		f = length * 0.5 * 100 # half of the member, m to cm
 		forces[int(vertex_0_id)] += array([load[0]*f, load[1]*f, load[2]*f])
 		forces[int(vertex_1_id)] += array([load[0]*f, load[1]*f, load[2]*f])
 	
@@ -457,7 +457,7 @@ def prepare_fea_fd():
 			vertex_0_id = member["vertex_0_id"]
 			vertex_1_id = member["vertex_1_id"]
 			length = lenghtes[int(id)]
-			f = length * 0.5 # half of the member
+			f = length * 0.5 * 100 # half of the member, m to cm
 			forces[int(vertex_0_id)] += array([x*f, y*f, z*f])
 			forces[int(vertex_1_id)] += array([x*f, y*f, z*f])
 
