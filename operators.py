@@ -821,6 +821,38 @@ def wool_threads():
 	bonding_threshold = phaenotyp.bonding_threshold
 	bonding_strength = phaenotyp.bonding_strength * 0.0001 # to make readable slider
 	iterations = phaenotyp.wool_iterations	# 10.0
+
+	# get lists of indices from connected vertices
+	# Is checking for the amount of parts in the mesh. Is based on the answer from BlackCutpoint
+	# https://blender.stackexchange.com/questions/75332/how-to-find-the-number-of-loose-parts-with-blenders-python-api
+	mesh = obj.data
+	paths = {v.index:set() for v in mesh.vertices}
+
+	for e in mesh.edges:
+		paths[e.vertices[0]].add(e.vertices[1])
+		paths[e.vertices[1]].add(e.vertices[0])
+
+	parts = []
+
+	while True:
+		try:
+			i=next(iter(paths.keys()))
+		except StopIteration:
+			break
+
+		part = {i}
+		cur = {i}
+
+		while True:
+			eligible = {sc for sc in cur if sc in paths}
+			if not eligible:
+				break
+
+			cur = {ve for sc in eligible for ve in paths[sc]}
+			part.update(cur)
+			for key in eligible: paths.pop(key)
+
+		parts.append(part)
 		
 	# wool
 	for i in range(iterations):
@@ -854,19 +886,25 @@ def wool_threads():
 					v_1 += (v_0 - v_1) * strength * link_strength
 		
 		# bonding
-		for vertex in vertices:
-			for other in vertices:
-				v_0 = vertex.co
-				v_1 = other.co
-				v = v_1 - v_0
-				dist = v.length
-				
-				if dist < bonding_threshold:
-					# move points towards each other
-					if vertex.index not in support_ids:
-						v_0 += (v_1 - v_0) * bonding_strength
-					if other.index not in support_ids:
-						v_1 += (v_0 - v_1) * bonding_strength
+		for part in parts:
+			for vertex_id in part:
+				vertex = vertices[vertex_id]                
+				for other in vertices:
+					other_id = other.index
+					
+					# if not in same part
+					if other_id not in part:
+						v_0 = vertex.co
+						v_1 = other.co
+						v = v_1 - v_0
+						dist = v.length
+						
+						if dist < bonding_threshold:
+							# move points towards each other
+							if vertex.index not in support_ids:
+								v_0 += (v_1 - v_0) * bonding_strength
+							if other.index not in support_ids:
+								v_1 += (v_0 - v_1) * bonding_strength
 
 def crown_shyness():
 	scene = bpy.context.scene
