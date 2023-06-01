@@ -151,6 +151,8 @@ def members(layout):
 	phaenotyp = scene.phaenotyp
 	frame = scene.frame_current
 	data = bpy.context.scene.get("<Phaenotyp>")
+	
+	calculation_type = phaenotyp.calculation_type
 
 	if data:
 		if data["panel_state"]["supports"]:
@@ -166,7 +168,8 @@ def members(layout):
 			material.current["Do"] = phaenotyp.Do * 0.1
 			material.current["Di"] = phaenotyp.Di * 0.1
 			
-			box_members.prop(phaenotyp, "member_type", text="")
+			if calculation_type != "force_distribution":
+				box_members.prop(phaenotyp, "member_type", text="")
 
 			box_members.prop(phaenotyp, "material", text="")
 			if phaenotyp.material == "custom":
@@ -796,7 +799,7 @@ def visualization(layout):
 	if phaenotyp.calculation_type != "geometrical":
 		box_viz = layout.box()
 		box_viz.label(text="Vizualisation:")
-		if calculation_type == "force_distribution":
+		if phaenotyp.calculation_type == "force_distribution":
 			box_viz.prop(phaenotyp, "forces_fd", text="Force")
 		else:
 			box_viz.prop(phaenotyp, "forces_pn", text="Force")
