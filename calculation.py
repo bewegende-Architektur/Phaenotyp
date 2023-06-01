@@ -860,7 +860,7 @@ def interweave_results_fd(feas, members):
 			force = truss[id]
 			sigma = force / A
 
-			# with 500cm, Do 60, Di 50, -10 kN
+			# with 500 cm, Do 60, Di 50, -10 kN
 			'''
 			print("I", I) # 32.9376 cm4
 			print("A", A) # 8,64 cm2
