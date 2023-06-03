@@ -1114,7 +1114,7 @@ def calculate_animation():
 
 					# run optimization and get new properties
 					if phaenotyp.calculation_type == "force_distribution":
-						if phaenotyp.optimization_fd == "approximate_sectional":
+						if phaenotyp.optimization_fd == "approximate":
 							calculation.approximate_sectional()
 
 					else:
