@@ -76,7 +76,7 @@ def amount_of_doubles():
 				v = v_1 - v_0
 				dist = v.length
 				
-				if v.length < 0.001:
+				if v.length < 0.0001:
 					amount += 1
 	
 	return amount
