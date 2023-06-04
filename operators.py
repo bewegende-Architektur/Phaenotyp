@@ -947,6 +947,38 @@ def crown_shyness():
 					if vertex_id not in support_ids:
 						v_0 += normal * growth_strength
 
+def store_co():
+	'''
+	Is storing the position of all vertices at the current state to be restored after translation.
+	'''
+	scene = bpy.context.scene
+	data = scene["<Phaenotyp>"]
+	obj = data["structure"]
+	vertices = obj.data.vertices
+	
+	data["process"]["stored"] = {}
+	stored = data["process"]["stored"]
+	
+	for vertex in vertices:
+		id = vertex.index
+		co = vertex.co
+		stored[str(id)] = co
+	
+def restore_co():
+	'''
+	Is restoring the position of all vertices prevously stored.
+	'''
+	scene = bpy.context.scene
+	data = scene["<Phaenotyp>"]
+	obj = data["structure"]
+	vertices = obj.data.vertices
+	
+	stored = data["process"]["stored"]
+	
+	for vertex in vertices:
+		id = vertex.index
+		vertex.co = stored[str(id)]
+		
 def calculate_single_frame():
 	scene = bpy.context.scene
 	phaenotyp = scene.phaenotyp

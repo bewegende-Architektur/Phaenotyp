@@ -420,6 +420,15 @@ def transformation(layout):
 			else:
 				box_animation.operator("screen.animation_play", text="Start")
 
+			box_state = layout.box()
+			box_state.label(text="State:")
+			stored = data["process"].get("stored")
+			if stored:
+				box_state.operator("wm.store_co", text="Overwrite")
+				box_state.operator("wm.restore_co", text="Restore")
+			else:
+				box_state.operator("wm.store_co", text="Store")
+			
 def single_frame(layout):
 	'''
 	Panel for single frame.

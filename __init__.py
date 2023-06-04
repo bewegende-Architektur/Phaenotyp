@@ -881,12 +881,38 @@ class WM_OT_crown_shyness(Operator):
 	'''
 	bl_label = "crown_shyness"
 	bl_idname = "wm.crown_shyness"
-	bl_description = "Crown_shyness."
+	bl_description = "Crown shyness."
 
 	def execute(self, context):
 		operators.crown_shyness()
 		return {"FINISHED"}
-	
+
+class WM_OT_store_co(Operator):
+	'''
+	Is calling store_co from the module called operators.
+	Check out further info in there.
+	'''
+	bl_label = "store_co"
+	bl_idname = "wm.store_co"
+	bl_description = "Store co."
+
+	def execute(self, context):
+		operators.store_co()
+		return {"FINISHED"}
+
+class WM_OT_restore_co(Operator):
+	'''
+	Is calling restore_co from the module called operators.
+	Check out further info in there.
+	'''
+	bl_label = "restore_co"
+	bl_idname = "wm.restore_co"
+	bl_description = "Restore co."
+
+	def execute(self, context):
+		operators.restore_co()
+		return {"FINISHED"}
+		
 class WM_OT_calculate_single_frame(Operator):
 	'''
 	Is calling calculate_single_frame from the module called operators.
@@ -1226,6 +1252,8 @@ classes = (
 	WM_OT_reach_goal,
 	WM_OT_wool_threads,
 	WM_OT_crown_shyness,
+	WM_OT_store_co,
+	WM_OT_restore_co,
 
 	WM_OT_calculate_single_frame,
 	WM_OT_calculate_animation,
