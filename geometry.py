@@ -813,6 +813,10 @@ def create_loads(structure_obj, loads_v, loads_e, loads_f):
 	# like suggested here by Gorgious and CodeManX:
 	# https://blender.stackexchange.com/questions/6155/how-to-convert-coordinates-from-vertex-to-world-space
 	mat = structure_obj.matrix_world
+	
+	scene = bpy.context.scene
+	phaenotyp = scene.phaenotyp
+	calculation_type = phaenotyp.calculation_type
 
 	for id, load in loads_v.items():
 		id = int(id)
@@ -830,11 +834,16 @@ def create_loads(structure_obj, loads_v, loads_e, loads_f):
 
 		text = "" + "\n"
 
-		text = text + "type: vertices\n"
-		text = text + "x: " + str(load[0]) + "\n"
-		text = text + "y: " + str(load[1]) + "\n"
-		text = text + "z: " + str(load[2]) + "\n"
-
+		text = text + "Type: vertices\n"
+		text = text + "FX: " + str(load[0]) + "\n"
+		text = text + "FY: " + str(load[1]) + "\n"
+		text = text + "FZ: " + str(load[2]) + "\n"
+		
+		if calculation_type not in ["geometrical", "force_distribution"]:
+			text = text + "MX: " + str(load[3]) + "\n"
+			text = text + "MY: " + str(load[4]) + "\n"
+			text = text + "MZ: " + str(load[5]) + "\n"
+		
 		font_curve.body = text
 		obj = bpy.data.objects.new(name="<Phaenotyp>load", object_data=font_curve)
 
@@ -866,11 +875,16 @@ def create_loads(structure_obj, loads_v, loads_e, loads_f):
 
 		text = "" + "\n"
 
-		text = text + "type: edges\n"
-		text = text + "x: " + str(load[0]) + "\n"
-		text = text + "y: " + str(load[1]) + "\n"
-		text = text + "z: " + str(load[2]) + "\n"
-
+		text = text + "Type: edges\n"
+		text = text + "FX: " + str(load[0]) + "\n"
+		text = text + "FY: " + str(load[1]) + "\n"
+		text = text + "FZ: " + str(load[2]) + "\n"
+		
+		if calculation_type not in ["geometrical", "force_distribution"]:
+			text = text + "Fx: " + str(load[3]) + "\n"
+			text = text + "Fy: " + str(load[4]) + "\n"
+			text = text + "Fz: " + str(load[5]) + "\n"
+		
 		font_curve.body = text
 		obj = bpy.data.objects.new(name="<Phaenotyp>load", object_data=font_curve)
 
@@ -899,7 +913,7 @@ def create_loads(structure_obj, loads_v, loads_e, loads_f):
 
 		text = "" + "\n"
 
-		text = text + "type: faces\n"
+		text = text + "Type: faces\n"
 		text = text + "n: " + str(load[0]) + "\n"
 		text = text + "p: " + str(load[1]) + "\n"
 		text = text + "z: " + str(load[2]) + "\n"

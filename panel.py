@@ -276,22 +276,39 @@ def loads(layout):
 	phaenotyp = scene.phaenotyp
 	frame = scene.frame_current
 	data = bpy.context.scene.get("<Phaenotyp>")
+	
+	calculation_type = phaenotyp.calculation_type
 
 	if data:
 		if data["panel_state"]["members"]:
 			box_loads = layout.box()
 			box_loads.label(text="Loads:")
 			box_loads.prop(phaenotyp, "load_type", text="")
-			if phaenotyp.load_type == "faces": # if faces
+
+			if phaenotyp.load_type == "vertices":
+				box_loads.prop(phaenotyp, "load_FX", text="Axial x")
+				box_loads.prop(phaenotyp, "load_FY", text="Axial y")
+				box_loads.prop(phaenotyp, "load_FZ", text="Axial z")
+			
+				if calculation_type not in ["geometrical", "force_distribution"]:
+					box_loads.prop(phaenotyp, "load_MX", text="Moment x")
+					box_loads.prop(phaenotyp, "load_MY", text="Moment y")
+					box_loads.prop(phaenotyp, "load_MZ", text="Moment z")
+			
+			if phaenotyp.load_type == "edges":
+				box_loads.prop(phaenotyp, "load_FX", text="Axial x")
+				box_loads.prop(phaenotyp, "load_FY", text="Axial y")
+				box_loads.prop(phaenotyp, "load_FZ", text="Axial z")
+
+				if calculation_type not in ["geometrical", "force_distribution"]:
+					box_loads.prop(phaenotyp, "load_Fx", text="Axial x local")
+					box_loads.prop(phaenotyp, "load_Fy", text="Axial y local")
+					box_loads.prop(phaenotyp, "load_Fz", text="Axial z local")
+					
+			if phaenotyp.load_type == "faces":
 				box_loads.prop(phaenotyp, "load_normal", text="Normal (Like wind)")
 				box_loads.prop(phaenotyp, "load_projected", text="Projected (Like snow)")
 				box_loads.prop(phaenotyp, "load_area_z", text="Area z (Like weight of facade)")
-
-			# if vertices or edges
-			else:
-				box_loads.prop(phaenotyp, "load_x", text="x")
-				box_loads.prop(phaenotyp, "load_y", text="y")
-				box_loads.prop(phaenotyp, "load_z", text="z")
 
 			box_loads.operator("wm.set_load", text="Set")
 

@@ -44,8 +44,9 @@ def prepare_fea_pn():
 	phaenotyp = scene.phaenotyp
 	data = scene["<Phaenotyp>"]
 	frame = bpy.context.scene.frame_current
-
 	truss = FEModel3D()
+	
+	calculation_type = phaenotyp.calculation_type
 
 	for mat in material.library:
 		name = mat[0]
@@ -180,12 +181,22 @@ def prepare_fea_pn():
 		truss.add_node_load(name, 'FY', load[1])
 		truss.add_node_load(name, 'FZ', load[2])
 
+		if calculation_type not in ["geometrical", "force_distribution"]:
+			truss.add_node_load(name, 'MX', load[3])
+			truss.add_node_load(name, 'MY', load[4])
+			truss.add_node_load(name, 'MZ', load[5])
+
 	loads_e = data["loads_e"]
 	for id, load in loads_e.items():
 		name = "member_" + str(id)
 		truss.add_member_dist_load(name, 'FX', load[0]*0.01, load[0]*0.01) # m to cm
 		truss.add_member_dist_load(name, 'FY', load[1]*0.01, load[1]*0.01) # m to cm
 		truss.add_member_dist_load(name, 'FZ', load[2]*0.01, load[2]*0.01) # m to cm
+		
+		if calculation_type not in ["geometrical", "force_distribution"]:
+			truss.add_member_dist_load(name, 'Fx', load[3]*0.01, load[0]*0.01) # m to cm
+			truss.add_member_dist_load(name, 'Fy', load[4]*0.01, load[1]*0.01) # m to cm
+			truss.add_member_dist_load(name, 'Fz', load[5]*0.01, load[2]*0.01) # m to cm
 
 	loads_f = data["loads_f"]
 	for id, load in loads_f.items():

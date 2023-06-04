@@ -455,7 +455,9 @@ def set_load():
 	phaenotyp = scene.phaenotyp
 	data = scene["<Phaenotyp>"]
 	obj = data["structure"]
-
+	
+	calculation_type = phaenotyp.calculation_type
+	
 	# create load
 	#bpy.ops.object.mode_set(mode="OBJECT") # <---- to avoid "out-of-range-error" on windows
 	bpy.ops.object.mode_set(mode="EDIT") # <---- to avoid "out-of-range-error" on windows
@@ -467,22 +469,37 @@ def set_load():
 		for vertex in obj.data.vertices:
 			if vertex.select:
 				id = vertex.index
-
-				load = [
-					phaenotyp.load_x,
-					phaenotyp.load_y,
-					phaenotyp.load_z
-					]
+				
+				if calculation_type not in ["geometrical", "force_distribution"]:
+					load = [
+						phaenotyp.load_FX,
+						phaenotyp.load_FY,
+						phaenotyp.load_FZ,
+						phaenotyp.load_MX,
+						phaenotyp.load_MY,
+						phaenotyp.load_MZ
+						]
+				else:
+					load = [
+						phaenotyp.load_FX,
+						phaenotyp.load_FY,
+						phaenotyp.load_FZ
+						]
 
 				data["loads_v"][str(id)] = load
 
 				# delete load if user is deleting the load
 				# (set all conditions to False and apply)
 				force = False
-				for i in range(3):
-					if load[i] != 0:
-						force = True
-
+				if calculation_type not in ["geometrical", "force_distribution"]:
+					for i in range(6):
+						if load[i] != 0:
+							force = True
+				else:
+					for i in range(3):
+						if load[i] != 0:
+							force = True
+							
 				if not force:
 					data["loads_v"].pop(str(id))
 
@@ -493,22 +510,37 @@ def set_load():
 
 			if edge.select:
 				id = edge.index
-
-				load = [
-					phaenotyp.load_x,
-					phaenotyp.load_y,
-					phaenotyp.load_z
-					]
+				
+				if calculation_type not in ["geometrical", "force_distribution"]:
+					load = [
+						phaenotyp.load_FX,
+						phaenotyp.load_FY,
+						phaenotyp.load_FZ,
+						phaenotyp.load_Fx,
+						phaenotyp.load_Fy,
+						phaenotyp.load_Fz
+						]
+				else:
+					load = [
+						phaenotyp.load_FX,
+						phaenotyp.load_FY,
+						phaenotyp.load_FZ
+						]
 
 				data["loads_e"][str(id)] = load
 
 				# delete load if user is deleting the load
 				# (set all conditions to False and apply)
 				force = False
-				for i in range(3):
-					if load[i] != 0:
-						force = True
-
+				if calculation_type not in ["geometrical", "force_distribution"]:
+					for i in range(6):
+						if load[i] != 0:
+							force = True
+				else:
+					for i in range(3):
+						if load[i] != 0:
+							force = True
+							
 				if not force:
 					data["loads_e"].pop(str(id))
 
@@ -1092,6 +1124,8 @@ def calculate_animation():
 
 					if phaenotyp.optimization_pn == "complex":
 						optimize_complex()
+		
+			bpy.context.scene.frame_end = frame
 
 	# without optimization
 	else:

@@ -165,30 +165,78 @@ class phaenotyp_properties(PropertyGroup):
 			   ]
 		)
 
-	load_x: FloatProperty(
-		name = "load_x",
-		description = "Load in x-Direction in kN",
+	load_FX: FloatProperty(
+		name = "load_FX",
+		description = "Axial in x-Direction in kN",
 		default = 0.0,
 		min = -1000,
 		max = 1000.0
 		)
 
-	load_y: FloatProperty(
-		name = "load_y",
-		description = "Load in y-Direction in kN",
+	load_FY: FloatProperty(
+		name = "load_FY",
+		description = "Axial in y-Direction in kN",
 		default = 0.0,
 		min = -1000,
 		max = 1000.0
 		)
 
-	load_z: FloatProperty(
-		name = "load_z",
-		description = "Load in z-Direction in kN",
+	load_FZ: FloatProperty(
+		name = "load_FZ",
+		description = "Axial in z-Direction in kN",
 		default = 0.0,
 		min = -1000,
 		max = 1000.0
 		)
 
+	load_MX: FloatProperty(
+		name = "load_MX",
+		description = "Moment in x-Direction in kN",
+		default = 0.0,
+		min = -1000,
+		max = 1000.0
+		)
+
+	load_MY: FloatProperty(
+		name = "load_MY",
+		description = "Moment in y-Direction in kN",
+		default = 0.0,
+		min = -1000,
+		max = 1000.0
+		)
+
+	load_MZ: FloatProperty(
+		name = "load_MZ",
+		description = "Moment in z-Direction in kN",
+		default = 0.0,
+		min = -1000,
+		max = 1000.0
+		)
+
+	load_Fx: FloatProperty(
+		name = "load_Fx",
+		description = "Local axial in x-Direction in kN",
+		default = 0.0,
+		min = -1000,
+		max = 1000.0
+		)
+
+	load_Fy: FloatProperty(
+		name = "load_Fy",
+		description = "Local axial in y-Direction in kN",
+		default = 0.0,
+		min = -1000,
+		max = 1000.0
+		)
+
+	load_Fz: FloatProperty(
+		name = "load_Fz",
+		description = "Local axial in z-Direction in kN",
+		default = 0.0,
+		min = -1000,
+		max = 1000.0
+		)
+	
 	load_normal: FloatProperty(
 		name = "load_normal",
 		description = "Load in normal-Direction in kN",
