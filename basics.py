@@ -2,6 +2,8 @@ import bpy
 import bmesh
 from phaenotyp import geometry
 from queue import Queue
+from time import time
+from datetime import timedelta
 
 def print_data(text):
 	"""
@@ -10,6 +12,28 @@ def print_data(text):
 	"""
 	print("Phaenotyp |", text)
 
+class timer:
+	"""
+	Class to handle the timer
+	"""
+	start_time = None
+	
+	@staticmethod
+	def start():
+		"""
+		Start the timer
+		"""
+		timer.start_time = time()
+	
+	@staticmethod
+	def stop():
+		"""
+		Return the elapsed time
+		:return: Formated time in seconds as string
+		"""
+		elapsed = time() - timer.start_time        
+		return " | " + str(timedelta(seconds=elapsed))
+		
 def create_data():
 	"""
 	Create scene[<Phaenotyp>] and build all basics to store data.

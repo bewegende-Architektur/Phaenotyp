@@ -82,7 +82,7 @@ def run_fea_pn(scipy_available, calculation_type, feas, truss, frame):
 
 	# get duration
 	elapsed = time() - start_time
-	text = calculation_type + " multiprocessing job for frame " + str(frame) + " done"
+	text = calculation_type + " calculation for frame " + str(frame) + " done"
 	text +=  " | " + str(timedelta(seconds=elapsed))
 	print_data(text)
 	sys.stdout.flush()
@@ -145,7 +145,7 @@ def run_fea_fd(feas, truss, frame):
 	
 	# get duration
 	elapsed = time() - start_time
-	text = calculation_type + " multiprocessing job for frame " + str(frame) + " done"
+	text = calculation_type + " calculation for frame " + str(frame) + " done"
 	text +=  " | " + str(timedelta(seconds=elapsed))
 	print_data(text)
 	sys.stdout.flush()

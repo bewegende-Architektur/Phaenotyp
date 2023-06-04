@@ -42,11 +42,12 @@ def prepare_fea_pn():
 	'''
 	scene = bpy.context.scene
 	phaenotyp = scene.phaenotyp
+	calculation_type = phaenotyp.calculation_type
 	data = scene["<Phaenotyp>"]
 	frame = bpy.context.scene.frame_current
 	truss = FEModel3D()
 	
-	calculation_type = phaenotyp.calculation_type
+	basics.timer.start()
 
 	for mat in material.library:
 		name = mat[0]
@@ -272,6 +273,12 @@ def prepare_fea_pn():
 	data["frames"][str(frame)]["cantilever"] = geometry.cantilever(vertices, supports)
 
 	progress.http.update_p()
+	
+	# get duration
+	text = calculation_type + " preparation for frame " + str(frame) + " done"
+	text +=  basics.timer.stop()
+	print_data(text)
+	
 	return truss
 
 def prepare_fea_fd():
@@ -281,8 +288,11 @@ def prepare_fea_fd():
 	'''
 	scene = bpy.context.scene
 	phaenotyp = scene.phaenotyp
+	calculation_type = phaenotyp.calculation_type
 	data = scene["<Phaenotyp>"]
 	frame = bpy.context.scene.frame_current
+	
+	basics.timer.start()
 
 	# apply chromosome if available
 	individuals = data.get("individuals")
@@ -507,6 +517,11 @@ def prepare_fea_fd():
 
 	progress.http.update_p()
 
+	# get duration
+	text = calculation_type + " preparation for frame " + str(frame) + " done"
+	text +=  basics.timer.stop()
+	print_data(text)
+	
 	truss = [points_array, supports_ids, edges_array, forces_array]
 	return truss
 
@@ -557,7 +572,7 @@ def run_mp(trusses):
 	file = open(path_import, 'rb')
 	imported_trusses = pickle.load(file)
 	file.close()
-
+		
 	return imported_trusses
 
 def interweave_results_pn(feas, members):
@@ -568,6 +583,10 @@ def interweave_results_pn(feas, members):
 	'''
 	scene = bpy.context.scene
 	data = scene["<Phaenotyp>"]
+	phaenotyp = scene.phaenotyp
+	calculation_type = phaenotyp.calculation_type
+	
+	basics.timer.start()
 
 	end = bpy.context.scene.frame_end
 
@@ -845,6 +864,11 @@ def interweave_results_pn(feas, members):
 		# update progress
 		progress.http.update_i()
 
+		# get duration
+		text = calculation_type + " involvment for frame " + str(frame) + " done"
+		text +=  basics.timer.stop()
+		print_data(text)
+		
 		data["done"][str(frame)] = True
 
 def interweave_results_fd(feas, members):
@@ -855,6 +879,10 @@ def interweave_results_fd(feas, members):
 	'''
 	scene = bpy.context.scene
 	data = scene["<Phaenotyp>"]
+	phaenotyp = scene.phaenotyp
+	calculation_type = phaenotyp.calculation_type
+	
+	basics.timer.start()
 
 	end = bpy.context.scene.frame_end
 
@@ -915,6 +943,11 @@ def interweave_results_fd(feas, members):
 		# update progress
 		progress.http.update_i()
 
+		# get duration
+		text = calculation_type + " involvment for frame " + str(frame) + " done"
+		text +=  basics.timer.stop()
+		print_data(text)
+		
 		data["done"][str(frame)] = True
 
 def approximate_sectional():
