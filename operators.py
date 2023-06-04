@@ -65,20 +65,8 @@ def set_structure():
 		else:
 			bpy.ops.object.mode_set(mode="EDIT")
 
-			amount_of_mesh_parts = geometry.amount_of_mesh_parts()
 			amount_of_loose_parts = geometry.amount_of_loose_parts()
 			amount_of_doubles = geometry.amount_of_doubles()
-
-			# uncommented to work with crown shyness
-			# amount_of_doubles is checked instead
-			'''			
-			if amount_of_mesh_parts > 1:
-				text = [
-					"The mesh contains " + str(amount_of_mesh_parts) + " parts.",
-					"Should Phaenotyp try to fix this?"]
-				basics.popup_operator(lines=text, operator="wm.fix_structure", text="Delete or seperate loose parts")
-				geometry.to_be_fixed = "seperate_by_loose"
-			'''
 			
 			if amount_of_loose_parts > 0:
 				text = [
@@ -175,7 +163,6 @@ def set_support():
 			if geometry.amount_of_selected_faces() != 1:
 				text = ["Select one face as support for force distribution only."]
 				basics.popup(lines = text)
-
 
 			# apply supports
 			else:
@@ -822,52 +809,8 @@ def wool_threads():
 	bonding_strength = phaenotyp.bonding_strength * 0.0001 # to make readable slider
 	iterations = phaenotyp.wool_iterations	# 10.0
 	
-	parts = data["process"].get("parts")
-	if parts:
-		# only create parts if not available
-		pass
-	
-	else:
-		# get lists of indices from connected vertices
-		# Is checking for the amount of parts in the mesh. Is based on the answer from BlackCutpoint
-		# https://blender.stackexchange.com/questions/75332/how-to-find-the-number-of-loose-parts-with-blenders-python-api
-		mesh = obj.data
-		paths = {v.index:set() for v in mesh.vertices}
-
-		for e in mesh.edges:
-			paths[e.vertices[0]].add(e.vertices[1])
-			paths[e.vertices[1]].add(e.vertices[0])
-
-		parts_temp = []
-
-		while True:
-			try:
-				i=next(iter(paths.keys()))
-			except StopIteration:
-				break
-
-			part = {i}
-			cur = {i}
-
-			while True:
-				eligible = {sc for sc in cur if sc in paths}
-				if not eligible:
-					break
-
-				cur = {ve for sc in eligible for ve in paths[sc]}
-				part.update(cur)
-				for key in eligible: paths.pop(key)
-
-			parts_temp.append(part)
-		
-		data["process"]["parts"] = {}
-		for id, part in enumerate(parts_temp):
-			entries = []
-			for entry in part:
-				entries.append(entry)
-			data["process"]["parts"][str(id)] = entries
-		
-		parts = data["process"]["parts"]
+	# get parts as list of ids of vertices
+	parts = geometry.parts()
 	
 	for i in range(iterations):
 		# links
@@ -941,52 +884,8 @@ def crown_shyness():
 	growth_strength = phaenotyp.growth_strength * 0.001
 	iterations = phaenotyp.crown_iterations
 	
-	parts = data["process"].get("parts")
-	if parts:
-		# only create parts if not available
-		pass
-	
-	else:
-		# get lists of indices from connected vertices
-		# Is checking for the amount of parts in the mesh. Is based on the answer from BlackCutpoint
-		# https://blender.stackexchange.com/questions/75332/how-to-find-the-number-of-loose-parts-with-blenders-python-api
-		mesh = obj.data
-		paths = {v.index:set() for v in mesh.vertices}
-
-		for e in mesh.edges:
-			paths[e.vertices[0]].add(e.vertices[1])
-			paths[e.vertices[1]].add(e.vertices[0])
-
-		parts_temp = []
-
-		while True:
-			try:
-				i=next(iter(paths.keys()))
-			except StopIteration:
-				break
-
-			part = {i}
-			cur = {i}
-
-			while True:
-				eligible = {sc for sc in cur if sc in paths}
-				if not eligible:
-					break
-
-				cur = {ve for sc in eligible for ve in paths[sc]}
-				part.update(cur)
-				for key in eligible: paths.pop(key)
-
-			parts_temp.append(part)
-		
-		data["process"]["parts"] = {}
-		for id, part in enumerate(parts_temp):
-			entries = []
-			for entry in part:
-				entries.append(entry)
-			data["process"]["parts"][str(id)] = entries
-		
-		parts = data["process"]["parts"]
+	# get parts as list of ids of vertices
+	parts = geometry.parts()
 	
 	# create possible combinations between parts
 	combinations = [(a,b) for a in parts for b in parts if a != b]

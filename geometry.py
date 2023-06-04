@@ -8,44 +8,6 @@ c = Color()
 # variable to pass all stuff that needs to be fixed
 to_be_fixed = None
 
-def amount_of_mesh_parts():
-	'''
-	Is checking for the amount of parts in the mesh. Is based on the answer from BlackCutpoint
-	https://blender.stackexchange.com/questions/75332/how-to-find-the-number-of-loose-parts-with-blenders-python-api
-	:return len(parts): Is returning the amount of parts as integer. 
-	'''
-	obj = bpy.context.object
-	mesh = obj.data
-	paths = {v.index:set() for v in mesh.vertices}
-
-	for e in mesh.edges:
-		paths[e.vertices[0]].add(e.vertices[1])
-		paths[e.vertices[1]].add(e.vertices[0])
-
-	parts = []
-
-	while True:
-		try:
-			i=next(iter(paths.keys()))
-		except StopIteration:
-			break
-
-		part = {i}
-		cur = {i}
-
-		while True:
-			eligible = {sc for sc in cur if sc in paths}
-			if not eligible:
-				break
-
-			cur = {ve for sc in eligible for ve in paths[sc]}
-			part.update(cur)
-			for key in eligible: paths.pop(key)
-
-		parts.append(part)
-
-	return len(parts)
-
 def amount_of_loose_parts():
 	'''
 	Is returning the amount of loose parts.
@@ -116,6 +78,63 @@ def amount_of_selected_faces():
 			selected_faces.append(face)
 
 	return len(selected_faces)
+
+def parts():
+	'''
+	Get lists of indices from connected vertices
+	Is checking for the amount of parts in the mesh. Is based on the answer from BlackCutpoint
+	https://blender.stackexchange.com/questions/75332/how-to-find-the-number-of-loose-parts-with-blenders-python-api
+	:return parts: Is returning the parts as list of ids of vertices
+	'''
+	scene = bpy.context.scene
+	data = scene["<Phaenotyp>"]
+	obj = data["structure"]
+	
+	parts = data["process"].get("parts")
+	if parts:
+		# only create parts if not available
+		pass
+	
+	else:
+		mesh = obj.data
+		paths = {v.index:set() for v in mesh.vertices}
+
+		for e in mesh.edges:
+			paths[e.vertices[0]].add(e.vertices[1])
+			paths[e.vertices[1]].add(e.vertices[0])
+
+		parts_temp = []
+
+		while True:
+			try:
+				i=next(iter(paths.keys()))
+			except StopIteration:
+				break
+
+			part = {i}
+			cur = {i}
+
+			while True:
+				eligible = {sc for sc in cur if sc in paths}
+				if not eligible:
+					break
+
+				cur = {ve for sc in eligible for ve in paths[sc]}
+				part.update(cur)
+				for key in eligible: paths.pop(key)
+
+			parts_temp.append(part)
+		
+		data["process"]["parts"] = {}
+		for id, part in enumerate(parts_temp):
+			entries = []
+			for entry in part:
+				entries.append(entry)
+			data["process"]["parts"][str(id)] = entries
+		
+		parts = data["process"]["parts"]
+	
+	return parts
 
 def delete_selected_faces():
 	'''
