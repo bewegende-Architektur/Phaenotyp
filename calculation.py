@@ -865,7 +865,7 @@ def interweave_results_pn(feas, members):
 		progress.http.update_i()
 
 		# get duration
-		text = calculation_type + " involvment for frame " + str(frame) + " done"
+		text = calculation_type + " involvement for frame " + str(frame) + " done"
 		text +=  basics.timer.stop()
 		print_data(text)
 		
@@ -944,7 +944,7 @@ def interweave_results_fd(feas, members):
 		progress.http.update_i()
 
 		# get duration
-		text = calculation_type + " involvment for frame " + str(frame) + " done"
+		text = calculation_type + " involvement for frame " + str(frame) + " done"
 		text +=  basics.timer.stop()
 		print_data(text)
 		
