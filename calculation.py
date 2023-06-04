@@ -586,11 +586,11 @@ def interweave_results_pn(feas, members):
 	phaenotyp = scene.phaenotyp
 	calculation_type = phaenotyp.calculation_type
 	
-	basics.timer.start()
-
 	end = bpy.context.scene.frame_end
 
 	for frame, truss in feas.items():
+		basics.timer.start()
+		
 		for id in members:
 			member = members[id]
 			name = member["name"]
@@ -882,11 +882,11 @@ def interweave_results_fd(feas, members):
 	phaenotyp = scene.phaenotyp
 	calculation_type = phaenotyp.calculation_type
 	
-	basics.timer.start()
-
 	end = bpy.context.scene.frame_end
 
 	for frame, truss in feas.items():
+		basics.timer.start()
+	
 		for id, member in members.items():
 			id = int(id)
 			# shorten
