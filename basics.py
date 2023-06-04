@@ -308,3 +308,18 @@ def check_modifiers():
 						"VERTEX_WEIGHT_PROXIMITY."
 						]
 				popup(lines = text)
+
+def set_selection_for_load(self, context):
+	'''
+	Switch type of selection according to type of load (VERT, EDGE, FACE)
+	'''
+	scene = context.scene
+	phaenotyp = scene.phaenotyp
+	
+	# switch selection mode
+	if phaenotyp.load_type == "vertices":
+		bpy.ops.mesh.select_mode(use_extend=False, use_expand=False, type='VERT')
+	if phaenotyp.load_type == "edges":
+		bpy.ops.mesh.select_mode(use_extend=False, use_expand=False, type='EDGE')
+	if phaenotyp.load_type == "faces":
+		bpy.ops.mesh.select_mode(use_extend=False, use_expand=False, type='FACE')

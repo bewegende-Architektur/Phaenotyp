@@ -162,7 +162,8 @@ class phaenotyp_properties(PropertyGroup):
 				("vertices", "Vertices", ""),
 				("edges", "Edges", ""),
 				("faces", "Faces", "")
-			   ]
+			   ],
+		update = basics.set_selection_for_load,
 		)
 
 	load_FX: FloatProperty(

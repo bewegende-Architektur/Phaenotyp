@@ -97,6 +97,10 @@ def set_structure():
 
 				# check for scipy
 				calculation.check_scipy()
+				
+				# change to face selection for force_distribution
+				if phaenotyp.calculation_type == "force_distribution":
+					bpy.ops.mesh.select_mode(use_extend=False, use_expand=False, type='FACE')
 
 def fix_structure():
 	if geometry.to_be_fixed == "seperate_by_loose":
