@@ -6,6 +6,7 @@ from math import tanh
 
 import sys
 from time import time
+from datetime import timedelta
 
 # import python from parent directory like pointed out here:
 # https://stackoverflow.com/questions/714063/importing-modules-from-parent-folder
@@ -53,6 +54,10 @@ def run_fea_pn(scipy_available, calculation_type, feas, truss, frame):
 	# the dict feas stores one anlysis for each frame
 	# the dict fea is created temporarily in run_fea and is wirrten to feas
 	# analyze the model
+	
+	# start time
+	start_time = time()
+	
 	if scipy_available == "True":
 		if calculation_type == "first_order":
 			truss.analyze(check_statics=False, sparse=True)
@@ -75,7 +80,10 @@ def run_fea_pn(scipy_available, calculation_type, feas, truss, frame):
 
 	feas[str(frame)] = truss
 
+	# get duration
+	elapsed = time() - start_time
 	text = calculation_type + " multiprocessing job for frame " + str(frame) + " done"
+	text +=  " | " + str(timedelta(seconds=elapsed))
 	print_data(text)
 	sys.stdout.flush()
 
@@ -86,6 +94,9 @@ def run_fea_fd(feas, truss, frame):
 	# Simulationen, Visualisierungen und Animationen von Anfang an
 	# 1. Auflage, Springer Spektrum, 2020
 	# https://pyph.de/1/1/index.php?name=code&kap=5&pgm=4
+
+	# start time
+	start_time = time()
 
 	# amount of dimensions
 	dim = 3
@@ -131,8 +142,11 @@ def run_fea_fd(feas, truss, frame):
 			forces_array[k] -= F[id] * vector(k, id)
 
 	feas[str(frame)] = F
-
+	
+	# get duration
+	elapsed = time() - start_time
 	text = calculation_type + " multiprocessing job for frame " + str(frame) + " done"
+	text +=  " | " + str(timedelta(seconds=elapsed))
 	print_data(text)
 	sys.stdout.flush()
 
