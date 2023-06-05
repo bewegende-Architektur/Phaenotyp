@@ -810,6 +810,7 @@ def wool_threads():
 	obj = data["structure"]
 	vertices = obj.data.vertices
 	edges = obj.data.edges
+	edge_keys = obj.data.edge_keys
 	members = data["members"]
 
 	bpy.ops.object.mode_set(mode="OBJECT")
@@ -848,12 +849,39 @@ def wool_threads():
 	# get parts as list of ids of vertices
 	parts = geometry.parts()
 	
+	# get pairs inside of threshold
+	inside = data["process"].get("inside_bonding")
+	if inside:
+		pass
+	else:
+		combinations = [(a,b) for a in parts for b in parts if a != b]
+		inside = []
+		for a,b in combinations:
+			for vertex_id in parts[a]:
+				for other_id in parts[b]:
+					vertex = vertices[vertex_id]
+					other = vertices[other_id]
+					
+					v_0 = vertex.co
+					v_1 = other.co
+					v = v_1 - v_0
+					dist = v.length
+					
+					if dist < bonding_threshold:
+						pair = [vertex_id, other_id]
+						sorted_pair = sorted(pair)
+						inside.append(sorted_pair)
+		
+		inside = list(inside for inside,_ in itertools.groupby(inside))
+		data["process"]["inside_bonding"] = inside
+		inside = data["process"]["inside_bonding"]
+		
 	for i in range(iterations):
 		# links
-		for id, edge in enumerate(edges):
+		for id, key in enumerate(edge_keys):
 			# get current distance
-			v_0_id = edge.vertices[0]
-			v_1_id = edge.vertices[1]
+			v_0_id = key[0]
+			v_1_id = key[1]
 			
 			v_0 = vertices[v_0_id].co
 			v_1 = vertices[v_1_id].co
@@ -875,25 +903,22 @@ def wool_threads():
 				# shrink and exapand
 				v_1 += v * strength * link_strength
 		
-		# create possible combinations between parts
-		combinations = [(a,b) for a in parts for b in parts if a != b]
-		for a,b in combinations:
-			for vertex_id in parts[a]:
-				for other_id in parts[b]:
-					vertex = vertices[vertex_id]
-					other = vertices[other_id]
-					
-					v_0 = vertex.co
-					v_1 = other.co
-					v = v_1 - v_0
-					dist = v.length
-					
-					if dist < bonding_threshold:
-						# move points towards each other
-						if vertex.index not in support_ids:
-							v_0 += v * bonding_strength
-						if other.index not in support_ids:
-							v_1 -= v * bonding_strength
+		# run trought pairs of closest vertices
+		for a,b in inside:			
+			v_0 = vertices[a].co
+			v_1 = vertices[b].co
+			v = v_1 - v_0
+			dist = v.length
+			
+			# move points towards each other
+			if a not in support_ids:
+				v_0 += v * bonding_strength
+			if b not in support_ids:
+				v_1 -= v * bonding_strength
+	
+	# recreate combination and closest
+	if frame % 25 == 0:
+		del data["process"]["inside_bonding"]
 
 def crown_shyness():
 	scene = bpy.context.scene
@@ -916,37 +941,76 @@ def crown_shyness():
 	
 	# parameters
 	shyness_threshold = phaenotyp.shyness_threshold
-	shyness_strength = phaenotyp.shyness_strength * (-1)
+	shyness_strength = phaenotyp.shyness_strength * (-0.001)
 	growth_strength = phaenotyp.growth_strength * 0.001
 	iterations = phaenotyp.crown_iterations
 	
 	# get parts as list of ids of vertices
 	parts = geometry.parts()
-	
-	# create possible combinations between parts
-	combinations = [(a,b) for a in parts for b in parts if a != b]
-	for a,b in combinations:
-		for vertex_id in parts[a]:
-			for other_id in parts[b]:
-				vertex = vertices[vertex_id]
-				other = vertices[other_id]
-				normal = vertex.normal
-					
-				v_0 = vertex.co
-				v_1 = other.co
-				v = v_1 - v_0
-				dist = v.length
-				
-				if dist < shyness_threshold:
-					# avoid
-					if vertex_id not in support_ids:
-						v_0 += v * shyness_strength
-				
-				else:
-					# grow
-					if vertex_id not in support_ids:
-						v_0 += normal * growth_strength
 
+	# get pairs inside of threshold
+	inside = data["process"].get("inside_shyness")
+	outside = data["process"].get("outside_shyness")
+	if inside:
+		pass
+	else:
+		combinations = [(a,b) for a in parts for b in parts if a != b]
+		inside = []
+		outside = [i for i in range(len(vertices))]
+		for a,b in combinations:
+			for vertex_id in parts[a]:
+				for other_id in parts[b]:
+					vertex = vertices[vertex_id]
+					other = vertices[other_id]
+					
+					v_0 = vertex.co
+					v_1 = other.co
+					v = v_1 - v_0
+					dist = v.length
+					
+					if dist < shyness_threshold:
+						pair = [vertex_id, other_id]
+						sorted_pair = sorted(pair)
+						inside.append(sorted_pair)
+						
+						if vertex_id in outside:
+							outside.remove(vertex_id)
+						
+						if other_id in outside:
+							outside.remove(other_id)
+		
+		inside = list(inside for inside,_ in itertools.groupby(inside))
+		data["process"]["inside_shyness"] = inside
+		inside = data["process"]["inside_shyness"]
+		
+		data["process"]["outside_shyness"] = outside
+		outside = data["process"]["outside_shyness"]
+	
+	# run trought pairs of closest vertices
+	for a,b in inside:			
+		v_0 = vertices[a].co
+		v_1 = vertices[b].co
+		v = v_1 - v_0
+		
+		# avoid
+		if a not in support_ids:
+			v_0 += v * shyness_strength
+
+		if b not in support_ids:
+			v_1 -= v * shyness_strength
+				
+	# grow
+	for vertex_id in outside:
+		if vertex_id not in support_ids:
+			vertex = vertices[vertex_id]
+			normal = vertex.normal
+			vertex.co += normal * growth_strength
+
+	# recreate combination and closest
+	if frame % 25 == 0:
+		del data["process"]["inside_shyness"]
+		del data["process"]["outside_shyness"]
+		
 def store_co():
 	'''
 	Is storing the position of all vertices at the current state to be restored after translation.
