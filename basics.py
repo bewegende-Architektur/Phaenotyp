@@ -5,6 +5,15 @@ from queue import Queue
 from time import time
 from datetime import timedelta
 
+blender_version = (3,5,1)
+phaenotyp_version = (0,2,3)
+phaenotyp_name = (
+	"Phänotyp " 
+	+ str(phaenotyp_version[0]) + "."
+	+ str(phaenotyp_version[1]) + "."
+	+ str(phaenotyp_version[2])
+	)
+
 def print_data(text):
 	"""
 	Print data for debugging
@@ -49,7 +58,10 @@ def create_data():
 		"loads_v": {},
 		"loads_e": {},
 		"loads_f": {},
-		"process": {"scipy_available": False},
+		"process": {
+			"scipy_available": False,
+			"version": phaenotyp_version
+			},
 		"done": {},
 		"environment": {},
 		"individuals": {},

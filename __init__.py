@@ -1,9 +1,16 @@
+import bpy
+from bpy.props import (IntProperty, FloatProperty, BoolProperty, StringProperty, EnumProperty, PointerProperty)
+from bpy.types import (Panel, Menu, Operator, PropertyGroup)
+from bpy.app.handlers import persistent
+
+from phaenotyp import basics, panel, operators, material, geometry, calculation, ga, report, progress
+
 bl_info = {
 	"name": "Phänotyp",
 	"description": "Genetic algorithm for architectural structures",
 	"author": "bewegende Architektur e.U. and Karl Deix",
-	"version": (0, 2, 3),
-	"blender": (3, 5, 1),
+	"version": basics.phaenotyp_version,
+	"blender": basics.blender_version,
 	"location": "3D View > Tools",
 }
 
@@ -12,12 +19,6 @@ bl_info = {
 The __init__ file is the main-file to be registert from blender.
 It contains and handles all blender properties as well as the panel.
 '''
-import bpy
-from bpy.props import (IntProperty, FloatProperty, BoolProperty, StringProperty, EnumProperty, PointerProperty)
-from bpy.types import (Panel, Menu, Operator, PropertyGroup)
-from bpy.app.handlers import persistent
-
-from phaenotyp import basics, panel, operators, material, geometry, calculation, ga, report, progress
 
 def viz_update(self, context):
 	'''
@@ -1177,7 +1178,7 @@ class OBJECT_PT_Phaenotyp(Panel):
 	'''
 	Panel for Phaenotyp.
 	'''
-	bl_label = "Phänotyp 0.2.3"
+	bl_label = basics.phaenotyp_name
 	bl_idname = "OBJECT_PT_custom_panel"
 	bl_space_type = "VIEW_3D"
 	bl_region_type = "UI"
@@ -1198,44 +1199,53 @@ class OBJECT_PT_Phaenotyp(Panel):
 		scene = context.scene
 		phaenotyp = scene.phaenotyp
 		frame = scene.frame_current
+		
+		# try to create panels
+		# this will make the restart-button also available
+		# if there is an error during the other panels
+		# for example: the file has been created with an older version
+		try:
+			# prepare everything
+			panel.structure(layout)
+			panel.scipy(layout)
+			panel.calculation_type(layout)
+			panel.supports(layout)
+			panel.members(layout)
+			panel.loads(layout)
+			panel.file(layout)
+			panel.mode(layout)
 
-		# prepare everything
-		panel.structure(layout)
-		panel.scipy(layout)
-		panel.calculation_type(layout)
-		panel.supports(layout)
-		panel.members(layout)
-		panel.loads(layout)
-		panel.file(layout)
-		panel.mode(layout)
+			# select and run mode
+			selected_mode = eval("panel." + phaenotyp.mode)
+			selected_mode(layout)
 
-		# select and run mode
-		selected_mode = eval("panel." + phaenotyp.mode)
-		selected_mode(layout)
+			# fitness und optimization als Funktion?
 
-		# fitness und optimization als Funktion?
+			# run if there is a result
+			data = scene.get("<Phaenotyp>")
+			if data:
+				result = data["done"].get(str(frame))
+				if result:
+					# hide previous boxes
+					# (to avoid confusion, if user is changing the setup
+					# the setup and the result would not match
+					# new setup needs new calculation by pressing reset
+					# or by changing frame)
+					data["panel_grayed"]["scipy"] = True
+					data["panel_grayed"]["supports"] = True
+					data["panel_grayed"]["members"] = True
+					data["panel_grayed"]["loads"] = True
 
-		# run if there is a result
-		data = scene.get("<Phaenotyp>")
-		if data:
-			result = data["done"].get(str(frame))
-			if result:
-				# hide previous boxes
-				# (to avoid confusion, if user is changing the setup
-				# the setup and the result would not match
-				# new setup needs new calculation by pressing reset
-				# or by changing frame)
-				data["panel_grayed"]["scipy"] = True
-				data["panel_grayed"]["supports"] = True
-				data["panel_grayed"]["members"] = True
-				data["panel_grayed"]["loads"] = True
-
-				panel.visualization(layout)
-				panel.text(layout)
-				panel.info(layout)
-				panel.selection(layout)
-				panel.report(layout)
-
+					panel.visualization(layout)
+					panel.text(layout)
+					panel.info(layout)
+					panel.selection(layout)
+					panel.report(layout)
+					
+		except Exception as error:
+			# run error panel
+			panel.error(layout, basics.phaenotyp_version)
+		
 		panel.reset(layout)
 
 classes = (

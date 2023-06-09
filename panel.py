@@ -950,7 +950,61 @@ def report(layout):
 		ga_available = environment.get("generations")
 		if ga_available:
 			box_report.operator("wm.report_tree", text="tree")
+
+def error(layout, phaenotyp_version):
+	'''
+	Panel for error.
+	:param layout: Passed layout of phaenotyp panel.
+	:param text: Passed error message as string.
+	'''
+	context = bpy.context
+	scene = context.scene
+	phaenotyp = scene.phaenotyp
+	frame = scene.frame_current
+	data = bpy.context.scene.get("<Phaenotyp>")
+
+	# handle error
+	# all this is running because of an error in on of the  panels
+	# most likly this is because of a file saved in a previous version
+	if data:
+		process = data.get("process")
+		if process:
+			phaenotyp_version_file = process.get("version")
 			
+			box_error = layout.box()
+			if phaenotyp_version_file:
+				version_file = (
+					phaenotyp_version_file[0],
+					phaenotyp_version_file[1],
+					phaenotyp_version_file[2],
+					)
+				
+				if phaenotyp_version_file != phaenotyp_version:
+					# there is an entry for version, but the version
+					# but the number is not matching the current version
+					box_error.label(text=(
+						"This file has been created in version: "
+						+ str(phaenotyp_version_file[0]) + "."
+						+ str(phaenotyp_version_file[1]) + "."
+						+ str(phaenotyp_version_file[2]) + "."
+						+ " Please reset.")
+						)
+				else:
+					# this should not happen
+					box_error.label(text="Some conflict in versions. Please reset.")
+			else:
+				# there is no entry for a version but there are entries of process and data
+				# it looks like this file has been created before the version control
+				box_error.label(text="This file has been created in an older version. Please reset.")
+		
+		else:
+			box_error = layout.box()
+			box_error.label(text="Unknown Error. Please reset")
+		
+	else:
+		box_error = layout.box()
+		box_error.label(text="Unknown Error. Please reset")
+				
 def reset(layout):
 	'''
 	Panel for reset.
