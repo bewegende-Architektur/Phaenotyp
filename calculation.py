@@ -154,7 +154,7 @@ def prepare_fea_pn():
 			member["J"][str(frame)], member["A"][str(frame)],
 			tension_only=tension_only, comp_only=comp_only,
 			)
-
+		
 		# add self weight
 		kg_A = member["kg_A"][str(frame)]
 		kN = kg_A * -0.0000981
@@ -174,6 +174,46 @@ def prepare_fea_pn():
 		member["kg"][str(frame)] = kg
 		member["length"][str(frame)] = length
 
+	# create quads
+	quads = data["quads"]
+	for id, quad in quads.items():
+		name = "quad_" + str(id)
+		
+		E = quad["E"]
+		G = quad["G"]
+		nu = quad["nu"]
+		rho = quad["rho"]
+		
+		# unique name of the material trough parameters
+		material_name = (
+			"material_" +
+			"E" + "_" +
+			"G" + "_" + 
+			"nu" +  "_" +
+			"rho")
+		
+		if material_name not in truss.Materials:
+			truss.add_material(material_name, E, G, nu, rho)
+		
+		vertex_ids = quad["vertices_ids_structure"]
+		t = quad["thickness"]
+		
+		v_0 = "node_" + str(vertex_ids[0])
+		v_1 = "node_" + str(vertex_ids[1])
+		v_2 = "node_" + str(vertex_ids[2])
+		v_3 = "node_" + str(vertex_ids[3])
+		
+		truss.add_quad(name, v_0, v_1, v_2, v_3, t, material_name, kx_mod=1.0, ky_mod=1.0)
+		
+		# save position before to morph with deflection afterwards
+		initial_positions = [
+			vertices[vertex_ids[0]].co,
+			vertices[vertex_ids[1]].co,
+			vertices[vertex_ids[2]].co,
+			vertices[vertex_ids[3]].co,
+			]
+		quad["initial_positions"][str(frame)] = initial_positions
+		
 	# add loads
 	loads_v = data["loads_v"]
 	for id, load in loads_v.items():
@@ -585,6 +625,7 @@ def interweave_results_pn(feas, members):
 	data = scene["<Phaenotyp>"]
 	phaenotyp = scene.phaenotyp
 	calculation_type = phaenotyp.calculation_type
+	quads = data["quads"]
 	
 	end = bpy.context.scene.frame_end
 
@@ -860,7 +901,40 @@ def interweave_results_pn(feas, members):
 				deflection.append([x,y,z])
 
 			member["deflection"][frame] = deflection
-
+		
+		nodes = truss.Nodes
+		
+		for id in quads:
+			quad = quads[id]
+			name = quad["name"]
+			
+			# read results from PyNite
+			result = truss.Quads[name]
+			
+			# only take highest value to zero
+			quad["shear"][frame] = float(basics.return_max_diff_to_zero(list(result.shear())))
+			quad["moment"][frame] = float(basics.return_max_diff_to_zero(list(result.moment())))
+			quad["membrane"][frame] = float(basics.return_max_diff_to_zero(list(result.membrane())))
+			
+			# get deflection
+			node_ids = quad["vertices_ids_structure"]
+			deflection = []
+			for i in range(4):
+				# deflection only
+				x = nodes["node_" + str(node_ids[i])].DX["Combo 1"]*0.1
+				y = nodes["node_" + str(node_ids[i])].DY["Combo 1"]*0.1
+				z = nodes["node_" + str(node_ids[i])].DZ["Combo 1"]*0.1
+				
+				# add deflection to initial position
+				initial = quad["initial_positions"][str(frame)][i]
+				x += initial[0]
+				y += initial[1]
+				z += initial[2]
+				
+				deflection.append([x,y,z])
+			
+			quad["deflection"][frame] = deflection
+			
 		# update progress
 		progress.http.update_i()
 

@@ -240,31 +240,60 @@ def members(layout):
 
 			box_members.operator("wm.set_member", text="Set")
 
-			# if not all edges are state as member
-			len_structure_edges = len(data["structure"].data.edges)
-			len_members = len(data["members"])
-			if len_members == 0:
-				pass
-
-			elif len_structure_edges != len_members:
-				text = str(len_members) + " edges of " + str(len_structure_edges) + " set as members."
+			# display amount of defined edges
+			amount = len(data["members"])
+			if amount > 0:
+				text = str(amount) + " edges set as members."
 				box_members.label(text=text)
-
-				# disable box for calculation_type when first edge is set
-				# to avoid key error if user is changing the type
-				data["panel_state"]["calculation_type"] = False
-
-			else:
-				data["panel_state"]["calculation_type"] = False
-
-				text = str(len_members) + " edges set as members."
-				box_members.label(text=text)
-
-				data["panel_state"]["members"] = True
+			
+			data["panel_state"]["members"] = True
 
 			# disable box
 			if data["panel_grayed"]["members"]:
 				box_members.enabled = False
+
+def quads(layout):
+	'''
+	Panel for quads.
+	:param layout: Passed layout of phaenotyp panel.
+	'''
+	context = bpy.context
+	scene = context.scene
+	phaenotyp = scene.phaenotyp
+	frame = scene.frame_current
+	data = bpy.context.scene.get("<Phaenotyp>")
+	
+	calculation_type = phaenotyp.calculation_type
+
+	if data:
+		if data["panel_state"]["supports"]:
+			# define material and geometry
+			if calculation_type is not "force_distribution":
+				box_quads = layout.box()
+				box_quads.label(text="Quads:")
+				
+				box_quads.prop(phaenotyp, "thickness", text="Thickness")
+				
+				box_quads.prop(phaenotyp, "E_quads", text="Modulus of elasticity")
+				box_quads.prop(phaenotyp, "G_quads", text="Modulus of elasticity")
+				box_quads.prop(phaenotyp, "nu_quads", text="Poisson's ratio")
+				box_quads.prop(phaenotyp, "rho_quads", text="Density")
+				
+				box_quads.label(text="kg = " + str(round(phaenotyp.rho_quads*phaenotyp.thickness*1000, 4)) + " kg/m²")
+				
+				box_quads.operator("wm.set_quad", text="Set")
+
+				# display amount of defined faces
+				amount = len(data["quads"])
+				if amount > 0:
+					text = str(amount) + " faces set as quads."
+					box_quads.label(text=text)
+				
+				data["panel_state"]["quads"] = True
+
+				# disable box
+				if data["panel_grayed"]["members"]:
+					box_quads.enabled = False
 
 def loads(layout):
 	'''
@@ -826,14 +855,15 @@ def visualization(layout):
 		box_viz = layout.box()
 		box_viz.label(text="Vizualisation:")
 		if phaenotyp.calculation_type == "force_distribution":
-			box_viz.prop(phaenotyp, "forces_fd", text="Force")
+			box_viz.prop(phaenotyp, "forces_fd", text="Members")
 		else:
-			box_viz.prop(phaenotyp, "forces_pn", text="Force")
+			box_viz.prop(phaenotyp, "forces_pn", text="Members")
+			box_viz.prop(phaenotyp, "forces_quads", text="Quads")
 
 		# sliders to scale forces and deflection
-		box_viz.prop(phaenotyp, "viz_scale", text="scale", slider=True)
+		box_viz.prop(phaenotyp, "viz_scale", text="Scale", slider=True)
 		if phaenotyp.calculation_type != "force_distribution":
-			box_viz.prop(phaenotyp, "viz_deflection", text="deflected / original", slider=True)
+			box_viz.prop(phaenotyp, "viz_deflection", text="Deflected / original", slider=True)
 
 def text(layout):
 	'''

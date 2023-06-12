@@ -87,7 +87,7 @@ class phaenotyp_properties(PropertyGroup):
 		items = material.dropdown
 		)
 
-	E: FloatProperty(
+	E: IntProperty(
 		name = "E",
 		description = "Elasticity modulus in kN/cm²",
 		default = 21000,
@@ -95,7 +95,7 @@ class phaenotyp_properties(PropertyGroup):
 		max = 50000
 		)
 
-	G: FloatProperty(
+	G: IntProperty(
 		name = "G",
 		description = "Shear modulus kN/cm²",
 		default = 8100,
@@ -155,6 +155,46 @@ class phaenotyp_properties(PropertyGroup):
 	rot_x: BoolProperty(name = 'rot_x', default = False)
 	rot_y: BoolProperty(name = 'rot_y', default = False)
 	rot_z: BoolProperty(name = 'rot_z', default = False)
+	
+	thickness: FloatProperty(
+		name = "thickness",
+		description = "Thickness",
+		default = 0.25,
+		min = 0.01,
+		max = 1.00
+		)
+		
+	E_quads: IntProperty(
+		name = "E",
+		description = "Elasticity modulus in kN/cm²",
+		default = 1500,
+		min = 500,
+		max = 50000
+		)
+
+	G_quads: IntProperty(
+		name = "G",
+		description = "Shear modulus kN/cm²",
+		default = 400,
+		min = 100,
+		max = 25000
+		)
+		
+	nu_quads: FloatProperty(
+		name = "nu",
+		description = "Poisson's ratio",
+		default = 0.17,
+		min = 0.01,
+		max = 30.0
+		)
+
+	rho_quads: FloatProperty(
+		name = "rho",
+		description = "Density",
+		default = 1.0,
+		min = 0.01,
+		max = 30.0
+		)
 
 	load_type: EnumProperty(
 		name = "load_type",
@@ -405,7 +445,7 @@ class phaenotyp_properties(PropertyGroup):
 		)
 
 	forces_fd: EnumProperty(
-		name = "forces",
+		name = "forces_fd",
 		description = "Force types",
 		items = [
 					("sigma", "Sigma", ""),
@@ -416,7 +456,7 @@ class phaenotyp_properties(PropertyGroup):
 		)
 
 	forces_pn: EnumProperty(
-		name = "forces",
+		name = "forces_pn",
 		description = "Force types",
 		items = [
 					("sigma", "Sigma", ""),
@@ -435,6 +475,17 @@ class phaenotyp_properties(PropertyGroup):
 		update = viz_update
 		)
 
+	forces_quads: EnumProperty(
+		name = "forces_quads",
+		description = "Force types",
+		items = [
+					("membrane", "Membrane", ""),
+					("moment", "Moment", ""),
+					("shear", "Shear", ""),
+				],
+		update = viz_update
+		)
+		
 	viz_scale: IntProperty(
 		name = "viz_scale",
 		description = "scale",
@@ -810,6 +861,19 @@ class WM_OT_set_member(Operator):
 		operators.set_member()
 		return {"FINISHED"}
 
+class WM_OT_set_quad(Operator):
+	'''
+	Is calling set_quad from the module called operators.
+	Check out further info in there.
+	'''
+	bl_label = "set_quad"
+	bl_idname = "wm.set_quad"
+	bl_description = "Please select faces in Edit-Mode and press set, to define surfaces"
+
+	def execute(self, context):
+		operators.set_quad()
+		return {"FINISHED"}
+		
 class WM_OT_set_load(Operator):
 	'''
 	Is calling set_load from the module called operators.
@@ -1204,47 +1268,48 @@ class OBJECT_PT_Phaenotyp(Panel):
 		# this will make the restart-button also available
 		# if there is an error during the other panels
 		# for example: the file has been created with an older version
-		try:
-			# prepare everything
-			panel.structure(layout)
-			panel.scipy(layout)
-			panel.calculation_type(layout)
-			panel.supports(layout)
-			panel.members(layout)
-			panel.loads(layout)
-			panel.file(layout)
-			panel.mode(layout)
+		#try:
+		# prepare everything
+		panel.structure(layout)
+		panel.scipy(layout)
+		panel.calculation_type(layout)
+		panel.supports(layout)
+		panel.members(layout)
+		panel.quads(layout)
+		panel.loads(layout)
+		panel.file(layout)
+		panel.mode(layout)
 
-			# select and run mode
-			selected_mode = eval("panel." + phaenotyp.mode)
-			selected_mode(layout)
+		# select and run mode
+		selected_mode = eval("panel." + phaenotyp.mode)
+		selected_mode(layout)
 
-			# fitness und optimization als Funktion?
+		# fitness und optimization als Funktion?
 
-			# run if there is a result
-			data = scene.get("<Phaenotyp>")
-			if data:
-				result = data["done"].get(str(frame))
-				if result:
-					# hide previous boxes
-					# (to avoid confusion, if user is changing the setup
-					# the setup and the result would not match
-					# new setup needs new calculation by pressing reset
-					# or by changing frame)
-					data["panel_grayed"]["scipy"] = True
-					data["panel_grayed"]["supports"] = True
-					data["panel_grayed"]["members"] = True
-					data["panel_grayed"]["loads"] = True
+		# run if there is a result
+		data = scene.get("<Phaenotyp>")
+		if data:
+			result = data["done"].get(str(frame))
+			if result:
+				# hide previous boxes
+				# (to avoid confusion, if user is changing the setup
+				# the setup and the result would not match
+				# new setup needs new calculation by pressing reset
+				# or by changing frame)
+				data["panel_grayed"]["scipy"] = True
+				data["panel_grayed"]["supports"] = True
+				data["panel_grayed"]["members"] = True
+				data["panel_grayed"]["loads"] = True
 
-					panel.visualization(layout)
-					panel.text(layout)
-					panel.info(layout)
-					panel.selection(layout)
-					panel.report(layout)
+				panel.visualization(layout)
+				panel.text(layout)
+				panel.info(layout)
+				panel.selection(layout)
+				panel.report(layout)
 					
-		except Exception as error:
-			# run error panel
-			panel.error(layout, basics.phaenotyp_version)
+		#except Exception as error:
+		# run error panel
+		#panel.error(layout, basics.phaenotyp_version)
 		
 		panel.reset(layout)
 
@@ -1255,6 +1320,7 @@ classes = (
 	WM_OT_fix_structure,
 	WM_OT_set_support,
 	WM_OT_set_member,
+	WM_OT_set_quad,
 	WM_OT_set_load,
 
 	WM_OT_assimilate,

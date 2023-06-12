@@ -421,6 +421,7 @@ def set_member():
 				member["sigma"] = {}
 
 				member["initial_positions"] = {}
+				member["deflection"] = {}
 				member["overstress"] = {}
 				member["utilization"] = {}
 
@@ -435,6 +436,75 @@ def set_member():
 
 	# create one mesh for all
 	geometry.create_members(data["structure"], data["members"])
+
+	# leave membersand go to edit-mode
+	# (in order to let the user define more supports)
+	bpy.ops.object.mode_set(mode="OBJECT")
+	bpy.ops.object.select_all(action='DESELECT')
+	obj.select_set(True)
+	bpy.context.view_layer.objects.active = data["structure"]
+	bpy.ops.object.mode_set(mode="EDIT")
+
+	# switch to wireframe
+	for area in bpy.context.screen.areas:
+		if area.type == 'VIEW_3D':
+			for space in area.spaces:
+				if space.type == 'VIEW_3D':
+					space.shading.type = 'WIREFRAME'
+
+	# to avoid key-error in optimization
+	data["done"][str(frame)] = False
+
+def set_quad():
+	scene = bpy.context.scene
+	phaenotyp = scene.phaenotyp
+	data = scene["<Phaenotyp>"]
+	obj = data["structure"]
+	frame = bpy.context.scene.frame_current
+
+	bpy.ops.object.mode_set(mode="OBJECT")
+
+	# this operator is only working for PyNite
+	# it is only called in this calculation_type
+	for face in obj.data.polygons:		
+		if face.select:
+			id = face.index
+			vertices_ids = face.vertices
+			
+			quad = {}
+
+			# this variables are always fix
+			quad["name"] = "quad_" + str(id)
+			quad["vertices_ids_structure"] = vertices_ids # structure obj
+			quad["vertices_ids_viz"] = {} # obj for visualization
+			
+			quad["thickness"] = phaenotyp.thickness # from gui
+			quad["E"] = phaenotyp.E_quads # from gui
+			quad["G"] = phaenotyp.G_quads # from gui
+			quad["nu"] = phaenotyp.nu_quads # from gui
+			quad["rho"] = phaenotyp.rho_quads # from gui
+
+			# results
+			quad["shear"] = {}
+			quad["moment"] = {}
+			quad["membrane"] = {}
+
+			quad["initial_positions"] = {}
+			quad["deflection"] = {}
+			quad["overstress"] = {}
+			quad["utilization"] = {}
+
+			quad["kg"] = {}
+			quad["area"] = {}
+
+			data["quads"][str(id)] = quad
+
+	# delete obj if existing
+	basics.delete_obj_if_existing("<Phaenotyp>quads")
+	basics.delete_mesh_if_existing("<Phaenotyp>quads")
+
+	# create one mesh for all
+	geometry.create_quads(data["structure"], data["quads"])
 
 	# leave membersand go to edit-mode
 	# (in order to let the user define more supports)
@@ -2085,6 +2155,18 @@ def reset():
 
 	scene = bpy.context.scene
 	phaenotyp = scene.phaenotyp
+	
+	# make structure visible
+	# try only because the object is maybe allready deleted
+	try:
+		data = scene["<Phaenotyp>"]
+		obj = scene["<Phaenotyp>"]["structure"]
+		obj.hide_set(False)
+		
+		# set active again to avoid missing panel
+		bpy.context.view_layer.objects.active = obj
+	except:
+		pass
 	
 	# create / recreate data
 	basics.create_data()

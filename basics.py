@@ -6,7 +6,7 @@ from time import time
 from datetime import timedelta
 
 blender_version = (3,5,1)
-phaenotyp_version = (0,2,3)
+phaenotyp_version = (0,2,4)
 phaenotyp_name = (
 	"Phänotyp " 
 	+ str(phaenotyp_version[0]) + "."
@@ -54,6 +54,7 @@ def create_data():
 		"structure": None,
 		"supports": {},
 		"members": {},
+		"quads": {},
 		"frames": {},
 		"loads_v": {},
 		"loads_e": {},
@@ -159,20 +160,37 @@ def delete_obj_if_name_contains(text):
 
 def view_vertex_colors():
 	'''
-	Change view to show colored material.
+	Change view to show colored material and hide structure.
 	'''
 	bpy.context.space_data.shading.type = 'MATERIAL'
-	# go to object-mode to avoid confusion
-	bpy.ops.object.mode_set(mode="OBJECT")
+
+	# hide structure
+	try:
+		data = bpy.context.scene["<Phaenotyp>"]
+		obj = data["structure"]
+		obj.hide_set(True)
+		
+		# go to object-mode to avoid confusion
+		bpy.ops.object.mode_set(mode="OBJECT")
+	except:
+		pass
 
 def revert_vertex_colors():
 	'''
 	Change view to solid.
 	'''
 	bpy.context.space_data.shading.type = 'SOLID'
-	# go to object-mode to avoid confusion
-	bpy.ops.object.mode_set(mode="OBJECT")
-
+	
+	# data is no longer available after reset
+	# therefore the obj is made visible again allready in reset
+	
+	# try, if the user has deleted the object
+	try:
+		# go to object-mode to avoid confusion
+		bpy.ops.object.mode_set(mode="OBJECT")
+	except:
+		pass
+	
 def popup(title = "Phaenotyp", lines=""):
 	'''
 	Create popup to inform user. The function is based on the answer from ChameleonScales at:

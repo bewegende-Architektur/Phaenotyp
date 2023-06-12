@@ -554,13 +554,11 @@ def create_members(structure_obj, members):
 		bpy.ops.geometry.color_attribute_add(name="force", domain='POINT', data_type='FLOAT_COLOR', color=(255, 0, 255, 1))
 
 	# create material
-	name = "<Phaenotyp>member"
-	existing = bpy.data.materials.get("<Phaenotyp>member")
-	if existing == None:
-		mat = bpy.data.materials.new(name)
-		obj.data.materials.append(mat)
-		obj.active_material_index = len(obj.data.materials) - 1
-
+	material_name = "<Phaenotyp>member"
+	member_material = bpy.data.materials.get(material_name)
+	if member_material == None:
+		mat = bpy.data.materials.new(material_name)
+		
 		mat.use_nodes = True
 		nodetree = mat.node_tree
 
@@ -575,6 +573,9 @@ def create_members(structure_obj, members):
 		output = ca.outputs['Color']
 		nodetree.links.new(input, output)
 
+	obj.data.materials.append(bpy.data.materials.get(material_name))
+	obj.active_material_index = len(obj.data.materials) - 1
+	
 	# create modifiere if not existing
 	modifier = obj.modifiers.get('<Phaenotyp>')
 	if modifier:
@@ -644,6 +645,121 @@ def create_members(structure_obj, members):
 		radius = member["Do"][str(frame)]*0.01
 		radius_group.add(vertex_ids, radius, 'REPLACE')
 
+def create_quads(structure_obj, quads):
+	# create mesh and object
+	mesh = bpy.data.meshes.new("<Phaenotyp>quads")
+	obj = bpy.data.objects.new(mesh.name, mesh)
+	col = bpy.data.collections.get("<Phaenotyp>")
+	col.objects.link(obj)
+	bpy.context.view_layer.objects.active = obj
+	scene = bpy.context.scene
+	phaenotyp = scene.phaenotyp
+	frame = scene.frame_current
+
+	verts = []
+	edges = []
+	faces = []
+
+	# like suggested here by Gorgious and CodeManX:
+	# https://blender.stackexchange.com/questions/6155/how-to-convert-coordinates-from-vertex-to-world-space
+	mat = structure_obj.matrix_world
+
+	structure_obj_vertices = structure_obj.data.vertices
+
+	# to keep track of the newly created mesh
+	# the whole mesh is recreated when a new member oder quad is added
+	used_verts = {}
+	len_verts = 0
+
+	for id, quad in quads.items():
+		vertices_ids_structure = quad["vertices_ids_structure"]
+		
+		# add or update nodes
+		# this is necessary because faces can share same vertices
+		vertices_ids_viz = []		
+		for vertex_id in vertices_ids_structure:
+			# create entry in temporary dictionary
+			if str(vertex_id) not in used_verts:
+				# like suggested here by Gorgious and CodeManX:
+				# https://blender.stackexchange.com/questions/6155/how-to-convert-coordinates-from-vertex-to-world-space
+				vertex_co = mat @ structure_obj_vertices[vertex_id].co
+				
+				# append to verts for the new mesh
+				verts.append(vertex_co)
+				
+				# to keep track of used vertices
+				# key = original id in structure, value = new id in mesh for viz
+				used_verts[str(vertex_id)] = len_verts
+				vertices_ids_viz.append(len_verts)
+				
+				# update id of new vertices
+				len_verts += 1
+			
+			else:
+				existing_id = used_verts[str(vertex_id)]
+				vertices_ids_viz.append(existing_id)
+		
+		# add face
+		faces.append(vertices_ids_viz)
+		
+		# save new ids to data for later access
+		quad["vertices_ids_viz"] = vertices_ids_viz
+		
+	mesh.from_pydata(verts, edges, faces)
+
+	# create vertex_color
+	attribute = obj.data.attributes.get("force")
+	if attribute:
+		text = "existing attribute:" + str(attribute)
+	else:
+		bpy.ops.geometry.color_attribute_add(name="force", domain='CORNER', data_type='FLOAT_COLOR', color=(255, 0, 255, 1))
+
+	# create material
+	material_name = "<Phaenotyp>quad"
+	quad_material = bpy.data.materials.get(material_name)
+	if quad_material == None:
+		mat = bpy.data.materials.new(material_name)
+		
+		mat.use_nodes = True
+		nodetree = mat.node_tree
+
+		# add color attribute
+		ca = nodetree.nodes.new(type="ShaderNodeVertexColor")
+
+		# set group
+		ca.layer_name = "force"
+
+		# connect to color attribute to base color
+		input = mat.node_tree.nodes['Principled BSDF'].inputs['Base Color']
+		output = ca.outputs['Color']
+		nodetree.links.new(input, output)
+
+	obj.data.materials.append(bpy.data.materials.get(material_name))    
+	obj.active_material_index = len(obj.data.materials) - 1
+	
+	# create vertex_group for thickness
+	bpy.ops.object.mode_set(mode = 'OBJECT')
+	thickness_group = obj.vertex_groups.get("thickness")
+	if not thickness_group:
+		thickness_group = obj.vertex_groups.new(name="thickness") 
+
+	# create modifiere if not existing
+	modifier = obj.modifiers.get('<Phaenotyp>')
+	if modifier:
+		text = "existing modifier:" + str(modifiers)
+	else:
+		modifier_solidify = obj.modifiers.new(name="<Phaenotyp>", type='SOLIDIFY')
+		modifier_solidify.thickness = 1
+		modifier_solidify.vertex_group = "thickness"
+		modifier_solidify.use_even_offset = True
+	
+	# set the thickness passed from gui
+	for id, quad in quads.items():
+		vertices_ids = quad["vertices_ids_viz"]
+		thickness = quad["thickness"]
+		thickness_group.add(vertices_ids, thickness, 'REPLACE')
+
+
 def update_translation():
 	phaenotyp = bpy.context.scene.phaenotyp
 	
@@ -707,7 +823,9 @@ def update_members_post():
 
 	radius_group = mesh_for_viz.vertex_groups.get("radius")
 	attribute = mesh_for_viz.data.attributes.get("force")
-			
+	
+	viz_deflection = phaenotyp.viz_deflection * 0.01
+	
 	for id, member in members.items():
 		id = int(id)
 
@@ -724,10 +842,9 @@ def update_members_post():
 
 			for i in range(11):
 				position = member["deflection"][str(frame)][i]
-				f = phaenotyp.viz_deflection * 0.01
-				x = position[0]*(1-f) + member["initial_positions"][str(frame)][10-i][0]*f
-				y = position[1]*(1-f) + member["initial_positions"][str(frame)][10-i][1]*f
-				z = position[2]*(1-f) + member["initial_positions"][str(frame)][10-i][2]*f
+				x = position[0]*(1-viz_deflection) + member["initial_positions"][str(frame)][10-i][0]*viz_deflection
+				y = position[1]*(1-viz_deflection) + member["initial_positions"][str(frame)][10-i][1]*viz_deflection
+				z = position[2]*(1-viz_deflection) + member["initial_positions"][str(frame)][10-i][2]*viz_deflection
 				vertices[mesh_vertex_ids[i]].co = (x,y,z)
 
 				# if utilization in viz
@@ -808,6 +925,62 @@ def update_members_post():
 
 				c.hsv = h,s,v
 				attribute.data[mesh_vertex_ids[i]].color = [c.r, c.g, c.b, 1.0]
+
+	# update quads
+	quads = data["quads"]
+	structure_obj_vertices = data["structure"]
+	mesh_for_viz = bpy.data.objects["<Phaenotyp>quads"]
+	vertices = mesh_for_viz.data.vertices
+
+	thickness_group = mesh_for_viz.vertex_groups.get("thickness")
+	attribute = mesh_for_viz.data.attributes.get("force")
+			
+	for id, quad in quads.items():
+		id = int(id)
+		
+		# get selected forcetyp and force
+		result = quad[phaenotyp.forces_quads]
+
+		# red or blue?
+		force = result[str(frame)]
+
+		if force > 0:
+			h = 0
+		else:
+			h = 0.666
+
+		# define s
+		s = 1 * abs(force) * phaenotyp.viz_scale #* 0.01
+
+		# define v
+		if member["overstress"][str(frame)] == True:
+			v = 0.25
+		else:
+			v = 1.0
+
+		c.hsv = h,s,v
+
+		# colorize faces (every corner has the same color)
+		attribute.data[id*4+0].color = [c.r, c.g, c.b, 1.0]
+		attribute.data[id*4+1].color = [c.r, c.g, c.b, 1.0]
+		attribute.data[id*4+2].color = [c.r, c.g, c.b, 1.0]
+		attribute.data[id*4+3].color = [c.r, c.g, c.b, 1.0]
+
+		for i in range(4):
+			position = quad["deflection"][str(frame)][i]
+			x = position[0]*(1-viz_deflection) + quad["initial_positions"][str(frame)][i][0]*viz_deflection
+			y = position[1]*(1-viz_deflection) + quad["initial_positions"][str(frame)][i][1]*viz_deflection
+			z = position[2]*(1-viz_deflection) + quad["initial_positions"][str(frame)][i][2]*viz_deflection
+			
+			# get node of the corresponding vertex id of the viz mesh
+			node_id = quad["vertices_ids_viz"][i]
+			vertices[node_id].co = (x,y,z)
+		
+		# Dicke anwenden
+		# Derzeit ist der Faktor einfach das maximale Moment
+		#thickness = max(moment) * 0.25
+		#thickness_group.add(keys, thickness, 'ADD')
+    
 
 def create_loads(structure_obj, loads_v, loads_e, loads_f):
 	# like suggested here by Gorgious and CodeManX:
