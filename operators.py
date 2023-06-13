@@ -899,7 +899,7 @@ def wool_threads():
 		support_ids.append(support_id)
 	
 	# get list of distances at start
-	length = members["0"]["length"].get("0")
+	length = members[list(members)[0]]["length"].get("0")
 	if length:
 		# only create distances if not available
 		pass
@@ -1140,15 +1140,15 @@ def calculate_single_frame():
 	# calculate new properties for each member
 	geometry.update_geometry_pre()
 
-	# created a truss object
-	trusses = {}
-	trusses[str(frame)] = prepare_fea()
+	# created a model object
+	models = {}
+	models[str(frame)] = prepare_fea()
 
 	# run singlethread and get results
-	feas = calculation.run_mp(trusses)
+	feas = calculation.run_mp(models)
 
 	# wait for it and interweave results to data
-	interweave_results(feas, members)
+	interweave_results(feas)
 
 	# calculate new visualization-mesh
 	geometry.update_geometry_post()
@@ -1184,8 +1184,8 @@ def calculate_animation():
 			progress.run()
 			progress.http.reset_pci(amount)
 
-			# create list of trusses
-			trusses = {}
+			# create list of models
+			models = {}
 
 			# run analysis for each frame first
 			for frame in range(start, end):
@@ -1196,15 +1196,15 @@ def calculate_animation():
 				# calculate new properties for each member
 				geometry.update_geometry_pre()
 
-				# created a truss object of PyNite and add to dict
-				truss = prepare_fea()
-				trusses[frame] = truss
+				# created a model object of PyNite and add to dict
+				model = prepare_fea()
+				models[frame] = model
 
 			# run mp and get results
-			feas = calculation.run_mp(trusses)
+			feas = calculation.run_mp(models)
 
 			# wait for it and interweave results to data
-			interweave_results(feas, members)
+			interweave_results(feas)
 
 			# calculate new visualization-mesh
 			geometry.update_geometry_post()
@@ -1238,15 +1238,15 @@ def calculate_animation():
 					# calculate new properties for each member
 					geometry.update_geometry_pre()
 
-					# created a truss object of PyNite and add to dict
-					truss = prepare_fea()
-					trusses[frame] = truss
+					# created a model object of PyNite and add to dict
+					model = prepare_fea()
+					models[frame] = model
 				
 				# run mp and get results
-				feas = calculation.run_mp(trusses)
+				feas = calculation.run_mp(models)
 
 				# wait for it and interweave results to data
-				interweave_results(feas, members)
+				interweave_results(feas)
 
 				# calculate new visualization-mesh
 				geometry.update_geometry_post()
@@ -1313,8 +1313,8 @@ def calculate_animation():
 		progress.run()
 		progress.http.reset_pci(end-start)
 
-		# create list of trusses
-		trusses = {}
+		# create list of models
+		models = {}
 
 		# run analysis for each frame first
 		for frame in range(start, end):
@@ -1325,15 +1325,15 @@ def calculate_animation():
 			# calculate new properties for each member
 			geometry.update_geometry_pre()
 
-			# created a truss object of PyNite and add to dict
-			truss = prepare_fea()
-			trusses[frame] = truss
+			# created a model object of PyNite and add to dict
+			model = prepare_fea()
+			models[frame] = model
 
 		# run mp and get results
-		feas = calculation.run_mp(trusses)
+		feas = calculation.run_mp(models)
 
 		# wait for it and interweave results to data
-		interweave_results(feas, members)
+		interweave_results(feas)
 
 		# calculate new visualization-mesh
 		geometry.update_geometry_post()
@@ -1359,15 +1359,15 @@ def optimize_approximate():
 	# calculate new properties for each member
 	geometry.update_geometry_pre()
 
-	# created a truss object
-	trusses = {}
-	trusses[str(frame)] = calculation.prepare_fea_fd()
+	# created a model object
+	models = {}
+	models[str(frame)] = calculation.prepare_fea_fd()
 
 	# run singlethread and get results
-	feas = calculation.run_mp(trusses)
+	feas = calculation.run_mp(models)
 
 	# wait for it and interweave results to data
-	calculation.interweave_results_fd(feas, members)
+	calculation.interweave_results_fd(feas)
 
 	# calculate new visualization-mesh
 	geometry.update_geometry_post()
@@ -1388,15 +1388,15 @@ def optimize_simple():
 	# calculate new properties for each member
 	geometry.update_geometry_pre()
 
-	# created a truss object
-	trusses = {}
-	trusses[str(frame)] = calculation.prepare_fea_pn()
+	# created a model object
+	models = {}
+	models[str(frame)] = calculation.prepare_fea_pn()
 
 	# run singlethread and get results
-	feas = calculation.run_mp(trusses)
+	feas = calculation.run_mp(models)
 
 	# wait for it and interweave results to data
-	calculation.interweave_results_pn(feas, members)
+	calculation.interweave_results_pn(feas)
 
 	# calculate new visualization-mesh
 	geometry.update_geometry_post()
@@ -1417,15 +1417,15 @@ def optimize_utilization():
 	# calculate new properties for each member
 	geometry.update_geometry_pre()
 
-	# created a truss object
-	trusses = {}
-	trusses[str(frame)] = calculation.prepare_fea_pn()
+	# created a model object
+	models = {}
+	models[str(frame)] = calculation.prepare_fea_pn()
 
 	# run singlethread and get results
-	feas = calculation.run_mp(trusses)
+	feas = calculation.run_mp(models)
 
 	# wait for it and interweave results to data
-	calculation.interweave_results_pn(feas, members)
+	calculation.interweave_results_pn(feas)
 
 	# calculate new visualization-mesh
 	geometry.update_geometry_post()
@@ -1446,15 +1446,15 @@ def optimize_complex():
 	# calculate new properties for each member
 	geometry.update_geometry_pre()
 
-	# created a truss object
-	trusses = {}
-	trusses[str(frame)] = calculation.prepare_fea_pn()
+	# created a model object
+	models = {}
+	models[str(frame)] = calculation.prepare_fea_pn()
 
 	# run singlethread and get results
-	feas = calculation.run_mp(trusses)
+	feas = calculation.run_mp(models)
 
 	# wait for it and interweave results to data
-	calculation.interweave_results_pn(feas, members)
+	calculation.interweave_results_pn(feas)
 
 	# calculate new visualization-mesh
 	geometry.update_geometry_post()
@@ -1941,13 +1941,14 @@ def selection():
 	value_min = value - threshold
 	value_max = value + threshold
 
+	# set obj active and switch mode
+	obj.hide_set(False)
+	bpy.context.view_layer.objects.active = obj
+	
 	# set edge for selection type and deselect
 	bpy.ops.object.mode_set(mode="EDIT")
 	bpy.ops.mesh.select_mode(use_extend=False, use_expand=False, type='EDGE')
 	bpy.ops.mesh.select_all(action='DESELECT')
-
-	# set obj active and switch mode
-	bpy.context.view_layer.objects.active = obj
 	bpy.ops.object.mode_set(mode="OBJECT")
 
 	# iterate edges
@@ -1956,49 +1957,53 @@ def selection():
 	if key == "id":
 		for edge in edges:
 			id = edge.index
-			member = members[str(id)]
+			
+			# is this edge a member?
+			member = members.get(str(id))
+			if member:
+				if compare == "Equal":
+					if value_min <= id <= value_max:
+						edge.select = True
+					else:
+						edge.select = False
 
-			if compare == "Equal":
-				if value_min <= id <= value_max:
-					edge.select = True
-				else:
-					edge.select = False
+				if compare == "Greater":
+					if id > value_min:
+						edge.select = True
+					else:
+						edge.select = False
 
-			if compare == "Greater":
-				if id > value_min:
-					edge.select = True
-				else:
-					edge.select = False
-
-			if compare == "Less":
-				if id < value_max:
-					edge.select = True
-				else:
-					edge.select = False
+				if compare == "Less":
+					if id < value_max:
+						edge.select = True
+					else:
+						edge.select = False
 
 	else:
 		for edge in edges:
 			id = edge.index
-			member = members[str(id)]
-			value = member[key][str(frame)]
+			# is this edge a member?
+			member = members.get(str(id))
+			if member:
+				value = member[key][str(frame)]
 
-			if compare == "Equal":
-				if value_min <= value <= value_max:
-					edge.select = True
-				else:
-					edge.select = False
+				if compare == "Equal":
+					if value_min <= value <= value_max:
+						edge.select = True
+					else:
+						edge.select = False
 
-			if compare == "Greater":
-				if value > value_min:
-					edge.select = True
-				else:
-					edge.select = False
+				if compare == "Greater":
+					if value > value_min:
+						edge.select = True
+					else:
+						edge.select = False
 
-			if compare == "Less":
-				if value < value_max:
-					edge.select = True
-				else:
-					edge.select = False
+				if compare == "Less":
+					if value < value_max:
+						edge.select = True
+					else:
+						edge.select = False
 
 	# go into edit-mode and switch to wireframe
 	bpy.ops.object.mode_set(mode="EDIT")
@@ -2027,7 +2032,7 @@ def report_members():
 
 	report.copy_sorttable(directory)
 
-	sorted_frames = basics.sorted_keys(members["0"]["axial"])
+	sorted_frames = basics.sorted_keys(members[list(members)[0]]["axial"])
 	start = sorted_frames[0] # first frame (if user is changing start frame)
 	end = sorted_frames[len(sorted_frames)-1]
 
@@ -2060,7 +2065,7 @@ def report_frames():
 
 	report.copy_sorttable(directory)
 
-	sorted_frames = basics.sorted_keys(members["0"]["axial"])
+	sorted_frames = basics.sorted_keys(members[list(members)[0]]["axial"])
 	start = sorted_frames[0] # first frame (if user is changing start frame)
 	end = sorted_frames[len(sorted_frames)-1]
 
@@ -2093,7 +2098,7 @@ def report_combined():
 
 	report.copy_sorttable(directory)
 
-	sorted_frames = basics.sorted_keys(members["0"]["axial"])
+	sorted_frames = basics.sorted_keys(members[list(members)[0]]["axial"])
 	start = sorted_frames[0] # first frame (if user is changing start frame)
 	end = sorted_frames[len(sorted_frames)-1]
 

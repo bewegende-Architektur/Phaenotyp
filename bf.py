@@ -61,8 +61,8 @@ def generate_basis():
 		prepare_fea = calculation.prepare_fea_fd
 		interweave_results = calculation.interweave_results_fd
 
-	# create list of trusses
-	trusses = {}
+	# create list of models
+	models = {}
 
 	# create chromosome all set to 0
 	chromosome = []
@@ -79,16 +79,16 @@ def generate_basis():
 	# calculate new properties for each member
 	geometry.update_geometry_pre()
 
-	# created a truss object of PyNite and add to dict
-	truss = prepare_fea()
-	trusses[0] = truss
+	# created a model object of PyNite and add to dict
+	model = prepare_fea()
+	models[0] = model
 
 	if phaenotyp.calculation_type != "geometrical":
 		# run mp and get results
-		feas = calculation.run_mp(trusses)
+		feas = calculation.run_mp(models)
 
 		# wait for it and interweave results to data
-		interweave_results(feas, members)
+		interweave_results(feas)
 
 def bruteforce(chromosomes):
 	"""
@@ -105,8 +105,8 @@ def bruteforce(chromosomes):
 	environment = data["environment"]
 	individuals = data["individuals"]
 
-	# create list of trusses
-	trusses = {}
+	# create list of models
+	models = {}
 
 	# for PyNite
 	if phaenotyp.calculation_type != "force_distribution":
@@ -132,13 +132,13 @@ def bruteforce(chromosomes):
 		# calculate new properties for each member
 		geometry.update_geometry_pre()
 
-		# created a truss object of PyNite and add to dict
-		truss = prepare_fea()
-		trusses[frame] = truss
+		# created a model object of PyNite and add to dict
+		model = prepare_fea()
+		models[frame] = model
 
 	if phaenotyp.calculation_type != "geometrical":
 		# run mp and get results
-		feas = calculation.run_mp(trusses)
+		feas = calculation.run_mp(models)
 
 		# wait for it and interweave results to data
-		interweave_results(feas, members)
+		interweave_results(feas)

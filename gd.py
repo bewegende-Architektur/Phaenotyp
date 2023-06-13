@@ -68,11 +68,11 @@ def generate_basis(chromosome):
 	# calculate frame
 	geometry.update_geometry_pre()
 	
-	trusses = {}
-	trusses[str(frame)] = prepare_fea()
+	models = {}
+	models[str(frame)] = prepare_fea()
 
 	# run singlethread and get results
-	feas = calculation.run_mp(trusses)
+	feas = calculation.run_mp(models)
 	
 	interweave_results(fea, members)
 	geometry.update_geometry_post()
@@ -139,12 +139,12 @@ def make_step_st(chromosome, frame):
 	# calculate frame
 	geometry.update_geometry_pre()
 	
-	# created a truss object
-	trusses = {}
-	trusses[str(frame)] = prepare_fea()
+	# created a model object
+	models = {}
+	models[str(frame)] = prepare_fea()
 
 	# run singlethread and get results
-	feas = calculation.run_mp(trusses)
+	feas = calculation.run_mp(models)
 	
 	interweave_results(fea, members)
 	geometry.update_geometry_post()
@@ -211,9 +211,9 @@ def make_step_mp(chromosome, frame):
 	
 	# calculate frame
 	geometry.update_geometry_pre()
-	truss = prepare_fea()
+	model = prepare_fea()
 	
-	return truss
+	return model
 
 def start():
 	'''
@@ -303,8 +303,8 @@ def start():
 		# copy current chromosome
 		chromosome = chromosome_current.copy()
 
-		# create list of trusses
-		trusses = {}
+		# create list of models
+		models = {}
 
 		# create variations of keys and calculate with mp
 		calculated_frames = [] # to access them later
@@ -320,7 +320,7 @@ def start():
 			chromosome[key_id] += delta
 
 			# with  multiprocessing
-			truss = make_step_mp(chromosome, frame)
+			model = make_step_mp(chromosome, frame)
 
 			# update scene
 			bpy.context.scene.frame_current = frame
@@ -329,15 +329,15 @@ def start():
 			# calculate new properties for each member
 			geometry.update_geometry_pre()
 
-			# created a truss object of PyNite and add to dict
-			trusses[str(frame)] = truss
+			# created a model object of PyNite and add to dict
+			models[str(frame)] = model
 
 		if phaenotyp.calculation_type != "geometrical":
 			# run mp and get results
-			feas = calculation.run_mp(trusses)
+			feas = calculation.run_mp(models)
 
 			# wait for it and interweave results to data
-			interweave_results(feas, members)
+			interweave_results(feas)
 		
 		# optimization
 		print_data("start optimization:")

@@ -38,17 +38,17 @@ calculation_type = sys.argv[3]
 # start timer
 start_time = time()
 
-def import_trusses():
-	# get trusses stored as dict with frame as key
+def import_models():
+	# get models stored as dict with frame as key
 	file = open(path_import, 'rb')
-	imported_trusses = pickle.load(file)
+	imported_models = pickle.load(file)
 	file.close()
 
-	return imported_trusses
+	return imported_models
 
 # run one single fea and save result into feas (multiprocessing manager dict)
-def run_fea_pn(scipy_available, calculation_type, feas, truss, frame):
-	# the variables truss, and frame are passed to mp
+def run_fea_pn(scipy_available, calculation_type, feas, model, frame):
+	# the variables model, and frame are passed to mp
 	# this variables can not be returned with multiprocessing
 	# instead of this a dict with multiprocessing.Manager is created
 	# the dict feas stores one anlysis for each frame
@@ -60,25 +60,25 @@ def run_fea_pn(scipy_available, calculation_type, feas, truss, frame):
 	
 	if scipy_available == "True":
 		if calculation_type == "first_order":
-			truss.analyze(check_statics=False, sparse=True)
+			model.analyze(check_statics=False, sparse=True)
 
 		elif calculation_type == "first_order_linear":
-			truss.analyze_linear(check_statics=False, sparse=True)
+			model.analyze_linear(check_statics=False, sparse=True)
 
 		else:
-			truss.analyze_PDelta(check_stability=False, sparse=True)
+			model.analyze_PDelta(check_stability=False, sparse=True)
 
 	if scipy_available == "False":
 		if calculation_type == "first_order":
-			truss.analyze(check_statics=False, sparse=False)
+			model.analyze(check_statics=False, sparse=False)
 
 		elif calculation_type == "first_order_linear":
-			truss.analyze_linear(check_statics=False, sparse=False)
+			model.analyze_linear(check_statics=False, sparse=False)
 
 		else:
-			truss.analyze_PDelta(check_stability=False, sparse=False)
+			model.analyze_PDelta(check_stability=False, sparse=False)
 
-	feas[str(frame)] = truss
+	feas[str(frame)] = model
 
 	# get duration
 	elapsed = time() - start_time
@@ -87,7 +87,7 @@ def run_fea_pn(scipy_available, calculation_type, feas, truss, frame):
 	print_data(text)
 	sys.stdout.flush()
 
-def run_fea_fd(feas, truss, frame):
+def run_fea_fd(feas, model, frame):
 	# based on:
 	# Oliver Natt
 	# Physik mit Python
@@ -101,10 +101,10 @@ def run_fea_fd(feas, truss, frame):
 	# amount of dimensions
 	dim = 3
 
-	points_array = truss[0]
-	supports_ids = truss[1]
-	edges_array = truss[2]
-	forces_array = truss[3]
+	points_array = model[0]
+	supports_ids = model[1]
+	edges_array = model[2]
+	forces_array = model[3]
 
 	# amount of points, edges, supports, verts
 	n_points_array = points_array.shape[0]
@@ -126,15 +126,15 @@ def run_fea_fd(feas, truss, frame):
 
 
 	# create equation
-	truss = zeros((n_equation, n_equation))
+	model = zeros((n_equation, n_equation))
 	for id, edge in enumerate(edges_array):
 		for k in intersect1d(edge, verts_id):
 			n = verts_id.index(k)
-			truss[n * dim:(n + 1) * dim, id] = vector(k, id)
+			model[n * dim:(n + 1) * dim, id] = vector(k, id)
 
 	# Löse das Gleichungssystem A @ F = -forces_array nach den Kräften F.
 	b = -forces_array[verts_id].reshape(-1)
-	F = linalg.solve(truss, b)
+	F = linalg.solve(model, b)
 
 	# Berechne die äußeren Kräfte.
 	for id, edge in enumerate(edges_array):
@@ -166,20 +166,20 @@ def mp_pool():
 
 	# for PyNite
 	if calculation_type != "force_distribution":
-		for frame, truss in imported_trusses.items():
-			pool.apply_async(run_fea_pn, args=(scipy_available, calculation_type, feas, truss, frame,))
+		for frame, model in imported_models.items():
+			pool.apply_async(run_fea_pn, args=(scipy_available, calculation_type, feas, model, frame,))
 
 	# for force distribution
 	else:
-		for frame, truss in imported_trusses.items():
-			pool.apply_async(run_fea_fd, args=(feas, truss, frame,))
+		for frame, model in imported_models.items():
+			pool.apply_async(run_fea_fd, args=(feas, model, frame,))
 
 	pool.close()
 	pool.join()
 
 	return feas
 
-def export_trusses():
+def export_models():
 	# export back to blender
 	path_export = directory_blend + "/Phaenotyp-return_mp.p"
 	file = open(path_export, 'wb')
@@ -187,9 +187,9 @@ def export_trusses():
 	file.close()
 
 if __name__ == "__main__":
-	imported_trusses = import_trusses()
+	imported_models = import_models()
 	feas = mp_pool()
-	export_trusses()
+	export_models()
 	# give feedback to user
 	end_time = time()
 

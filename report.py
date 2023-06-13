@@ -343,7 +343,9 @@ def fill_matrix_members(matrix, result_type, frame, length):
 				# force, overstress and utilization
 				overstress = member["overstress"][str(frame)]
 				utilization = False # utilization is always one value
-				matrix[int(member_id)][int(pos_id)] = [force, overstress, utilization]
+				
+				index_in_list = list(members).index(member_id)
+				matrix[index_in_list][int(pos_id)] = [force, overstress, utilization]
 
 				# find highest
 				if force > highest:
@@ -361,7 +363,7 @@ def fill_matrix_members(matrix, result_type, frame, length):
 				utilization = True
 			else:
 				utilization = False
-			matrix[int(member_id)] = [force, overstress, utilization]
+			matrix[int(list(members)[member_id])] = [force, overstress, utilization]
 
 			# find highest
 			if force > highest:
@@ -392,11 +394,11 @@ def fill_matrix_frames(matrix, result_type, length):
 		for matrix_frame, frame_id in enumerate(sorted_frames):
 			force = member[result_type][str(frame_id)]
 			if length > 1:
-				list = []
+				force_list = []
 				for force_pos in force:
-					list.append(force_pos)
+					force_list.append(force_pos)
 
-				force = basics.return_max_diff_to_zero(list)
+				force = basics.return_max_diff_to_zero(force_list)
 
 			# force, overstress and utilization
 			overstress = member["overstress"][str(frame_id)]
@@ -404,7 +406,9 @@ def fill_matrix_frames(matrix, result_type, length):
 				utilization = True
 			else:
 				utilization = False
-			matrix[int(member_id)][int(matrix_frame)] = [force, overstress, utilization]
+			
+			index_in_list = list(members).index(member_id)
+			matrix[index_in_list][int(matrix_frame)] = [force, overstress, utilization]
 
 			# find highest
 			if force > highest:
@@ -726,11 +730,16 @@ def append_headlines(file, names, fill):
 	file.write('</tr>')
 
 def append_matrix_members(file, matrix, frame, highest, lowest, length):
-	for member_id, member_entry in enumerate(matrix):
+	scene = bpy.context.scene
+	data = scene["<Phaenotyp>"]
+	members = data["members"]
+	
+	for id_in_list, member_entry in enumerate(matrix):
 		# start row
 		file.write('<tr class="item">')
 
 		# print member name
+		member_id = list(members)[id_in_list]
 		text = '<td height="20" width="20" align="left">' + str(member_id).zfill(3) + '</td>\n'
 		file.write(text)
 
@@ -806,11 +815,16 @@ def append_matrix_members(file, matrix, frame, highest, lowest, length):
 		file.write("</tr>\n")
 
 def append_matrix_frames(file, matrix, highest, lowest, length):
-	for member_id, member_entry in enumerate(matrix):
+	scene = bpy.context.scene
+	data = scene["<Phaenotyp>"]
+	members = data["members"]
+	
+	for id_in_list, member_entry in enumerate(matrix):
 		# start row
 		file.write('<tr class="item">')
 
 		# print member name
+		member_id = list(members)[id_in_list]
 		text = '<td height="20" width="20" align="left">' + str(member_id).zfill(3) + '</td>\n'
 		file.write(text)
 
@@ -916,7 +930,7 @@ def report_members(directory, frame):
 		filename = directory + str(force_type) + ".html"
 		file = open(filename, 'w')
 		len_members = (len(members))
-		frames_len = len(members["0"][force_type]) # Was wenn start wo anders?
+		frames_len = len(members[list(members)[0]][force_type]) # len of entries from first existing member
 
 		# create matrix with length of col and row
 		result_matrix = create_matrix(length, len_members)
@@ -967,7 +981,7 @@ def report_frames(directory, start, end):
 		filename = directory + str(force_type) + ".html"
 		file = open(filename, 'w')
 		len_members = (len(members))
-		frames_len = len(members["0"][force_type]) # Was wenn start wo anders?
+		frames_len = len(members[list(members)[0]][force_type]) # Was wenn start wo anders?
 
 		# create matrix with length of col and row
 		result_matrix = create_matrix(frames_len, len_members)
@@ -1010,7 +1024,7 @@ def report_combined(directory, start, end):
 		filename = directory + str(force_type) + ".html"
 		file = open(filename, 'w')
 		len_members = (len(members))
-		frames_len = len(members["0"][force_type]) # Was wenn start wo anders?
+		frames_len = len(members[list(members)[0]][force_type]) # Was wenn start wo anders?
 
 		# create matrix with length of col and row
 		result_matrix = create_matrix(frames_len, len_members)

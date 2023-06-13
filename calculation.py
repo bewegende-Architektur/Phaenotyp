@@ -38,14 +38,14 @@ def check_scipy():
 def prepare_fea_pn():
 	'''
 	Is preparing the calculaton of the current frame for for PyNite.
-	:return truss: FEModel3D function of PyNite
+	:return model: FEModel3D function of PyNite
 	'''
 	scene = bpy.context.scene
 	phaenotyp = scene.phaenotyp
 	calculation_type = phaenotyp.calculation_type
 	data = scene["<Phaenotyp>"]
 	frame = bpy.context.scene.frame_current
-	truss = FEModel3D()
+	model = FEModel3D()
 	
 	basics.timer.start()
 
@@ -55,7 +55,7 @@ def prepare_fea_pn():
 		G = mat[3]
 		nu = None # replace later
 		rho = None # replace later
-		truss.add_material(name, E, G, nu, rho)
+		model.add_material(name, E, G, nu, rho)
 
 	# apply chromosome if available
 	individuals = data.get("individuals")
@@ -91,7 +91,7 @@ def prepare_fea_pn():
 	# add nodes from vertices
 	for vertex in vertices:
 		vertex_id = vertex.index
-		name = "node_" + str(vertex_id)
+		name = str(vertex_id)
 
 		# like suggested here by Gorgious and CodeManX:
 		# https://blender.stackexchange.com/questions/6155/how-to-convert-coordinates-from-vertex-to-world-space
@@ -104,18 +104,16 @@ def prepare_fea_pn():
 		y = v[1] * 100 # convert to cm for calculation
 		z = v[2] * 100 # convert to cm for calculation
 
-		truss.add_node(name, x,y,z)
+		model.add_node(name, x,y,z)
 
 	# define support
 	supports = data["supports"]
 	for id, support in supports.items():
-		name = "node_" + str(id)
-		truss.def_support(name, support[0], support[1], support[2], support[3], support[4], support[5])
+		model.def_support(id, support[0], support[1], support[2], support[3], support[4], support[5])
 
 	# create members
 	members = data["members"]
 	for id, member in members.items():
-		name = "member_" + str(id)
 		vertex_0_id = member["vertex_0_id"]
 		vertex_1_id = member["vertex_1_id"]
 
@@ -132,8 +130,8 @@ def prepare_fea_pn():
 			initial_positions.append([x,y,z])
 		member["initial_positions"][str(frame)] = initial_positions
 
-		node_0 = str("node_") + str(vertex_0_id)
-		node_1 = str("node_") + str(vertex_1_id)
+		node_0 = str(vertex_0_id)
+		node_1 = str(vertex_1_id)
 		material_name = member["material_name"]
 		
 		if member["type"] == "full":
@@ -148,8 +146,8 @@ def prepare_fea_pn():
 			tension_only = False
 			comp_only = True
 				
-		truss.add_member(
-			name, node_0, node_1, material_name,
+		model.add_member(
+			id, node_0, node_1, material_name,
 			member["Iy"][str(frame)], member["Iz"][str(frame)],
 			member["J"][str(frame)], member["A"][str(frame)],
 			tension_only=tension_only, comp_only=comp_only,
@@ -160,7 +158,7 @@ def prepare_fea_pn():
 		kN = kg_A * -0.0000981
 
 		# add self weight as distributed load
-		truss.add_member_dist_load(name, "FZ", kN, kN)
+		model.add_member_dist_load(id, "FZ", kN, kN)
 
 		# calculate lenght of parts (maybe usefull later ...)
 		length = (v_0 - v_1).length
@@ -177,8 +175,6 @@ def prepare_fea_pn():
 	# create quads
 	quads = data["quads"]
 	for id, quad in quads.items():
-		name = "quad_" + str(id)
-		
 		E = quad["E"]
 		G = quad["G"]
 		nu = quad["nu"]
@@ -192,18 +188,18 @@ def prepare_fea_pn():
 			"nu" +  "_" +
 			"rho")
 		
-		if material_name not in truss.Materials:
-			truss.add_material(material_name, E, G, nu, rho)
+		if material_name not in model.Materials:
+			model.add_material(material_name, E, G, nu, rho)
 		
 		vertex_ids = quad["vertices_ids_structure"]
 		t = quad["thickness"]
 		
-		v_0 = "node_" + str(vertex_ids[0])
-		v_1 = "node_" + str(vertex_ids[1])
-		v_2 = "node_" + str(vertex_ids[2])
-		v_3 = "node_" + str(vertex_ids[3])
+		v_0 = str(vertex_ids[0])
+		v_1 = str(vertex_ids[1])
+		v_2 = str(vertex_ids[2])
+		v_3 = str(vertex_ids[3])
 		
-		truss.add_quad(name, v_0, v_1, v_2, v_3, t, material_name, kx_mod=1.0, ky_mod=1.0)
+		model.add_quad(id, v_0, v_1, v_2, v_3, t, material_name, kx_mod=1.0, ky_mod=1.0)
 		
 		# save position before to morph with deflection afterwards
 		initial_positions = [
@@ -217,27 +213,25 @@ def prepare_fea_pn():
 	# add loads
 	loads_v = data["loads_v"]
 	for id, load in loads_v.items():
-		name = "node_" + str(id)
-		truss.add_node_load(name, 'FX', load[0])
-		truss.add_node_load(name, 'FY', load[1])
-		truss.add_node_load(name, 'FZ', load[2])
+		model.add_node_load(id, 'FX', load[0])
+		model.add_node_load(id, 'FY', load[1])
+		model.add_node_load(id, 'FZ', load[2])
 
 		if calculation_type not in ["geometrical", "force_distribution"]:
-			truss.add_node_load(name, 'MX', load[3])
-			truss.add_node_load(name, 'MY', load[4])
-			truss.add_node_load(name, 'MZ', load[5])
+			model.add_node_load(id, 'MX', load[3])
+			model.add_node_load(id, 'MY', load[4])
+			model.add_node_load(id, 'MZ', load[5])
 
 	loads_e = data["loads_e"]
 	for id, load in loads_e.items():
-		name = "member_" + str(id)
-		truss.add_member_dist_load(name, 'FX', load[0]*0.01, load[0]*0.01) # m to cm
-		truss.add_member_dist_load(name, 'FY', load[1]*0.01, load[1]*0.01) # m to cm
-		truss.add_member_dist_load(name, 'FZ', load[2]*0.01, load[2]*0.01) # m to cm
+		model.add_member_dist_load(id, 'FX', load[0]*0.01, load[0]*0.01) # m to cm
+		model.add_member_dist_load(id, 'FY', load[1]*0.01, load[1]*0.01) # m to cm
+		model.add_member_dist_load(id, 'FZ', load[2]*0.01, load[2]*0.01) # m to cm
 		
 		if calculation_type not in ["geometrical", "force_distribution"]:
-			truss.add_member_dist_load(name, 'Fx', load[3]*0.01, load[0]*0.01) # m to cm
-			truss.add_member_dist_load(name, 'Fy', load[4]*0.01, load[1]*0.01) # m to cm
-			truss.add_member_dist_load(name, 'Fz', load[5]*0.01, load[2]*0.01) # m to cm
+			model.add_member_dist_load(id, 'Fx', load[3]*0.01, load[0]*0.01) # m to cm
+			model.add_member_dist_load(id, 'Fy', load[4]*0.01, load[1]*0.01) # m to cm
+			model.add_member_dist_load(id, 'Fz', load[5]*0.01, load[2]*0.01) # m to cm
 
 	loads_f = data["loads_f"]
 	for id, load in loads_f.items():
@@ -291,17 +285,17 @@ def prepare_fea_pn():
 			y = edge_load_normal[i] * normal[1]
 			z = edge_load_normal[i] * normal[2]
 
-			truss.add_member_dist_load(name, 'FX', x, x)
-			truss.add_member_dist_load(name, 'FY', y, y)
-			truss.add_member_dist_load(name, 'FZ', z, z)
+			model.add_member_dist_load(name, 'FX', x, x)
+			model.add_member_dist_load(name, 'FY', y, y)
+			model.add_member_dist_load(name, 'FZ', z, z)
 
 			# edge_load_projected
 			z = edge_load_projected[i]
-			truss.add_member_dist_load(name, 'FZ', z, z)
+			model.add_member_dist_load(name, 'FZ', z, z)
 
 			# edge_load_area_z
 			z = edge_load_area_z[i]
-			truss.add_member_dist_load(name, 'FZ', z, z)
+			model.add_member_dist_load(name, 'FZ', z, z)
 
 	# store frame based data
 	data["frames"][str(frame)]["volume"] = geometry.volume(mesh)
@@ -319,12 +313,12 @@ def prepare_fea_pn():
 	text +=  basics.timer.stop()
 	print_data(text)
 	
-	return truss
+	return model
 
 def prepare_fea_fd():
 	'''
 	Is preparing the calculaton of the current frame for for force disbribution.
-	:return truss: List of [points_array, supports_ids, edges_array, forces_array].
+	:return model: List of [points_array, supports_ids, edges_array, forces_array].
 	'''
 	scene = bpy.context.scene
 	phaenotyp = scene.phaenotyp
@@ -562,14 +556,14 @@ def prepare_fea_fd():
 	text +=  basics.timer.stop()
 	print_data(text)
 	
-	truss = [points_array, supports_ids, edges_array, forces_array]
-	return truss
+	model = [points_array, supports_ids, edges_array, forces_array]
+	return model
 
-def run_mp(trusses):
+def run_mp(models):
 	'''
-	Is calculating the given trusses, pickles them for mp.
-	:param trusses: Needs a list of trusses from any prepare_fea as dict with frame as key.
-	:return trusses: Returns the calculated trusses as dict with the frame as key.
+	Is calculating the given models, pickles them for mp.
+	:param models: Needs a list of models from any prepare_fea as dict with frame as key.
+	:return models: Returns the calculated models as dict with the frame as key.
 	'''
 	# get pathes
 	path_addons = os.path.dirname(__file__) # path to the folder of addons
@@ -579,11 +573,11 @@ def run_mp(trusses):
 	directory_blend = os.path.dirname(path_blend) # directory of blender file
 	name_blend = bpy.path.basename(path_blend) # name of file
 
-	# pickle trusses to file
+	# pickle models to file
 	path_export = directory_blend + "/Phaenotyp-export_mp.p"
-	export_trusses = open(path_export, 'wb')
-	pickle.dump(trusses, export_trusses)
-	export_trusses.close()
+	export_models = open(path_export, 'wb')
+	pickle.dump(models, export_models)
+	export_models.close()
 
 	# scipy_available to pass forward
 	if bpy.context.scene["<Phaenotyp>"]["scipy_available"]:
@@ -607,15 +601,15 @@ def run_mp(trusses):
 			print(nline.decode("utf8"), end = "\r\n",flush =True) # yield line
 			progress.http.update_c()
 
-	# get trusses back from mp
+	# get models back from mp
 	path_import = directory_blend + "/Phaenotyp-return_mp.p"
 	file = open(path_import, 'rb')
-	imported_trusses = pickle.load(file)
+	imported_models = pickle.load(file)
 	file.close()
 		
-	return imported_trusses
+	return imported_models
 
-def interweave_results_pn(feas, members):
+def interweave_results_pn(feas):
 	'''
 	Function to integrate the results of PyNite.
 	:param feas: Feas as dict with frame as key.
@@ -625,20 +619,20 @@ def interweave_results_pn(feas, members):
 	data = scene["<Phaenotyp>"]
 	phaenotyp = scene.phaenotyp
 	calculation_type = phaenotyp.calculation_type
+	members = data["members"]
 	quads = data["quads"]
 	
 	end = bpy.context.scene.frame_end
 
-	for frame, truss in feas.items():
+	for frame, model in feas.items():
 		basics.timer.start()
 		
 		for id in members:
 			member = members[id]
-			name = member["name"]
-
-			truss_member = truss.Members[name]
-			L = truss_member.L() # Member length
-			T = truss_member.T() # Member local transformation matrix
+			model_member = model.Members[id]
+			
+			L = model_member.L() # Member length
+			T = model_member.T() # Member local transformation matrix
 
 			axial = []
 			moment_y = []
@@ -650,22 +644,22 @@ def interweave_results_pn(feas, members):
 			for i in range(11): # get the forces at 11 positions and
 				x = L/10*i
 
-				axial_pos = truss_member.axial(x) * (-1) # Druckkraft minus
+				axial_pos = model_member.axial(x) * (-1) # Druckkraft minus
 				axial.append(axial_pos)
 
-				moment_y_pos = truss_member.moment("My", x)
+				moment_y_pos = model_member.moment("My", x)
 				moment_y.append(moment_y_pos)
 
-				moment_z_pos = truss_member.moment("Mz", x)
+				moment_z_pos = model_member.moment("Mz", x)
 				moment_z.append(moment_z_pos)
 
-				shear_y_pos = truss_member.shear("Fy", x)
+				shear_y_pos = model_member.shear("Fy", x)
 				shear_y.append(shear_y_pos)
 
-				shear_z_pos = truss_member.shear("Fz", x)
+				shear_z_pos = model_member.shear("Fz", x)
 				shear_z.append(shear_z_pos)
 
-				torque_pos = truss_member.torque(x)
+				torque_pos = model_member.torque(x)
 				torque.append(torque_pos)
 
 			member["axial"][frame] = axial
@@ -862,13 +856,13 @@ def interweave_results_pn(feas, members):
 
 			for i in range(11):
 				# Calculate the local y-direction displacement
-				dy_tot = truss_member.deflection('dy', L/10*i)
+				dy_tot = model_member.deflection('dy', L/10*i)
 
 				# Calculate the scaled displacement in global coordinates
 				DY_plot = append(DY_plot, dy_tot*cos_y*scale_factor, axis=0)
 
 				# Calculate the local z-direction displacement
-				dz_tot = truss_member.deflection('dz', L/10*i)
+				dz_tot = model_member.deflection('dz', L/10*i)
 
 				# Calculate the scaled displacement in global coordinates
 				DZ_plot = append(DZ_plot, dz_tot*cos_z*scale_factor, axis=0)
@@ -876,13 +870,13 @@ def interweave_results_pn(feas, members):
 			# Calculate the local x-axis displacements at 20 points along the member's length
 			DX_plot = empty((0, 3))
 
-			Xi = truss_member.i_node.X
-			Yi = truss_member.i_node.Y
-			Zi = truss_member.i_node.Z
+			Xi = model_member.i_node.X
+			Yi = model_member.i_node.Y
+			Zi = model_member.i_node.Z
 
 			for i in range(11):
 				# Displacements in local coordinates
-				dx_tot = [[Xi, Yi, Zi]] + (L/10*i + truss_member.deflection('dx', L/10*i)*scale_factor)*cos_x
+				dx_tot = [[Xi, Yi, Zi]] + (L/10*i + model_member.deflection('dx', L/10*i)*scale_factor)*cos_x
 
 				# Magnified displacements in global coordinates
 				DX_plot = append(DX_plot, dx_tot, axis=0)
@@ -902,26 +896,27 @@ def interweave_results_pn(feas, members):
 
 			member["deflection"][frame] = deflection
 		
-		nodes = truss.Nodes
+		nodes = model.Nodes
 		
 		for id in quads:
 			quad = quads[id]
-			name = quad["name"]
 			
 			# read results from PyNite
-			result = truss.Quads[name]
+			result = model.Quads[id]
 			
 			# only take highest value to zero
 			shear = result.shear()
 			moment = result.moment()
 			membrane = result.membrane()
 			
-			print("id", name)
+			'''
+			print("id", id)
 			print("shear", shear)
 			print("moment", moment)
 			print("membrane", membrane)
 			print("")
-
+			'''
+			
 			quad["shear_x"][frame] = float(shear[0])
 			quad["shear_y"][frame] = float(shear[1])
 			
@@ -938,9 +933,9 @@ def interweave_results_pn(feas, members):
 			deflection = []
 			for i in range(4):
 				# deflection only
-				x = nodes["node_" + str(node_ids[i])].DX["Combo 1"]*0.1
-				y = nodes["node_" + str(node_ids[i])].DY["Combo 1"]*0.1
-				z = nodes["node_" + str(node_ids[i])].DZ["Combo 1"]*0.1
+				x = nodes[str(node_ids[i])].DX["Combo 1"]*0.1
+				y = nodes[str(node_ids[i])].DY["Combo 1"]*0.1
+				z = nodes[str(node_ids[i])].DZ["Combo 1"]*0.1
 				
 				# add deflection to initial position
 				initial = quad["initial_positions"][str(frame)][i]
@@ -962,7 +957,7 @@ def interweave_results_pn(feas, members):
 		
 		data["done"][str(frame)] = True
 
-def interweave_results_fd(feas, members):
+def interweave_results_fd(feas):
 	'''
 	Function to integrate the results of force distribution.
 	:param feas: Feas as dict with frame as key.
@@ -970,12 +965,13 @@ def interweave_results_fd(feas, members):
 	'''
 	scene = bpy.context.scene
 	data = scene["<Phaenotyp>"]
+	members = data["members"]
 	phaenotyp = scene.phaenotyp
 	calculation_type = phaenotyp.calculation_type
 	
 	end = bpy.context.scene.frame_end
 
-	for frame, truss in feas.items():
+	for frame, model in feas.items():
 		basics.timer.start()
 	
 		for id, member in members.items():
@@ -987,7 +983,7 @@ def interweave_results_fd(feas, members):
 			acceptable_sigma = member["acceptable_sigma"]
 			L = member["length"][str(frame)] * 100
 
-			force = truss[id]
+			force = model[id]
 			sigma = force / A
 
 			# with 500 cm, Do 60, Di 50, -10 kN
@@ -1246,8 +1242,8 @@ def sectional_optimization(start, end):
 	environment = data["environment"]
 	individuals = data["individuals"]
 
-	# create list of trusses
-	trusses = {}
+	# create list of models
+	models = {}
 
 	# for PyNite
 	if phaenotyp.calculation_type != "force_distribution":
@@ -1290,15 +1286,15 @@ def sectional_optimization(start, end):
 		# calculate new properties for each member
 		geometry.update_geometry_pre()
 
-		# created a truss object of PyNite and add to dict
-		truss = prepare_fea()
-		trusses[frame] = truss
+		# created a model object of PyNite and add to dict
+		model = prepare_fea()
+		models[frame] = model
 
 	# run mp and get results
-	feas = run_mp(trusses)
+	feas = run_mp(models)
 
 	# wait for it and interweave results to data
-	interweave_results(feas, members)
+	interweave_results(feas)
 
 def calculate_fitness(start, end):
 	'''
@@ -1387,7 +1383,7 @@ def calculate_fitness(start, end):
 				fitness_average_strain_energy = sum_forces / len(forces)
 
 			'''
-			if environment["fitness_function"] == "lever_arm_truss":
+			if environment["fitness_function"] == "lever_arm_model":
 				forces = []
 				for id, member in members.items():
 					force = member["max_lever_arm"][str(frame)]
