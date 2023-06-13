@@ -66,7 +66,7 @@ def generate_basis(chromosome):
 		optimization_type = phaenotyp.optimization_fd
 	
 	# calculate frame
-	geometry.update_members_pre()
+	geometry.update_geometry_pre()
 	
 	trusses = {}
 	trusses[str(frame)] = prepare_fea()
@@ -75,7 +75,7 @@ def generate_basis(chromosome):
 	feas = calculation.run_mp(trusses)
 	
 	interweave_results(fea, members)
-	geometry.update_members_post()
+	geometry.update_geometry_post()
 
 	# optimization
 	if optimization_type != "none":
@@ -137,7 +137,7 @@ def make_step_st(chromosome, frame):
 		optimization_type = phaenotyp.optimization_fd
 	
 	# calculate frame
-	geometry.update_members_pre()
+	geometry.update_geometry_pre()
 	
 	# created a truss object
 	trusses = {}
@@ -147,7 +147,7 @@ def make_step_st(chromosome, frame):
 	feas = calculation.run_mp(trusses)
 	
 	interweave_results(fea, members)
-	geometry.update_members_post()
+	geometry.update_geometry_post()
 
 	# optimization
 	if optimization_type != "none":
@@ -210,7 +210,7 @@ def make_step_mp(chromosome, frame):
 		prepare_fea = calculation.prepare_fea_fd
 	
 	# calculate frame
-	geometry.update_members_pre()
+	geometry.update_geometry_pre()
 	truss = prepare_fea()
 	
 	return truss
@@ -327,7 +327,7 @@ def start():
 			bpy.context.view_layer.update()
 
 			# calculate new properties for each member
-			geometry.update_members_pre()
+			geometry.update_geometry_pre()
 
 			# created a truss object of PyNite and add to dict
 			trusses[str(frame)] = truss

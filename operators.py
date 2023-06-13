@@ -485,9 +485,16 @@ def set_quad():
 			quad["rho"] = phaenotyp.rho_quads # from gui
 
 			# results
-			quad["shear"] = {}
-			quad["moment"] = {}
-			quad["membrane"] = {}
+			quad["shear_x"] = {}
+			quad["shear_y"] = {}
+			
+			quad["moment_x"] = {}
+			quad["moment_y"] = {}
+			quad["moment_xy"] = {}
+			
+			quad["membrane_x"] = {}
+			quad["membrane_y"] = {}
+			quad["membrane_xy"] = {}
 
 			quad["initial_positions"] = {}
 			quad["deflection"] = {}
@@ -1131,7 +1138,7 @@ def calculate_single_frame():
 		interweave_results = calculation.interweave_results_fd
 
 	# calculate new properties for each member
-	geometry.update_members_pre()
+	geometry.update_geometry_pre()
 
 	# created a truss object
 	trusses = {}
@@ -1144,7 +1151,7 @@ def calculate_single_frame():
 	interweave_results(feas, members)
 
 	# calculate new visualization-mesh
-	geometry.update_members_post()
+	geometry.update_geometry_post()
 
 	basics.view_vertex_colors()
 
@@ -1187,7 +1194,7 @@ def calculate_animation():
 				bpy.context.view_layer.update()
 
 				# calculate new properties for each member
-				geometry.update_members_pre()
+				geometry.update_geometry_pre()
 
 				# created a truss object of PyNite and add to dict
 				truss = prepare_fea()
@@ -1200,7 +1207,7 @@ def calculate_animation():
 			interweave_results(feas, members)
 
 			# calculate new visualization-mesh
-			geometry.update_members_post()
+			geometry.update_geometry_post()
 
 			progress.http.reset_o(phaenotyp.optimization_amount)
 			
@@ -1229,7 +1236,7 @@ def calculate_animation():
 							calculation.complex_sectional()
 
 					# calculate new properties for each member
-					geometry.update_members_pre()
+					geometry.update_geometry_pre()
 
 					# created a truss object of PyNite and add to dict
 					truss = prepare_fea()
@@ -1242,7 +1249,7 @@ def calculate_animation():
 				interweave_results(feas, members)
 
 				# calculate new visualization-mesh
-				geometry.update_members_post()
+				geometry.update_geometry_post()
 				
 				progress.http.update_o()
 
@@ -1316,7 +1323,7 @@ def calculate_animation():
 			bpy.context.view_layer.update()
 
 			# calculate new properties for each member
-			geometry.update_members_pre()
+			geometry.update_geometry_pre()
 
 			# created a truss object of PyNite and add to dict
 			truss = prepare_fea()
@@ -1329,7 +1336,7 @@ def calculate_animation():
 		interweave_results(feas, members)
 
 		# calculate new visualization-mesh
-		geometry.update_members_post()
+		geometry.update_geometry_post()
 
 		# update view
 		basics.view_vertex_colors()
@@ -1350,7 +1357,7 @@ def optimize_approximate():
 	calculation.approximate_sectional()
 
 	# calculate new properties for each member
-	geometry.update_members_pre()
+	geometry.update_geometry_pre()
 
 	# created a truss object
 	trusses = {}
@@ -1363,7 +1370,7 @@ def optimize_approximate():
 	calculation.interweave_results_fd(feas, members)
 
 	# calculate new visualization-mesh
-	geometry.update_members_post()
+	geometry.update_geometry_post()
 
 	basics.view_vertex_colors()
 
@@ -1379,7 +1386,7 @@ def optimize_simple():
 	calculation.simple_sectional()
 
 	# calculate new properties for each member
-	geometry.update_members_pre()
+	geometry.update_geometry_pre()
 
 	# created a truss object
 	trusses = {}
@@ -1392,7 +1399,7 @@ def optimize_simple():
 	calculation.interweave_results_pn(feas, members)
 
 	# calculate new visualization-mesh
-	geometry.update_members_post()
+	geometry.update_geometry_post()
 
 	basics.view_vertex_colors()
 
@@ -1408,7 +1415,7 @@ def optimize_utilization():
 	calculation.utilization_sectional()
 
 	# calculate new properties for each member
-	geometry.update_members_pre()
+	geometry.update_geometry_pre()
 
 	# created a truss object
 	trusses = {}
@@ -1421,7 +1428,7 @@ def optimize_utilization():
 	calculation.interweave_results_pn(feas, members)
 
 	# calculate new visualization-mesh
-	geometry.update_members_post()
+	geometry.update_geometry_post()
 
 	basics.view_vertex_colors()
 
@@ -1437,7 +1444,7 @@ def optimize_complex():
 	calculation.complex_sectional()
 
 	# calculate new properties for each member
-	geometry.update_members_pre()
+	geometry.update_geometry_pre()
 
 	# created a truss object
 	trusses = {}
@@ -1450,7 +1457,7 @@ def optimize_complex():
 	calculation.interweave_results_pn(feas, members)
 
 	# calculate new visualization-mesh
-	geometry.update_members_post()
+	geometry.update_geometry_post()
 
 	basics.view_vertex_colors()
 

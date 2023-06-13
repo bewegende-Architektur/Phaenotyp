@@ -77,7 +77,7 @@ def generate_basis():
 	create_indivdual(chromosome) # and change frame to shape key
 
 	# calculate new properties for each member
-	geometry.update_members_pre()
+	geometry.update_geometry_pre()
 
 	# created a truss object of PyNite and add to dict
 	truss = prepare_fea()
@@ -130,7 +130,7 @@ def bruteforce(chromosomes):
 		create_indivdual(chromosome) # and change frame to shape key
 
 		# calculate new properties for each member
-		geometry.update_members_pre()
+		geometry.update_geometry_pre()
 
 		# created a truss object of PyNite and add to dict
 		truss = prepare_fea()

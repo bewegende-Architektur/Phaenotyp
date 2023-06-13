@@ -712,7 +712,7 @@ def create_quads(structure_obj, quads):
 	if attribute:
 		text = "existing attribute:" + str(attribute)
 	else:
-		bpy.ops.geometry.color_attribute_add(name="force", domain='CORNER', data_type='FLOAT_COLOR', color=(255, 0, 255, 1))
+		bpy.ops.geometry.color_attribute_add(name="force", domain='POINT', data_type='FLOAT_COLOR', color=(255, 0, 255, 1))
 
 	# create material
 	material_name = "<Phaenotyp>quad"
@@ -779,7 +779,7 @@ def update_translation():
 	if phaenotyp.crown_update == True:
 		operators.crown_shyness()
 
-def update_members_pre():
+def update_geometry_pre():
 	scene = bpy.context.scene
 	phaenotyp = scene.phaenotyp
 	data = scene["<Phaenotyp>"]
@@ -811,7 +811,7 @@ def update_members_pre():
 	
 	update_translation()
 		
-def update_members_post():
+def update_geometry_post():
 	scene = bpy.context.scene
 	phaenotyp = scene.phaenotyp
 	data = scene["<Phaenotyp>"]
@@ -931,19 +931,43 @@ def update_members_post():
 	structure_obj_vertices = data["structure"]
 	mesh_for_viz = bpy.data.objects["<Phaenotyp>quads"]
 	vertices = mesh_for_viz.data.vertices
+	faces = mesh_for_viz.data.polygons
 
 	thickness_group = mesh_for_viz.vertex_groups.get("thickness")
 	attribute = mesh_for_viz.data.attributes.get("force")
-			
+	
+	nodes = [[] for i in range(len(vertices))]
+	
 	for id, quad in quads.items():
 		id = int(id)
 		
 		# get selected forcetyp and force
 		result = quad[phaenotyp.forces_quads]
-
-		# red or blue?
 		force = result[str(frame)]
+		
+		# append forces to nodes to create average afterwards
+		keys = faces[id].vertices
+		for key in keys:
+			nodes[key].append(force)
 
+		for i in range(4):
+			position = quad["deflection"][str(frame)][i]
+			x = position[0]*(1-viz_deflection) + quad["initial_positions"][str(frame)][i][0]*viz_deflection
+			y = position[1]*(1-viz_deflection) + quad["initial_positions"][str(frame)][i][1]*viz_deflection
+			z = position[2]*(1-viz_deflection) + quad["initial_positions"][str(frame)][i][2]*viz_deflection
+			
+			# get node of the corresponding vertex id of the viz mesh
+			node_id = quad["vertices_ids_viz"][i]
+			vertices[node_id].co = (x,y,z)
+		
+		# Dicke anwenden
+		# Derzeit ist der Faktor einfach das maximale Moment
+		#thickness = max(moment) * 0.25
+		#thickness_group.add(keys, thickness, 'ADD')
+
+	for i, forces in enumerate(nodes):
+		force = sum(forces)/len(forces)
+		
 		if force > 0:
 			h = 0
 		else:
@@ -960,27 +984,8 @@ def update_members_post():
 
 		c.hsv = h,s,v
 
-		# colorize faces (every corner has the same color)
-		attribute.data[id*4+0].color = [c.r, c.g, c.b, 1.0]
-		attribute.data[id*4+1].color = [c.r, c.g, c.b, 1.0]
-		attribute.data[id*4+2].color = [c.r, c.g, c.b, 1.0]
-		attribute.data[id*4+3].color = [c.r, c.g, c.b, 1.0]
-
-		for i in range(4):
-			position = quad["deflection"][str(frame)][i]
-			x = position[0]*(1-viz_deflection) + quad["initial_positions"][str(frame)][i][0]*viz_deflection
-			y = position[1]*(1-viz_deflection) + quad["initial_positions"][str(frame)][i][1]*viz_deflection
-			z = position[2]*(1-viz_deflection) + quad["initial_positions"][str(frame)][i][2]*viz_deflection
-			
-			# get node of the corresponding vertex id of the viz mesh
-			node_id = quad["vertices_ids_viz"][i]
-			vertices[node_id].co = (x,y,z)
-		
-		# Dicke anwenden
-		# Derzeit ist der Faktor einfach das maximale Moment
-		#thickness = max(moment) * 0.25
-		#thickness_group.add(keys, thickness, 'ADD')
-    
+		# colorize faces
+		attribute.data[i].color = [c.r, c.g, c.b, 1.0]
 
 def create_loads(structure_obj, loads_v, loads_e, loads_f):
 	# like suggested here by Gorgious and CodeManX:

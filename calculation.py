@@ -912,9 +912,26 @@ def interweave_results_pn(feas, members):
 			result = truss.Quads[name]
 			
 			# only take highest value to zero
-			quad["shear"][frame] = float(basics.return_max_diff_to_zero(list(result.shear())))
-			quad["moment"][frame] = float(basics.return_max_diff_to_zero(list(result.moment())))
-			quad["membrane"][frame] = float(basics.return_max_diff_to_zero(list(result.membrane())))
+			shear = result.shear()
+			moment = result.moment()
+			membrane = result.membrane()
+			
+			print("id", name)
+			print("shear", shear)
+			print("moment", moment)
+			print("membrane", membrane)
+			print("")
+
+			quad["shear_x"][frame] = float(shear[0])
+			quad["shear_y"][frame] = float(shear[1])
+			
+			quad["moment_x"][frame] = float(moment[0])
+			quad["moment_y"][frame] = float(moment[1])
+			quad["moment_xy"][frame] = float(moment[2])
+			
+			quad["membrane_x"][frame] = float(membrane[0])
+			quad["membrane_y"][frame] = float(membrane[1])
+			quad["membrane_xy"][frame] = float(membrane[2])
 			
 			# get deflection
 			node_ids = quad["vertices_ids_structure"]
@@ -1271,7 +1288,7 @@ def sectional_optimization(start, end):
 			pass
 
 		# calculate new properties for each member
-		geometry.update_members_pre()
+		geometry.update_geometry_pre()
 
 		# created a truss object of PyNite and add to dict
 		truss = prepare_fea()

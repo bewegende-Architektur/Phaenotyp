@@ -28,7 +28,7 @@ def viz_update(self, context):
 	'''
 	scene = context.scene
 	phaenotyp = scene.phaenotyp
-	geometry.update_members_post()
+	geometry.update_geometry_post()
 
 class phaenotyp_properties(PropertyGroup):
 	'''
@@ -479,9 +479,14 @@ class phaenotyp_properties(PropertyGroup):
 		name = "forces_quads",
 		description = "Force types",
 		items = [
-					("membrane", "Membrane", ""),
-					("moment", "Moment", ""),
-					("shear", "Shear", ""),
+					("membrane_x", "Membrane X", ""),
+					("membrane_y", "Membrane Y", ""),
+					("membrane_xy", "Membrane XY", ""),
+					("moment_x", "Moment X", ""),
+					("moment_y", "Moment Y", ""),
+					("moment_xy", "Moment XY", ""),
+					("shear_x", "Shear_X", ""),
+					("shear_y", "Shear_Y", "")
 				],
 		update = viz_update
 		)
@@ -1376,7 +1381,7 @@ def update_post(scene):
 
 			result = data["done"].get(str(frame))
 			if result:
-				geometry.update_members_post()
+				geometry.update_geometry_post()
 
 		# apply chromosome if available
 		# (to change the shape-key, the result will be correct allready)

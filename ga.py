@@ -82,7 +82,7 @@ def generate_basis():
 	create_indivdual(chromosome, None, None) # and change frame to shape key
 
 	# calculate new properties for each member
-	geometry.update_members_pre()
+	geometry.update_geometry_pre()
 
 	# created a truss object of PyNite and add to dict
 	truss = prepare_fea()
@@ -216,7 +216,7 @@ def create_initial_individuals(start, end):
 		create_indivdual(chromosome, None, None) # and change frame to shape key
 
 		# calculate new properties for each member
-		geometry.update_members_pre()
+		geometry.update_geometry_pre()
 
 		# created a truss object of PyNite and add to dict
 		truss = prepare_fea()
@@ -428,7 +428,7 @@ def create_new_individuals(start, end):
 		create_indivdual(chromosome, parent_1_name, parent_2_name)
 
 		# calculate new properties for each member
-		geometry.update_members_pre()
+		geometry.update_geometry_pre()
 
 		# created a truss object of PyNite and add to dict
 		truss = prepare_fea()
