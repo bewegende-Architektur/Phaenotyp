@@ -1,7 +1,7 @@
 import bpy
 import bmesh
 import random
-from phaenotyp import basics, geometry, calculation, progress
+from phaenotyp import geometry, calculation, progress
 
 def print_data(text):
 	"""
