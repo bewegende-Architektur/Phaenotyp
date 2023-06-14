@@ -1246,7 +1246,7 @@ class OBJECT_PT_Phaenotyp(Panel):
 	'''
 	Panel for Phaenotyp.
 	'''
-	bl_label = basics.phaenotyp_name
+	bl_label = "Phänotyp 0.2.4"
 	bl_idname = "OBJECT_PT_custom_panel"
 	bl_space_type = "VIEW_3D"
 	bl_region_type = "UI"

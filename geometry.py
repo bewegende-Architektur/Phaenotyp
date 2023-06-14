@@ -1,7 +1,7 @@
 import bpy
 import bmesh
 from math import sqrt, pi
-from phaenotyp import basics, operators
+from phaenotyp import operators
 from mathutils import Color, Vector
 c = Color()
 
@@ -966,7 +966,10 @@ def update_geometry_post():
 		#thickness_group.add(keys, thickness, 'ADD')
 
 	for i, forces in enumerate(nodes):
-		force = basics.avoid_div_zero(sum(forces), len(forces))
+		try:
+			force = (sum(forces)/len(forces)
+		except:
+			force = 0
 		
 		if force > 0:
 			h = 0
