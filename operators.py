@@ -285,7 +285,6 @@ def set_member():
 				member = {}
 
 				# this variables are always fix
-				member["name"] = "member_" + str(id) # equals edge-id
 				member["vertex_0_id"] = vertex_0_id # equals id of vertex
 				member["vertex_1_id"] = vertex_1_id # equals id of vertex
 
@@ -474,7 +473,6 @@ def set_quad():
 			quad = {}
 
 			# this variables are always fix
-			quad["name"] = "quad_" + str(id)
 			quad["vertices_ids_structure"] = vertices_ids # structure obj
 			quad["vertices_ids_viz"] = {} # obj for visualization
 			

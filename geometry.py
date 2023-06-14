@@ -1,7 +1,7 @@
 import bpy
 import bmesh
 from math import sqrt, pi
-from phaenotyp import operators
+from phaenotyp import basics, operators
 from mathutils import Color, Vector
 c = Color()
 
@@ -946,7 +946,7 @@ def update_geometry_post():
 		force = result[str(frame)]
 		
 		# append forces to nodes to create average afterwards
-		keys = faces[id].vertices
+		keys = quad["vertices_ids_viz"]
 		for key in keys:
 			nodes[key].append(force)
 
@@ -966,7 +966,7 @@ def update_geometry_post():
 		#thickness_group.add(keys, thickness, 'ADD')
 
 	for i, forces in enumerate(nodes):
-		force = sum(forces)/len(forces)
+		force = basics.avoid_div_zero(sum(forces), len(forces))
 		
 		if force > 0:
 			h = 0

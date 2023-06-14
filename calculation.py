@@ -44,6 +44,14 @@ def prepare_fea_pn():
 	phaenotyp = scene.phaenotyp
 	calculation_type = phaenotyp.calculation_type
 	data = scene["<Phaenotyp>"]
+	
+	supports = data["supports"]
+	members = data["members"]
+	quads = data["quads"]
+	loads_v = data["loads_v"]
+	loads_e = data["loads_e"]
+	loads_f = data["loads_f"]
+	
 	frame = bpy.context.scene.frame_current
 	model = FEModel3D()
 	
@@ -103,16 +111,27 @@ def prepare_fea_pn():
 		x = v[0] * 100 # convert to cm for calculation
 		y = v[1] * 100 # convert to cm for calculation
 		z = v[2] * 100 # convert to cm for calculation
-
-		model.add_node(name, x,y,z)
+		
+		# only create Node if needed for the model
+		create = False
+		for member_id, member in members.items():
+			if vertex_id in [member["vertex_0_id"], member["vertex_1_id"]]:
+				create = True
+				break
+		
+		for quad_id, quad in quads.items():
+			if vertex_id in quad["vertices_ids_structure"]:
+				create = True
+				break
+		
+		if create:
+			model.add_node(name, x,y,z)
 
 	# define support
-	supports = data["supports"]
 	for id, support in supports.items():
 		model.def_support(id, support[0], support[1], support[2], support[3], support[4], support[5])
 
 	# create members
-	members = data["members"]
 	for id, member in members.items():
 		vertex_0_id = member["vertex_0_id"]
 		vertex_1_id = member["vertex_1_id"]
@@ -173,7 +192,6 @@ def prepare_fea_pn():
 		member["length"][str(frame)] = length
 
 	# create quads
-	quads = data["quads"]
 	for id, quad in quads.items():
 		E = quad["E"]
 		G = quad["G"]
@@ -211,7 +229,6 @@ def prepare_fea_pn():
 		quad["initial_positions"][str(frame)] = initial_positions
 		
 	# add loads
-	loads_v = data["loads_v"]
 	for id, load in loads_v.items():
 		model.add_node_load(id, 'FX', load[0])
 		model.add_node_load(id, 'FY', load[1])
@@ -222,7 +239,6 @@ def prepare_fea_pn():
 			model.add_node_load(id, 'MY', load[4])
 			model.add_node_load(id, 'MZ', load[5])
 
-	loads_e = data["loads_e"]
 	for id, load in loads_e.items():
 		model.add_member_dist_load(id, 'FX', load[0]*0.01, load[0]*0.01) # m to cm
 		model.add_member_dist_load(id, 'FY', load[1]*0.01, load[1]*0.01) # m to cm
@@ -233,7 +249,6 @@ def prepare_fea_pn():
 			model.add_member_dist_load(id, 'Fy', load[4]*0.01, load[1]*0.01) # m to cm
 			model.add_member_dist_load(id, 'Fz', load[5]*0.01, load[2]*0.01) # m to cm
 
-	loads_f = data["loads_f"]
 	for id, load in loads_f.items():
 		# int(id), otherwise crashing Speicherzugriffsfehler
 		face = data["structure"].data.polygons[int(id)]

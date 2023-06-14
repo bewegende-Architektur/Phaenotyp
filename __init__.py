@@ -1,19 +1,18 @@
+bl_info = {
+	"name": "Phänotyp",
+	"description": "Genetic algorithm for architectural structures",
+	"author": "bewegende Architektur e.U. and Karl Deix",
+	"version": (0,2,4),
+	"blender": (3,5,1),
+	"location": "3D View > Tools",
+}
+
 import bpy
 from bpy.props import (IntProperty, FloatProperty, BoolProperty, StringProperty, EnumProperty, PointerProperty)
 from bpy.types import (Panel, Menu, Operator, PropertyGroup)
 from bpy.app.handlers import persistent
 
 from phaenotyp import basics, panel, operators, material, geometry, calculation, ga, report, progress
-
-bl_info = {
-	"name": "Phänotyp",
-	"description": "Genetic algorithm for architectural structures",
-	"author": "bewegende Architektur e.U. and Karl Deix",
-	"version": basics.phaenotyp_version,
-	"blender": basics.blender_version,
-	"location": "3D View > Tools",
-}
-
 
 '''
 The __init__ file is the main-file to be registert from blender.
