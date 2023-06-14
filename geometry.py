@@ -967,7 +967,7 @@ def update_geometry_post():
 
 	for i, forces in enumerate(nodes):
 		try:
-			force = (sum(forces)/len(forces)
+			force = sum(forces) / len(forces)
 		except:
 			force = 0
 		
