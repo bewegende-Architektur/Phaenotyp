@@ -1272,48 +1272,48 @@ class OBJECT_PT_Phaenotyp(Panel):
 		# this will make the restart-button also available
 		# if there is an error during the other panels
 		# for example: the file has been created with an older version
-		#try:
-		# prepare everything
-		panel.structure(layout)
-		panel.scipy(layout)
-		panel.calculation_type(layout)
-		panel.supports(layout)
-		panel.members(layout)
-		panel.quads(layout)
-		panel.loads(layout)
-		panel.file(layout)
-		panel.mode(layout)
+		try:
+			# prepare everything
+			panel.structure(layout)
+			panel.scipy(layout)
+			panel.calculation_type(layout)
+			panel.supports(layout)
+			panel.members(layout)
+			panel.quads(layout)
+			panel.loads(layout)
+			panel.file(layout)
+			panel.mode(layout)
 
-		# select and run mode
-		selected_mode = eval("panel." + phaenotyp.mode)
-		selected_mode(layout)
+			# select and run mode
+			selected_mode = eval("panel." + phaenotyp.mode)
+			selected_mode(layout)
 
-		# fitness und optimization als Funktion?
+			# fitness und optimization als Funktion?
 
-		# run if there is a result
-		data = scene.get("<Phaenotyp>")
-		if data:
-			result = data["done"].get(str(frame))
-			if result:
-				# hide previous boxes
-				# (to avoid confusion, if user is changing the setup
-				# the setup and the result would not match
-				# new setup needs new calculation by pressing reset
-				# or by changing frame)
-				data["panel_grayed"]["scipy"] = True
-				data["panel_grayed"]["supports"] = True
-				data["panel_grayed"]["members"] = True
-				data["panel_grayed"]["loads"] = True
+			# run if there is a result
+			data = scene.get("<Phaenotyp>")
+			if data:
+				result = data["done"].get(str(frame))
+				if result:
+					# hide previous boxes
+					# (to avoid confusion, if user is changing the setup
+					# the setup and the result would not match
+					# new setup needs new calculation by pressing reset
+					# or by changing frame)
+					data["panel_grayed"]["scipy"] = True
+					data["panel_grayed"]["supports"] = True
+					data["panel_grayed"]["members"] = True
+					data["panel_grayed"]["loads"] = True
 
-				panel.visualization(layout)
-				panel.text(layout)
-				panel.info(layout)
-				panel.selection(layout)
-				panel.report(layout)
+					panel.visualization(layout)
+					panel.text(layout)
+					panel.info(layout)
+					panel.selection(layout)
+					panel.report(layout)
 					
-		#except Exception as error:
-		# run error panel
-		#panel.error(layout, basics.phaenotyp_version)
+		except Exception as error:
+			# run error panel
+			panel.error(layout, basics.phaenotyp_version)
 		
 		panel.reset(layout)
 

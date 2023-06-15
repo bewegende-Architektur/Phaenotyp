@@ -978,13 +978,16 @@ def update_geometry_post():
 
 		# define s
 		s = 1 * abs(force) * phaenotyp.viz_scale #* 0.01
-
+		
+		'''
 		# define v
 		if member["overstress"][str(frame)] == True:
 			v = 0.25
 		else:
 			v = 1.0
-
+		'''
+		v = 1.0
+		
 		c.hsv = h,s,v
 
 		# colorize faces

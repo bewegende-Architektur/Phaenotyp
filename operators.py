@@ -98,6 +98,16 @@ def set_structure():
 				# check for scipy
 				calculation.check_scipy()
 				
+				# create meshes at this point allready
+				# this is necessary to avoid a missing mesh if no members or no quads are created
+				members = scene["<Phaenotyp>"]["members"]
+				quads = scene["<Phaenotyp>"]["quads"]
+				geometry.create_members(obj, members)
+				geometry.create_quads(obj, quads)
+				
+				# set obj active
+				bpy.context.view_layer.objects.active = obj
+				
 				# change to face selection for force_distribution
 				if phaenotyp.calculation_type == "force_distribution":
 					bpy.ops.mesh.select_mode(use_extend=False, use_expand=False, type='FACE')
@@ -2188,6 +2198,9 @@ def reset():
 	basics.delete_obj_if_existing("<Phaenotyp>member")
 	basics.delete_mesh_if_existing("<Phaenotyp>member")
 
+	basics.delete_obj_if_existing("<Phaenotyp>quads")
+	basics.delete_mesh_if_existing("<Phaenotyp>quads")
+	
 	# delete collection
 	basics.delete_col_if_existing("<Phaenotyp>")
 

@@ -107,6 +107,8 @@ def supports(layout):
 	phaenotyp = scene.phaenotyp
 	frame = scene.frame_current
 	data = bpy.context.scene.get("<Phaenotyp>")
+	
+	calculation_type = phaenotyp.calculation_type
 
 	if data:
 		if data["panel_state"]["structure"] and data["panel_state"]["calculation_type"]:
@@ -268,7 +270,7 @@ def quads(layout):
 	if data:
 		if data["panel_state"]["supports"]:
 			# define material and geometry
-			if calculation_type is not "force_distribution":
+			if calculation_type != "force_distribution":
 				box_quads = layout.box()
 				box_quads.label(text="Quads:")
 				
