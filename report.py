@@ -714,7 +714,7 @@ def append_head(file, report_type):
 		file.write('<tr class="item">')
 
 		# empty part in the top-left
-		text = '<td height="20" width="20" bgcolor="FFFFFF">Member</td>'
+		text = '<td height="20" width="20" bgcolor="FFFFFF">Quad</td>'
 		file.write(text)
 	
 	elif report_type == "combined":
