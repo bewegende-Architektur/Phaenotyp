@@ -965,8 +965,11 @@ def report(layout):
 
 	if phaenotyp.calculation_type != "geometrical":
 		if phaenotyp.calculation_type != "force_distribution":
-			box_report.operator("wm.report_members", text="members")
-			box_report.operator("wm.report_frames", text="frames")
+			if len(data["members"]) > 0:
+				box_report.operator("wm.report_members", text="members")
+				box_report.operator("wm.report_frames", text="frames")
+			if len(data["quads"]) > 0:
+				box_report.operator("wm.report_quads", text="quads")
 		else:
 			box_report.operator("wm.report_combined", text="combined")
 	else:

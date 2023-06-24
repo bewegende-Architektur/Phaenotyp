@@ -487,26 +487,27 @@ class phaenotyp_properties(PropertyGroup):
 					("shear_x", "Shear_X", ""),
 					("shear_y", "Shear_Y", "")
 				],
-		update = viz_update
+		update = viz_update,
+		default = "membrane_xy"
 		)
 		
-	viz_scale: IntProperty(
+	viz_scale: FloatProperty(
 		name = "viz_scale",
 		description = "scale",
 		update = viz_update,
 		subtype = "PERCENTAGE",
 		default = 50,
-		min = 1,
+		min = 0.01,
 		max = 100
 		)
 
-	viz_deflection: IntProperty(
+	viz_deflection: FloatProperty(
 		name = "viz_scale",
 		description = "deflected / original",
 		update = viz_update,
 		subtype = "PERCENTAGE",
 		default = 50,
-		min = 1,
+		min = 0.01,
 		max = 100
 		)
 
@@ -1190,6 +1191,19 @@ class WM_OT_report_frames(Operator):
 		operators.report_frames()
 		return {"FINISHED"}
 
+class WM_OT_report_quads(Operator):
+	'''
+	Is calling report_quads from the module called operators.
+	Check out further info in there.
+	'''
+	bl_label = "report_quads"
+	bl_idname = "wm.report_quads"
+	bl_description = "Generate report as html-format"
+
+	def execute(self, context):
+		operators.report_quads()
+		return {"FINISHED"}
+		
 class WM_OT_report_combined(Operator):
 	'''
 	Is calling report_combined from the module called operators.
@@ -1355,6 +1369,7 @@ classes = (
 
 	WM_OT_report_members,
 	WM_OT_report_frames,
+	WM_OT_report_quads,
 	WM_OT_report_combined,
 	WM_OT_report_chromosomes,
 	WM_OT_report_tree,

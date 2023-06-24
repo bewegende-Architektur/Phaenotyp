@@ -2083,6 +2083,39 @@ def report_frames():
 	file_to_open = directory + "/max_sigma.html"
 	webbrowser.open(file_to_open)
 
+def report_quads():
+	print_data("Generate report overview in html-format")
+
+	scene = bpy.context.scene
+	phaenotyp = scene.phaenotyp
+	data = scene["<Phaenotyp>"]
+	quads = data["quads"]
+	frame = bpy.context.scene.frame_current
+
+
+	# create folder
+	filepath = bpy.data.filepath
+	directory = os.path.dirname(filepath)
+
+	try:
+		os.mkdir(os.path.join(directory, "Phaenotyp-quads"))
+	except:
+		pass
+
+	directory += "/Phaenotyp-quads/"
+
+	report.copy_sorttable(directory)
+
+	sorted_frames = basics.sorted_keys(quads[list(quads)[0]]["membrane_xy"])
+	start = sorted_frames[0] # first frame (if user is changing start frame)
+	end = sorted_frames[len(sorted_frames)-1]
+
+	report.report_quads(directory, start, end)
+
+	# open file
+	file_to_open = directory + "/membrane_xy.html"
+	webbrowser.open(file_to_open)
+
 def report_combined():
 	print_data("Generate report overview in html-format")
 

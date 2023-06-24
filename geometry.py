@@ -851,6 +851,7 @@ def update_geometry_post():
 				if phaenotyp.forces_pn == "utilization":
 					# red or blue?
 					force = result[str(frame)] - 1
+					"""
 					if force > 0:
 						h = 0
 					else:
@@ -864,6 +865,15 @@ def update_geometry_post():
 						v = 0.25
 					else:
 						v = 1.0
+					"""
+					# rainbow
+					h = force * phaenotyp.viz_scale + 0.333
+					if h > 0.666:
+						h = 0.666
+					if h < 0:
+						h = 0
+					s = 1
+					v = 1.0
 
 				# for 11 entries
 				else:
@@ -875,7 +885,8 @@ def update_geometry_post():
 						force = result[str(frame)][9]
 					else:
 						force = result[str(frame)][i]
-
+					
+					"""
 					# red or blue?
 					if force > 0:
 						h = 0
@@ -890,6 +901,15 @@ def update_geometry_post():
 						v = 0.25
 					else:
 						v = 1.0
+					"""
+					# rainbow
+					h = force * phaenotyp.viz_scale + 0.333
+					if h > 0.666:
+						h = 0.666
+					if h < 0:
+						h = 0
+					s = 1
+					v = 1
 
 				c.hsv = h,s,v
 				attribute.data[mesh_vertex_ids[i]].color = [c.r, c.g, c.b, 1.0]
@@ -906,9 +926,9 @@ def update_geometry_post():
 				z = member["initial_positions"][str(frame)][i][2]
 				vertices[mesh_vertex_ids[i]].co = (x,y,z)
 
-				# red or blue?
 				force = result[str(frame)]
-
+				"""
+				# red or blue?
 				if force > 0:
 					h = 0
 				else:
@@ -922,6 +942,15 @@ def update_geometry_post():
 					v = 0.25
 				else:
 					v = 1.0
+				"""
+				# rainbow
+				h = force * phaenotyp.viz_scale + 0.333
+				if h > 0.666:
+					h = 0.666
+				if h < 0:
+					h = 0
+				s = 1
+				v = 1
 
 				c.hsv = h,s,v
 				attribute.data[mesh_vertex_ids[i]].color = [c.r, c.g, c.b, 1.0]
@@ -970,7 +999,7 @@ def update_geometry_post():
 			force = sum(forces) / len(forces)
 		except:
 			force = 0
-		
+		'''
 		if force > 0:
 			h = 0
 		else:
@@ -978,7 +1007,7 @@ def update_geometry_post():
 
 		# define s
 		s = 1 * abs(force) * phaenotyp.viz_scale #* 0.01
-		
+		'''
 		'''
 		# define v
 		if member["overstress"][str(frame)] == True:
@@ -986,7 +1015,15 @@ def update_geometry_post():
 		else:
 			v = 1.0
 		'''
-		v = 1.0
+		# rainbow
+		h = force * phaenotyp.viz_scale + 0.333
+		#h = 0.333/phaenotyp.viz_scale*force  + 0.333
+		if h > 0.666:
+			h = 0.666
+		if h < 0:
+			h = 0
+		s = 1
+		v = 1
 		
 		c.hsv = h,s,v
 

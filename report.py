@@ -420,6 +420,52 @@ def fill_matrix_frames(matrix, result_type, length):
 
 	return matrix, highest, lowest
 
+def fill_matrix_quads(matrix, result_type, length):
+	scene = bpy.context.scene
+	phaenotyp = scene.phaenotyp
+	data = scene["<Phaenotyp>"]
+	quads = data["quads"]
+
+	highest = 0
+	lowest = 0
+	for quad_id, quad in quads.items():
+		# get sorted frames
+		sorted_frames = basics.sorted_keys(quad[result_type])
+
+		# matrix_frame is the index of the matrix
+		# the matrix starts with 0
+		# the frame_id of the member can start anywhere
+		# if the user is changing the start of the animation
+		for matrix_quad, frame_id in enumerate(sorted_frames):
+			force = quad[result_type][str(frame_id)]
+			if length > 1:
+				force_list = []
+				for force_pos in force:
+					force_list.append(force_pos)
+
+				force = basics.return_max_diff_to_zero(force_list)
+
+			# force, overstress and utilization
+			#overstress = quad["overstress"][str(frame_id)]
+			overstress = False # to be solved
+			if result_type == "utilization":
+				utilization = True
+			else:
+				utilization = False
+			
+			index_in_list = list(quads).index(quad_id)
+			matrix[index_in_list][int(matrix_quad)] = [force, overstress, utilization]
+
+			# find highest
+			if force > highest:
+				highest = force
+
+			# find highest
+			if force < lowest:
+				lowest = force
+
+	return matrix, highest, lowest
+
 def fill_matrix_chromosomes(matrix, len_chromosome):
 	scene = bpy.context.scene
 	phaenotyp = scene.phaenotyp
@@ -609,6 +655,68 @@ def append_head(file, report_type):
 		text = '<td height="20" width="20" bgcolor="FFFFFF">Member</td>'
 		file.write(text)
 
+	elif report_type == "quads":
+		file.write("<a href='membrane_xy.html'>membrane_xy</a> |\n")
+		file.write("<a href='membrane_x.html'>membrane_x</a> |\n")
+		file.write("<a href='membrane_y.html'>membrane_y</a> |\n")
+		
+		file.write("<a href='moment_xy.html'>moment_xy</a> |\n")
+		file.write("<a href='moment_x.html'>moment_x</a> |\n")
+		file.write("<a href='moment_y.html'>moment_y</a> |\n")
+		
+		file.write("<a href='shear_x.html'>shear_x</a> |\n")
+		file.write("<a href='shear_y.html'>shear_y</a>\n")
+		file.write("<br>\n")
+		
+		# thickness, kg, utilization?
+
+		file.write("<br>\n")
+		file.write("<br>\n")
+		file.write("<br>\n")
+		file.write("</head>\n")
+
+		file.write("\n")
+		file.write("<style>\n")
+		file.write("* {font-family: sans-serif;}\n")
+		file.write("a:link {color: rgb(0, 0, 0); background-color: transparent; text-decoration: none;}\n")
+		file.write("a:visited {color: rgb(0,0,0); background-color: transparent; text-decoration: none;}\n")
+		file.write("a:hover {color: rgb(0,0,0); background-color: transparent; text-decoration: underline;}\n")
+		file.write("a:active {color: rgb(0,0,0); background-color: transparent; text-decoration: underline;}\n")
+		file.write("</style>\n")
+		file.write("\n")
+
+		# from https://www.kryogenix.org/
+		# as suggested by smilyface
+		# https://stackoverflow.com/questions/10683712/html-table-sort
+		file.write('<script src="sorttable.js"></script>\n')
+		file.write("\n")
+		
+		# based on the answer of Niente0
+		# https://stackoverflow.com/questions/26053004/copy-whole-html-table-to-clipboard-javascript
+		file.write('<script type="text/javascript">\n')
+		file.write('function copytable(el) {\n')
+		file.write('var urlField = document.getElementById(el)\n')
+		file.write('var range = document.createRange()\n')
+		file.write('range.selectNode(urlField)\n')
+		file.write('window.getSelection().addRange(range)\n')
+		file.write('document.execCommand("copy")\n')
+		file.write('}\n')
+		file.write('</script>\n')
+		file.write("\n")
+		
+		file.write('<a onClick="copytable(')
+		file.write("'stats')")
+		file.write('">copy to clipboard</a>\n')
+		file.write('<br>\n')
+		file.write('<br>\n')
+		
+		file.write('<table class="sortable" id=stats>\n')
+		file.write('<tr class="item">')
+
+		# empty part in the top-left
+		text = '<td height="20" width="20" bgcolor="FFFFFF">Member</td>'
+		file.write(text)
+	
 	elif report_type == "combined":
 		file.write("<a href='axial.html'>axial</a> |\n")
 		file.write("<a href='sigma.html'>sigma</a> |\n")
@@ -748,7 +856,7 @@ def append_matrix_members(file, matrix, frame, highest, lowest, length):
 			for entry in member_entry:
 				force, overstress, utilization = entry
 				value = force
-
+				"""
 				# red or blue?
 				if value > 0:
 					h = 0
@@ -766,6 +874,11 @@ def append_matrix_members(file, matrix, frame, highest, lowest, length):
 					v = 0.75
 				else:
 					v = 1.0
+				"""
+				max_diff = basics.return_max_diff_to_zero([lowest, highest])
+				h = 0.333/max_diff*force + 0.333
+				s = 1
+				v = 1
 
 				c.hsv = h,s,v
 				r = int(c.r*255)
@@ -784,7 +897,7 @@ def append_matrix_members(file, matrix, frame, highest, lowest, length):
 				value = force -1
 			else:
 				value = force
-
+			"""
 			# red or blue?
 			if value > 0:
 				h = 0
@@ -802,7 +915,13 @@ def append_matrix_members(file, matrix, frame, highest, lowest, length):
 				v = 0.75
 			else:
 				v = 1.0
-
+			"""
+			
+			max_diff = basics.return_max_diff_to_zero([lowest, highest])
+			h = 0.333/max_diff*force + 0.333
+			s = 1
+			v = 1
+			
 			c.hsv = h,s,v
 			r = int(c.r*255)
 			g = int(c.g*255)
@@ -836,7 +955,8 @@ def append_matrix_frames(file, matrix, highest, lowest, length):
 
 			else:
 				value = force
-
+			
+			"""
 			# red or blue?
 			if value > 0:
 				h = 0
@@ -854,6 +974,81 @@ def append_matrix_frames(file, matrix, highest, lowest, length):
 				v = 0.75
 			else:
 				v = 1.0
+			"""
+			max_diff = basics.return_max_diff_to_zero([lowest, highest])
+			h = 0.333/max_diff*force + 0.333
+			s = 1
+			v = 1
+
+			c.hsv = h,s,v
+			r = int(c.r*255)
+			g = int(c.g*255)
+			b = int(c.b*255)
+			color = rgb_to_hex((r,g,b))
+
+			c.hsv = h,s,v
+			r = int(c.r*255)
+			g = int(c.g*255)
+			b = int(c.b*255)
+			color = rgb_to_hex((r,g,b))
+			text = '<td height="20" width="20" align="right" bgcolor=' + color + '>' + "{:10.3f}".format(force) + '</td>\n'
+			file.write(text)
+
+		# end row
+		file.write("</tr>\n")
+
+def append_matrix_quads(file, matrix, highest, lowest, length):
+	scene = bpy.context.scene
+	data = scene["<Phaenotyp>"]
+	quads = data["quads"]
+	
+	for id_in_list, quad_entry in enumerate(matrix):
+		# start row
+		file.write('<tr class="item">')
+
+		# print member name
+		quad_id = list(quads)[id_in_list]
+		text = '<td height="20" width="20" align="left">' + str(quad_id).zfill(3) + '</td>\n'
+		file.write(text)
+
+		for entry in quad_entry:
+			force, overstress, utilization = entry
+
+			if utilization:
+				value = force-1
+
+			else:
+				value = force
+			
+			"""
+			# red or blue?
+			if value > 0:
+				h = 0
+			else:
+				h = 0.666
+
+			# saturation
+			max_diff = basics.return_max_diff_to_zero([lowest, highest])
+			s = abs(basics.avoid_div_zero(1, max_diff) * value)
+
+			# define v
+			if overstress:
+				# like in update_post put not so strong
+				# to make it readable in html
+				v = 0.75
+			else:
+				v = 1.0
+			"""
+			max_diff = basics.return_max_diff_to_zero([lowest, highest])
+			h = 0.333/max_diff*force + 0.333
+			s = 1
+			v = 1
+
+			c.hsv = h,s,v
+			r = int(c.r*255)
+			g = int(c.g*255)
+			b = int(c.b*255)
+			color = rgb_to_hex((r,g,b))
 
 			c.hsv = h,s,v
 			r = int(c.r*255)
@@ -997,6 +1192,55 @@ def report_frames(directory, start, end):
 
 		# append matrix with or without
 		append_matrix_frames(file, result_matrix, highest, lowest, length)
+
+		append_end(file)
+
+def report_quads(directory, start, end):
+	scene = bpy.context.scene
+	phaenotyp = scene.phaenotyp
+	data = scene["<Phaenotyp>"]
+	quads = data["quads"]
+
+	force_types = {}
+
+	force_types["membrane_xy"] = 1
+	force_types["membrane_x"] = 1
+	force_types["membrane_y"] = 1
+	
+	force_types["moment_xy"] = 1
+	force_types["moment_x"] = 1
+	force_types["moment_y"] = 1
+
+	force_types["shear_x"] = 1
+	force_types["shear_y"] = 1
+	
+	#force_types["Do"] = 1
+	#force_types["Di"] = 1
+
+	#force_types["kg"] = 1
+	#force_types["length"] = 1
+
+	for force_type, length in force_types.items():
+		# create file
+		filename = directory + str(force_type) + ".html"
+		file = open(filename, 'w')
+		len_quads = (len(quads))
+		frames_len = len(quads[list(quads)[0]][force_type]) # Was wenn start wo anders?
+
+		# create matrix with length of col and row
+		result_matrix = create_matrix(frames_len, len_quads)
+
+		# fill matrix with, result_matrix, forcetype, length and absolute
+		result_matrix, highest, lowest = fill_matrix_quads(result_matrix, force_type, length)
+
+		# append start
+		append_head(file, "quads")
+
+		names = list(range(start, end+1))
+		append_headlines(file, names, 3)
+
+		# append matrix with or without
+		append_matrix_quads(file, result_matrix, highest, lowest, length)
 
 		append_end(file)
 
