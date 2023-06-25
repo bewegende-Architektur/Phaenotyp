@@ -467,7 +467,7 @@ def create_supports(structure_obj, supports):
 
 def create_members(structure_obj, members):
 	# create mesh and object
-	mesh = bpy.data.meshes.new("<Phaenotyp>member")
+	mesh = bpy.data.meshes.new("<Phaenotyp>members")
 	obj = bpy.data.objects.new(mesh.name, mesh)
 	col = bpy.data.collections.get("<Phaenotyp>")
 	col.objects.link(obj)
@@ -554,7 +554,7 @@ def create_members(structure_obj, members):
 		bpy.ops.geometry.color_attribute_add(name="force", domain='POINT', data_type='FLOAT_COLOR', color=(255, 0, 255, 1))
 
 	# create material
-	material_name = "<Phaenotyp>member"
+	material_name =  "<Phaenotyp>members"
 	member_material = bpy.data.materials.get(material_name)
 	if member_material == None:
 		mat = bpy.data.materials.new(material_name)
@@ -613,7 +613,7 @@ def create_members(structure_obj, members):
 
 		# set material
 		gnsm = node_group.nodes.new(type="GeometryNodeSetMaterial")
-		gnsm.inputs[2].default_value = bpy.data.materials["<Phaenotyp>member"]
+		gnsm.inputs[2].default_value = bpy.data.materials[ "<Phaenotyp>members"]
 		input = gnsm.inputs[0] # geometry
 		output = ctm.outputs[0] # curve to mesh, mesh
 		node_group.links.new(input, output)
@@ -786,7 +786,7 @@ def update_geometry_pre():
 	members = data["members"]
 	structure_obj_vertices = data["structure"]
 	frame = bpy.context.scene.frame_current
-	mesh_for_viz = bpy.data.objects["<Phaenotyp>member"]
+	mesh_for_viz = bpy.data.objects[ "<Phaenotyp>members"]
 	vertices = mesh_for_viz.data.vertices
 
 	radius_group = mesh_for_viz.vertex_groups.get("radius")
@@ -818,7 +818,7 @@ def update_geometry_post():
 	members = data["members"]
 	structure_obj_vertices = data["structure"]
 	frame = bpy.context.scene.frame_current
-	mesh_for_viz = bpy.data.objects["<Phaenotyp>member"]
+	mesh_for_viz = bpy.data.objects[ "<Phaenotyp>members"]
 	vertices = mesh_for_viz.data.vertices
 
 	radius_group = mesh_for_viz.vertex_groups.get("radius")

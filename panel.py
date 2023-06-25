@@ -904,27 +904,43 @@ def info(layout):
 		box_info.label(text="Info:")
 		selected_objects = bpy.context.selected_objects
 		if len(selected_objects) > 1:
-			box_info.label(text="Please select the vizualisation object only - too many objects")
+			box_info.label(text="Please select one vizualisation object only - too many objects")
 
 		elif len(selected_objects) == 0:
-			box_info.label(text="Please select the vizualisation object - no object selected")
+			box_info.label(text="Please select a vizualisation object - no object selected")
 
-		elif selected_objects[0].name_full != "<Phaenotyp>member":
-			box_info.label(text="Please select the vizualisation object - wrong object selected")
-
+		elif selected_objects[0].name_full !=  "<Phaenotyp>members" and selected_objects[0].name_full !=  "<Phaenotyp>quads":
+			box_info.label(text="Please select a vizualisation object - wrong object selected")
+			
 		else:
 			if context.active_object.mode == 'EDIT':
-				vert_sel = bpy.context.active_object.data.total_vert_sel
-				if vert_sel != 1:
-					box_info.label(text="Select one vertex only")
+				# selection for members
+				if selected_objects[0].name_full ==  "<Phaenotyp>members":
+					vert_sel = bpy.context.active_object.data.total_vert_sel
+					if vert_sel != 1:
+						box_info.label(text="Select one vertex only")
 
-				else:
-					box_info.operator("wm.text", text="Generate")
-					if len(data["texts"]) > 0:
-						for text in data["texts"]:
-							box_info.label(text=text)
+					else:
+						box_info.operator("wm.text", text="Generate")
+						if len(data["texts"]) > 0:
+							for text in data["texts"]:
+								box_info.label(text=text)
+				
+				# seleciton for quads
+				if selected_objects[0].name_full !=  "<Phaenotyp>members":
+					face_sel = bpy.context.active_object.data.total_face_sel
+					if face_sel != 1:
+						box_info.label(text="Select one face only")
+
+					else:
+						box_info.operator("wm.text", text="Generate")
+						if len(data["texts"]) > 0:
+							for text in data["texts"]:
+								box_info.label(text=text)
+								
 			else:
 				box_info.label(text="Switch to edit-mode")
+				data["texts"] = []
 
 def selection(layout):
 	'''

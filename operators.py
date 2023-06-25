@@ -440,8 +440,8 @@ def set_member():
 				data["members"][str(id)] = member
 
 	# delete obj if existing
-	basics.delete_obj_if_existing("<Phaenotyp>member")
-	basics.delete_mesh_if_existing("<Phaenotyp>member")
+	basics.delete_obj_if_existing( "<Phaenotyp>members")
+	basics.delete_mesh_if_existing( "<Phaenotyp>members")
 
 	# create one mesh for all
 	geometry.create_members(data["structure"], data["members"])
@@ -1816,6 +1816,7 @@ def text():
 	phaenotyp = scene.phaenotyp
 	data = scene["<Phaenotyp>"]
 	members = data["members"]
+	quads = data["quads"]
 	frame = bpy.context.scene.frame_current
 
 	print_data("Generate output at the selected point")
@@ -1824,107 +1825,159 @@ def text():
 
 	# get selected vertex
 	bpy.ops.object.mode_set(mode="OBJECT")
-	for vertex in bpy.context.active_object.data.vertices:
-		if vertex.select == True:
-			# continue with this vertex:
-			# (only one is selected)
-			vertex_id = vertex.index
-			bpy.ops.object.mode_set(mode="EDIT")
+	if selected_objects[0].name_full ==  "<Phaenotyp>members":
+		for vertex in bpy.context.active_object.data.vertices:
+			if vertex.select == True:
+				# continue with this vertex:
+				# (only one is selected)
+				vertex_id = vertex.index
+				bpy.ops.object.mode_set(mode="EDIT")
 
-			# get member
-			for id, member in members.items():
-				if phaenotyp.calculation_type != "force_distribution":
-					for position in range(11):
-						if member["mesh_vertex_ids"][position] == vertex_id:
-							data_temp = []
-							# get member id
-							text = "Member: " + id
-							data_temp.append(text)
+				# get member
+				for id, member in members.items():
+					if phaenotyp.calculation_type != "force_distribution":
+						for position in range(11):
+							if member["mesh_vertex_ids"][position] == vertex_id:
+								data_temp = []
+								# get member id
+								text = "Member: " + id
+								data_temp.append(text)
 
-							# get Position
-							text = "Position: " + str(position)
-							data_temp.append(text)
+								# get Position
+								text = "Position: " + str(position)
+								data_temp.append(text)
 
-							# get frame
-							frame = bpy.context.scene.frame_current
+								# get frame
+								frame = bpy.context.scene.frame_current
 
-							# get Do and Di
-							text = "Do: " + str(round(member["Do"][str(frame)], 3))
-							data_temp.append(text)
-							text = "Di: " + str(round(member["Di"][str(frame)], 3))
-							data_temp.append(text)
+								# get Do and Di
+								text = "Do: " + str(round(member["Do"][str(frame)], 3))
+								data_temp.append(text)
+								text = "Di: " + str(round(member["Di"][str(frame)], 3))
+								data_temp.append(text)
 
-							# results
-							text = "axial: " + str(round(member["axial"][str(frame)][position], 3))
-							data_temp.append(text)
-							text = "moment_y: " + str(round(member["moment_y"][str(frame)][position], 3))
-							data_temp.append(text)
-							text = "moment_z: " + str(round(member["moment_z"][str(frame)][position], 3))
-							data_temp.append(text)
-							text = "shear_y: " + str(round(member["shear_y"][str(frame)][position], 3))
-							data_temp.append(text)
-							text = "shear_z: " + str(round(member["shear_z"][str(frame)][position], 3))
-							data_temp.append(text)
-							text = "torque: " + str(round(member["torque"][str(frame)][position], 3))
-							data_temp.append(text)
+								# results
+								text = "axial: " + str(round(member["axial"][str(frame)][position], 3))
+								data_temp.append(text)
+								text = "moment_y: " + str(round(member["moment_y"][str(frame)][position], 3))
+								data_temp.append(text)
+								text = "moment_z: " + str(round(member["moment_z"][str(frame)][position], 3))
+								data_temp.append(text)
+								text = "shear_y: " + str(round(member["shear_y"][str(frame)][position], 3))
+								data_temp.append(text)
+								text = "shear_z: " + str(round(member["shear_z"][str(frame)][position], 3))
+								data_temp.append(text)
+								text = "torque: " + str(round(member["torque"][str(frame)][position], 3))
+								data_temp.append(text)
 
-							text = "long_stress: " + str(round(member["long_stress"][str(frame)][position], 3))
-							data_temp.append(text)
-							text = "tau_shear: " + str(round(member["tau_shear"][str(frame)][position], 3))
-							data_temp.append(text)
-							text = "tau_torsion: " + str(round(member["tau_torsion"][str(frame)][position], 3))
-							data_temp.append(text)
-							text = "sum_tau: " + str(round(member["sum_tau"][str(frame)][position], 3))
-							data_temp.append(text)
-							text = "sigmav: " + str(round(member["sigmav"][str(frame)][position], 3))
-							data_temp.append(text)
-							text = "sigma: " + str(round(member["sigma"][str(frame)][position], 3))
-							data_temp.append(text)
+								text = "long_stress: " + str(round(member["long_stress"][str(frame)][position], 3))
+								data_temp.append(text)
+								text = "tau_shear: " + str(round(member["tau_shear"][str(frame)][position], 3))
+								data_temp.append(text)
+								text = "tau_torsion: " + str(round(member["tau_torsion"][str(frame)][position], 3))
+								data_temp.append(text)
+								text = "sum_tau: " + str(round(member["sum_tau"][str(frame)][position], 3))
+								data_temp.append(text)
+								text = "sigmav: " + str(round(member["sigmav"][str(frame)][position], 3))
+								data_temp.append(text)
+								text = "sigma: " + str(round(member["sigma"][str(frame)][position], 3))
+								data_temp.append(text)
 
-							# leverarm
-							text = "leverarm: " + str(round(member["lever_arm"][str(frame)][position], 3))
-							data_temp.append(text)
+								# leverarm
+								text = "leverarm: " + str(round(member["lever_arm"][str(frame)][position], 3))
+								data_temp.append(text)
 
-							# overstress
-							text = "overstress: " + str(round(member["overstress"][str(frame)], 3))
-							data_temp.append(text)
+								# overstress
+								text = "overstress: " + str(round(member["overstress"][str(frame)], 3))
+								data_temp.append(text)
 
-							data["texts"] = data_temp
+								data["texts"] = data_temp
 
-				else:
-					for position in range(2):
-						if member["mesh_vertex_ids"][position] == vertex_id:
-							data_temp = []
-							# get member id
-							text = "Member: " + id
-							data_temp.append(text)
+					else:
+						for position in range(2):
+							if member["mesh_vertex_ids"][position] == vertex_id:
+								data_temp = []
+								# get member id
+								text = "Member: " + id
+								data_temp.append(text)
 
-							# get frame
-							frame = bpy.context.scene.frame_current
+								# get frame
+								frame = bpy.context.scene.frame_current
 
-							# get Do and Di
-							text = "Do: " + str(round(member["Do"][str(frame)], 3))
-							data_temp.append(text)
-							text = "Di: " + str(round(member["Di"][str(frame)], 3))
-							data_temp.append(text)
+								# get Do and Di
+								text = "Do: " + str(round(member["Do"][str(frame)], 3))
+								data_temp.append(text)
+								text = "Di: " + str(round(member["Di"][str(frame)], 3))
+								data_temp.append(text)
 
-							# results
-							text = "axial: " + str(round(member["axial"][str(frame)], 3))
-							data_temp.append(text)
+								# results
+								text = "axial: " + str(round(member["axial"][str(frame)], 3))
+								data_temp.append(text)
 
-							text = "sigma: " + str(round(member["sigma"][str(frame)], 3))
-							data_temp.append(text)
+								text = "sigma: " + str(round(member["sigma"][str(frame)], 3))
+								data_temp.append(text)
 
-							# leverarm
-							text = "utilization: " + str(round(member["utilization"][str(frame)], 3))
-							data_temp.append(text)
+								# leverarm
+								text = "utilization: " + str(round(member["utilization"][str(frame)], 3))
+								data_temp.append(text)
 
-							# overstress
-							text = "overstress: " + str(round(member["overstress"][str(frame)], 3))
-							data_temp.append(text)
+								# overstress
+								text = "overstress: " + str(round(member["overstress"][str(frame)], 3))
+								data_temp.append(text)
 
-							data["texts"] = data_temp
+								data["texts"] = data_temp
 
+	if selected_objects[0].name_full ==  "<Phaenotyp>quads":
+		for face in bpy.context.active_object.data.polygons:
+			if face.select == True:
+				# continue with this face:
+				# (only one is selected)
+				face_id = face.index
+				bpy.ops.object.mode_set(mode="EDIT")
+
+				# get quad, only available in pynite
+				for id, quad in quads.items():
+					if (quad["vertices_ids_viz"][0] == face.vertices[0] and
+						quad["vertices_ids_viz"][1] == face.vertices[1] and
+						quad["vertices_ids_viz"][2] == face.vertices[2] and
+						quad["vertices_ids_viz"][3] == face.vertices[3]):
+							
+						data_temp = []
+
+						text = "Quad: " + id
+						data_temp.append(text)
+
+						# get frame
+						frame = bpy.context.scene.frame_current
+
+						# get info
+						text = "thickness: " + str(round(quad["thickness"], 3))
+						data_temp.append(text)
+						
+						#kg, area
+												
+						# get results
+						text = "membrane_xy: " + str(round(quad["membrane_xy"][str(frame)], 3))
+						data_temp.append(text)
+						text = "membrane_x: " + str(round(quad["membrane_x"][str(frame)], 3))
+						data_temp.append(text)
+						text = "membrane_y: " + str(round(quad["membrane_y"][str(frame)], 3))
+						data_temp.append(text)
+
+						text = "moment_xy: " + str(round(quad["moment_xy"][str(frame)], 3))
+						data_temp.append(text)
+						text = "moment_x: " + str(round(quad["moment_x"][str(frame)], 3))
+						data_temp.append(text)
+						text = "moment_y: " + str(round(quad["moment_y"][str(frame)], 3))
+						data_temp.append(text)
+
+						text = "shear_x: " + str(round(quad["shear_x"][str(frame)], 3))
+						data_temp.append(text)
+						text = "shear_y: " + str(round(quad["shear_y"][str(frame)], 3))
+						data_temp.append(text)
+						
+						data["texts"] = data_temp
+						
 def selection():
 	print_data("Generate report at frame in html-format")
 
@@ -2228,8 +2281,8 @@ def reset():
 	basics.delete_obj_if_existing("<Phaenotyp>support")
 	basics.delete_mesh_if_existing("<Phaenotyp>support")
 
-	basics.delete_obj_if_existing("<Phaenotyp>member")
-	basics.delete_mesh_if_existing("<Phaenotyp>member")
+	basics.delete_obj_if_existing("<Phaenotyp>members")
+	basics.delete_mesh_if_existing("<Phaenotyp>members")
 
 	basics.delete_obj_if_existing("<Phaenotyp>quads")
 	basics.delete_mesh_if_existing("<Phaenotyp>quads")
