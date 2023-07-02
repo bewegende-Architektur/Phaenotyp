@@ -172,6 +172,12 @@ class phaenotyp_properties(PropertyGroup):
 		min = 0.01,
 		max = 1.00
 		)
+
+	material_quads: EnumProperty(
+		name = "material",
+		description = "Predefined materials",
+		items = material.dropdown_quads
+		)
 	
 	E_quads: IntProperty(
 		name = "E",

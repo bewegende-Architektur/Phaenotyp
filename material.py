@@ -52,3 +52,20 @@ def update():
 	current["kg_A"] =  current["A"]*current["d"] * 0.1
 
 	current["ir"] = sqrt(current["Iy"]/current["A"])
+
+# for quads
+library_quads = [
+	# name, name in dropdown, E, G, nu, rho
+	["concrete", "Concrete", 3200, 25, 0.17, 2.4], # from freecad
+	["masonry", "Masonry", 1500, 400, 0.17, 1.0], # from pynite
+	["custom", "Custom", 1500, 400, 0.17, 1.0]
+	]
+
+dropdown_quads = []
+for material in library_quads:
+	dropdown_entry = (material[0], material[1], "")
+	dropdown_quads.append(dropdown_entry)
+
+# current setting passed from gui
+# (because a property can not be set in gui)
+current_quads = {}

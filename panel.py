@@ -290,10 +290,40 @@ def quads(layout):
 				
 				box_quads.prop(phaenotyp, "thickness", text="Thickness")
 				
-				box_quads.prop(phaenotyp, "E_quads", text="Modulus of elasticity")
-				box_quads.prop(phaenotyp, "G_quads", text="Modulus of elasticity")
-				box_quads.prop(phaenotyp, "nu_quads", text="Poisson's ratio")
-				box_quads.prop(phaenotyp, "rho_quads", text="Density")
+				box_quads.prop(phaenotyp, "material_quads", text="")
+				
+				if phaenotyp.material_quads == "custom":
+					box_quads.prop(phaenotyp, "E_quads", text="Modulus of elasticity")
+					box_quads.prop(phaenotyp, "G_quads", text="Modulus of elasticity")
+					box_quads.prop(phaenotyp, "nu_quads", text="Poisson's ratio")
+					box_quads.prop(phaenotyp, "rho_quads", text="Density")
+					
+					material.current_quads["E"] = phaenotyp.E_quads
+					material.current_quads["G"] = phaenotyp.G_quads
+					material.current_quads["nu"] = phaenotyp.nu_quads
+					material.current_quads["rho"] = phaenotyp.rho_quads
+				
+				else:
+					# pass input form library to data
+					for mat in material.library_quads:
+						if phaenotyp.material_quads == mat[0]: # select correct material
+							# current setting passed from gui
+							# (because a property can not be set in gui)
+							
+							E = mat[2]
+							G = mat[3]
+							nu = mat[4]
+							rho = mat[5]
+							
+							material.current_quads["E"] = E
+							material.current_quads["G"] = G
+							material.current_quads["nu"] = nu
+							material.current_quads["rho"] = rho
+							
+							box_quads.label(text="E = " + str(E) + " kN/cm²")
+							box_quads.label(text="G = " + str(G) + " kN/cm²")
+							box_quads.label(text="nu = " + str(nu))
+							box_quads.label(text="rho = " + str(rho))
 				
 				box_quads.label(text="kg = " + str(round(phaenotyp.rho_quads*phaenotyp.thickness*1000, 4)) + " kg/m²")
 				

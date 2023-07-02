@@ -486,10 +486,10 @@ def set_quad():
 			quad["vertices_ids_structure"] = vertices_ids # structure obj
 			quad["vertices_ids_viz"] = {} # obj for visualization
 			
-			quad["E"] = phaenotyp.E_quads # from gui
-			quad["G"] = phaenotyp.G_quads # from gui
-			quad["nu"] = phaenotyp.nu_quads # from gui
-			quad["rho"] = phaenotyp.rho_quads # from gui
+			quad["E"] = material.current_quads["E"] # from gui
+			quad["G"] = material.current_quads["G"] # from gui
+			quad["nu"] = material.current_quads["nu"] # from gui
+			quad["rho"] = material.current_quads["rho"] # from gui
 
 			quad["thickness"] = {}
 			quad["thickness_first"] = phaenotyp.thickness # from gui
