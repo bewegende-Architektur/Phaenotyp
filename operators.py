@@ -289,16 +289,16 @@ def set_member():
 		for edge in obj.data.edges:
 			vertex_0_id = edge.vertices[0]
 			vertex_1_id = edge.vertices[1]
-			
-			# create empty node to track which nodes are used
-			# infos like thickness and others can be stored too later
-			for node_id in [vertex_0_id, vertex_1_id]:
-				node = nodes.get(str(node_id))
-				if not node:
-					nodes[str(node_id)] = {}
 
 			if edge.select:
 				id = edge.index
+
+				# create empty node to track which nodes are used
+				# infos like thickness and others can be stored too later
+				for node_id in [vertex_0_id, vertex_1_id]:
+					node = nodes.get(str(node_id))
+					if not node:
+						nodes[str(node_id)] = {}
 
 				member = {}
 
@@ -392,17 +392,17 @@ def set_member():
 		for edge in obj.data.edges:
 			vertex_0_id = edge.vertices[0]
 			vertex_1_id = edge.vertices[1]
-
-			# create empty node to track which nodes are used
-			# infos like thickness and others can be stored too later
-			for node_id in [vertex_0_id, vertex_1_id]:
-				node = nodes.get(str(node_id))
-				if not node:
-					nodes[str(node_id)] = {}
 			
 			if edge.select:
 				id = edge.index
 
+				# create empty node to track which nodes are used
+				# infos like thickness and others can be stored too later
+				for node_id in [vertex_0_id, vertex_1_id]:
+					node = nodes.get(str(node_id))
+					if not node:
+						nodes[str(node_id)] = {}
+						
 				member = {}
 
 				# this variables are always fix
@@ -568,6 +568,9 @@ def set_load():
 	scene = bpy.context.scene
 	phaenotyp = scene.phaenotyp
 	data = scene["<Phaenotyp>"]
+	nodes = data["nodes"]
+	members = data["members"]
+	quads = data["quads"]
 	obj = data["structure"]
 	
 	calculation_type = phaenotyp.calculation_type
@@ -578,107 +581,151 @@ def set_load():
 	bpy.ops.object.mode_set(mode="OBJECT") # <---- to avoid "out-of-range-error" on windows
 
 	# pass user input to data
-
 	if phaenotyp.load_type == "vertices":
+		# loads can only be applied to existing nodes, members and quads
+		possible = True
 		for vertex in obj.data.vertices:
 			if vertex.select:
 				id = vertex.index
-				
-				if calculation_type not in ["geometrical", "force_distribution"]:
-					load = [
-						phaenotyp.load_FX,
-						phaenotyp.load_FY,
-						phaenotyp.load_FZ,
-						phaenotyp.load_MX,
-						phaenotyp.load_MY,
-						phaenotyp.load_MZ
-						]
-				else:
-					load = [
-						phaenotyp.load_FX,
-						phaenotyp.load_FY,
-						phaenotyp.load_FZ
-						]
+				if str(id) not in nodes:
+					possible = False
+					break
+		
+		if possible == False:
+			text = ["Loads can only be applied nodes that are part of members or quads."]
+			basics.popup(lines = text)
+		
+		# apply loads
+		else:
+			for vertex in obj.data.vertices:
+				if vertex.select:
+					id = vertex.index
+					
+					if calculation_type not in ["geometrical", "force_distribution"]:
+						load = [
+							phaenotyp.load_FX,
+							phaenotyp.load_FY,
+							phaenotyp.load_FZ,
+							phaenotyp.load_MX,
+							phaenotyp.load_MY,
+							phaenotyp.load_MZ
+							]
+					else:
+						load = [
+							phaenotyp.load_FX,
+							phaenotyp.load_FY,
+							phaenotyp.load_FZ
+							]
 
-				data["loads_v"][str(id)] = load
+					data["loads_v"][str(id)] = load
 
-				# delete load if user is deleting the load
-				# (set all conditions to False and apply)
-				force = False
-				if calculation_type not in ["geometrical", "force_distribution"]:
-					for i in range(6):
-						if load[i] != 0:
-							force = True
-				else:
-					for i in range(3):
-						if load[i] != 0:
-							force = True
-							
-				if not force:
-					data["loads_v"].pop(str(id))
+					# delete load if user is deleting the load
+					# (set all conditions to False and apply)
+					force = False
+					if calculation_type not in ["geometrical", "force_distribution"]:
+						for i in range(6):
+							if load[i] != 0:
+								force = True
+					else:
+						for i in range(3):
+							if load[i] != 0:
+								force = True
+								
+					if not force:
+						data["loads_v"].pop(str(id))
 
 	if phaenotyp.load_type == "edges":
+		# loads can only be applied to existing nodes, members and quads
+		possible = True
 		for edge in obj.data.edges:
-			vertex_0_id = edge.vertices[0]
-			vertex_1_id = edge.vertices[1]
-
 			if edge.select:
 				id = edge.index
-				
-				if calculation_type not in ["geometrical", "force_distribution"]:
-					load = [
-						phaenotyp.load_FX,
-						phaenotyp.load_FY,
-						phaenotyp.load_FZ,
-						phaenotyp.load_Fx,
-						phaenotyp.load_Fy,
-						phaenotyp.load_Fz
-						]
-				else:
-					load = [
-						phaenotyp.load_FX,
-						phaenotyp.load_FY,
-						phaenotyp.load_FZ
-						]
+				if str(id) not in members:
+					possible = False
+					break
+		
+		if possible == False:
+			text = ["Loads of type edge can only be applied to Members of the structure."]
+			basics.popup(lines = text)
+		
+		# apply loads
+		else:
+			for edge in obj.data.edges:
+				vertex_0_id = edge.vertices[0]
+				vertex_1_id = edge.vertices[1]
 
-				data["loads_e"][str(id)] = load
+				if edge.select:
+					id = edge.index
+					
+					if calculation_type not in ["geometrical", "force_distribution"]:
+						load = [
+							phaenotyp.load_FX,
+							phaenotyp.load_FY,
+							phaenotyp.load_FZ,
+							phaenotyp.load_Fx,
+							phaenotyp.load_Fy,
+							phaenotyp.load_Fz
+							]
+					else:
+						load = [
+							phaenotyp.load_FX,
+							phaenotyp.load_FY,
+							phaenotyp.load_FZ
+							]
 
-				# delete load if user is deleting the load
-				# (set all conditions to False and apply)
-				force = False
-				if calculation_type not in ["geometrical", "force_distribution"]:
-					for i in range(6):
-						if load[i] != 0:
-							force = True
-				else:
-					for i in range(3):
-						if load[i] != 0:
-							force = True
-							
-				if not force:
-					data["loads_e"].pop(str(id))
+					data["loads_e"][str(id)] = load
+
+					# delete load if user is deleting the load
+					# (set all conditions to False and apply)
+					force = False
+					if calculation_type not in ["geometrical", "force_distribution"]:
+						for i in range(6):
+							if load[i] != 0:
+								force = True
+					else:
+						for i in range(3):
+							if load[i] != 0:
+								force = True
+								
+					if not force:
+						data["loads_e"].pop(str(id))
 
 	if phaenotyp.load_type == "faces":
+		# loads can only be applied to existing nodes, members and quads
+		possible = True
 		for polygon in obj.data.polygons:
 			if polygon.select:
 				id = polygon.index
-				load = [
-					phaenotyp.load_normal,
-					phaenotyp.load_projected,
-					phaenotyp.load_area_z,
-					]
+				if str(id) not in quads:
+					possible = False
+					break
+		
+		if possible == False:
+			text = ["Loads of type face can only be applied to Members or quads within the structure."]
+			basics.popup(lines = text)
+		
+		# apply loads
+		else:
+			for polygon in obj.data.polygons:
+				if polygon.select:
+					id = polygon.index
+					load = [
+						phaenotyp.load_normal,
+						phaenotyp.load_projected,
+						phaenotyp.load_area_z,
+						]
 
-				data["loads_f"][str(id)] = load
+					data["loads_f"][str(id)] = load
 
-				# delete load if user is deleting the load
-				# (set all conditions to False and apply)
-				force = False
-				for i in range(3):
-					if load[i] != 0:
-						force = True
+					# delete load if user is deleting the load
+					# (set all conditions to False and apply)
+					force = False
+					for i in range(3):
+						if load[i] != 0:
+							force = True
 
-				if not force:
-					data["loads_f"].pop(str(id))
+					if not force:
+						data["loads_f"].pop(str(id))
 
 	# delete text of loads
 	basics.delete_obj_if_name_contains("<Phaenotyp>load")
