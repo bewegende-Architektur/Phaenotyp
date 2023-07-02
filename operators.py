@@ -486,12 +486,14 @@ def set_quad():
 			quad["vertices_ids_structure"] = vertices_ids # structure obj
 			quad["vertices_ids_viz"] = {} # obj for visualization
 			
-			quad["thickness"] = phaenotyp.thickness # from gui
 			quad["E"] = phaenotyp.E_quads # from gui
 			quad["G"] = phaenotyp.G_quads # from gui
 			quad["nu"] = phaenotyp.nu_quads # from gui
 			quad["rho"] = phaenotyp.rho_quads # from gui
 
+			quad["thickness"] = {}
+			quad["thickness_first"] = phaenotyp.thickness # from gui
+			
 			# results
 			quad["shear_x"] = {}
 			quad["shear_y"] = {}
@@ -1986,6 +1988,7 @@ def selection():
 	data = scene["<Phaenotyp>"]
 	obj = data["structure"]
 	members = data["members"]
+	quads = data["quads"]
 	frame = bpy.context.scene.frame_current
 
 	print_data("Select edges by given key and value.")
@@ -1994,11 +1997,16 @@ def selection():
 	if phaenotyp.calculation_type == "force_distribution":
 		key = phaenotyp.selection_key_fd
 	else:
-		key = phaenotyp.selection_key_pn
-
+		if phaenotyp.selection_type == "member":
+			key = phaenotyp.selection_key_pn
+		else:
+			key = phaenotyp.selection_key_quads
+			
 	compare = phaenotyp.selection_compare
-	value = int(phaenotyp.selection_value)
-	threshold = abs(int(phaenotyp.selection_threshold))
+	#value = int(phaenotyp.selection_value)
+	value = float(phaenotyp.selection_value)
+	#threshold = abs(int(phaenotyp.selection_threshold))
+	threshold = abs(float(phaenotyp.selection_threshold))
 	value_min = value - threshold
 	value_max = value + threshold
 
@@ -2006,65 +2014,128 @@ def selection():
 	obj.hide_set(False)
 	bpy.context.view_layer.objects.active = obj
 	
-	# set edge for selection type and deselect
+	# set type of selection and deselect
 	bpy.ops.object.mode_set(mode="EDIT")
-	bpy.ops.mesh.select_mode(use_extend=False, use_expand=False, type='EDGE')
+	if phaenotyp.selection_type == "member": # for members
+		bpy.ops.mesh.select_mode(use_extend=False, use_expand=False, type='EDGE')
+	else: # for quads
+		bpy.ops.mesh.select_mode(use_extend=False, use_expand=False, type='FACE')
 	bpy.ops.mesh.select_all(action='DESELECT')
 	bpy.ops.object.mode_set(mode="OBJECT")
+	
+	# for members
+	if phaenotyp.selection_type == "member": # for members
+		# iterate edges
+		edges = obj.data.edges
 
-	# iterate edges
-	edges = obj.data.edges
+		if key == "id":
+			for edge in edges:
+				id = edge.index
+				
+				# is this edge a member?
+				member = members.get(str(id))
+				if member:
+					if compare == "Equal":
+						if value_min <= id <= value_max:
+							edge.select = True
+						else:
+							edge.select = False
 
-	if key == "id":
-		for edge in edges:
-			id = edge.index
-			
-			# is this edge a member?
-			member = members.get(str(id))
-			if member:
-				if compare == "Equal":
-					if value_min <= id <= value_max:
-						edge.select = True
-					else:
-						edge.select = False
+					if compare == "Greater":
+						if id > value_min:
+							edge.select = True
+						else:
+							edge.select = False
 
-				if compare == "Greater":
-					if id > value_min:
-						edge.select = True
-					else:
-						edge.select = False
+					if compare == "Less":
+						if id < value_max:
+							edge.select = True
+						else:
+							edge.select = False
 
-				if compare == "Less":
-					if id < value_max:
-						edge.select = True
-					else:
-						edge.select = False
+		else:
+			for edge in edges:
+				id = edge.index
+				# is this edge a member?
+				member = members.get(str(id))
+				if member:
+					value = member[key][str(frame)]
 
+					if compare == "Equal":
+						if value_min <= value <= value_max:
+							edge.select = True
+						else:
+							edge.select = False
+
+					if compare == "Greater":
+						if value > value_min:
+							edge.select = True
+						else:
+							edge.select = False
+
+					if compare == "Less":
+						if value < value_max:
+							edge.select = True
+						else:
+							edge.select = False
+							
+	# for quads
 	else:
-		for edge in edges:
-			id = edge.index
-			# is this edge a member?
-			member = members.get(str(id))
-			if member:
-				value = member[key][str(frame)]
+		# iterate edges
+		faces = obj.data.polygons
 
-				if compare == "Equal":
-					if value_min <= value <= value_max:
-						edge.select = True
-					else:
-						edge.select = False
+		if key == "id":
+			for face in faces:
+				id = face.index
+				
+				# is this edge a member?
+				quad = quads.get(str(id))
+				if quad:
+					if compare == "Equal":
+						if value_min <= id <= value_max:
+							face.select = True
+						else:
+							face.select = False
 
-				if compare == "Greater":
-					if value > value_min:
-						edge.select = True
-					else:
-						edge.select = False
+					if compare == "Greater":
+						if id > value_min:
+							face.select = True
+						else:
+							face.select = False
 
-				if compare == "Less":
-					if value < value_max:
-						edge.select = True
-					else:
-						edge.select = False
+					if compare == "Less":
+						if id < value_max:
+							face.select = True
+						else:
+							face.select = False
+
+		else:
+			for face in faces:
+				id = face.index
+				# is this face a quad?
+				quad = quads.get(str(id))
+				if quad:
+					print(quad)
+					value = quad[key][str(frame)]
+
+					if compare == "Equal":
+						if value_min <= value <= value_max:
+							face.select = True
+						else:
+							face.select = False
+
+					if compare == "Greater":
+						if value > value_min:
+							face.select = True
+						else:
+							face.select = False
+
+					if compare == "Less":
+						if value < value_max:
+							face.select = True
+						else:
+							face.select = False
+
 
 	# go into edit-mode and switch to wireframe
 	bpy.ops.object.mode_set(mode="EDIT")
@@ -2295,3 +2366,4 @@ def reset():
 
 	# change props
 	phaenotyp.calculation_type = "-"
+	phaenotyp.type_of_joints = "-"

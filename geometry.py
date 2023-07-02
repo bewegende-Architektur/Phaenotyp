@@ -757,7 +757,7 @@ def create_quads(structure_obj, quads):
 	# set the thickness passed from gui
 	for id, quad in quads.items():
 		vertices_ids = quad["vertices_ids_viz"]
-		thickness = quad["thickness"]
+		thickness = quad["thickness_first"]
 		thickness_group.add(vertices_ids, thickness, 'REPLACE')
 
 
@@ -785,6 +785,7 @@ def update_geometry_pre():
 	phaenotyp = scene.phaenotyp
 	data = scene["<Phaenotyp>"]
 	members = data["members"]
+	quads = data["quads"]
 	structure_obj_vertices = data["structure"]
 	frame = bpy.context.scene.frame_current
 	mesh_for_viz = bpy.data.objects[ "<Phaenotyp>members"]
@@ -809,7 +810,27 @@ def update_geometry_pre():
 		member["A"][str(frame)]  = ((pi * (member["Do"][str(frame)]*0.5)**2) - (pi * (member["Di"][str(frame)]*0.5)**2))
 		member["kg_A"][str(frame)] =  member["A"][str(frame)]*member["d"] * 0.1
 		member["ir"][str(frame)] = sqrt(member["Iy"][str(frame)]/member["A"][str(frame)])
-	
+
+	for id, quad in quads.items():
+		id = int(id)
+
+		# copy properties if not set by optimization
+		# or the user changed the frame during optimization
+		if str(frame) not in quad["thickness"]:
+			quad["thickness"][str(frame)] = quad["thickness_first"]
+			quad["thickness"][str(frame)] = quad["thickness_first"]
+		
+		# need to be updated for quads
+		'''
+		# update material (like updated when passed from gui in material.py)
+		member["Iy"][str(frame)] = pi * (member["Do"][str(frame)]**4 - member["Di"][str(frame)]**4)/64
+		member["Iz"][str(frame)] = member["Iy"][str(frame)]
+		member["J"][str(frame)]  = pi * (member["Do"][str(frame)]**4 - member["Di"][str(frame)]**4)/(32)
+		member["A"][str(frame)]  = ((pi * (member["Do"][str(frame)]*0.5)**2) - (pi * (member["Di"][str(frame)]*0.5)**2))
+		member["kg_A"][str(frame)] =  member["A"][str(frame)]*member["d"] * 0.1
+		member["ir"][str(frame)] = sqrt(member["Iy"][str(frame)]/member["A"][str(frame)])
+		'''
+		
 	update_translation()
 		
 def update_geometry_post():

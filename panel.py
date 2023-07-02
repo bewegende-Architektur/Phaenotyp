@@ -90,12 +90,26 @@ def calculation_type(layout):
 			box_calculation_type.prop(phaenotyp, "calculation_type", text="")
 
 			calculation_type = phaenotyp.calculation_type
+			type_of_joints = phaenotyp.type_of_joints
 			
-			# gray out panel if defined
-			if calculation_type != "-":
-				data["panel_state"]["calculation_type"] = True
-				data["panel_grayed"]["calculation_type"] = True
-				box_calculation_type.enabled = False
+			# for pynite
+			if calculation_type not in ["geometrical", "force_distribution", "-"]:
+				box_calculation_type.prop(phaenotyp, "type_of_joints", text="")
+			
+				# gray out panel if defined
+				if calculation_type != "-" and type_of_joints != "-":
+					data["panel_state"]["calculation_type"] = True
+					data["panel_grayed"]["calculation_type"] = True
+					box_calculation_type.enabled = False
+			
+			# for others
+			else:
+				# gray out panel if defined
+				if calculation_type != "-":
+					data["panel_state"]["calculation_type"] = True
+					data["panel_grayed"]["calculation_type"] = True
+					box_calculation_type.enabled = False
+
 
 def supports(layout):
 	'''
@@ -959,7 +973,12 @@ def selection(layout):
 		if phaenotyp.calculation_type == "force_distribution":
 			box_selection.prop(phaenotyp, "selection_key_fd", text="")
 		else:
-			box_selection.prop(phaenotyp, "selection_key_pn", text="Key:")
+			box_selection.prop(phaenotyp, "selection_type", text="Type:")
+			if phaenotyp.selection_type == "member":
+				box_selection.prop(phaenotyp, "selection_key_pn", text="Key:")
+			else:
+				box_selection.prop(phaenotyp, "selection_key_quads", text="Key:")
+			
 		box_selection.prop(phaenotyp, "selection_compare", text="Compare:")
 		box_selection.prop(phaenotyp, "selection_value", text="Value:")
 		box_selection.prop(phaenotyp, "selection_threshold", text="Threshold:")

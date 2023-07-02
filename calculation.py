@@ -171,7 +171,13 @@ def prepare_fea_pn():
 			member["J"][str(frame)], member["A"][str(frame)],
 			tension_only=tension_only, comp_only=comp_only,
 			)
-		
+	
+		# release Moments
+		if phaenotyp.type_of_joints == "release_moments":
+			model.def_releases(id,
+				False, False, False, False, True, True,
+				False, False, False, False, True, True)
+
 		# add self weight
 		kg_A = member["kg_A"][str(frame)]
 		kN = kg_A * -0.0000981
@@ -210,8 +216,14 @@ def prepare_fea_pn():
 			model.add_material(material_name, E, G, nu, rho)
 		
 		vertex_ids = quad["vertices_ids_structure"]
-		t = quad["thickness"]
 		
+		# get thickness of frame or first
+		t = quad["thickness"].get(str(frame))
+		if t:
+			pass
+		else:
+			t = quad["thickness_first"]
+				
 		v_0 = str(vertex_ids[0])
 		v_1 = str(vertex_ids[1])
 		v_2 = str(vertex_ids[2])

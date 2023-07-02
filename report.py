@@ -876,7 +876,11 @@ def append_matrix_members(file, matrix, frame, highest, lowest, length):
 					v = 1.0
 				"""
 				max_diff = basics.return_max_diff_to_zero([lowest, highest])
-				h = 0.333/max_diff*force + 0.333
+				if max_diff != 0:
+					h = 0.333/max_diff*force + 0.333
+				else:
+					h = 0 # white
+				
 				s = 1
 				v = 1
 
@@ -918,7 +922,11 @@ def append_matrix_members(file, matrix, frame, highest, lowest, length):
 			"""
 			
 			max_diff = basics.return_max_diff_to_zero([lowest, highest])
-			h = 0.333/max_diff*force + 0.333
+			if max_diff != 0:
+				h = 0.333/max_diff*force + 0.333
+			else:
+				h = 0 # white
+			
 			s = 1
 			v = 1
 			
@@ -976,7 +984,11 @@ def append_matrix_frames(file, matrix, highest, lowest, length):
 				v = 1.0
 			"""
 			max_diff = basics.return_max_diff_to_zero([lowest, highest])
-			h = 0.333/max_diff*force + 0.333
+			if max_diff != 0:
+				h = 0.333/max_diff*force + 0.333
+			else:
+				h = 0 # white
+
 			s = 1
 			v = 1
 
@@ -1040,7 +1052,11 @@ def append_matrix_quads(file, matrix, highest, lowest, length):
 				v = 1.0
 			"""
 			max_diff = basics.return_max_diff_to_zero([lowest, highest])
-			h = 0.333/max_diff*force + 0.333
+			if max_diff != 0:
+				h = 0.333/max_diff*force + 0.333
+			else:
+				h = 0 # white
+
 			s = 1
 			v = 1
 

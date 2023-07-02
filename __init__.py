@@ -54,6 +54,16 @@ class phaenotyp_properties(PropertyGroup):
 		update = basics.force_distribution_info
 		)
 
+	type_of_joints: EnumProperty(
+		name="type_of_joints:",
+		description="Released Moments",
+		items=[
+				("-", "-", ""),
+				("release_moments", "Release moments", ""),
+				("fixed_joints", "Fixed joints (choose this if unsure)", "")
+			   ]
+		)
+	
 	Do: FloatProperty(
 		name = "Do",
 		description = "Diameter of pipe outside in mm",
@@ -154,7 +164,7 @@ class phaenotyp_properties(PropertyGroup):
 	rot_x: BoolProperty(name = 'rot_x', default = False)
 	rot_y: BoolProperty(name = 'rot_y', default = False)
 	rot_z: BoolProperty(name = 'rot_z', default = False)
-	
+	   
 	thickness: FloatProperty(
 		name = "thickness",
 		description = "Thickness",
@@ -162,7 +172,7 @@ class phaenotyp_properties(PropertyGroup):
 		min = 0.01,
 		max = 1.00
 		)
-		
+	
 	E_quads: IntProperty(
 		name = "E",
 		description = "Elasticity modulus in kN/cm²",
@@ -497,7 +507,7 @@ class phaenotyp_properties(PropertyGroup):
 		update = viz_update,
 		subtype = "PERCENTAGE",
 		default = 50,
-		min = 0.01,
+		min = 0.001,
 		max = 100
 		)
 
@@ -507,7 +517,7 @@ class phaenotyp_properties(PropertyGroup):
 		update = viz_update,
 		subtype = "PERCENTAGE",
 		default = 50,
-		min = 0.01,
+		min = 0.001,
 		max = 100
 		)
 
@@ -723,6 +733,15 @@ class phaenotyp_properties(PropertyGroup):
 			   ]
 		)
 
+	selection_type: EnumProperty(
+		name = "selection_type",
+		description = "Member or Quad",
+		items = [
+					("member", "Member", ""),
+					("quad", "Quad", "")
+				]
+		)
+	
 	selection_key_fd: EnumProperty(
 		name = "selection_key_fd",
 		description = "Key for selection",
@@ -760,6 +779,24 @@ class phaenotyp_properties(PropertyGroup):
 		default = "Do"
 		)
 
+	selection_key_quads: EnumProperty(
+		name = "selection_key_quads",
+		description = "Key for selection",
+		items = [
+					("id", "Id", ""),
+					("thickness", "Thickness", ""),
+					("membrane_x", "Membrane X", ""),
+					("membrane_y", "Membrane Y", ""),
+					("membrane_xy", "Membrane XY", ""),
+					("moment_x", "Moment X", ""),
+					("moment_y", "Moment Y", ""),
+					("moment_xy", "Moment XY", ""),
+					("shear_x", "Shear_X", ""),
+					("shear_y", "Shear_Y", "")
+				],
+		default = "thickness"
+		)
+	
 	selection_compare: EnumProperty(
 		name = "selection_compare",
 		description = "Type of comparsion",
@@ -1260,7 +1297,7 @@ class OBJECT_PT_Phaenotyp(Panel):
 	'''
 	Panel for Phaenotyp.
 	'''
-	bl_label = "Phänotyp 0.2.4"
+	bl_label = "Phänotyp 0.2.5"
 	bl_idname = "OBJECT_PT_custom_panel"
 	bl_space_type = "VIEW_3D"
 	bl_region_type = "UI"
