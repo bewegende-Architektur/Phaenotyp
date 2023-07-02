@@ -279,6 +279,7 @@ def set_member():
 	phaenotyp = scene.phaenotyp
 	data = scene["<Phaenotyp>"]
 	obj = data["structure"]
+	nodes = data["nodes"]
 	frame = bpy.context.scene.frame_current
 
 	bpy.ops.object.mode_set(mode="OBJECT")
@@ -288,6 +289,13 @@ def set_member():
 		for edge in obj.data.edges:
 			vertex_0_id = edge.vertices[0]
 			vertex_1_id = edge.vertices[1]
+			
+			# create empty node to track which nodes are used
+			# infos like thickness and others can be stored too later
+			for node_id in [vertex_0_id, vertex_1_id]:
+				node = nodes.get(str(node_id))
+				if not node:
+					nodes[str(node_id)] = {}
 
 			if edge.select:
 				id = edge.index
@@ -385,6 +393,13 @@ def set_member():
 			vertex_0_id = edge.vertices[0]
 			vertex_1_id = edge.vertices[1]
 
+			# create empty node to track which nodes are used
+			# infos like thickness and others can be stored too later
+			for node_id in [vertex_0_id, vertex_1_id]:
+				node = nodes.get(str(node_id))
+				if not node:
+					nodes[str(node_id)] = {}
+			
 			if edge.select:
 				id = edge.index
 
@@ -469,6 +484,7 @@ def set_quad():
 	phaenotyp = scene.phaenotyp
 	data = scene["<Phaenotyp>"]
 	obj = data["structure"]
+	nodes = data["nodes"]
 	frame = bpy.context.scene.frame_current
 
 	bpy.ops.object.mode_set(mode="OBJECT")
@@ -479,6 +495,13 @@ def set_quad():
 		if face.select:
 			id = face.index
 			vertices_ids = face.vertices
+
+			# create empty node to track which nodes are used
+			# infos like thickness and others can be stored too later
+			for node_id in vertices_ids:
+				node = nodes.get(str(node_id))
+				if not node:
+					nodes[str(node_id)] = {}
 			
 			quad = {}
 

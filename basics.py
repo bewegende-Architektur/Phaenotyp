@@ -53,6 +53,7 @@ def create_data():
 	data = bpy.context.scene["<Phaenotyp>"] = {
 		"structure": None,
 		"supports": {},
+		"nodes": {},
 		"members": {},
 		"quads": {},
 		"frames": {},
