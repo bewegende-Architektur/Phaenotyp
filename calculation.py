@@ -240,6 +240,15 @@ def prepare_fea_pn():
 			]
 		quad["initial_positions"][str(frame)] = initial_positions
 		
+		# self weight
+		face = data["structure"].data.polygons[int(id)]
+		area = face.area
+		for vertex_id in quads[id]["vertices_ids_structure"]:
+			vertex_id = str(vertex_id)
+			# area * thickness * density * 0.25 (to distribute to all four faces) - for gravity
+			z = area * t + rho * (-0.25)
+			model.add_node_load(vertex_id, 'FZ', z * 0.01) # to cm
+		
 	# add loads
 	for id, load in loads_v.items():
 		model.add_node_load(id, 'FX', load[0])
@@ -289,11 +298,11 @@ def prepare_fea_pn():
 			
 			# load projected
 			area_load = load_projected * area_projected
-			z += area_load * 0.25 # divided by four points of each quad
+			z += area_load * (-0.25) # divided by four points of each quad
 			
 			# load z
 			area_load = load_area_z * area
-			z += area_load * 0.25 # divided by four points of each quad
+			z += area_load * (-0.25) # divided by four points of each quad
 			
 			model.add_node_load(vertex_id, 'FX', x*0.01) # to cm
 			model.add_node_load(vertex_id, 'FY', y*0.01) # to cm
