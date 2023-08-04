@@ -843,6 +843,7 @@ def interweave_results_pn(feas):
 					function_to_run = poly1d(polyfit(material.kn_lamda, kn, 6))
 					member["acceptable_sigma_buckling"][frame] = function_to_run(member["lamda"][frame])
 					if member["lamda"][frame] > 250: # Schlankheit zu schlank
+						member["acceptable_sigma_buckling"][frame] = function_to_run(250)
 						member["overstress"][frame] = True
 					if safety_factor*abs(member["acceptable_sigma_buckling"][frame]) > abs(member["max_sigma"][frame]): # Sigma
 						member["overstress"][frame] = True
