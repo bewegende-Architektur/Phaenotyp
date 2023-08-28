@@ -808,7 +808,7 @@ def update_geometry_pre():
 		member["Iz"][str(frame)] = member["Iy"][str(frame)]
 		member["J"][str(frame)]  = pi * (member["Do"][str(frame)]**4 - member["Di"][str(frame)]**4)/(32)
 		member["A"][str(frame)]  = ((pi * (member["Do"][str(frame)]*0.5)**2) - (pi * (member["Di"][str(frame)]*0.5)**2))
-		member["kg_A"][str(frame)] =  member["A"][str(frame)]*member["d"] * 0.1
+		member["weight_A"][str(frame)] =  member["A"][str(frame)]*member["d"] * 0.1
 		member["ir"][str(frame)] = sqrt(member["Iy"][str(frame)]/member["A"][str(frame)])
 
 	for id, quad in quads.items():
@@ -827,7 +827,7 @@ def update_geometry_pre():
 		member["Iz"][str(frame)] = member["Iy"][str(frame)]
 		member["J"][str(frame)]  = pi * (member["Do"][str(frame)]**4 - member["Di"][str(frame)]**4)/(32)
 		member["A"][str(frame)]  = ((pi * (member["Do"][str(frame)]*0.5)**2) - (pi * (member["Di"][str(frame)]*0.5)**2))
-		member["kg_A"][str(frame)] =  member["A"][str(frame)]*member["d"] * 0.1
+		member["weight_A"][str(frame)] =  member["A"][str(frame)]*member["d"] * 0.1
 		member["ir"][str(frame)] = sqrt(member["Iy"][str(frame)]/member["A"][str(frame)])
 		'''
 		

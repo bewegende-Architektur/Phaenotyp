@@ -333,14 +333,14 @@ def set_member():
 				member["Iz"] = {}
 				member["J"] = {}
 				member["A"] = {}
-				member["kg_A"] = {}
+				member["weight_A"] = {}
 				member["ir"] = {}
 
 				member["Iy_first"] = material.current["Iy"] # from gui
 				member["Iz_first"] = material.current["Iz"] # from gui
 				member["J_first"] = material.current["J"] # from gui
 				member["A_first"] = material.current["A"] # from gui
-				member["kg_first"] = material.current["kg_A"] # from gui
+				member["weight_first"] = material.current["weight_A"] # from gui
 				member["ir_first"] = material.current["ir"] # from gui
 
 				# results
@@ -382,7 +382,7 @@ def set_member():
 				member["moment_energy"] = {}
 				member["strain_energy"] = {}
 
-				member["kg"] = {}
+				member["weight"] = {}
 				member["length"] = {}
 
 				data["members"][str(id)] = member
@@ -430,14 +430,14 @@ def set_member():
 				member["Iz"] = {}
 				member["J"] = {}
 				member["A"] = {}
-				member["kg_A"] = {}
+				member["weight_A"] = {}
 				member["ir"] = {}
 
 				member["Iy_first"] = material.current["Iy"] # from gui
 				member["Iz_first"] = material.current["Iz"] # from gui
 				member["J_first"] = material.current["J"] # from gui
 				member["A_first"] = material.current["A"] # from gui
-				member["kg_first"] = material.current["kg_A"] # from gui
+				member["weight_first"] = material.current["weight_A"] # from gui
 				member["ir_first"] = material.current["ir"] # from gui
 
 				# results
@@ -449,7 +449,7 @@ def set_member():
 				member["overstress"] = {}
 				member["utilization"] = {}
 
-				member["kg"] = {}
+				member["weight"] = {}
 				member["length"] = {}
 
 				data["members"][str(id)] = member
@@ -534,7 +534,7 @@ def set_quad():
 			quad["overstress"] = {}
 			quad["utilization"] = {}
 
-			quad["kg"] = {}
+			quad["weight"] = {}
 			quad["area"] = {}
 
 			data["quads"][str(id)] = quad
@@ -2026,7 +2026,7 @@ def text():
 						text = "thickness: " + str(round(quad["thickness"], 3))
 						data_temp.append(text)
 						
-						#kg, area
+						#weight, area
 												
 						# get results
 						text = "membrane_xy: " + str(round(quad["membrane_xy"][str(frame)], 3))

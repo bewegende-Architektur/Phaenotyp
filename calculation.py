@@ -87,7 +87,7 @@ def prepare_fea_pn():
 	frame_volume = 0
 	frame_area = 0
 	frame_length = 0
-	frame_kg = 0
+	frame_weight = 0
 	frame_rise = 0
 	frame_span = 0
 	frame_cantilever = 0
@@ -179,8 +179,8 @@ def prepare_fea_pn():
 				False, False, False, False, True, True)
 
 		# add self weight
-		kg_A = member["kg_A"][str(frame)]
-		kN = kg_A * -0.0000981
+		weight_A = member["weight_A"][str(frame)]
+		kN = weight_A * -0.0000981
 
 		# add self weight as distributed load
 		model.add_member_dist_load(id, "FZ", kN, kN)
@@ -190,11 +190,11 @@ def prepare_fea_pn():
 		frame_length += length
 
 		# calculate and add weight to overall weight of structure
-		kg = length * kg_A
-		frame_kg += kg
+		weight = length * weight_A
+		frame_weight += weight
 
 		# store in member
-		member["kg"][str(frame)] = kg
+		member["weight"][str(frame)] = weight
 		member["length"][str(frame)] = length
 
 	# create quads
@@ -366,7 +366,7 @@ def prepare_fea_pn():
 	data["frames"][str(frame)]["volume"] = geometry.volume(mesh)
 	data["frames"][str(frame)]["area"] = geometry.area(faces)
 	data["frames"][str(frame)]["length"] = frame_length
-	data["frames"][str(frame)]["kg"] = frame_kg
+	data["frames"][str(frame)]["weight"] = frame_weight
 	data["frames"][str(frame)]["rise"] = geometry.rise(vertices)
 	data["frames"][str(frame)]["span"] = geometry.span(vertices, supports)
 	data["frames"][str(frame)]["cantilever"] = geometry.cantilever(vertices, supports)
@@ -415,7 +415,7 @@ def prepare_fea_fd():
 	frame_volume = 0
 	frame_area = 0
 	frame_length = 0
-	frame_kg = 0
+	frame_weight = 0
 	frame_rise = 0
 	frame_span = 0
 	frame_cantilever = 0
@@ -481,16 +481,16 @@ def prepare_fea_fd():
 		member["initial_positions"][str(frame)] = initial_positions
 
 		# add self weight
-		kg_A = member["kg_A"][str(frame)]
-		kN = kg_A * -0.0000981
+		weight_A = member["weight_A"][str(frame)]
+		kN = weight_A * -0.0000981
 
 		# calculate lenght of parts (maybe usefull later ...)
 		length = (v_0 - v_1).length
 		frame_length += length
 
 		# calculate and add weight to overall weight of structure
-		kg = length * kg_A
-		frame_kg += kg
+		weight = length * weight_A
+		frame_weight += weight
 
 		# for calculation
 		lenghtes.append(length)
@@ -501,7 +501,7 @@ def prepare_fea_fd():
 		forces[vertex_1_id] += array([0.0, 0.0, self_weight*0.5])
 
 		# store in member
-		member["kg"][str(frame)] = kg
+		member["weight"][str(frame)] = weight
 		member["length"][str(frame)] = length
 
 	edges_array = array(keys)
@@ -609,7 +609,7 @@ def prepare_fea_fd():
 	data["frames"][str(frame)]["volume"] = geometry.volume(mesh)
 	data["frames"][str(frame)]["area"] = geometry.area(faces)
 	data["frames"][str(frame)]["length"] = frame_length
-	data["frames"][str(frame)]["kg"] = frame_kg
+	data["frames"][str(frame)]["weight"] = frame_weight
 	data["frames"][str(frame)]["rise"] = geometry.rise(vertices)
 	data["frames"][str(frame)]["span"] = geometry.span(vertices, supports)
 	data["frames"][str(frame)]["cantilever"] = geometry.cantilever(vertices, supports)
@@ -1389,9 +1389,9 @@ def calculate_fitness(start, end):
 		area = data["frames"][str(frame)]["area"]
 		fitness_area = area
 
-		# kg
-		kg = data["frames"][str(frame)]["kg"]
-		fitness_kg = kg
+		# weight
+		weight = data["frames"][str(frame)]["weight"]
+		fitness_weight = weight
 
 		# rise
 		rise = data["frames"][str(frame)]["rise"]
@@ -1477,7 +1477,7 @@ def calculate_fitness(start, end):
 		# pass to individual
 		individual["fitness"]["volume"] = fitness_volume
 		individual["fitness"]["area"] = fitness_area
-		individual["fitness"]["kg"] = fitness_kg
+		individual["fitness"]["weight"] = fitness_weight
 		individual["fitness"]["rise"] = fitness_rise
 		individual["fitness"]["span"] = fitness_span
 		individual["fitness"]["cantilever"] = fitness_cantilever
@@ -1502,10 +1502,10 @@ def calculate_fitness(start, end):
 			else:
 				weighted += basics.avoid_div_zero(1, basis_fitness["area"]) * fitness_area * phaenotyp.fitness_area
 
-			if phaenotyp.fitness_kg_invert:
-				weighted += basics.avoid_div_zero(1, fitness_kg) * basis_fitness["kg"] * phaenotyp.fitness_kg
+			if phaenotyp.fitness_weight_invert:
+				weighted += basics.avoid_div_zero(1, fitness_weight) * basis_fitness["weight"] * phaenotyp.fitness_weight
 			else:
-				weighted += basics.avoid_div_zero(1, basis_fitness["kg"]) * fitness_kg * phaenotyp.fitness_kg
+				weighted += basics.avoid_div_zero(1, basis_fitness["weight"]) * fitness_weight * phaenotyp.fitness_weight
 
 			if phaenotyp.fitness_rise_invert:
 				weighted += basics.avoid_div_zero(1, fitness_rise) * basis_fitness["rise"] * phaenotyp.fitness_rise
@@ -1531,7 +1531,7 @@ def calculate_fitness(start, end):
 			# if all sliders are set to one, the weight is 6 (with 6 fitness sliders)
 			weight = phaenotyp.fitness_volume
 			weight += phaenotyp.fitness_area
-			weight += phaenotyp.fitness_kg
+			weight += phaenotyp.fitness_weight
 			weight += phaenotyp.fitness_rise
 			weight += phaenotyp.fitness_span
 			weight += phaenotyp.fitness_cantilever

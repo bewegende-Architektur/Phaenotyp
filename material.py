@@ -49,7 +49,7 @@ def update():
 	current["A"] = ((pi * (current["Do"]*0.5)**2) - (pi * (current["Di"]*0.5)**2))
 
 	# weight of profile, 6.79 kg/m
-	current["kg_A"] =  current["A"]*current["d"] * 0.1
+	current["weight_A"] =  current["A"]*current["d"] * 0.1
 
 	current["ir"] = sqrt(current["Iy"]/current["A"])
 

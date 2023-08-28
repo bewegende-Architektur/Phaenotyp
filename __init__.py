@@ -370,17 +370,17 @@ class phaenotyp_properties(PropertyGroup):
 		default = False
 	)
 
-	fitness_kg: FloatProperty(
-		name = "kg",
+	fitness_weight: FloatProperty(
+		name = "weight",
 		description = "Weight the structure (without loads)",
 		default = 0.0,
 		min = 0.0,
 		max = 1.0
 		)
 
-	fitness_kg_invert: BoolProperty(
-		name = 'kg invert',
-		description = "Activate to maximize the kg",
+	fitness_weight_invert: BoolProperty(
+		name = 'weight invert',
+		description = "Activate to maximize the weight",
 		default = False
 	)
 
@@ -755,7 +755,7 @@ class phaenotyp_properties(PropertyGroup):
 					("id", "id", ""),
 					("Do", "Do", ""),
 					("Di", "Di", ""),
-					("kg", "kg", ""),
+					("weight", "weight", ""),
 					("length", "length", ""),
 					("sigma", "Sigma", ""),
 					("axial", "Axial", ""),
@@ -771,7 +771,7 @@ class phaenotyp_properties(PropertyGroup):
 					("id", "Id", ""),
 					("Do", "Do", ""),
 					("Di", "Di", ""),
-					("kg", "kg", ""),
+					("weight", "weight", ""),
 					("length", "Length", ""),
 					("max_long_stress", "Max long stress", ""),
 					("max_tau_shear", "Max tau shear", ""),

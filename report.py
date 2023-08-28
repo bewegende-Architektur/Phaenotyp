@@ -495,7 +495,7 @@ def fill_matrix_chromosomes(matrix, len_chromosome):
 	best = 0
 
 	# append fitness
-	fitness_types = ["volume", "area", "kg", "rise", "span", "cantilever"]
+	fitness_types = ["volume", "area", "weight", "rise", "span", "cantilever"]
 
 	if phaenotyp.calculation_type != "geometrical":
 		fitness_types.append("average_sigma")
@@ -605,7 +605,7 @@ def append_head(file, report_type):
 		file.write("<a href='Di.html'>Di</a> |\n")
 		file.write("<a href='utilization.html'>utilization</a> |\n")
 		file.write("<a href='acceptable_sigma_buckling.html'>acceptable_sigma_buckling |</a>\n")
-		file.write("<a href='kg.html'>kg</a> |\n")
+		file.write("<a href='weight.html'>weight</a> |\n")
 		file.write("<a href='length.html'>length</a>\n")
 
 		file.write("<br>\n")
@@ -668,7 +668,7 @@ def append_head(file, report_type):
 		file.write("<a href='shear_y.html'>shear_y</a>\n")
 		file.write("<br>\n")
 		
-		# thickness, kg, utilization?
+		# thickness, weight, utilization?
 
 		file.write("<br>\n")
 		file.write("<br>\n")
@@ -723,7 +723,7 @@ def append_head(file, report_type):
 		file.write("<a href='Do.html'>Do</a> |\n")
 		file.write("<a href='Di.html'>Di</a> |\n")
 		file.write("<a href='utilization.html'>utilization</a> |\n")
-		file.write("<a href='kg.html'>kg</a> |\n")
+		file.write("<a href='weight.html'>weight</a> |\n")
 		file.write("<a href='length.html'>length</a>\n")
 
 		file.write("<br>\n")
@@ -1184,7 +1184,7 @@ def report_frames(directory, start, end):
 	force_types["utilization"] = 1
 	force_types["acceptable_sigma_buckling"] = 1
 
-	force_types["kg"] = 1
+	force_types["weight"] = 1
 	force_types["length"] = 1
 
 	for force_type, length in force_types.items():
@@ -1233,7 +1233,7 @@ def report_quads(directory, start, end):
 	#force_types["Do"] = 1
 	#force_types["Di"] = 1
 
-	#force_types["kg"] = 1
+	#force_types["weight"] = 1
 	#force_types["length"] = 1
 
 	for force_type, length in force_types.items():
@@ -1276,7 +1276,7 @@ def report_combined(directory, start, end):
 	force_types["Di"] = 1
 	force_types["utilization"] = 1
 
-	force_types["kg"] = 1
+	force_types["weight"] = 1
 	force_types["length"] = 1
 
 	for force_type, length in force_types.items():
@@ -1343,7 +1343,7 @@ def report_chromosomes(directory):
 	# plus fitness
 	names.append("volume")
 	names.append("area")
-	names.append("kg")
+	names.append("weight")
 	names.append("rise")
 	names.append("span")
 	names.append("cantilever")
