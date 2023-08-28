@@ -252,7 +252,7 @@ def members(layout):
 				box_members.label(text="J = " + str(round(material.current["J"], 4)) + " cm⁴")
 
 			box_members.label(text="A = " + str(round(material.current["A"], 4)) + " cm²")
-			box_members.label(text="weight = " + str(round(material.current["weight_A"], 4)) + " kg/m")
+			box_members.label(text="Weight = " + str(round(material.current["weight_A"], 4)) + " kg/m")
 
 			box_members.operator("wm.set_member", text="Set")
 
@@ -325,7 +325,7 @@ def quads(layout):
 							box_quads.label(text="nu = " + str(nu))
 							box_quads.label(text="rho = " + str(rho))
 				
-				box_quads.label(text="weight = " + str(round(phaenotyp.rho_quads*phaenotyp.thickness*1000, 4)) + " kg/m²")
+				box_quads.label(text="Weight = " + str(round(phaenotyp.rho_quads*phaenotyp.thickness*1000, 4)) + " kg/m²")
 				
 				box_quads.operator("wm.set_quad", text="Set")
 
