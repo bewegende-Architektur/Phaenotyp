@@ -478,6 +478,7 @@ class phaenotyp_properties(PropertyGroup):
 					("axial", "Axial", ""),
 					("moment_y", "Moment Y", ""),
 					("moment_z", "Moment Z", ""),
+					("moment_h", "Moment H", ""),
 					("shear_y", "Shear Y", ""),
 					("shear_z", "Shear y", ""),
 					("torque", "Torque", ""),
