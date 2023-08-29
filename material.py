@@ -58,7 +58,7 @@ def update():
 # for quads
 library_quads = [
 	# name, name in dropdown, E, G, nu, rho
-	["concrete", "Concrete", 3200, 25, 0.17, 2.4], # from freecad
+	["concrete", "Concrete", 3300, 1375, 0.2, 2.5], # from R-Stab
 	["masonry", "Masonry", 1500, 400, 0.17, 1.0], # from pynite
 	["custom", "Custom", 1500, 400, 0.17, 1.0]
 	]
