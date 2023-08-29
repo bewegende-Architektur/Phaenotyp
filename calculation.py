@@ -974,25 +974,17 @@ def interweave_results_pn(feas):
 			shear = result.shear()
 			moment = result.moment()
 			membrane = result.membrane()
+
+			Qx = float(shear[0])
+			Qy = float(shear[1])
 			
-			'''
-			print("id", id)
-			print("shear", shear)
-			print("moment", moment)
-			print("membrane", membrane)
-			print("")
-			'''
+			Mx = float(moment[0])
+			My = float(moment[1])
+			Mxy = float(moment[2])
 			
-			quad["shear_x"][frame] = float(shear[0])
-			quad["shear_y"][frame] = float(shear[1])
-			
-			quad["moment_x"][frame] = float(moment[0])
-			quad["moment_y"][frame] = float(moment[1])
-			quad["moment_xy"][frame] = float(moment[2])
-			
-			quad["membrane_x"][frame] = float(membrane[0])
-			quad["membrane_y"][frame] = float(membrane[1])
-			quad["membrane_xy"][frame] = float(membrane[2])
+			Sx = float(membrane[0])
+			Sy = float(membrane[1])
+			Txy = float(membrane[2])
 			
 			# get deflection
 			node_ids = quad["vertices_ids_structure"]
@@ -1011,41 +1003,53 @@ def interweave_results_pn(feas):
 				
 				deflection.append([x,y,z])
 			
-			# get lengthes
+			# get average lengthes to calculate force by unit
 			initial = quad["initial_positions"][str(frame)]
 			v_0 = array(initial[0])
 			v_1 = array(initial[1])
 			v_2 = array(initial[2])
 			v_3 = array(initial[3])
 			
-			x_0 = v_1 - v_0
-			x_1 = v_3 - v_2
-			y_0 = v_2 - v_1
-			y_1 = v_3 - v_0
+			x_0 = v_1 - v_0 # first edge x
+			x_1 = v_3 - v_2 # second edge x
+			y_0 = v_2 - v_1 # first edge y
+			y_1 = v_3 - v_0 # second edge y
 			
+			# as descripted in quad example
 			length_x = (linalg.norm(x_0) + linalg.norm(x_1)) * 0.5 * 100 # to convert into cm
 			length_y = (linalg.norm(y_0) + linalg.norm(y_1)) * 0.5 * 100 # to convert into cm
+
+			# moment per unit
+			shear_x = Qx/(length_x/2)
+			shear_y = Qy/(length_y/2)
 			
-			quad["length_x"][frame] = length_x
-			quad["length_y"][frame] = length_y
+			moment_x = Mx/(length_x/2)
+			moment_y = My/(length_y/2)
+			moment_xy = Mxy/(length_y/2)
 			
-			print("x:", length_x, "y:", length_y)
-			
-			quad["deflection"][frame] = deflection
-			
-			# real moment per unit
-			Mx = quad["moment_x"][frame]/(length_x/2)
-			My = quad["moment_y"][frame]/(length_y/2)
-			
-			print("id:", id, "Mx:", Mx, "My:", My)
+			membrane_x = Sx/(length_x/2)
+			membrane_y = Sy/(length_y/2)
+			membrane_xy = Txy/(length_y/2)
 			
 			# overstress of shear
 			#shear_stress_x = 1.5 * quad["shear_x"][frame]/quad["thickness"][frame] # Schubspannung x
 			#shear_stress_y = 1.5 * quad["shear_y"][frame]/quad["thickness"][frame] # Schubspannung y
 			
-			#print("id:", id, "x:", shear_stress_x, "y", shear_stress_y)
-			#print("rho:", quad["rho"], "thickness", quad["thickness"][frame])
-			# if stress > acceptable sigma = overstress
+			quad["shear_x"][frame] = shear_x
+			quad["shear_y"][frame] = shear_y
+			
+			quad["moment_x"][frame] = moment_x
+			quad["moment_y"][frame] = moment_y
+			quad["moment_xy"][frame] = moment_xy
+			
+			quad["membrane_x"][frame] = membrane_x
+			quad["membrane_y"][frame] = membrane_y
+			quad["membrane_xy"][frame] = membrane_xy
+			
+			quad["length_x"][frame] = length_x
+			quad["length_y"][frame] = length_y
+			
+			quad["deflection"][frame] = deflection
 		
 		# update progress
 		progress.http.update_i()
