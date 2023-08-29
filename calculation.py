@@ -1011,8 +1011,42 @@ def interweave_results_pn(feas):
 				
 				deflection.append([x,y,z])
 			
+			# get lengthes
+			initial = quad["initial_positions"][str(frame)]
+			v_0 = array(initial[0])
+			v_1 = array(initial[1])
+			v_2 = array(initial[2])
+			v_3 = array(initial[3])
+			
+			x_0 = v_1 - v_0
+			x_1 = v_3 - v_2
+			y_0 = v_2 - v_1
+			y_1 = v_3 - v_0
+			
+			length_x = (linalg.norm(x_0) + linalg.norm(x_1)) * 0.5
+			length_y = (linalg.norm(y_0) + linalg.norm(y_1)) * 0.5
+			
+			quad["length_x"][frame] = length_x
+			quad["length_y"][frame] = length_y
+			
+			print("x:", length_x, "y:", length_y)
+			
 			quad["deflection"][frame] = deflection
 			
+			# real moment
+			Mx = quad["moment_x"][frame]/(length_x/2)
+			My = quad["moment_y"][frame]/(length_y/2)
+			
+			print("id:", id, "Mx:", Mx, "My:", My)
+			
+			# overstress of shear
+			#shear_stress_x = 1.5 * quad["shear_x"][frame]/quad["thickness"][frame] # Schubspannung x
+			#shear_stress_y = 1.5 * quad["shear_y"][frame]/quad["thickness"][frame] # Schubspannung y
+			
+			#print("id:", id, "x:", shear_stress_x, "y", shear_stress_y)
+			#print("rho:", quad["rho"], "thickness", quad["thickness"][frame])
+			# if stress > acceptable sigma = overstress
+		
 		# update progress
 		progress.http.update_i()
 

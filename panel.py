@@ -302,7 +302,9 @@ def quads(layout):
 					material.current_quads["G"] = phaenotyp.G_quads
 					material.current_quads["nu"] = phaenotyp.nu_quads
 					material.current_quads["rho"] = phaenotyp.rho_quads
-				
+					
+					box_quads.label(text="Weight = " + str(round(phaenotyp.rho_quads*phaenotyp.thickness*1000, 4)) + " kg/m²")
+
 				else:
 					# pass input form library to data
 					for mat in material.library_quads:
@@ -325,7 +327,7 @@ def quads(layout):
 							box_quads.label(text="nu = " + str(nu))
 							box_quads.label(text="rho = " + str(rho))
 				
-				box_quads.label(text="Weight = " + str(round(phaenotyp.rho_quads*phaenotyp.thickness*1000, 4)) + " kg/m²")
+					box_quads.label(text="Weight = " + str(round(rho*phaenotyp.thickness*1000, 4)) + " kg/m²")
 				
 				box_quads.operator("wm.set_quad", text="Set")
 

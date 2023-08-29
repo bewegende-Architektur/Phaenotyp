@@ -536,6 +536,9 @@ def set_quad():
 
 			quad["weight"] = {}
 			quad["area"] = {}
+			
+			quad["length_x"] = {} # average length of quad in x-direction
+			quad["length_y"] = {} # average length of quad in y-direction
 
 			data["quads"][str(id)] = quad
 
@@ -2023,7 +2026,7 @@ def text():
 						frame = bpy.context.scene.frame_current
 
 						# get info
-						text = "thickness: " + str(round(quad["thickness"], 3))
+						text = "thickness: " + str(round(quad["thickness"][str(frame)], 3))
 						data_temp.append(text)
 						
 						#weight, area

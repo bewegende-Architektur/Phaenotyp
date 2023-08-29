@@ -1122,19 +1122,19 @@ def report_members(directory, frame):
 	force_types = {}
 
 	# force type with length of entry
-	force_types["axial"] = 11
-	force_types["moment_y"] = 11
-	force_types["moment_z"] = 11
-	force_types["moment_h"] = 11
-	force_types["shear_y"] = 11
-	force_types["shear_z"] = 11
-	force_types["shear_h"] = 11
-	force_types["torque"] = 11
-	force_types["sigma"] = 11
+	force_types["axial"] = 11 # kN
+	force_types["moment_y"] = 11 # kNcm
+	force_types["moment_z"] = 11 # kNcm
+	force_types["moment_h"] = 11 # kNcm
+	force_types["shear_y"] = 11	 # kN
+	force_types["shear_z"] = 11	 # kN
+	force_types["shear_h"] = 11 # kN
+	force_types["torque"] = 11 # kNcm
+	force_types["sigma"] = 11 # kN/cm²
 
-	force_types["normal_energy"] = 10
-	force_types["moment_energy"] = 10
-	force_types["strain_energy"] = 10
+	force_types["normal_energy"] = 10 # kNcm
+	force_types["moment_energy"] = 10 # kNcm
+	force_types["strain_energy"] = 10 # kNcm
 
 	for force_type, length in force_types.items():
 		# create file
@@ -1173,19 +1173,19 @@ def report_frames(directory, start, end):
 
 	force_types = {}
 
-	force_types["max_sigma"] = 1
-	force_types["max_tau_shear"] = 1
-	force_types["max_tau_torsion"] = 1
-	force_types["max_sum_tau"] = 1
-	force_types["max_sigmav"] = 1
+	force_types["max_sigma"] = 1 # kN/cm²
+	force_types["max_tau_shear"] = 1 # kN/cm²
+	force_types["max_tau_torsion"] = 1 # kN/cm²
+	force_types["max_sum_tau"] = 1 # kN/cm²
+	force_types["max_sigmav"] = 1 # kN/cm²
 
-	force_types["Do"] = 1
-	force_types["Di"] = 1
+	force_types["Do"] = 1 # cm
+	force_types["Di"] = 1 # cm
 	force_types["utilization"] = 1
-	force_types["acceptable_sigma_buckling"] = 1
+	force_types["acceptable_sigma_buckling"] = 1 # kN/cm²
 
-	force_types["weight"] = 1
-	force_types["length"] = 1
+	force_types["weight"] = 1 # kg
+	force_types["length"] = 1 # cm
 
 	for force_type, length in force_types.items():
 		# create file
@@ -1269,15 +1269,15 @@ def report_combined(directory, start, end):
 
 	force_types = {}
 
-	force_types["axial"] = 1
-	force_types["sigma"] = 1
+	force_types["axial"] = 1 # kN
+	force_types["sigma"] = 1 # kN/cm²
 
-	force_types["Do"] = 1
-	force_types["Di"] = 1
+	force_types["Do"] = 1 # cm
+	force_types["Di"] = 1 # cm
 	force_types["utilization"] = 1
 
-	force_types["weight"] = 1
-	force_types["length"] = 1
+	force_types["weight"] = 1 # kg
+	force_types["length"] = 1 # cm
 
 	for force_type, length in force_types.items():
 		# create file
@@ -1341,12 +1341,12 @@ def report_chromosomes(directory):
 	names = list(range(len_chromosome))
 
 	# plus fitness
-	names.append("volume")
-	names.append("area")
-	names.append("weight")
-	names.append("rise")
-	names.append("span")
-	names.append("cantilever")
+	names.append("volume") # m³
+	names.append("area") # m²
+	names.append("weight") # kg
+	names.append("rise") # m
+	names.append("span") # m
+	names.append("cantilever") # m
 
 	if phaenotyp.calculation_type != "geometrical":
 		names.append("average_sigma")
