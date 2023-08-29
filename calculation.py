@@ -247,7 +247,7 @@ def prepare_fea_pn():
 			vertex_id = str(vertex_id)
 			# area * thickness * density * 0.25 (to distribute to all four faces) - for gravity
 			z = area * t + rho * (-0.25)
-			model.add_node_load(vertex_id, 'FZ', z * 0.01) # to cm
+			model.add_node_load(vertex_id, 'FZ', z * 0.00981) # to cm
 		
 	# add loads
 	for id, load in loads_v.items():
