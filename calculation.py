@@ -1023,8 +1023,8 @@ def interweave_results_pn(feas):
 			y_0 = v_2 - v_1
 			y_1 = v_3 - v_0
 			
-			length_x = (linalg.norm(x_0) + linalg.norm(x_1)) * 0.5
-			length_y = (linalg.norm(y_0) + linalg.norm(y_1)) * 0.5
+			length_x = (linalg.norm(x_0) + linalg.norm(x_1)) * 0.5 * 100 # to convert into cm
+			length_y = (linalg.norm(y_0) + linalg.norm(y_1)) * 0.5 * 100 # to convert into cm
 			
 			quad["length_x"][frame] = length_x
 			quad["length_y"][frame] = length_y
@@ -1033,7 +1033,7 @@ def interweave_results_pn(feas):
 			
 			quad["deflection"][frame] = deflection
 			
-			# real moment
+			# real moment per unit
 			Mx = quad["moment_x"][frame]/(length_x/2)
 			My = quad["moment_y"][frame]/(length_y/2)
 			
