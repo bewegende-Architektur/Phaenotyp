@@ -223,6 +223,8 @@ def prepare_fea_pn():
 			pass
 		else:
 			t = quad["thickness_first"]
+		
+		print(t)
 				
 		v_0 = str(vertex_ids[0])
 		v_1 = str(vertex_ids[1])
@@ -246,7 +248,7 @@ def prepare_fea_pn():
 		for vertex_id in quads[id]["vertices_ids_structure"]:
 			vertex_id = str(vertex_id)
 			# area * thickness * density * 0.25 (to distribute to all four faces) - for gravity
-			z = area * t + rho * (-0.25)
+			z = area * t * rho * (-0.25)
 			model.add_node_load(vertex_id, 'FZ', z * 0.00981) # to cm
 		
 	# add loads
