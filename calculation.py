@@ -245,7 +245,6 @@ def prepare_fea_pn():
 		area = face.area
 		weight_A = t * rho
 		weight = weight_A * area * 10000 # in cm
-		print(t, rho, area)
 		for vertex_id in quads[id]["vertices_ids_structure"]:
 			vertex_id = str(vertex_id)
 			# area * thickness * density * 0.25 (to distribute to all four faces) - for gravity
@@ -256,7 +255,7 @@ def prepare_fea_pn():
 		quad["weight_A"][str(frame)] = t * weight_A
 		quad["weight"][str(frame)] = weight_A * area # in kg
 				
-		frame_weight += weight
+		frame_weight += weight_A * area # in kg
 		
 	# add loads
 	for id, load in loads_v.items():
@@ -1451,9 +1450,28 @@ def calculate_fitness(start, end):
 		# cantilever
 		cantilever = data["frames"][str(frame)]["cantilever"]
 		fitness_cantilever = cantilever
-
+		
 		if phaenotyp.calculation_type != "geometrical":
 			if phaenotyp.calculation_type != "force_distribution":
+				# deflection
+				forces = []
+				for id, member in members.items():
+					v_0 = member["initial_positions"][str(frame)]
+					v_1 = member["deflection"][str(frame)]
+					
+					v_0 = array(v_0)
+					v_1 = array(v_1)
+					
+					dist = (linalg.norm(v_1) + linalg.norm(v_0))
+					
+					forces.append(dist)
+
+				sum_forces = 0
+				for force in forces:
+					sum_forces = sum_forces + abs(force)
+
+				fitness_deflection = sum_forces / len(forces)
+				
 				# average_sigma
 				forces = []
 				for id, member in members.items():
@@ -1529,6 +1547,7 @@ def calculate_fitness(start, end):
 		individual["fitness"]["span"] = fitness_span
 		individual["fitness"]["cantilever"] = fitness_cantilever
 		if phaenotyp.calculation_type != "geometrical":
+			individual["fitness"]["deflection"] = fitness_deflection
 			individual["fitness"]["average_sigma"] = fitness_average_sigma
 			if phaenotyp.calculation_type != "force_distribution":
 				individual["fitness"]["average_strain_energy"] = fitness_average_strain_energy
@@ -1570,6 +1589,11 @@ def calculate_fitness(start, end):
 				weighted += basics.avoid_div_zero(1, basis_fitness["cantilever"]) * fitness_cantilever * phaenotyp.fitness_cantilever
 
 			if phaenotyp.calculation_type != "geometrical":
+				if phaenotyp.fitness_deflection_invert:
+					weighted += basics.avoid_div_zero(1, fitness_deflection) * basis_fitness["deflection"] * phaenotyp.fitness_deflection
+				else:
+					weighted += basics.avoid_div_zero(1, basis_fitness["deflection"]) * fitness_deflection * phaenotyp.fitness_deflection
+
 				weighted += basics.avoid_div_zero(1, basis_fitness["average_sigma"]) * fitness_average_sigma * phaenotyp.fitness_average_sigma
 				if phaenotyp.calculation_type != "force_distribution":
 					weighted += basics.avoid_div_zero(1, basis_fitness["average_strain_energy"]) * fitness_average_strain_energy * phaenotyp.fitness_average_strain_energy
@@ -1583,6 +1607,7 @@ def calculate_fitness(start, end):
 			weight += phaenotyp.fitness_span
 			weight += phaenotyp.fitness_cantilever
 			if phaenotyp.calculation_type != "geometrical":
+				weight += phaenotyp.fitness_deflection
 				weight += phaenotyp.fitness_average_sigma
 				if phaenotyp.calculation_type != "force_distribution":
 					weight += phaenotyp.fitness_average_strain_energy

@@ -671,7 +671,13 @@ def bruteforce(layout):
 
 				# structural fitness
 				if phaenotyp.calculation_type != "geometrical":
+					col = box_fitness.column()
+					split = col.split()
+					split.prop(phaenotyp, "fitness_deflection", text="Deflection")
+					split.prop(phaenotyp, "fitness_deflection_invert", text="Invert")
+					
 					box_fitness.prop(phaenotyp, "fitness_average_sigma", text="Sigma")
+					
 					if phaenotyp.calculation_type != "force_distribution":
 						box_fitness.prop(phaenotyp, "fitness_average_strain_energy", text="Strain energy")
 
@@ -776,7 +782,13 @@ def genetic_algorithm(layout):
 
 				# structural fitness
 				if phaenotyp.calculation_type != "geometrical":
+					col = box_fitness.column()
+					split = col.split()
+					split.prop(phaenotyp, "fitness_deflection", text="Deflection")
+					split.prop(phaenotyp, "fitness_deflection_invert", text="Invert")
+					
 					box_fitness.prop(phaenotyp, "fitness_average_sigma", text="Sigma")
+					
 					if phaenotyp.calculation_type != "force_distribution":
 						box_fitness.prop(phaenotyp, "fitness_average_strain_energy", text="Strain energy")
 
@@ -884,7 +896,13 @@ def gradient_descent(layout):
 
 				# structural fitness
 				if phaenotyp.calculation_type != "geometrical":
+					col = box_fitness.column()
+					split = col.split()
+					split.prop(phaenotyp, "fitness_deflection", text="Deflection")
+					split.prop(phaenotyp, "fitness_deflection_invert", text="Invert")
+					
 					box_fitness.prop(phaenotyp, "fitness_average_sigma", text="Sigma")
+					
 					if phaenotyp.calculation_type != "force_distribution":
 						box_fitness.prop(phaenotyp, "fitness_average_strain_energy", text="Strain energy")
 

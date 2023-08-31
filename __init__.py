@@ -466,6 +466,20 @@ class phaenotyp_properties(PropertyGroup):
 		max = 1.0
 		)
 
+	fitness_deflection: FloatProperty(
+		name = "deflection",
+		description = "Average deflection of the elements",
+		default = 0.0,
+		min = 0.0,
+		max = 1.0
+		)
+
+	fitness_deflection_invert: BoolProperty(
+		name = 'deflection invert',
+		description = "Activate to maximize the deflection",
+		default = False
+	)
+	
 	mate_type: EnumProperty(
 		name = "mate_type",
 		description = "Type of mating",

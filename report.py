@@ -498,6 +498,7 @@ def fill_matrix_chromosomes(matrix, len_chromosome):
 	fitness_types = ["volume", "area", "weight", "rise", "span", "cantilever"]
 
 	if phaenotyp.calculation_type != "geometrical":
+		fitness_types.append("deflection")
 		fitness_types.append("average_sigma")
 		if phaenotyp.calculation_type != "force_distribution":
 			fitness_types.append("average_strain_energy")
@@ -1368,11 +1369,11 @@ def report_chromosomes(directory):
 	# len_fitness_functions
 	if phaenotyp.calculation_type != "geometrical":
 		if phaenotyp.calculation_type == "force_distribution":
-			len_fitness_functions = 8
-		else:
 			len_fitness_functions = 9
+		else:
+			len_fitness_functions = 10
 	else:
-		len_fitness_functions = 7
+		len_fitness_functions = 8
 
 	# create matrix with length of col and row
 	# len = genes + amount of fitness
@@ -1396,6 +1397,7 @@ def report_chromosomes(directory):
 	names.append("cantilever") # m
 
 	if phaenotyp.calculation_type != "geometrical":
+		names.append("deflection")
 		names.append("average_sigma")
 		if phaenotyp.calculation_type != "force_distribution":
 			names.append("average_strain_energy")
