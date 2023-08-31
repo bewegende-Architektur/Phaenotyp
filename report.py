@@ -519,7 +519,7 @@ def fill_matrix_chromosomes(matrix, len_chromosome):
 
 	return matrix, highest, lowest, weakest, best
 
-def append_head(file, report_type, name):
+def append_head(file, report_type, name, unit):
 	file.write('<html>\n')
 	file.write("<head>\n")
 	file.write('<title>')
@@ -550,7 +550,6 @@ def append_head(file, report_type, name):
 
 		file.write("<br>\n")
 		file.write("<br>\n")
-		file.write("<br>\n")
 		file.write("</head>\n")
 
 		file.write("\n")
@@ -562,7 +561,14 @@ def append_head(file, report_type, name):
 		file.write("a:active {color: rgb(0,0,0); background-color: transparent; text-decoration: underline;}\n")
 		file.write("</style>\n")
 		file.write("\n")
-
+		
+		if unit:
+			file.write("\n")
+			file.write("all values in unit: " + unit)
+			file.write("<br>\n")
+			file.write("<br>\n")
+			file.write("\n")
+		
 		# from https://www.kryogenix.org/
 		# as suggested by smilyface
 		# https://stackoverflow.com/questions/10683712/html-table-sort
@@ -612,7 +618,6 @@ def append_head(file, report_type, name):
 
 		file.write("<br>\n")
 		file.write("<br>\n")
-		file.write("<br>\n")
 		file.write("</head>\n")
 
 		file.write("\n")
@@ -625,6 +630,13 @@ def append_head(file, report_type, name):
 		file.write("</style>\n")
 		file.write("\n")
 
+		if unit:
+			file.write("\n")
+			file.write("all values in unit: " + unit)
+			file.write("<br>\n")
+			file.write("<br>\n")
+			file.write("\n")
+		
 		# from https://www.kryogenix.org/
 		# as suggested by smilyface
 		# https://stackoverflow.com/questions/10683712/html-table-sort
@@ -674,7 +686,6 @@ def append_head(file, report_type, name):
 
 		file.write("<br>\n")
 		file.write("<br>\n")
-		file.write("<br>\n")
 		file.write("</head>\n")
 
 		file.write("\n")
@@ -687,6 +698,13 @@ def append_head(file, report_type, name):
 		file.write("</style>\n")
 		file.write("\n")
 
+		if unit:
+			file.write("\n")
+			file.write("all values in unit: " + unit)
+			file.write("<br>\n")
+			file.write("<br>\n")
+			file.write("\n")
+		
 		# from https://www.kryogenix.org/
 		# as suggested by smilyface
 		# https://stackoverflow.com/questions/10683712/html-table-sort
@@ -730,7 +748,6 @@ def append_head(file, report_type, name):
 
 		file.write("<br>\n")
 		file.write("<br>\n")
-		file.write("<br>\n")
 		file.write("</head>\n")
 
 		file.write("\n")
@@ -743,6 +760,13 @@ def append_head(file, report_type, name):
 		file.write("</style>\n")
 		file.write("\n")
 
+		if unit:
+			file.write("\n")
+			file.write("all values in unit: " + unit)
+			file.write("<br>\n")
+			file.write("<br>\n")
+			file.write("\n")
+		
 		# from https://www.kryogenix.org/
 		# as suggested by smilyface
 		# https://stackoverflow.com/questions/10683712/html-table-sort
@@ -1124,21 +1148,24 @@ def report_members(directory, frame):
 	force_types = {}
 
 	# force type with length of entry
-	force_types["axial"] = 11 # kN
-	force_types["moment_y"] = 11 # kNcm
-	force_types["moment_z"] = 11 # kNcm
-	force_types["moment_h"] = 11 # kNcm
-	force_types["shear_y"] = 11	 # kN
-	force_types["shear_z"] = 11	 # kN
-	force_types["shear_h"] = 11 # kN
-	force_types["torque"] = 11 # kNcm
-	force_types["sigma"] = 11 # kN/cm²
+	force_types["axial"] = [11, "kN"]
+	force_types["moment_y"] = [11, "kNcm"]
+	force_types["moment_z"] = [11, "kNcm"]
+	force_types["moment_h"] = [11, "kNcm"]
+	force_types["shear_y"] = [11, "kN"]
+	force_types["shear_z"] = [11, "kN"]
+	force_types["shear_h"] = [11, "kN"]
+	force_types["torque"] = [11, "kNcm"]
+	force_types["sigma"] = [11, "kN/cm²"]
 
-	force_types["normal_energy"] = 10 # kNcm
-	force_types["moment_energy"] = 10 # kNcm
-	force_types["strain_energy"] = 10 # kNcm
+	force_types["normal_energy"] = [10, "kNcm"]
+	force_types["moment_energy"] = [10, "kNcm"]
+	force_types["strain_energy"] = [10, "kNcm"]
 
-	for force_type, length in force_types.items():
+	for force_type, entries in force_types.items():
+		length = entries[0]
+		unit = entries[1]
+		
 		# create file
 		filename = directory + str(force_type) + ".html"
 		file = open(filename, 'w')
@@ -1152,7 +1179,7 @@ def report_members(directory, frame):
 		result_matrix, highest, lowest = fill_matrix_members(result_matrix, force_type, frame, length)
 
 		# append start
-		append_head(file, "members", force_type)
+		append_head(file, "members", force_type, unit)
 
 		# create headlines
 		if length > 1:
@@ -1175,21 +1202,24 @@ def report_frames(directory, start, end):
 
 	force_types = {}
 
-	force_types["max_sigma"] = 1 # kN/cm²
-	force_types["max_tau_shear"] = 1 # kN/cm²
-	force_types["max_tau_torsion"] = 1 # kN/cm²
-	force_types["max_sum_tau"] = 1 # kN/cm²
-	force_types["max_sigmav"] = 1 # kN/cm²
+	force_types["max_sigma"] = [1, "kN/cm²"]
+	force_types["max_tau_shear"] = [1, "kN/cm²"]
+	force_types["max_tau_torsion"] = [1, "kN/cm²"]
+	force_types["max_sum_tau"] = [1, "kN/cm²"]
+	force_types["max_sigmav"] = [1, "kN/cm²"]
 
-	force_types["Do"] = 1 # cm
-	force_types["Di"] = 1 # cm
-	force_types["utilization"] = 1
-	force_types["acceptable_sigma_buckling"] = 1 # kN/cm²
+	force_types["Do"] = [1, "cm"]
+	force_types["Di"] = [1, "cm"]
+	force_types["utilization"] = [1, ""]
+	force_types["acceptable_sigma_buckling"] = [1, "kN/cm²"]
 
-	force_types["weight"] = 1 # kg
-	force_types["length"] = 1 # cm
+	force_types["weight"] = [1, "kg"]
+	force_types["length"] = [1, "cm"]
 
-	for force_type, length in force_types.items():
+	for force_type, entries in force_types.items():
+		length = entries[0]
+		unit = entries[1]
+		
 		# create file
 		filename = directory + str(force_type) + ".html"
 		file = open(filename, 'w')
@@ -1203,7 +1233,7 @@ def report_frames(directory, start, end):
 		result_matrix, highest, lowest = fill_matrix_frames(result_matrix, force_type, length)
 
 		# append start
-		append_head(file, "frames", force_type)
+		append_head(file, "frames", force_type, unit)
 
 		names = list(range(start, end+1))
 		append_headlines(file, names, 3)
@@ -1221,24 +1251,23 @@ def report_quads(directory, start, end):
 
 	force_types = {}
 
-	force_types["membrane_xy"] = 1
-	force_types["membrane_x"] = 1
-	force_types["membrane_y"] = 1
+	force_types["membrane_xy"] = [1, None]
+	force_types["membrane_x"] = [1, None]
+	force_types["membrane_y"] = [1, None]
 	
-	force_types["moment_xy"] = 1
-	force_types["moment_x"] = 1
-	force_types["moment_y"] = 1
+	force_types["moment_xy"] = [1, None]
+	force_types["moment_x"] = [1, None]
+	force_types["moment_y"] = [1, None]
 
-	force_types["shear_x"] = 1
-	force_types["shear_y"] = 1
+	force_types["shear_x"] = [1, None]
+	force_types["shear_y"] = [1, None]
 	
-	#force_types["Do"] = 1
-	#force_types["Di"] = 1
-
-	#force_types["weight"] = 1
-	#force_types["length"] = 1
-
-	for force_type, length in force_types.items():
+	force_types["thickness"] = [1, "cm"]
+	
+	for force_type, entries in force_types.items():
+		length = entries[0]
+		unit = entries[1]
+		
 		# create file
 		filename = directory + str(force_type) + ".html"
 		file = open(filename, 'w')
@@ -1252,7 +1281,7 @@ def report_quads(directory, start, end):
 		result_matrix, highest, lowest = fill_matrix_quads(result_matrix, force_type, length)
 
 		# append start
-		append_head(file, "quads", force_type)
+		append_head(file, "quads", force_type, unit)
 
 		names = list(range(start, end+1))
 		append_headlines(file, names, 3)
@@ -1281,7 +1310,10 @@ def report_combined(directory, start, end):
 	force_types["weight"] = 1 # kg
 	force_types["length"] = 1 # cm
 
-	for force_type, length in force_types.items():
+	for force_type, entries in force_types.items():
+		length = entries[0]
+		unit = entries[1]
+		
 		# create file
 		filename = directory + str(force_type) + ".html"
 		file = open(filename, 'w')
@@ -1337,7 +1369,7 @@ def report_chromosomes(directory):
 	result_matrix, highest, lowest, weakest, best = fill_matrix_chromosomes(result_matrix, len_chromosome)
 
 	# append start
-	append_head(file, "chromosomes", "")
+	append_head(file, "chromosomes", "", False)
 
 	# genes
 	names = list(range(len_chromosome))
@@ -1391,7 +1423,7 @@ def report_tree(directory):
 	svg_individuals.fitness_best = sorted_list[0][2]
 	svg_individuals.fitness_weakest = sorted_list[len(sorted_list)-1][2]
 
-	append_head(file, "tree", "")
+	append_head(file, "tree", "", False)
 	svg_individuals.setup()
 	svg_individuals.start(file)
 	svg_individuals.initial_generation(file)
