@@ -1926,44 +1926,44 @@ def text():
 								frame = bpy.context.scene.frame_current
 
 								# get Do and Di
-								text = "Do: " + str(round(member["Do"][str(frame)], 3))
+								text = "Do: " + str(round(member["Do"][str(frame)], 3)) + " cm"
 								data_temp.append(text)
-								text = "Di: " + str(round(member["Di"][str(frame)], 3))
+								text = "Di: " + str(round(member["Di"][str(frame)], 3)) + " cm"
 								data_temp.append(text)
 
 								# results
-								text = "axial: " + str(round(member["axial"][str(frame)][position], 3))
+								text = "axial: " + str(round(member["axial"][str(frame)][position], 3)) + " kN"
 								data_temp.append(text)
-								text = "moment_y: " + str(round(member["moment_y"][str(frame)][position], 3))
+								text = "moment_y: " + str(round(member["moment_y"][str(frame)][position], 3)) + " kNcm"
 								data_temp.append(text)
-								text = "moment_z: " + str(round(member["moment_z"][str(frame)][position], 3))
+								text = "moment_z: " + str(round(member["moment_z"][str(frame)][position], 3)) + " kNcm"
 								data_temp.append(text)
-								text = "shear_y: " + str(round(member["shear_y"][str(frame)][position], 3))
+								text = "moment_h: " + str(round(member["moment_h"][str(frame)][position], 3)) + " kNcm"
 								data_temp.append(text)
-								text = "shear_z: " + str(round(member["shear_z"][str(frame)][position], 3))
+								text = "shear_y: " + str(round(member["shear_y"][str(frame)][position], 3)) + " kN"
 								data_temp.append(text)
-								text = "torque: " + str(round(member["torque"][str(frame)][position], 3))
+								text = "shear_z: " + str(round(member["shear_z"][str(frame)][position], 3)) + " kN"
 								data_temp.append(text)
-
-								text = "long_stress: " + str(round(member["long_stress"][str(frame)][position], 3))
+								text = "shear_h: " + str(round(member["shear_h"][str(frame)][position], 3)) + " kN"
 								data_temp.append(text)
-								text = "tau_shear: " + str(round(member["tau_shear"][str(frame)][position], 3))
-								data_temp.append(text)
-								text = "tau_torsion: " + str(round(member["tau_torsion"][str(frame)][position], 3))
-								data_temp.append(text)
-								text = "sum_tau: " + str(round(member["sum_tau"][str(frame)][position], 3))
-								data_temp.append(text)
-								text = "sigmav: " + str(round(member["sigmav"][str(frame)][position], 3))
-								data_temp.append(text)
-								text = "sigma: " + str(round(member["sigma"][str(frame)][position], 3))
+								text = "torque: " + str(round(member["torque"][str(frame)][position], 3)) + " kNcm"
 								data_temp.append(text)
 
-								# leverarm
-								text = "leverarm: " + str(round(member["lever_arm"][str(frame)][position], 3))
+								text = "tau_shear: " + str(round(member["tau_shear"][str(frame)][position], 3)) + " kN/cm²"
+								data_temp.append(text)
+								text = "tau_torsion: " + str(round(member["tau_torsion"][str(frame)][position], 3)) + " kN/cm²"
+								data_temp.append(text)
+								text = "sum_tau: " + str(round(member["sum_tau"][str(frame)][position], 3)) + " kN/cm²"
+								data_temp.append(text)
+								text = "sigmav: " + str(round(member["sigmav"][str(frame)][position], 3)) + " kN/cm²"
+								data_temp.append(text)
+								text = "sigma: " + str(round(member["sigma"][str(frame)][position], 3)) + " kN/cm²"
 								data_temp.append(text)
 
-								# overstress
-								text = "overstress: " + str(round(member["overstress"][str(frame)], 3))
+								text = "utilization: " + str(round(member["utilization"][str(frame)], 3))
+								data_temp.append(text)
+
+								text = "overstress: " + str(member["overstress"][str(frame)])
 								data_temp.append(text)
 
 								data["texts"] = data_temp
@@ -1980,24 +1980,22 @@ def text():
 								frame = bpy.context.scene.frame_current
 
 								# get Do and Di
-								text = "Do: " + str(round(member["Do"][str(frame)], 3))
+								text = "Do: " + str(round(member["Do"][str(frame)], 3)) + " cm"
 								data_temp.append(text)
-								text = "Di: " + str(round(member["Di"][str(frame)], 3))
+								text = "Di: " + str(round(member["Di"][str(frame)], 3)) + " cm"
 								data_temp.append(text)
 
 								# results
-								text = "axial: " + str(round(member["axial"][str(frame)], 3))
+								text = "axial: " + str(round(member["axial"][str(frame)], 3)) + " kN"
 								data_temp.append(text)
 
-								text = "sigma: " + str(round(member["sigma"][str(frame)], 3))
+								text = "sigma: " + str(round(member["sigma"][str(frame)], 3)) + " kN/cm²"
 								data_temp.append(text)
 
-								# leverarm
 								text = "utilization: " + str(round(member["utilization"][str(frame)], 3))
 								data_temp.append(text)
 
-								# overstress
-								text = "overstress: " + str(round(member["overstress"][str(frame)], 3))
+								text = "overstress: " + str(member["overstress"][str(frame)])
 								data_temp.append(text)
 
 								data["texts"] = data_temp
