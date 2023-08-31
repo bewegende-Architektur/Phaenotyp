@@ -191,7 +191,7 @@ def members(layout):
 			if phaenotyp.material == "custom":
 				box_members.prop(phaenotyp, "E", text="Modulus of elasticity kN/cm²")
 				box_members.prop(phaenotyp, "G", text="Shear modulus kN/cm²")
-				box_members.prop(phaenotyp, "rho", text="Density in g/cm3")
+				box_members.prop(phaenotyp, "rho", text="Density g/cm3")
 
 				box_members.prop(phaenotyp, "acceptable_sigma", text="Acceptable sigma kN/cm²")
 				box_members.prop(phaenotyp, "acceptable_shear", text="Acceptable shear kN/cm²")
@@ -303,17 +303,17 @@ def quads(layout):
 				box_quads.prop(phaenotyp, "material_quads", text="")
 				
 				if phaenotyp.material_quads == "custom":
-					box_quads.prop(phaenotyp, "E_quads", text="Modulus of elasticity")
-					box_quads.prop(phaenotyp, "G_quads", text="Modulus of elasticity")
+					box_quads.prop(phaenotyp, "E_quads", text="Modulus of elasticity kN/cm²")
+					box_quads.prop(phaenotyp, "G_quads", text="Modulus of elasticity kN/cm²")
 					box_quads.prop(phaenotyp, "nu_quads", text="Poisson's ratio")
-					box_quads.prop(phaenotyp, "rho_quads", text="Density")
+					box_quads.prop(phaenotyp, "rho_quads", text="Density g/cm3")
 					
 					material.current_quads["E"] = phaenotyp.E_quads
 					material.current_quads["G"] = phaenotyp.G_quads
 					material.current_quads["nu"] = phaenotyp.nu_quads
 					material.current_quads["rho"] = phaenotyp.rho_quads
 					
-					box_quads.label(text="Weight = " + str(round(phaenotyp.rho_quads*phaenotyp.thickness, 4)) + " kg/m²")
+					box_quads.label(text="Weight = " + str(round(phaenotyp.rho_quads*phaenotyp.thickness*10, 4)) + " kg/m²")
 
 				else:
 					# pass input form library to data
