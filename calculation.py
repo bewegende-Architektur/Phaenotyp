@@ -56,6 +56,10 @@ def prepare_fea_pn():
 	model = FEModel3D()
 	
 	basics.timer.start()
+	
+	psf_members = phaenotyp.psf_members
+	psf_quads = phaenotyp.psf_quads
+	psf_loads = phaenotyp.psf_loads
 
 	for mat in material.library:
 		name = mat[0]
@@ -183,7 +187,7 @@ def prepare_fea_pn():
 		kN = weight_A * -0.0000981
 
 		# add self weight as distributed load
-		model.add_member_dist_load(id, "FZ", kN, kN)
+		model.add_member_dist_load(id, "FZ", kN*psf_members, kN*psf_members)
 
 		# calculate lenght of parts (maybe usefull later ...)
 		length = (v_0 - v_1).length
@@ -246,7 +250,7 @@ def prepare_fea_pn():
 			vertex_id = str(vertex_id)
 			# area * thickness * density * 0.25 (to distribute to all four faces) - for gravity
 			z = weight * (-0.25)
-			model.add_node_load(vertex_id, 'FZ', z * 0.00000981) # to cm and force
+			model.add_node_load(vertex_id, 'FZ', z * 0.00000981 * psf_quads) # to cm and force
 		
 		quad["area"][str(frame)] = area # in m²
 		quad["weight_A"][str(frame)] = t * weight_A
@@ -256,24 +260,24 @@ def prepare_fea_pn():
 		
 	# add loads
 	for id, load in loads_v.items():
-		model.add_node_load(id, 'FX', load[0])
-		model.add_node_load(id, 'FY', load[1])
-		model.add_node_load(id, 'FZ', load[2])
+		model.add_node_load(id, 'FX', load[0] * psf_loads)
+		model.add_node_load(id, 'FY', load[1] * psf_loads)
+		model.add_node_load(id, 'FZ', load[2] * psf_loads)
 
 		if calculation_type not in ["geometrical", "force_distribution"]:
-			model.add_node_load(id, 'MX', load[3])
-			model.add_node_load(id, 'MY', load[4])
-			model.add_node_load(id, 'MZ', load[5])
+			model.add_node_load(id, 'MX', load[3] * psf_loads)
+			model.add_node_load(id, 'MY', load[4] * psf_loads)
+			model.add_node_load(id, 'MZ', load[5] * psf_loads)
 
 	for id, load in loads_e.items():
-		model.add_member_dist_load(id, 'FX', load[0]*0.01, load[0]*0.01) # m to cm
-		model.add_member_dist_load(id, 'FY', load[1]*0.01, load[1]*0.01) # m to cm
-		model.add_member_dist_load(id, 'FZ', load[2]*0.01, load[2]*0.01) # m to cm
+		model.add_member_dist_load(id, 'FX', load[0]*0.01 * psf_loads, load[0]*0.01 * psf_loads) # m to cm
+		model.add_member_dist_load(id, 'FY', load[1]*0.01 * psf_loads, load[1]*0.01 * psf_loads) # m to cm
+		model.add_member_dist_load(id, 'FZ', load[2]*0.01 * psf_loads, load[2]*0.01 * psf_loads) # m to cm
 		
 		if calculation_type not in ["geometrical", "force_distribution"]:
-			model.add_member_dist_load(id, 'Fx', load[3]*0.01, load[0]*0.01) # m to cm
-			model.add_member_dist_load(id, 'Fy', load[4]*0.01, load[1]*0.01) # m to cm
-			model.add_member_dist_load(id, 'Fz', load[5]*0.01, load[2]*0.01) # m to cm
+			model.add_member_dist_load(id, 'Fx', load[3]*0.01 * psf_loads, load[0]*0.01 * psf_loads) # m to cm
+			model.add_member_dist_load(id, 'Fy', load[4]*0.01 * psf_loads, load[1]*0.01 * psf_loads) # m to cm
+			model.add_member_dist_load(id, 'Fz', load[5]*0.01 * psf_loads, load[2]*0.01 * psf_loads) # m to cm
 
 	for id, load in loads_f.items():
 		# int(id), otherwise crashing Speicherzugriffsfehler
@@ -309,9 +313,9 @@ def prepare_fea_pn():
 			area_load = load_area_z * area
 			z += area_load * (-0.25) # divided by four points of each quad
 			
-			model.add_node_load(vertex_id, 'FX', x*0.01) # to cm
-			model.add_node_load(vertex_id, 'FY', y*0.01) # to cm
-			model.add_node_load(vertex_id, 'FZ', z*0.01) # to cm
+			model.add_node_load(vertex_id, 'FX', x*0.01 * psf_loads) # to cm
+			model.add_node_load(vertex_id, 'FY', y*0.01 * psf_loads) # to cm
+			model.add_node_load(vertex_id, 'FZ', z*0.01 * psf_loads) # to cm
 			
 		
 		# old version: applied to edges

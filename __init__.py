@@ -120,6 +120,14 @@ class phaenotyp_properties(PropertyGroup):
 		max = 30.0
 		)
 
+	psf_members: FloatProperty(
+		name = "rho",
+		description = "Partial safety factor",
+		default = 1.35,
+		min = 0.8,
+		max = 1.5
+		)
+	
 	acceptable_sigma: FloatProperty(
 		name = "acceptable_sigma",
 		description = "Acceptable sigma kN/cm²",
@@ -211,6 +219,14 @@ class phaenotyp_properties(PropertyGroup):
 		max = 30.0
 		)
 
+	psf_quads: FloatProperty(
+		name = "rho",
+		description = "Partial safety factor",
+		default = 1.35,
+		min = 0.8,
+		max = 1.5
+		)
+	
 	load_type: EnumProperty(
 		name = "load_type",
 		description = "Load types",
@@ -318,6 +334,14 @@ class phaenotyp_properties(PropertyGroup):
 		max = 1000.0
 		)
 
+	psf_loads: FloatProperty(
+		name = "rho",
+		description = "Partial safety factor",
+		default = 1.5,
+		min = 0.8,
+		max = 4
+		)
+	
 	generation_size: IntProperty(
 		name = "generation_size",
 		description="Size of generation for GA",

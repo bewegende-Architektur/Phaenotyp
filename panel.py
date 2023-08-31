@@ -263,7 +263,9 @@ def members(layout):
 
 			box_members.label(text="A = " + str(round(material.current["A"], 4)) + " cm²")
 			box_members.label(text="Weight = " + str(round(material.current["weight_A"], 4)) + " kg/m")
-
+			
+			box_members.prop(phaenotyp, "psf_members", text="Partial safety factor")
+				
 			box_members.operator("wm.set_member", text="Set")
 
 			# display amount of defined edges
@@ -339,6 +341,7 @@ def quads(layout):
 					
 					box_quads.label(text="Weight = " + str(round(rho*phaenotyp.thickness*10, 4)) + " kg/m²")
 				
+				box_quads.prop(phaenotyp, "psf_quads", text="Partial safety factor")
 				box_quads.operator("wm.set_quad", text="Set")
 
 				# display amount of defined faces
@@ -396,7 +399,9 @@ def loads(layout):
 				box_loads.prop(phaenotyp, "load_normal", text="Normal (Like wind)")
 				box_loads.prop(phaenotyp, "load_projected", text="Projected (Like snow)")
 				box_loads.prop(phaenotyp, "load_area_z", text="Area z (Like weight of facade)")
-
+			
+			box_loads.prop(phaenotyp, "psf_loads", text="Partial safety factor")
+			
 			box_loads.operator("wm.set_load", text="Set")
 
 			len_loads = len(data["loads_v"]) + len(data["loads_e"]) + len(data["loads_f"])
