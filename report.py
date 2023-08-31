@@ -519,15 +519,17 @@ def fill_matrix_chromosomes(matrix, len_chromosome):
 
 	return matrix, highest, lowest, weakest, best
 
-def append_head(file, report_type):
+def append_head(file, report_type, name):
 	file.write('<html>\n')
 	file.write("<head>\n")
 	file.write('<title>')
-	text = 'Phaenotyp | report ' + str(report_type)
+	text = 'Phaenotyp | report ' + str(report_type) + " | " + name
+	
 	file.write(text)
 	file.write('</title>\n')
-
-	file.write("Phaenotyp | Report <br>\n")
+	
+	file.write('<font size="+2">' + text + '</font>')
+	file.write("<br>\n")
 	file.write("<br>\n")
 
 	if report_type == "members":
@@ -554,8 +556,8 @@ def append_head(file, report_type):
 		file.write("\n")
 		file.write("<style>\n")
 		file.write("* {font-family: sans-serif;}\n")
-		file.write("a:link {color: rgb(0, 0, 0); background-color: transparent; text-decoration: none;}\n")
-		file.write("a:visited {color: rgb(0,0,0); background-color: transparent; text-decoration: none;}\n")
+		file.write("a:link {color: rgb(0, 0, 0); background-color: transparent; text-decoration: None;}\n")
+		file.write("a:visited {color: rgb(0,0,0); background-color: transparent; text-decoration: None;}\n")
 		file.write("a:hover {color: rgb(0,0,0); background-color: transparent; text-decoration: underline;}\n")
 		file.write("a:active {color: rgb(0,0,0); background-color: transparent; text-decoration: underline;}\n")
 		file.write("</style>\n")
@@ -616,8 +618,8 @@ def append_head(file, report_type):
 		file.write("\n")
 		file.write("<style>\n")
 		file.write("* {font-family: sans-serif;}\n")
-		file.write("a:link {color: rgb(0, 0, 0); background-color: transparent; text-decoration: none;}\n")
-		file.write("a:visited {color: rgb(0,0,0); background-color: transparent; text-decoration: none;}\n")
+		file.write("a:link {color: rgb(0, 0, 0); background-color: transparent; text-decoration: None;}\n")
+		file.write("a:visited {color: rgb(0,0,0); background-color: transparent; text-decoration: None;}\n")
 		file.write("a:hover {color: rgb(0,0,0); background-color: transparent; text-decoration: underline;}\n")
 		file.write("a:active {color: rgb(0,0,0); background-color: transparent; text-decoration: underline;}\n")
 		file.write("</style>\n")
@@ -678,8 +680,8 @@ def append_head(file, report_type):
 		file.write("\n")
 		file.write("<style>\n")
 		file.write("* {font-family: sans-serif;}\n")
-		file.write("a:link {color: rgb(0, 0, 0); background-color: transparent; text-decoration: none;}\n")
-		file.write("a:visited {color: rgb(0,0,0); background-color: transparent; text-decoration: none;}\n")
+		file.write("a:link {color: rgb(0, 0, 0); background-color: transparent; text-decoration: None;}\n")
+		file.write("a:visited {color: rgb(0,0,0); background-color: transparent; text-decoration: None;}\n")
 		file.write("a:hover {color: rgb(0,0,0); background-color: transparent; text-decoration: underline;}\n")
 		file.write("a:active {color: rgb(0,0,0); background-color: transparent; text-decoration: underline;}\n")
 		file.write("</style>\n")
@@ -734,8 +736,8 @@ def append_head(file, report_type):
 		file.write("\n")
 		file.write("<style>\n")
 		file.write("* {font-family: sans-serif;}\n")
-		file.write("a:link {color: rgb(0, 0, 0); background-color: transparent; text-decoration: none;}\n")
-		file.write("a:visited {color: rgb(0,0,0); background-color: transparent; text-decoration: none;}\n")
+		file.write("a:link {color: rgb(0, 0, 0); background-color: transparent; text-decoration: None;}\n")
+		file.write("a:visited {color: rgb(0,0,0); background-color: transparent; text-decoration: None;}\n")
 		file.write("a:hover {color: rgb(0,0,0); background-color: transparent; text-decoration: underline;}\n")
 		file.write("a:active {color: rgb(0,0,0); background-color: transparent; text-decoration: underline;}\n")
 		file.write("</style>\n")
@@ -777,8 +779,8 @@ def append_head(file, report_type):
 		file.write("\n")
 		file.write("<style>\n")
 		file.write("* {font-family: sans-serif;}\n")
-		file.write("a:link {color: rgb(0, 0, 0); background-color: transparent; text-decoration: none;}\n")
-		file.write("a:visited {color: rgb(0,0,0); background-color: transparent; text-decoration: none;}\n")
+		file.write("a:link {color: rgb(0, 0, 0); background-color: transparent; text-decoration: None;}\n")
+		file.write("a:visited {color: rgb(0,0,0); background-color: transparent; text-decoration: None;}\n")
 		file.write("a:hover {color: rgb(0,0,0); background-color: transparent; text-decoration: underline;}\n")
 		file.write("a:active {color: rgb(0,0,0); background-color: transparent; text-decoration: underline;}\n")
 		file.write("</style>\n")
@@ -1150,7 +1152,7 @@ def report_members(directory, frame):
 		result_matrix, highest, lowest = fill_matrix_members(result_matrix, force_type, frame, length)
 
 		# append start
-		append_head(file, "members")
+		append_head(file, "members", force_type)
 
 		# create headlines
 		if length > 1:
@@ -1201,7 +1203,7 @@ def report_frames(directory, start, end):
 		result_matrix, highest, lowest = fill_matrix_frames(result_matrix, force_type, length)
 
 		# append start
-		append_head(file, "frames")
+		append_head(file, "frames", force_type)
 
 		names = list(range(start, end+1))
 		append_headlines(file, names, 3)
@@ -1250,7 +1252,7 @@ def report_quads(directory, start, end):
 		result_matrix, highest, lowest = fill_matrix_quads(result_matrix, force_type, length)
 
 		# append start
-		append_head(file, "quads")
+		append_head(file, "quads", force_type)
 
 		names = list(range(start, end+1))
 		append_headlines(file, names, 3)
@@ -1293,7 +1295,7 @@ def report_combined(directory, start, end):
 		result_matrix, highest, lowest = fill_matrix_frames(result_matrix, force_type, length)
 
 		# append start
-		append_head(file, "combined")
+		append_head(file, "combined", force_type)
 
 		names = list(range(start, end+1))
 		append_headlines(file, names, 3)
@@ -1335,7 +1337,7 @@ def report_chromosomes(directory):
 	result_matrix, highest, lowest, weakest, best = fill_matrix_chromosomes(result_matrix, len_chromosome)
 
 	# append start
-	append_head(file, "chromosomes")
+	append_head(file, "chromosomes", "")
 
 	# genes
 	names = list(range(len_chromosome))
@@ -1389,7 +1391,7 @@ def report_tree(directory):
 	svg_individuals.fitness_best = sorted_list[0][2]
 	svg_individuals.fitness_weakest = sorted_list[len(sorted_list)-1][2]
 
-	append_head(file, "tree")
+	append_head(file, "tree", "")
 	svg_individuals.setup()
 	svg_individuals.start(file)
 	svg_individuals.initial_generation(file)
