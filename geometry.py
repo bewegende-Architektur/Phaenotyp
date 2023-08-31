@@ -788,11 +788,6 @@ def update_geometry_pre():
 	quads = data["quads"]
 	structure_obj_vertices = data["structure"]
 	frame = bpy.context.scene.frame_current
-	mesh_for_viz = bpy.data.objects[ "<Phaenotyp>members"]
-	vertices = mesh_for_viz.data.vertices
-
-	radius_group = mesh_for_viz.vertex_groups.get("radius")
-	attribute = mesh_for_viz.data.attributes.get("force")
 
 	for id, member in members.items():
 		id = int(id)
@@ -817,7 +812,6 @@ def update_geometry_pre():
 		# copy properties if not set by optimization
 		# or the user changed the frame during optimization
 		if str(frame) not in quad["thickness"]:
-			quad["thickness"][str(frame)] = quad["thickness_first"]
 			quad["thickness"][str(frame)] = quad["thickness_first"]
 		
 		# need to be updated for quads

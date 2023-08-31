@@ -609,10 +609,12 @@ def append_head(file, report_type, name, unit):
 		file.write("<a href='max_sigmav.html'>max_sigmav</a>\n")
 		file.write("<br>\n")
 
-		file.write("<a href='Do.html'>Do</a> |\n")
-		file.write("<a href='Di.html'>Di</a> |\n")
 		file.write("<a href='utilization.html'>utilization</a> |\n")
-		file.write("<a href='acceptable_sigma_buckling.html'>acceptable_sigma_buckling |</a>\n")
+		file.write("<a href='acceptable_sigma_buckling.html'>acceptable_sigma_buckling</a>\n")
+		file.write("<br>\n")
+		
+		file.write("<a href='Do.html'>Do</a> |\n")
+		file.write("<a href='Di.html'>Di</a> |\n")		
 		file.write("<a href='weight.html'>weight</a> |\n")
 		file.write("<a href='length.html'>length</a>\n")
 
@@ -681,8 +683,15 @@ def append_head(file, report_type, name, unit):
 		file.write("<a href='shear_x.html'>shear_x</a> |\n")
 		file.write("<a href='shear_y.html'>shear_y</a>\n")
 		file.write("<br>\n")
-		
-		# thickness, weight, utilization?
+
+		file.write("<a href='length_x.html'>length_x</a> |\n")
+		file.write("<a href='length_y.html'>length_y</a> |\n")
+		file.write("<a href='thickness.html'>thickness</a> |\n")
+		file.write("<a href='weight.html'>weight</a> |\n")
+		file.write("<a href='area.html'>area</a>\n")
+		file.write("<br>\n")
+	
+		# utilization?
 
 		file.write("<br>\n")
 		file.write("<br>\n")
@@ -1261,8 +1270,12 @@ def report_quads(directory, start, end):
 
 	force_types["shear_x"] = [1, None]
 	force_types["shear_y"] = [1, None]
-	
-	force_types["thickness"] = [1, "cm"]
+
+	force_types["length_x"] = [1, "cm"]
+	force_types["length_y"] = [1, "cm"]
+	force_types["thickness"] = [1, "m"]
+	force_types["weight"] = [1, "kg"]
+	force_types["area"] = [1, "m²"]
 	
 	for force_type, entries in force_types.items():
 		length = entries[0]

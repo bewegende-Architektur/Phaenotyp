@@ -219,10 +219,6 @@ def prepare_fea_pn():
 		
 		# get thickness of frame or first
 		t = quad["thickness"].get(str(frame))
-		if t:
-			pass
-		else:
-			t = quad["thickness_first"]
 				
 		v_0 = str(vertex_ids[0])
 		v_1 = str(vertex_ids[1])
@@ -243,11 +239,20 @@ def prepare_fea_pn():
 		# self weight
 		face = data["structure"].data.polygons[int(id)]
 		area = face.area
+		weight_A = t * rho
+		weight = weight_A * area * 10000 # in cm
+		print(t, rho, area)
 		for vertex_id in quads[id]["vertices_ids_structure"]:
 			vertex_id = str(vertex_id)
 			# area * thickness * density * 0.25 (to distribute to all four faces) - for gravity
-			z = area * t * rho * (-0.25)
+			z = weight * (-0.25)
 			model.add_node_load(vertex_id, 'FZ', z * 0.00000981) # to cm and force
+		
+		quad["area"][str(frame)] = area # in m²
+		quad["weight_A"][str(frame)] = t * weight_A
+		quad["weight"][str(frame)] = weight_A * area # in kg
+				
+		frame_weight += weight
 		
 	# add loads
 	for id, load in loads_v.items():

@@ -534,8 +534,9 @@ def set_quad():
 			quad["overstress"] = {}
 			quad["utilization"] = {}
 
-			quad["weight"] = {}
+			quad["weight_A"] = {}
 			quad["area"] = {}
+			quad["weight"] = {}
 			
 			quad["length_x"] = {} # average length of quad in x-direction
 			quad["length_y"] = {} # average length of quad in y-direction
