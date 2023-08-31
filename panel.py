@@ -181,33 +181,43 @@ def members(layout):
 
 			# current setting passed from gui
 			# (because a property can not be set in gui)
-			material.current["Do"] = phaenotyp.Do * 0.1
-			material.current["Di"] = phaenotyp.Di * 0.1
+			material.current["Do"] = phaenotyp.Do
+			material.current["Di"] = phaenotyp.Di
 			
 			if calculation_type != "force_distribution":
 				box_members.prop(phaenotyp, "member_type", text="")
 
 			box_members.prop(phaenotyp, "material", text="")
 			if phaenotyp.material == "custom":
-				box_members.prop(phaenotyp, "E", text="Modulus of elasticity")
-				box_members.prop(phaenotyp, "G", text="Shear modulus")
-				box_members.prop(phaenotyp, "d", text="Density")
+				box_members.prop(phaenotyp, "E", text="Modulus of elasticity kN/cm²")
+				box_members.prop(phaenotyp, "G", text="Shear modulus kN/cm²")
+				box_members.prop(phaenotyp, "rho", text="Density in g/cm3")
 
-				box_members.prop(phaenotyp, "acceptable_sigma", text="Acceptable sigma")
-				box_members.prop(phaenotyp, "acceptable_shear", text="Acceptable shear")
-				box_members.prop(phaenotyp, "acceptable_torsion", text="Acceptable torsion")
-				box_members.prop(phaenotyp, "acceptable_sigmav", text="Acceptable sigmav")
-				box_members.prop(phaenotyp, "ir", text="Ir")
+				box_members.prop(phaenotyp, "acceptable_sigma", text="Acceptable sigma kN/cm²")
+				box_members.prop(phaenotyp, "acceptable_shear", text="Acceptable shear kN/cm²")
+				box_members.prop(phaenotyp, "acceptable_torsion", text="Acceptable torsion kN/cm²")
+				box_members.prop(phaenotyp, "acceptable_sigmav", text="Acceptable sigmav kN/cm²")
+				box_members.prop(phaenotyp, "kn_custom", text="kn")
 				
 				material.current["material_name"] = "custom"
 				material.current["E"] = phaenotyp.E
 				material.current["G"] = phaenotyp.G
-				material.current["d"] = phaenotyp.d
+				material.current["rho"] = phaenotyp.rho
 
 				material.current["acceptable_sigma"] = phaenotyp.acceptable_sigma
 				material.current["acceptable_shear"] = phaenotyp.acceptable_shear
 				material.current["acceptable_torsion"] = phaenotyp.acceptable_torsion
 				material.current["acceptable_sigmav"] = phaenotyp.acceptable_sigmav
+					
+				# convert custom kn from string to int
+				kn_custom = []
+				kn = phaenotyp.kn_custom
+				kn = kn.split(",")
+				
+				for entry in kn:
+					kn_custom.append(float(entry))
+				
+				material.current["knick_model"] = kn_custom
 
 			else:
 				# pass input form library to data
@@ -219,7 +229,7 @@ def members(layout):
 						material.current["material_name"] = mat[0]					
 						material.current["E"] = mat[2]
 						material.current["G"] = mat[3]
-						material.current["d"] = mat[4]
+						material.current["rho"] = mat[4]
 
 						material.current["acceptable_sigma"] = mat[5]
 						material.current["acceptable_shear"] = mat[6]
@@ -233,15 +243,15 @@ def members(layout):
 				if calculation_type not in ["geometrical", "force_distribution"]:
 					box_members.label(text="G = " + str(material.current["G"]) + " kN/cm²")
 
-				box_members.label(text="d = " + str(material.current["d"]) + " g/cm3")
+				box_members.label(text="rho = " + str(material.current["rho"]) + " g/cm3")
 
 				if calculation_type != "geometrical":
-					box_members.label(text="Acceptable sigma = " + str(material.current["acceptable_sigma"]))
+					box_members.label(text="Acceptable sigma = " + str(material.current["acceptable_sigma"]) + " kN/cm²")
 
 				if calculation_type not in ["geometrical", "force_distribution"]:
-					box_members.label(text="Acceptable shear = " + str(material.current["acceptable_shear"]))
-					box_members.label(text="Acceptable torsion = " + str(material.current["acceptable_torsion"]))
-					box_members.label(text="Acceptable sigmav = " + str(material.current["acceptable_sigmav"]))
+					box_members.label(text="Acceptable shear = " + str(material.current["acceptable_shear"]) + " kN/cm²")
+					box_members.label(text="Acceptable torsion = " + str(material.current["acceptable_torsion"]) + " kN/cm²")
+					box_members.label(text="Acceptable sigmav = " + str(material.current["acceptable_sigmav"]) + " kN/cm²")
 
 			material.update() # calculate Iy, Iz, J, A, weight
 			if calculation_type != "geometrical":
@@ -303,7 +313,7 @@ def quads(layout):
 					material.current_quads["nu"] = phaenotyp.nu_quads
 					material.current_quads["rho"] = phaenotyp.rho_quads
 					
-					box_quads.label(text="Weight = " + str(round(phaenotyp.rho_quads*phaenotyp.thickness*1000, 4)) + " kg/m²")
+					box_quads.label(text="Weight = " + str(round(phaenotyp.rho_quads*phaenotyp.thickness, 4)) + " kg/m²")
 
 				else:
 					# pass input form library to data
@@ -325,9 +335,9 @@ def quads(layout):
 							box_quads.label(text="E = " + str(E) + " kN/cm²")
 							box_quads.label(text="G = " + str(G) + " kN/cm²")
 							box_quads.label(text="nu = " + str(nu))
-							box_quads.label(text="rho = " + str(rho))
-				
-					box_quads.label(text="Weight = " + str(round(rho*phaenotyp.thickness*1000, 4)) + " kg/m²")
+							box_quads.label(text="rho = " + str(rho) + " g/cm³")
+					
+					box_quads.label(text="Weight = " + str(round(rho*phaenotyp.thickness*10, 4)) + " kg/m²")
 				
 				box_quads.operator("wm.set_quad", text="Set")
 

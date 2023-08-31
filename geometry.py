@@ -757,7 +757,7 @@ def create_quads(structure_obj, quads):
 	# set the thickness passed from gui
 	for id, quad in quads.items():
 		vertices_ids = quad["vertices_ids_viz"]
-		thickness = quad["thickness_first"]
+		thickness = quad["thickness_first"] * 0.01 # to convert from cm to m
 		thickness_group.add(vertices_ids, thickness, 'REPLACE')
 
 
@@ -808,7 +808,7 @@ def update_geometry_pre():
 		member["Iz"][str(frame)] = member["Iy"][str(frame)]
 		member["J"][str(frame)]  = pi * (member["Do"][str(frame)]**4 - member["Di"][str(frame)]**4)/(32)
 		member["A"][str(frame)]  = ((pi * (member["Do"][str(frame)]*0.5)**2) - (pi * (member["Di"][str(frame)]*0.5)**2))
-		member["weight_A"][str(frame)] =  member["A"][str(frame)]*member["d"] * 0.1
+		member["weight_A"][str(frame)] =  member["A"][str(frame)]*member["rho"] * 0.1
 		member["ir"][str(frame)] = sqrt(member["Iy"][str(frame)]/member["A"][str(frame)])
 
 	for id, quad in quads.items():

@@ -66,18 +66,18 @@ class phaenotyp_properties(PropertyGroup):
 	
 	Do: FloatProperty(
 		name = "Do",
-		description = "Diameter of pipe outside in mm",
-		default = 60.0,
-		min = 1.0,
-		max = 1000.0
+		description = "Diameter of pipe outside in cm",
+		default = 6.0,
+		min = 0.1,
+		max = 100.0
 		)
 
 	Di: FloatProperty(
 		name = "Di",
-		description = "Diameter of pipe inside in mm. Needs to be smaller than Diameter outside",
-		default = 50.0,
-		min = 1.0,
-		max = 1000.0
+		description = "Diameter of pipe inside in cm. Needs to be smaller than Diameter outside",
+		default = 5.0,
+		min = 0.1,
+		max = 100.0
 		)
 
 	member_type: EnumProperty(
@@ -112,8 +112,8 @@ class phaenotyp_properties(PropertyGroup):
 		max = 30000
 		)
 
-	d: FloatProperty(
-		name = "d",
+	rho: FloatProperty(
+		name = "rho",
 		description = "Density in g/cm3",
 		default = 7.85,
 		min = 0.01,
@@ -122,7 +122,7 @@ class phaenotyp_properties(PropertyGroup):
 
 	acceptable_sigma: FloatProperty(
 		name = "acceptable_sigma",
-		description = "Acceptable sigma",
+		description = "Acceptable sigma kN/cm²",
 		default = 16.0,
 		min = 0.01,
 		max = 30.0
@@ -130,7 +130,7 @@ class phaenotyp_properties(PropertyGroup):
 
 	acceptable_shear: FloatProperty(
 		name = "acceptable_shear",
-		description = "Acceptable shear",
+		description = "Acceptable shear kN/cm²",
 		default = 9.5,
 		min = 0.01,
 		max = 30.0
@@ -138,23 +138,23 @@ class phaenotyp_properties(PropertyGroup):
 
 	acceptable_torsion: FloatProperty(
 		name = "acceptable_torsion",
-		description = "Acceptable torsion",
+		description = "Acceptable torsion kN/cm²",
 		default = 10.5,
 		min = 0.01,
 		max = 30.0
 		)
 
 	acceptable_sigmav: FloatProperty(
-		name = "acceptable_sigmav",
+		name = "acceptable_sigmav kN/cm²",
 		description = "Acceptable sigmav",
 		default = 10.5,
 		min = 23.5,
 		max = 30.0
 		)
 
-	ir: StringProperty(
-		name = "ir",
-		description = "Ir of custom material",
+	kn_custom: StringProperty(
+		name = "kn_custom",
+		description = "kn of custom material",
 		default = "16.5, 15.8, 15.3, 14.8, 14.2, 13.5, 12.7, 11.8, 10.7, 9.5, 8.2, 6.9, 5.9, 5.1, 4.4, 3.9, 3.4, 3.1, 2.7, 2.5, 2.2, 2.0, 1.9, 1.7, 1.6"
 		)
 
@@ -167,10 +167,10 @@ class phaenotyp_properties(PropertyGroup):
 	   
 	thickness: FloatProperty(
 		name = "thickness",
-		description = "Thickness",
-		default = 0.25,
+		description = "Thickness in cm",
+		default = 25.0,
 		min = 0.01,
-		max = 1.00
+		max = 100.0
 		)
 
 	material_quads: EnumProperty(
@@ -205,7 +205,7 @@ class phaenotyp_properties(PropertyGroup):
 
 	rho_quads: FloatProperty(
 		name = "rho",
-		description = "Density",
+		description = "Density in g/cm3",
 		default = 1.0,
 		min = 0.01,
 		max = 30.0

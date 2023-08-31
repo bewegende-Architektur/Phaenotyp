@@ -50,8 +50,8 @@ def update():
 	# cross-sectional area, 8,64 cm²
 	current["A"] = ((pi * (current["Do"]*0.5)**2) - (pi * (current["Di"]*0.5)**2))
 
-	# weight of profile, 6.79 kg/m
-	current["weight_A"] =  current["A"]*current["d"] * 0.1
+	# weight of profile, 6.78 kg/m
+	current["weight_A"] =  current["A"]*current["rho"] * 0.1
 
 	current["ir"] = sqrt(current["Iy"]/current["A"])
 

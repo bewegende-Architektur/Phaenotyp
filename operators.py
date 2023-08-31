@@ -315,7 +315,7 @@ def set_member():
 				member["material_name"] = material.current["material_name"]
 				member["E"] = material.current["E"] # from gui
 				member["G"] = material.current["G"] # from gui
-				member["d"] = material.current["d"] # from gui
+				member["rho"] = material.current["rho"] # from gui
 
 				# this variables can change per frame
 				# the key "first" is used to store the user-input of each member
@@ -414,7 +414,7 @@ def set_member():
 
 				member["E"] = material.current["E"] # from gui
 				member["G"] = material.current["G"] # from gui
-				member["d"] = material.current["d"] # from gui
+				member["rho"] = material.current["d"] # from gui
 
 				# this variables can change per frame
 				# the key "first" is used to store the user-input of each member
@@ -2188,7 +2188,6 @@ def selection():
 				# is this face a quad?
 				quad = quads.get(str(id))
 				if quad:
-					print(quad)
 					value = quad[key][str(frame)]
 
 					if compare == "Equal":
