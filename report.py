@@ -931,7 +931,11 @@ def append_matrix_members(file, matrix, frame, highest, lowest, length):
 					h = 0 # white
 				
 				s = 1
-				v = 1
+
+				if overstress == True:
+					v = 0.25
+				else:
+					v = 1.0
 
 				c.hsv = h,s,v
 				r = int(c.r*255)
@@ -977,7 +981,11 @@ def append_matrix_members(file, matrix, frame, highest, lowest, length):
 				h = 0 # white
 			
 			s = 1
-			v = 1
+
+			if overstress == True:
+				v = 0.25
+			else:
+				v = 1.0
 			
 			c.hsv = h,s,v
 			r = int(c.r*255)
@@ -1039,7 +1047,10 @@ def append_matrix_frames(file, matrix, highest, lowest, length):
 				h = 0 # white
 
 			s = 1
-			v = 1
+			if overstress == True:
+				v = 0.25
+			else:
+				v = 1.0
 
 			c.hsv = h,s,v
 			r = int(c.r*255)
@@ -1107,7 +1118,10 @@ def append_matrix_quads(file, matrix, highest, lowest, length):
 				h = 0 # white
 
 			s = 1
-			v = 1
+			if overstress == True:
+				v = 0.25
+			else:
+				v = 1.0
 
 			c.hsv = h,s,v
 			r = int(c.r*255)

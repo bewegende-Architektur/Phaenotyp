@@ -889,7 +889,11 @@ def update_geometry_post():
 					if h < 0:
 						h = 0
 					s = 1
-					v = 1.0
+					
+					if member["overstress"][str(frame)] == True:
+						v = 0.25
+					else:
+						v = 1.0
 
 				# for 11 entries
 				else:
@@ -925,7 +929,10 @@ def update_geometry_post():
 					if h < 0:
 						h = 0
 					s = 1
-					v = 1
+					if member["overstress"][str(frame)] == True:
+						v = 0.25
+					else:
+						v = 1.0
 
 				c.hsv = h,s,v
 				attribute.data[mesh_vertex_ids[i]].color = [c.r, c.g, c.b, 1.0]
@@ -966,7 +973,10 @@ def update_geometry_post():
 				if h < 0:
 					h = 0
 				s = 1
-				v = 1
+				if member["overstress"][str(frame)] == True:
+					v = 0.25
+				else:
+					v = 1.0
 
 				c.hsv = h,s,v
 				attribute.data[mesh_vertex_ids[i]].color = [c.r, c.g, c.b, 1.0]
@@ -982,6 +992,10 @@ def update_geometry_post():
 	attribute = mesh_for_viz.data.attributes.get("force")
 	
 	nodes = [[] for i in range(len(vertices))]
+	
+	# list of overstressed node_ids
+	# if a quad is overstressed, all nodes are drawn darker
+	overstressed = []
 	
 	for id, quad in quads.items():
 		id = int(id)
@@ -1009,6 +1023,10 @@ def update_geometry_post():
 		# Derzeit ist der Faktor einfach das maximale Moment
 		#thickness = max(moment) * 0.25
 		#thickness_group.add(keys, thickness, 'ADD')
+		
+		if quad["overstress"][str(frame)]:
+			for key in keys:
+				overstressed.append(key)
 
 	for i, forces in enumerate(nodes):
 		try:
@@ -1039,7 +1057,11 @@ def update_geometry_post():
 		if h < 0:
 			h = 0
 		s = 1
-		v = 1
+		
+		if i in overstressed == True:
+			v = 0.25
+		else:
+			v = 1.0
 		
 		c.hsv = h,s,v
 
