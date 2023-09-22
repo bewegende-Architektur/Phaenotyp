@@ -165,6 +165,36 @@ class phaenotyp_properties(PropertyGroup):
 		description = "kn of custom material",
 		default = "16.5, 15.8, 15.3, 14.8, 14.2, 13.5, 12.7, 11.8, 10.7, 9.5, 8.2, 6.9, 5.9, 5.1, 4.4, 3.9, 3.4, 3.1, 2.7, 2.5, 2.2, 2.0, 1.9, 1.7, 1.6"
 		)
+	
+	acceptable_sigma_quads: FloatProperty(
+		name = "acceptable_sigma_quads",
+		description = "Acceptable sigma kN/cm²",
+		default = 16.0,
+		min = 0.01,
+		max = 30.0
+		)
+
+	acceptable_shear_quads: FloatProperty(
+		name = "acceptable_shear_quads",
+		description = "Acceptable shear kN/cm²",
+		default = 9.5,
+		min = 0.01,
+		max = 30.0
+		)
+
+	acceptable_sigmav_quads: FloatProperty(
+		name = "acceptable_sigmav kN/cm²",
+		description = "Acceptable sigmav",
+		default = 10.5,
+		min = 23.5,
+		max = 30.0
+		)
+
+	kn_custom_quads: StringProperty(
+		name = "kn_custom_quads",
+		description = "kn of custom material",
+		default = "16.5, 15.8, 15.3, 14.8, 14.2, 13.5, 12.7, 11.8, 10.7, 9.5, 8.2, 6.9, 5.9, 5.1, 4.4, 3.9, 3.4, 3.1, 2.7, 2.5, 2.2, 2.0, 1.9, 1.7, 1.6"
+		)
 
 	loc_x: BoolProperty(name = 'loc_x', default = True)
 	loc_y: BoolProperty(name = 'loc_y', default = True)

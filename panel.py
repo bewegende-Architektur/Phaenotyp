@@ -315,6 +315,11 @@ def quads(layout):
 					material.current_quads["nu"] = phaenotyp.nu_quads
 					material.current_quads["rho"] = phaenotyp.rho_quads
 					
+					quad["acceptable_sigma"] = phaenotyp.acceptable_sigma_quads
+					quad["acceptable_shear"] = phaenotyp.acceptable_shear_quads
+					quad["acceptable_sigmav"] = phaenotyp.acceptable_sigmav_quads
+					quad["knick_model"] = phaenotyp.knick_model_quads
+					
 					box_quads.label(text="Weight = " + str(round(phaenotyp.rho_quads*phaenotyp.thickness*10, 4)) + " kg/m²")
 
 				else:
@@ -329,15 +334,30 @@ def quads(layout):
 							nu = mat[4]
 							rho = mat[5]
 							
+							acceptable_sigma = mat[6]
+							acceptable_shear = mat[7]
+							acceptable_sigmav = mat[8]
+							knick_model = mat[9]
+							
 							material.current_quads["E"] = E
 							material.current_quads["G"] = G
 							material.current_quads["nu"] = nu
 							material.current_quads["rho"] = rho
 							
+							material.current_quads["acceptable_sigma"] = acceptable_sigma
+							material.current_quads["acceptable_shear"] = acceptable_shear
+							material.current_quads["acceptable_sigmav"] = acceptable_sigmav
+							material.current_quads["knick_model"] = knick_model
+							
 							box_quads.label(text="E = " + str(E) + " kN/cm²")
 							box_quads.label(text="G = " + str(G) + " kN/cm²")
 							box_quads.label(text="nu = " + str(nu))
 							box_quads.label(text="rho = " + str(rho) + " g/cm³")
+							
+							box_quads.label(text="acceptable_sigma = " + str(acceptable_sigma) + " kN/cm³")
+							box_quads.label(text="acceptable_shear = " + str(acceptable_shear) + " kN/cm³")
+							box_quads.label(text="acceptable_sigmav = " + str(acceptable_sigmav) + " kN/cm³")
+							box_quads.label(text="knick_model = " + str(knick_model))
 					
 					box_quads.label(text="Weight = " + str(round(rho*phaenotyp.thickness*10, 4)) + " kg/m²")
 				

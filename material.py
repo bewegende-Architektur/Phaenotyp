@@ -56,11 +56,15 @@ def update():
 	current["ir"] = sqrt(current["Iy"]/current["A"])
 
 # for quads
+knconcrete = [16.5,15.8,15.3,14.8,14.2,13.5,12.7,11.8,10.7,9.5,8.2,6.9,5.9,5.1,4.4,3.9,3.4,3.1,2.7,2.5,2.2,2,1.9,1.7,1.6]
+knmasonry = [16.5,15.8,15.3,14.8,14.2,13.5,12.7,11.8,10.7,9.5,8.2,6.9,5.9,5.1,4.4,3.9,3.4,3.1,2.7,2.5,2.2,2,1.9,1.7,1.6]
+kncustom = [16.5,15.8,15.3,14.8,14.2,13.5,12.7,11.8,10.7,9.5,8.2,6.9,5.9,5.1,4.4,3.9,3.4,3.1,2.7,2.5,2.2,2,1.9,1.7,1.6]
+
 library_quads = [
-	# name, name in dropdown, E, G, nu, rho
-	["concrete", "Concrete", 3300, 1375, 0.2, 2.5], # from R-Stab
-	["masonry", "Masonry", 1500, 400, 0.17, 1.0], # from pynite
-	["custom", "Custom", 1500, 400, 0.17, 1.0]
+	# name, name in dropdown, E, G, nu, rho, acceptable_sigma, acceptable_shear, acceptable_sigmav, knick_model
+	["concrete", "Concrete", 3300, 1375, 0.2, 2.5, 16.5, 9.5, 23.5, knconcrete], # Platzhalter! Noch korrigieren
+	["masonry", "Masonry", 1500, 400, 0.17, 1.0, 16.5, 9.5, 23.5, knmasonry], # Platzhalter! Noch korrigieren
+	["custom", "Custom", 1500, 400, 0.17, 1.0, 16.5, 9.5, 23.5, kncustom] # Platzhalter! Noch korrigieren
 	]
 
 dropdown_quads = []

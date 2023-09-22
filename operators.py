@@ -513,7 +513,12 @@ def set_quad():
 			quad["G"] = material.current_quads["G"] # from gui
 			quad["nu"] = material.current_quads["nu"] # from gui
 			quad["rho"] = material.current_quads["rho"] # from gui
-
+			
+			quad["acceptable_sigma"] = material.current_quads["acceptable_sigma"] # from gui
+			quad["acceptable_shear"] = material.current_quads["acceptable_shear"] # from gui
+			quad["acceptable_sigmav"] = material.current_quads["acceptable_sigmav"] # from gui
+			quad["knick_model"] = material.current_quads["knick_model"] # from gui
+			
 			quad["thickness"] = {}
 			quad["thickness_first"] = phaenotyp.thickness # from gui
 			
@@ -541,6 +546,22 @@ def set_quad():
 			quad["length_x"] = {} # average length of quad in x-direction
 			quad["length_y"] = {} # average length of quad in y-direction
 
+			quad["ir"] = {}
+			quad["A"] = {} # area of the section, not the face
+			quad["J"] = {}
+			quad["Wy"] = {}
+			quad["moment_h"] = {}
+			quad["long_stress"] = {}
+			quad["shear_h"] = {}
+			quad["tau_shear"] = {}
+			quad["sigmav"] = {}
+			quad["sigma"] = {}
+			quad["acceptable_sigma_buckling"] = {}
+			quad["lamda"] = {}
+			quad["strain_energy"] = {}
+			quad["normal_energy"] = {}
+			quad["moment_energy"] = {}
+			
 			data["quads"][str(id)] = quad
 
 	# delete obj if existing
