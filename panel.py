@@ -264,7 +264,7 @@ def members(layout):
 			box_members.label(text="A = " + str(round(material.current["A"], 4)) + " cm²")
 			box_members.label(text="Weight = " + str(round(material.current["weight_A"], 4)) + " kg/m")
 			
-			box_members.prop(phaenotyp, "psf_members", text="Partial safety factor for all members")
+			box_members.prop(phaenotyp, "psf_members", text="Partial safety factor")
 				
 			box_members.operator("wm.set_member", text="Set")
 
@@ -361,7 +361,7 @@ def quads(layout):
 					
 					box_quads.label(text="Weight = " + str(round(rho*phaenotyp.thickness*10, 4)) + " kg/m²")
 				
-				box_quads.prop(phaenotyp, "psf_quads", text="Partial safety factor for all quads")
+				box_quads.prop(phaenotyp, "psf_quads", text="Partial safety factor")
 				box_quads.operator("wm.set_quad", text="Set")
 
 				# display amount of defined faces
@@ -420,7 +420,7 @@ def loads(layout):
 				box_loads.prop(phaenotyp, "load_projected", text="Projected (Like snow)")
 				box_loads.prop(phaenotyp, "load_area_z", text="Area z (Like weight of facade)")
 			
-			box_loads.prop(phaenotyp, "psf_loads", text="Partial safety factor for all loads")
+			box_loads.prop(phaenotyp, "psf_loads", text="Partial safety factor")
 			
 			box_loads.operator("wm.set_load", text="Set")
 
