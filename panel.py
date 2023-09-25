@@ -583,6 +583,9 @@ def single_frame(layout):
 				result = data["done"].get(str(frame))
 				if result:
 					box_opt.operator("wm.topolgy_decimate", text="Decimate")
+					decimate_group = data["structure"].vertex_groups.get("<Phaenotyp>decimate")
+					if decimate_group:
+						box_opt.label(text="Ajust the ratio in modifiers and reset Phänotyp aferwards")
 				else:
 					box_opt.label(text="Run single analysis first.")
 

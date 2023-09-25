@@ -1430,6 +1430,11 @@ def decimate_topology():
 	mod.ratio = 0.9
 	mod.invert_vertex_group = True
 	mod.vertex_group = "<Phaenotyp>decimate"
+	
+	# go to modifiers
+	for area in bpy.context.screen.areas:
+		if area.type == 'PROPERTIES':
+			area.spaces[0].context = 'MODIFIER'
 
 def sectional_optimization(start, end):
 	'''
