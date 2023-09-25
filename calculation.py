@@ -1371,7 +1371,10 @@ def decimate_topology():
 	members = data["members"]
 	obj = data["structure"] # applied to structure
 	frame = bpy.context.scene.frame_current
-
+	
+	# make obj visible
+	obj.hide_set(False)
+	obj.select_set(True)
 	bpy.context.view_layer.objects.active = obj
 
 	# create vertex-group if not existing
@@ -1422,8 +1425,10 @@ def decimate_topology():
 		pass
 
 	# create decimate modifiere
+	bpy.context.space_data.shading.type = 'WIREFRAME'
 	mod = obj.modifiers.new("<Phaenotyp>decimate", "DECIMATE")
-	mod.ratio = 0.1
+	mod.ratio = 0.9
+	mod.invert_vertex_group = True
 	mod.vertex_group = "<Phaenotyp>decimate"
 
 def sectional_optimization(start, end):
