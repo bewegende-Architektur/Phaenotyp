@@ -1062,7 +1062,7 @@ def interweave_results_pn(feas):
 			sigma = s
 
 			shear_h = sqrt(shear_x**2 + shear_y**2)
-			tau_shear = 1.5 * s_h/A # for quads
+			tau_shear = 1.5 * shear_h/A # for quads
 			sigmav = sqrt(long_stress**2 + 3*tau_shear**2)
 
 			overstress = False
