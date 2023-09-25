@@ -122,7 +122,7 @@ class phaenotyp_properties(PropertyGroup):
 
 	psf_members: FloatProperty(
 		name = "rho",
-		description = "Partial safety factor",
+		description = "Partial safety factor for all members",
 		default = 1.35,
 		min = 0.8,
 		max = 1.5
@@ -251,7 +251,7 @@ class phaenotyp_properties(PropertyGroup):
 
 	psf_quads: FloatProperty(
 		name = "rho",
-		description = "Partial safety factor",
+		description = "Partial safety factor for all quads",
 		default = 1.35,
 		min = 0.8,
 		max = 1.5
@@ -366,7 +366,7 @@ class phaenotyp_properties(PropertyGroup):
 
 	psf_loads: FloatProperty(
 		name = "rho",
-		description = "Partial safety factor",
+		description = "Partial safety factor for all loads",
 		default = 1.5,
 		min = 0.8,
 		max = 4
