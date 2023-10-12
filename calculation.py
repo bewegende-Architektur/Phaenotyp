@@ -44,19 +44,19 @@ def prepare_fea_pn():
 	phaenotyp = scene.phaenotyp
 	calculation_type = phaenotyp.calculation_type
 	data = scene["<Phaenotyp>"]
-	
+
 	supports = data["supports"]
 	members = data["members"]
 	quads = data["quads"]
 	loads_v = data["loads_v"]
 	loads_e = data["loads_e"]
 	loads_f = data["loads_f"]
-	
+
 	frame = bpy.context.scene.frame_current
 	model = FEModel3D()
-	
+
 	basics.timer.start()
-	
+
 	psf_members = phaenotyp.psf_members
 	psf_quads = phaenotyp.psf_quads
 	psf_loads = phaenotyp.psf_loads
@@ -115,19 +115,19 @@ def prepare_fea_pn():
 		x = v[0] * 100 # convert to cm for calculation
 		y = v[1] * 100 # convert to cm for calculation
 		z = v[2] * 100 # convert to cm for calculation
-		
+
 		# only create Node if needed for the model
 		create = False
 		for member_id, member in members.items():
 			if vertex_id in [member["vertex_0_id"], member["vertex_1_id"]]:
 				create = True
 				break
-		
+
 		for quad_id, quad in quads.items():
 			if vertex_id in quad["vertices_ids_structure"]:
 				create = True
 				break
-		
+
 		if create:
 			model.add_node(name, x,y,z)
 
@@ -156,7 +156,7 @@ def prepare_fea_pn():
 		node_0 = str(vertex_0_id)
 		node_1 = str(vertex_1_id)
 		material_name = member["material_name"]
-		
+
 		if member["type"] == "full":
 			tension_only = False
 			comp_only = False
@@ -164,18 +164,18 @@ def prepare_fea_pn():
 		if member["type"] == "tension_only":
 			tension_only = True
 			comp_only = False
-		
+
 		if member["type"] == "comp_only":
 			tension_only = False
 			comp_only = True
-				
+
 		model.add_member(
 			id, node_0, node_1, material_name,
 			member["Iy"][str(frame)], member["Iz"][str(frame)],
 			member["J"][str(frame)], member["A"][str(frame)],
 			tension_only=tension_only, comp_only=comp_only,
 			)
-	
+
 		# release Moments
 		if phaenotyp.type_of_joints == "release_moments":
 			model.def_releases(id,
@@ -207,30 +207,30 @@ def prepare_fea_pn():
 		G = quad["G"]
 		nu = quad["nu"]
 		rho = quad["rho"]
-		
+
 		# unique name of the material trough parameters
 		material_name = (
 			"material_" +
 			"E" + "_" +
-			"G" + "_" + 
+			"G" + "_" +
 			"nu" +  "_" +
 			"rho")
-		
+
 		if material_name not in model.Materials:
 			model.add_material(material_name, E, G, nu, rho)
-		
+
 		vertex_ids = quad["vertices_ids_structure"]
-		
+
 		# get thickness of frame or first
 		t = quad["thickness"].get(str(frame))
-				
+
 		v_0 = str(vertex_ids[0])
 		v_1 = str(vertex_ids[1])
 		v_2 = str(vertex_ids[2])
 		v_3 = str(vertex_ids[3])
-		
+
 		model.add_quad(id, v_0, v_1, v_2, v_3, t, material_name, kx_mod=1.0, ky_mod=1.0)
-		
+
 		# save position before to morph with deflection afterwards
 		initial_positions = [
 			vertices[vertex_ids[0]].co,
@@ -239,7 +239,7 @@ def prepare_fea_pn():
 			vertices[vertex_ids[3]].co,
 			]
 		quad["initial_positions"][str(frame)] = initial_positions
-		
+
 		# self weight
 		face = data["structure"].data.polygons[int(id)]
 		area = face.area
@@ -250,13 +250,13 @@ def prepare_fea_pn():
 			# area * thickness * density * 0.25 (to distribute to all four faces) - for gravity
 			z = weight * (-0.25)
 			model.add_node_load(vertex_id, 'FZ', z * 0.00000981 * psf_quads) # to cm and force
-		
+
 		quad["area"][str(frame)] = area # in m²
 		quad["weight_A"][str(frame)] = t * weight_A
 		quad["weight"][str(frame)] = weight_A * area # in kg
-				
+
 		frame_weight += weight_A * area # in kg
-		
+
 	# add loads
 	for id, load in loads_v.items():
 		model.add_node_load(id, 'FX', load[0] * psf_loads)
@@ -272,7 +272,7 @@ def prepare_fea_pn():
 		model.add_member_dist_load(id, 'FX', load[0]*0.01 * psf_loads, load[0]*0.01 * psf_loads) # m to cm
 		model.add_member_dist_load(id, 'FY', load[1]*0.01 * psf_loads, load[1]*0.01 * psf_loads) # m to cm
 		model.add_member_dist_load(id, 'FZ', load[2]*0.01 * psf_loads, load[2]*0.01 * psf_loads) # m to cm
-		
+
 		if calculation_type not in ["geometrical", "force_distribution"]:
 			model.add_member_dist_load(id, 'Fx', load[3]*0.01 * psf_loads, load[0]*0.01 * psf_loads) # m to cm
 			model.add_member_dist_load(id, 'Fy', load[4]*0.01 * psf_loads, load[1]*0.01 * psf_loads) # m to cm
@@ -291,32 +291,32 @@ def prepare_fea_pn():
 		load_area_z = load[2]
 
 		area_projected = geometry.area_projected(face, vertices)
-		
+
 		# new version: applied to vertices
 		# a quad is needed to apply forces to
 		for vertex_id in quads[id]["vertices_ids_structure"]:
 			vertex_id = str(vertex_id)
 			x,y,z = 0,0,0
-			
+
 			# load normal
 			area_load = load_normal * area
 			x += area_load * normal[0]
 			y += area_load * normal[1]
 			z += area_load * normal[2]
-			
+
 			# load projected
 			area_load = load_projected * area_projected
 			z += area_load * (-0.25) # divided by four points of each quad
-			
+
 			# load z
 			area_load = load_area_z * area
 			z += area_load * (-0.25) # divided by four points of each quad
-			
+
 			model.add_node_load(vertex_id, 'FX', x*0.01 * psf_loads) # to cm
 			model.add_node_load(vertex_id, 'FY', y*0.01 * psf_loads) # to cm
 			model.add_node_load(vertex_id, 'FZ', z*0.01 * psf_loads) # to cm
-			
-		
+
+
 		# old version: applied to edges
 		'''
 		distances, perimeter = geometry.perimeter(edge_keys, vertices)
@@ -369,7 +369,7 @@ def prepare_fea_pn():
 			z = edge_load_area_z[i]
 			model.add_member_dist_load(name, 'FZ', z, z)
 		'''
-		
+
 	# store frame based data
 	data["frames"][str(frame)]["volume"] = geometry.volume(mesh)
 	data["frames"][str(frame)]["area"] = geometry.area(faces)
@@ -380,12 +380,12 @@ def prepare_fea_pn():
 	data["frames"][str(frame)]["cantilever"] = geometry.cantilever(vertices, supports)
 
 	progress.http.update_p()
-	
+
 	# get duration
 	text = calculation_type + " preparation for frame " + str(frame) + " done"
 	text +=  basics.timer.stop()
 	print_data(text)
-	
+
 	return model
 
 def prepare_fea_fd():
@@ -398,7 +398,7 @@ def prepare_fea_fd():
 	calculation_type = phaenotyp.calculation_type
 	data = scene["<Phaenotyp>"]
 	frame = bpy.context.scene.frame_current
-	
+
 	basics.timer.start()
 
 	# apply chromosome if available
@@ -427,7 +427,7 @@ def prepare_fea_fd():
 	frame_rise = 0
 	frame_span = 0
 	frame_cantilever = 0
-	
+
 	# to sum up loads
 	forces = []
 	for i in range(len(vertices)):
@@ -502,7 +502,7 @@ def prepare_fea_fd():
 
 		# for calculation
 		lenghtes.append(length)
-		
+
 		# add self weight
 		self_weight = kN * length * 100
 		forces[vertex_0_id] += array([0.0, 0.0, self_weight*0.5])
@@ -528,7 +528,7 @@ def prepare_fea_fd():
 		f = length * 0.5 * 100 # half of the member, m to cm
 		forces[int(vertex_0_id)] += array([load[0]*f, load[1]*f, load[2]*f])
 		forces[int(vertex_1_id)] += array([load[0]*f, load[1]*f, load[2]*f])
-	
+
 	loads_f = data["loads_f"]
 	for id, load in loads_f.items():
 		# int(id), otherwise crashing Speicherzugriffsfehler
@@ -598,21 +598,21 @@ def prepare_fea_fd():
 			z = edge_load_area_z[i]
 			forces[int(vertex_0_id)] += array([0.0, 0.0, z*f])
 			forces[int(vertex_1_id)] += array([0.0, 0.0, z*f])
-	
+
 	# move all forces from the supports to the next load
 	# (is ignored if the both vertices are supports)
 	for id, member in members.items():
 		vertex_0_id = member["vertex_0_id"]
 		vertex_1_id = member["vertex_1_id"]
-		
+
 		if vertex_0_id in supports_ids:
 			forces[int(vertex_1_id)] += forces[int(vertex_0_id)]
-	
+
 		if vertex_1_id in supports_ids:
 			forces[int(vertex_0_id)] += forces[int(vertex_1_id)]
-	
+
 	forces_array = array(forces)
-	
+
 	# store frame based data
 	data["frames"][str(frame)]["volume"] = geometry.volume(mesh)
 	data["frames"][str(frame)]["area"] = geometry.area(faces)
@@ -628,7 +628,7 @@ def prepare_fea_fd():
 	text = calculation_type + " preparation for frame " + str(frame) + " done"
 	text +=  basics.timer.stop()
 	print_data(text)
-	
+
 	model = [points_array, supports_ids, edges_array, forces_array]
 	return model
 
@@ -679,7 +679,7 @@ def run_mp(models):
 	file = open(path_import, 'rb')
 	imported_models = pickle.load(file)
 	file.close()
-		
+
 	return imported_models
 
 def interweave_results_pn(feas):
@@ -694,16 +694,16 @@ def interweave_results_pn(feas):
 	calculation_type = phaenotyp.calculation_type
 	members = data["members"]
 	quads = data["quads"]
-	
+
 	end = bpy.context.scene.frame_end
 
 	for frame, model in feas.items():
 		basics.timer.start()
-		
+
 		for id in members:
 			member = members[id]
 			model_member = model.Members[id]
-			
+
 			L = model_member.L() # Member length
 			T = model_member.T() # Member local transformation matrix
 
@@ -969,7 +969,7 @@ def interweave_results_pn(feas):
 				deflection.append([x,y,z])
 
 			member["deflection"][frame] = deflection
-		
+
 		nodes = model.Nodes
 
 		for id in quads:
@@ -994,6 +994,8 @@ def interweave_results_pn(feas):
 			Sx = float(membrane[0])
 			Sy = float(membrane[1])
 			Txy = float(membrane[2])
+
+			print("Qx:", Qx, "Qy:", Qy, "Mx:", Mx, "My:", My, "Mxy:", Mxy, "Sx:", Sx, "Sy:", Sy, "Txy:", Txy)
 
 			# get deflection
 			node_ids = quad["vertices_ids_structure"]
@@ -1036,13 +1038,13 @@ def interweave_results_pn(feas):
 			moment_y = My/(length_y/2)
 			moment_xy = Mxy/(length_y/2) #???
 
-			membrane_x = Sx/(length_x/2)
-			membrane_y = Sy/(length_y/2)
-			membrane_xy = Txy/(length_y/2) #???
+			membrane_x = Sx#(length_x/2)
+			membrane_y = Sy#*(length_y/2)
+			membrane_xy = Txy#*(length_y/2) #???
 
 			# shorten and accessing once
 			thickness = quad["thickness"][frame]
-			
+
 			# area of the section, not the face
 			A = thickness * 100 # Dicke x 1 m in cm
 			J = (100 * thickness)**3 / 12
@@ -1105,14 +1107,14 @@ def interweave_results_pn(feas):
 
 			# Einführung in die Technische Mechanik - Festigkeitslehre, H.Balke, Springer 2010
 			# Berechnung der strain_energy für Normalkraft
-			normalkraft_energie = (axial[i]**2)*(length_x)/(2*quad["E"]*A)
+			normalkraft_energie = (long_stress**2)*(length_x)/(2*quad["E"]*A)
 
 			# Berechnung der strain_energy für Moment
 			moment_hq = moment_x**2+moment_y**2
-			moment_energie = (moment_hq * length_x) / (quad["E"] * Wy * Do)
+			moment_energie = (moment_hq * length_x) / (quad["E"] * Wy * thickness)
 
 			# Summe von Normalkraft und Moment-Verzerrunsenergie
-			strain_energy = ne + me
+			strain_energy = normalkraft_energie + moment_energie
 
 			# save to dict
 			quad["shear_x"][frame] = shear_x
@@ -1156,7 +1158,7 @@ def interweave_results_pn(feas):
 		text = calculation_type + " involvement for frame " + str(frame) + " done"
 		text +=  basics.timer.stop()
 		print_data(text)
-		
+
 		data["done"][str(frame)] = True
 
 def interweave_results_fd(feas):
@@ -1170,12 +1172,12 @@ def interweave_results_fd(feas):
 	members = data["members"]
 	phaenotyp = scene.phaenotyp
 	calculation_type = phaenotyp.calculation_type
-	
+
 	end = bpy.context.scene.frame_end
 
 	for frame, model in feas.items():
 		basics.timer.start()
-	
+
 		for id, member in members.items():
 			id = int(id)
 			# shorten
@@ -1236,7 +1238,7 @@ def interweave_results_fd(feas):
 		text = calculation_type + " involvement for frame " + str(frame) + " done"
 		text +=  basics.timer.stop()
 		print_data(text)
-		
+
 		data["done"][str(frame)] = True
 
 def approximate_sectional():
@@ -1250,7 +1252,7 @@ def approximate_sectional():
 	data = scene["<Phaenotyp>"]
 	members = data["members"]
 	frame = bpy.context.scene.frame_current
-	
+
 	for id, member in members.items():
 		if member["overstress"][str(frame)] == True:
 			member["Do"][str(frame)] = member["Do"][str(frame)] * 1.05
@@ -1277,7 +1279,7 @@ def simple_sectional():
 	data = scene["<Phaenotyp>"]
 	members = data["members"]
 	frame = bpy.context.scene.frame_current
-		
+
 	for id, member in members.items():
 		if abs(member["max_long_stress"][str(frame)]/member["acceptable_sigma_buckling"][str(frame)]) > 1:
 			member["Do"][str(frame)] = member["Do"][str(frame)] * 1.2
@@ -1303,7 +1305,7 @@ def utilization_sectional():
 	data = scene["<Phaenotyp>"]
 	members = data["members"]
 	frame = bpy.context.scene.frame_current
-		
+
 	for id, member in members.items():
 		ang = member["utilization"][str(frame)]
 
@@ -1371,10 +1373,7 @@ def decimate_topology():
 	members = data["members"]
 	obj = data["structure"] # applied to structure
 	frame = bpy.context.scene.frame_current
-	
-	# make obj visible
-	obj.hide_set(False)
-	obj.select_set(True)
+
 	bpy.context.view_layer.objects.active = obj
 
 	# create vertex-group if not existing
@@ -1425,16 +1424,9 @@ def decimate_topology():
 		pass
 
 	# create decimate modifiere
-	bpy.context.space_data.shading.type = 'WIREFRAME'
 	mod = obj.modifiers.new("<Phaenotyp>decimate", "DECIMATE")
-	mod.ratio = 0.9
-	mod.invert_vertex_group = True
+	mod.ratio = 0.1
 	mod.vertex_group = "<Phaenotyp>decimate"
-	
-	# go to modifiers
-	for area in bpy.context.screen.areas:
-		if area.type == 'PROPERTIES':
-			area.spaces[0].context = 'MODIFIER'
 
 def sectional_optimization(start, end):
 	'''
@@ -1550,7 +1542,7 @@ def calculate_fitness(start, end):
 		# cantilever
 		cantilever = data["frames"][str(frame)]["cantilever"]
 		fitness_cantilever = cantilever
-		
+
 		if phaenotyp.calculation_type != "geometrical":
 			if phaenotyp.calculation_type != "force_distribution":
 				# deflection
@@ -1558,12 +1550,12 @@ def calculate_fitness(start, end):
 				for id, member in members.items():
 					v_0 = member["initial_positions"][str(frame)]
 					v_1 = member["deflection"][str(frame)]
-					
+
 					v_0 = array(v_0)
 					v_1 = array(v_1)
-					
+
 					dist = (linalg.norm(v_1) + linalg.norm(v_0))
-					
+
 					forces.append(dist)
 
 				sum_forces = 0
@@ -1571,7 +1563,7 @@ def calculate_fitness(start, end):
 					sum_forces = sum_forces + abs(force)
 
 				fitness_deflection = sum_forces / len(forces)
-				
+
 				# average_sigma
 				forces = []
 				for id, member in members.items():
