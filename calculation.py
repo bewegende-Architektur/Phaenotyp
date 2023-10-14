@@ -245,11 +245,13 @@ def prepare_fea_pn():
 		area = face.area
 		weight_A = t * rho
 		weight = weight_A * area * 10000 # in cm
+		print ("area=", area, "weight_a=", weight_A, "weight= ", weight)
 		for vertex_id in quads[id]["vertices_ids_structure"]:
 			vertex_id = str(vertex_id)
 			# area * thickness * density * 0.25 (to distribute to all four faces) - for gravity
 			z = weight * (-0.25)
 			model.add_node_load(vertex_id, 'FZ', z * 0.00000981 * psf_quads) # to cm and force
+			print ("FZ=", z * 0.00000981 * psf_quads, "psf_quads=", psf_quads)
 
 		quad["area"][str(frame)] = area # in m²
 		quad["weight_A"][str(frame)] = t * weight_A
@@ -1029,30 +1031,38 @@ def interweave_results_pn(feas):
 			# as descripted in quad example
 			length_x = (linalg.norm(x_0) + linalg.norm(x_1)) * 0.5 * 100 # to convert into cm
 			length_y = (linalg.norm(y_0) + linalg.norm(y_1)) * 0.5 * 100 # to convert into cm
+			print ("length_x=", length_x, "length_y=", length_y)
+			
+			# per length unit in cm
+			
+			shear_x = Qx
+			shear_y = Qy
 
-			# moment per unit
-			shear_x = Qx/(length_x/2)
-			shear_y = Qy/(length_y/2)
-
-			moment_x = Mx/(length_x/2)
-			moment_y = My/(length_y/2)
-			moment_xy = Mxy/(length_y/2) #???
-
-			membrane_x = Sx#(length_x/2)
-			membrane_y = Sy#*(length_y/2)
-			membrane_xy = Txy#*(length_y/2) #???
-
-			# shorten and accessing once
+			moment_x = Mx
+			moment_y = My
+			moment_xy = Mxy
+			
+			# shorten and accessing once, thickness in cm
 			thickness = quad["thickness"][frame]
-
+			
+			membrane_x = Sx*thickness
+			membrane_y = Sy*thickness
+			membrane_xy = Txy*thickness
+			
+			
+			# Die Querschnittswerte sind jetzt auf 1 cm Schalenbreite bezogen (statt auf 1 m wie vorher)
 			# area of the section, not the face
-			A = thickness * 100 # Dicke x 1 m in cm
-			J = (100 * thickness)**3 / 12
+			A = thickness * 1 # Dicke x 1 cm in cm
+			
+
+			J = 1 * (thickness)**3 / 12
 
 			# buckling
 			ir = sqrt(J/A) # in cm
 			# modulus from the moments of area
 			Wy = J / (thickness/2)
+
+			# ab hier überarbeiten
 
 			moment_h = sqrt(moment_x**2 + moment_y**2)
 			if membrane_x > 0:
