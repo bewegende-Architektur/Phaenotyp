@@ -1219,7 +1219,7 @@ def interweave_results_pn(feas):
 			quad["alpha_1"][frame] = alpha_1
 			quad["alpha_2"][frame] = alpha_2
 
-			quad["overstress"][frame] = False
+			quad["overstress"][frame] = overstress
 			quad["utilization"][frame] = utilization
 
 			#quad["strain_energy"][frame] = strain_energy
@@ -1449,10 +1449,10 @@ def quads_sectional():
 
 	for id, quad in quads.items():
 		if quad["overstress"][str(frame)]:
-			quad["thickness"][str(frame)] = quad["thickness"][str(frame)] * 0.9
+			quad["thickness"][str(frame)] = quad["thickness"][str(frame)] * 1.1
 		
 		else:
-			quad["thickness"][str(frame)] = quad["thickness"][str(frame)] * 1.1
+			quad["thickness"][str(frame)] = quad["thickness"][str(frame)] * 0.9
 			
 def decimate_topology():
 	'''
