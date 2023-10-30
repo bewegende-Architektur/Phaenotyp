@@ -1571,6 +1571,9 @@ def sectional_optimization(start, end):
 
 			if phaenotyp.optimization_pn == "complex":
 				complex_sectional()
+				
+			if phaenotyp.optimization_quads == "approximate":
+				quads_sectional()
 
 		# apply shape keys
 		try:

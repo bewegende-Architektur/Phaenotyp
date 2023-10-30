@@ -567,16 +567,13 @@ def single_frame(layout):
 
 				result = data["done"].get(str(frame))
 				if result:
-					if len(data['members']) > 0:
-						if calculation_type == "force_distribution":
-							box_opt.operator("wm.optimize_approximate", text="Approximate")
-						else:
-							box_opt.operator("wm.optimize_simple", text="Simple")
-							box_opt.operator("wm.optimize_utilization", text="Utilization")
-							box_opt.operator("wm.optimize_complex", text="Complex")
-					
-					if len(data['quads']) > 0:
-						box_opt.operator("wm.optimize_quads", text="Quads")
+					if calculation_type == "force_distribution":
+						box_opt.operator("wm.optimize_approximate", text="Members approximate")
+					else:
+						box_opt.operator("wm.optimize_simple", text="Members simple")
+						box_opt.operator("wm.optimize_utilization", text="Members utilization")
+						box_opt.operator("wm.optimize_complex", text="Members complex")
+						box_opt.operator("wm.optimize_quads", text="Quads approximate")
 				else:
 					box_opt.label(text="Run single analysis first.")
 
@@ -618,8 +615,15 @@ def animation(layout):
 					if calculation_type == "force_distribution":
 						box_optimization.prop(phaenotyp, "optimization_fd", text="")
 					else:
-						box_optimization.prop(phaenotyp, "optimization_pn", text="")
-					if phaenotyp.optimization_pn != "none" or phaenotyp.optimization_fd != "none":
+						col = box_optimization.column()
+						split = col.split()
+						split.label(text="Members:")
+						split.prop(phaenotyp, "optimization_pn", text="")
+						col = box_optimization.column()
+						split = col.split()
+						split.label(text="Quads:")
+						split.prop(phaenotyp, "optimization_quads", text="")
+					if phaenotyp.optimization_pn != "none" or phaenotyp.optimization_fd != "none" or phaenotyp.optimization_quads != "none":
 						box_optimization.prop(phaenotyp, "animation_optimization_type", text="")
 						box_optimization.prop(phaenotyp, "optimization_amount", text="Amount of sectional optimization")
 
@@ -654,12 +658,21 @@ def bruteforce(layout):
 				if calculation_type != "geometrical":
 					box_optimization = layout.box()
 					box_optimization.label(text="Optimization:")
-					if calculation_type == "force_distribution":
-						box_optimization.prop(phaenotyp, "optimization_fd", text="")
-					else:
-						box_optimization.prop(phaenotyp, "optimization_pn", text="")
-					if phaenotyp.optimization_pn != "none" or phaenotyp.optimization_fd != "none":
-						box_optimization.prop(phaenotyp, "optimization_amount", text="Amount of sectional optimization")
+					if phaenotyp.calculation_type != "geometrical":
+						if calculation_type == "force_distribution":
+							box_optimization.prop(phaenotyp, "optimization_fd", text="")
+						else:
+							col = box_optimization.column()
+							split = col.split()
+							split.label(text="Members:")
+							split.prop(phaenotyp, "optimization_pn", text="")
+							col = box_optimization.column()
+							split = col.split()
+							split.label(text="Quads:")
+							split.prop(phaenotyp, "optimization_quads", text="")
+						if phaenotyp.optimization_pn != "none" or phaenotyp.optimization_fd != "none" or phaenotyp.optimization_quads != "none":
+							box_optimization.prop(phaenotyp, "animation_optimization_type", text="")
+							box_optimization.prop(phaenotyp, "optimization_amount", text="Amount of sectional optimization")
 
 				# fitness headline
 				box_fitness = layout.box()
@@ -765,12 +778,21 @@ def genetic_algorithm(layout):
 				if calculation_type != "geometrical":
 					box_optimization = layout.box()
 					box_optimization.label(text="Optimization:")
-					if calculation_type == "force_distribution":
-						box_optimization.prop(phaenotyp, "optimization_fd", text="")
-					else:
-						box_optimization.prop(phaenotyp, "optimization_pn", text="")
-					if phaenotyp.optimization_pn != "none" or phaenotyp.optimization_fd != "none":
-						box_optimization.prop(phaenotyp, "optimization_amount", text="Amount of sectional optimization")
+					if phaenotyp.calculation_type != "geometrical":
+						if calculation_type == "force_distribution":
+							box_optimization.prop(phaenotyp, "optimization_fd", text="")
+						else:
+							col = box_optimization.column()
+							split = col.split()
+							split.label(text="Members:")
+							split.prop(phaenotyp, "optimization_pn", text="")
+							col = box_optimization.column()
+							split = col.split()
+							split.label(text="Quads:")
+							split.prop(phaenotyp, "optimization_quads", text="")
+						if phaenotyp.optimization_pn != "none" or phaenotyp.optimization_fd != "none" or phaenotyp.optimization_quads != "none":
+							box_optimization.prop(phaenotyp, "animation_optimization_type", text="")
+							box_optimization.prop(phaenotyp, "optimization_amount", text="Amount of sectional optimization")
 
 				# fitness headline
 				box_fitness = layout.box()
@@ -879,12 +901,21 @@ def gradient_descent(layout):
 				if calculation_type != "geometrical":
 					box_optimization = layout.box()
 					box_optimization.label(text="Optimization:")
-					if calculation_type == "force_distribution":
-						box_optimization.prop(phaenotyp, "optimization_fd", text="")
-					else:
-						box_optimization.prop(phaenotyp, "optimization_pn", text="")
-					if phaenotyp.optimization_pn != "none" or phaenotyp.optimization_fd != "none":
-						box_optimization.prop(phaenotyp, "optimization_amount", text="Amount of sectional optimization")
+					if phaenotyp.calculation_type != "geometrical":
+						if calculation_type == "force_distribution":
+							box_optimization.prop(phaenotyp, "optimization_fd", text="")
+						else:
+							col = box_optimization.column()
+							split = col.split()
+							split.label(text="Members:")
+							split.prop(phaenotyp, "optimization_pn", text="")
+							col = box_optimization.column()
+							split = col.split()
+							split.label(text="Quads:")
+							split.prop(phaenotyp, "optimization_quads", text="")
+						if phaenotyp.optimization_pn != "none" or phaenotyp.optimization_fd != "none" or phaenotyp.optimization_quads != "none":
+							box_optimization.prop(phaenotyp, "animation_optimization_type", text="")
+							box_optimization.prop(phaenotyp, "optimization_amount", text="Amount of sectional optimization")
 
 				# fitness headline
 				box_fitness = layout.box()

@@ -1281,6 +1281,7 @@ def calculate_animation():
 	phaenotyp = scene.phaenotyp
 	data = scene["<Phaenotyp>"]
 	members = scene["<Phaenotyp>"]["members"]
+	quads = scene["<Phaenotyp>"]["quads"]
 	frame = bpy.context.scene.frame_current
 
 	# for PyNite
@@ -1294,7 +1295,7 @@ def calculate_animation():
 		interweave_results = calculation.interweave_results_fd
 
 	# if optimization
-	if phaenotyp.optimization_pn != "none" or phaenotyp.optimization_fd != "none":
+	if phaenotyp.optimization_pn != "none" or phaenotyp.optimization_fd != "none" or phaenotyp.optimization_quads != "none":
 		if phaenotyp.animation_optimization_type == "each_frame":
 			start = bpy.context.scene.frame_start
 			end = bpy.context.scene.frame_end + 1 # to render also last frame
@@ -1355,6 +1356,9 @@ def calculate_animation():
 
 						if phaenotyp.optimization_pn == "complex":
 							calculation.complex_sectional()
+						
+						if phaenotyp.optimization_quads == "approximate":
+							calculation.quads_sectional()
 
 					# calculate new properties for each member
 					geometry.update_geometry_pre()
@@ -1406,6 +1410,9 @@ def calculate_animation():
 					member["Do"][str(frame)] = member["Do"][str(frame-1)]
 					member["Di"][str(frame)] = member["Di"][str(frame-1)]
 
+				for id, quad in quads.items():
+					quad["thickness"][str(frame)] = quad["thickness"][str(frame-1)]
+					
 				calculate_single_frame()
 
 				# run optimization and get new properties
@@ -1422,6 +1429,9 @@ def calculate_animation():
 
 					if phaenotyp.optimization_pn == "complex":
 						optimize_complex()
+
+					if phaenotyp.optimization_quads == "approximate":
+						optimize_quads()
 		
 			bpy.context.scene.frame_end = frame
 

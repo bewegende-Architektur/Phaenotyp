@@ -788,6 +788,15 @@ class phaenotyp_properties(PropertyGroup):
 				]
 		)
 
+	optimization_quads: EnumProperty(
+		name = "optimization",
+		description = "Enables sectional optimization after each frame",
+		items = [
+					("none", "None", ""),
+					("approximate", "Approximate", "")
+				]
+		)
+
 	optimization_amount: IntProperty(
 		name = "optimization_amount",
 		description = "Amount of optimization to run for each member",
@@ -1525,6 +1534,16 @@ def update_post(scene):
 			if result:
 				geometry.update_geometry_post()
 
+		# only run if quad is available
+		quads_available = data.get("quads")
+		if quads_available:
+			quads = data["quads"]
+			frame = scene.frame_current
+
+			result = data["done"].get(str(frame))
+			if result:
+				geometry.update_geometry_post()
+		
 		# apply chromosome if available
 		# (to change the shape-key, the result will be correct allready)
 		individuals = data.get("individuals")
