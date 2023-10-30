@@ -558,24 +558,21 @@ class phaenotyp_properties(PropertyGroup):
 				],
 		update = viz_update
 		)
-
+			
 	forces_quads: EnumProperty(
 		name = "forces_quads",
 		description = "Force types",
 		items = [
-					("membrane_x", "Membrane X", ""),
-					("membrane_y", "Membrane Y", ""),
-					("membrane_xy", "Membrane XY", ""),
-					("moment_x", "Moment X", ""),
-					("moment_y", "Moment Y", ""),
-					("moment_xy", "Moment XY", ""),
-					("shear_x", "Shear_X", ""),
-					("shear_y", "Shear_Y", "")
+					("s_x", "S X", ""),
+					("s_y", "S Y", ""),
+					("T_xy", "T XY", ""),
+					("s_1", "S 1", ""),
+					("s_2", "S 2", "")
 				],
 		update = viz_update,
-		default = "membrane_xy"
+		default = "T_xy"
 		)
-		
+			
 	viz_scale: FloatProperty(
 		name = "viz_scale",
 		description = "scale",
@@ -867,7 +864,12 @@ class phaenotyp_properties(PropertyGroup):
 					("moment_y", "Moment Y", ""),
 					("moment_xy", "Moment XY", ""),
 					("shear_x", "Shear_X", ""),
-					("shear_y", "Shear_Y", "")
+					("shear_y", "Shear_Y", ""),
+					("s_x", "S X", ""),
+					("s_y", "S Y", ""),
+					("T_xy", "T XY", ""),
+					("s_1", "S 1", ""),
+					("s_2", "S 2", "")
 				],
 		default = "thickness"
 		)

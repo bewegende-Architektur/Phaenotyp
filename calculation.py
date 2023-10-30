@@ -1,7 +1,7 @@
 import bpy
 import bmesh
 from PyNite import FEModel3D
-from numpy import array, empty, append, poly1d, polyfit, linalg, zeros, intersect1d
+from numpy import array, empty, append, poly1d, polyfit, linalg, zeros, intersect1d, arctan
 from phaenotyp import basics, material, geometry, progress
 from math import sqrt
 from math import tanh
@@ -245,13 +245,11 @@ def prepare_fea_pn():
 		area = face.area
 		weight_A = t * rho
 		weight = weight_A * area * 10000 # in cm
-		print ("area=", area, "weight_a=", weight_A, "weight= ", weight)
 		for vertex_id in quads[id]["vertices_ids_structure"]:
 			vertex_id = str(vertex_id)
 			# area * thickness * density * 0.25 (to distribute to all four faces) - for gravity
 			z = weight * (-0.25)
 			model.add_node_load(vertex_id, 'FZ', z * 0.00000981 * psf_quads) # to cm and force
-			print ("FZ=", z * 0.00000981 * psf_quads, "psf_quads=", psf_quads)
 
 		quad["area"][str(frame)] = area # in m²
 		quad["weight_A"][str(frame)] = t * weight_A
@@ -673,7 +671,7 @@ def run_mp(models):
 	while p.poll() is None:
 		for line in lines_iterator:
 			nline = line.rstrip()
-			print(nline.decode("utf8"), end = "\r\n",flush =True) # yield line
+			#print(nline.decode("utf8"), end = "\r\n",flush =True) # yield line
 			progress.http.update_c()
 
 	# get models back from mp
@@ -997,7 +995,7 @@ def interweave_results_pn(feas):
 			Sy = float(membrane[1])
 			Txy = float(membrane[2])
 
-			print("Qx:", Qx, "Qy:", Qy, "Mx:", Mx, "My:", My, "Mxy:", Mxy, "Sx:", Sx, "Sy:", Sy, "Txy:", Txy)
+			#print("Qx:", Qx, "Qy:", Qy, "Mx:", Mx, "My:", My, "Mxy:", Mxy, "Sx:", Sx, "Sy:", Sy, "Txy:", Txy)
 
 			# get deflection
 			node_ids = quad["vertices_ids_structure"]
@@ -1015,7 +1013,7 @@ def interweave_results_pn(feas):
 				z += initial[2]
 
 				deflection.append([x,y,z])
-
+			
 			# get average lengthes to calculate force by unit
 			initial = quad["initial_positions"][frame]
 			v_0 = array(initial[0])
@@ -1031,100 +1029,152 @@ def interweave_results_pn(feas):
 			# as descripted in quad example
 			length_x = (linalg.norm(x_0) + linalg.norm(x_1)) * 0.5 * 100 # to convert into cm
 			length_y = (linalg.norm(y_0) + linalg.norm(y_1)) * 0.5 * 100 # to convert into cm
-			print ("length_x=", length_x, "length_y=", length_y)
-			
-			# per length unit in cm
-			
-			shear_x = Qx
-			shear_y = Qy
 
-			moment_x = Mx
-			moment_y = My
-			moment_xy = Mxy
+			# Schnittkräfte in unit-cm
+
+			shear_x = Qx # Querkraft in kN  # für Darstellung
+			shear_y = Qy # Querkraft in kN  # für Darstellung
+
+			moment_x = Mx  # Moment in kNcm   # für Darstellung
+			moment_y = My  # Moment in kNcm   # für Darstellung
+			moment_xy = Mxy  # Drillmoment in kNcm   # für Darstellung
 			
-			# shorten and accessing once, thickness in cm
 			thickness = quad["thickness"][frame]
-			
-			membrane_x = Sx*thickness
-			membrane_y = Sy*thickness
-			membrane_xy = Txy*thickness
-			
-			
-			# Die Querschnittswerte sind jetzt auf 1 cm Schalenbreite bezogen (statt auf 1 m wie vorher)
+
+			membrane_x = Sx * thickness  # Spannung in kN/cm   # für Darstellung
+			membrane_y = Sy * thickness  # Spannung in kN/cm   # für Darstellung
+			membrane_xy = Txy * thickness  #  Schubspannung in kN/cm   # für Darstellung
+
+			# die Querschnittswerte sind jetzt auf 1 cm Schalenbreite bezogen
 			# area of the section, not the face
-			A = thickness * 1 # Dicke x 1 cm in cm
+			A = thickness * 1 # Dicke in cm² pro cm Schalenbreite
 			
+			# J = 1 * (thickness)**3 / 12
 
-			J = 1 * (thickness)**3 / 12
-
-			# buckling
-			ir = sqrt(J/A) # in cm
+			# für buckling
+			ir = thickness * 0.28867 # in cm  - Breite kürzt sich weg, es bleibt 1/wurzel aus 12
+			# ir = sqrt(J/A) # in cm
 			# modulus from the moments of area
-			Wy = J / (thickness/2)
+			Wy = (thickness**2)/6  # auf 1 cm Schalenbreite
+			
+			# Spannungen in x und y Richrtung an den Oberflächen 1 und 2
+			s_x_1 = membrane_x + moment_x/Wy  # für Darstellung
+			s_x_2 = membrane_x - moment_x/Wy  # für Darstellung
+			s_y_1 = membrane_y + moment_x/Wy  # für Darstellung
+			s_y_2 = membrane_y - moment_x/Wy  # für Darstellung
+			T_xy_1 = membrane_xy/Wy        # am Plattenrand, für Darstellung
+			T_xy_2 = -1 * membrane_xy/Wy   # am Plattenrand, für Darstellung
+			
+			# Schubspannungen in x und y Richtung  infolge Querkraft in Plattenmitte
+			T_x = 1.5 * shear_x/A   # in Plattenmitte
+			T_y = 1.5 * shear_y/A   # in Plattenmitte
 
-			# ab hier überarbeiten
+			# Hauptspannungen 1 und 2 an den Oberflächen 1 und 2			
+			s_1_1 = (s_x_1 + s_y_1)/2 + sqrt(abs((s_x_1 - s_y_1)/2 + T_xy_1**2))   # für Darstellung
+			s_1_2 = (s_x_1 + s_y_1)/2 - sqrt(abs((s_x_1 - s_y_1)/2 + T_xy_1**2))   # für Darstellung
+			s_2_1 = (s_x_2 + s_y_2)/2 + sqrt(abs((s_x_2 - s_y_2)/2 + T_xy_2**2))   # für Darstellung
+			s_2_2 = (s_x_2 + s_y_2)/2 - sqrt(abs((s_x_2 - s_y_2)/2 + T_xy_2**2))   # für Darstellung
+			
+			# Winkel der Hautptspannungen an den Oberflächen 1 und 2
+			alpha_1 = (arctan (2* T_xy_1/(s_x_1 - s_y_1)) * 0.5) # in radianten, mit *pi/180 um in grad umzurechnen, für Darstellung
+			alpha_2 = (arctan (2* T_xy_2/(s_x_2 - s_y_2)) * 0.5) # in radianten, mit *pi/180 um in grad umzurechnen, für Darstellung
 
-			moment_h = sqrt(moment_x**2 + moment_y**2)
-			if membrane_x > 0:
-				s = membrane_x/A + moment_h/Wy
+			# long_stress_x = s_x
+			# sigma = s_x
+			# long_stress_y = s_y
+			# sigma_y = s_y
+			# shear_xy = membrane_xy
+			# tau_shear_xy = 1.5 * shear_x/A # for quads
+			# tau_shear_y = 1.5 * shear_y/A # for quads
+			# tau_shear_y = 1.5 * shear_y/A # for quads
+			
+			# Vergleichsspannung an den beiden Oberflächen 1 und 2
+			sigmav1 = sqrt(s_x_1**2 + s_y_1**2 - s_x_1*s_y_1 + 3*T_xy_1**2)
+			sigmav2 = sqrt(s_x_2**2 + s_y_2**2 - s_x_2*s_y_2 + 3*T_xy_2**2)
+			
+			# der größere Wert wird für die weitere Optimierung verwendet
+			if sigmav2 > sigmav1:
+				sigmav = sigmav2
 			else:
-				s = membrane_x/A - moment_h/Wy
+				sigmav = sigmav1
 
-			long_stress = s
-			sigma = s
-
-			shear_h = sqrt(shear_x**2 + shear_y**2)
-			tau_shear = 1.5 * shear_h/A # for quads
-			sigmav = sqrt(long_stress**2 + 3*tau_shear**2)
-
+			# Vergleichsspannung in Plattenmitte
+			sigmav_m = sqrt(abs((membrane_x/A)**2 + (membrane_y/A)**2 - (membrane_x/A) * (membrane_y/A) + 3 * T_x * T_y))  # falls notwendig
+			
 			overstress = False
-
-			# check overstress and add 1.05 savety factor
+			# check overstress and add 1.05 safety factor
 			safety_factor = 1.05
-			if abs(tau_shear) > safety_factor*quad["acceptable_shear"]:
-				overstress = True
+			#if abs(tau_shear) > safety_factor*quad["acceptable_shear"]:
+			#	overstress = True
 
 			if sigmav > safety_factor*quad["acceptable_sigmav"]:
 				overstress = True
 
-			# buckling
+			# buckling in x-Richtung
 			if membrane_x < 0: # nur für Druckstäbe, axial kann nicht flippen?
-				quad["lamda"][frame] = length_x*0.5/ir # für eingespannte Stäbe ist die Knicklänge 0.5 der Stablänge L, Stablänge muss in cm sein !
+				quad["lamda"][frame] = length_x*5/ir # es wird hier von einer Knicklänge von 5 x der Elementlänge vorerst ausgegagen, in cm
 				if quad["lamda"][frame] > 20: # für lamda < 20 (kurze Träger) gelten die default-Werte)
 					kn = quad["knick_model"]
 					function_to_run = poly1d(polyfit(material.kn_lamda, kn, 6))
-					quad["acceptable_sigma_buckling"][frame] = function_to_run(quad["lamda"][frame])
+					acceptable_sigma_buckling_x = function_to_run(quad["lamda"][frame])
 					if quad["lamda"][frame] > 250: # Schlankheit zu schlank
-						quad["acceptable_sigma_buckling"][frame] = function_to_run(250)
+						acceptable_sigma_buckling_x = function_to_run(250)
 						overstress = True
-					if safety_factor*abs(quad["acceptable_sigma_buckling"][frame]) > abs(sigma): # Sigma
+					if safety_factor*abs(acceptable_sigma_buckling_x) > abs(sigmav): # Sigma
 						overstress = True
 
 				else:
-					quad["acceptable_sigma_buckling"][frame] = quad["acceptable_sigma"]
+					acceptable_sigma_buckling_x = quad["acceptable_sigma"]
+			# without buckling		
+			else:
+				acceptable_sigma_buckling_x = quad["acceptable_sigma"]
+				quad["lamda"][frame] = None # to avoid missing KeyError
+
+			
+			# buckling in y-Richtung
+			if membrane_y < 0: # nur für Druckstäbe, axial kann nicht flippen?
+				quad["lamda"][frame] = length_y*5/ir # es wird hier von einer Knicklänge von 5 x der Elementlänge vorerst ausgegagen, in cm
+				if quad["lamda"][frame] > 20: # für lamda < 20 (kurze Träger) gelten die default-Werte)
+					kn = quad["knick_model"]
+					function_to_run = poly1d(polyfit(material.kn_lamda, kn, 6))
+					acceptable_sigma_buckling_y = function_to_run(quad["lamda"][frame])
+					if quad["lamda"][frame] > 250: # Schlankheit zu schlank
+						acceptable_sigma_buckling_y = function_to_run(250)
+						overstress = True
+					if safety_factor*abs(acceptable_sigma_buckling_y) > abs(sigmav): # Sigma
+						overstress = True
+
+				else:
+					acceptable_sigma_buckling_y = quad["acceptable_sigma"]
 
 			# without buckling
 			else:
-				quad["acceptable_sigma_buckling"][frame] = quad["acceptable_sigma"]
+				acceptable_sigma_buckling_y = quad["acceptable_sigma"]
 				quad["lamda"][frame] = None # to avoid missing KeyError
+			
+			# das kleinere ist maßgbend
+			if acceptable_sigma_buckling_x < acceptable_sigma_buckling_y:
+				quad["acceptable_sigma_buckling"][frame] = acceptable_sigma_buckling_x
+			else:
+				quad["acceptable_sigma_buckling"][frame] = acceptable_sigma_buckling_y 
 
-
-			if abs(sigma) > safety_factor*quad["acceptable_sigma"]:
+			if abs(sigmav) > safety_factor*quad["acceptable_sigma"]:
 				overstress = True
 
 			# Ausnutzungsgrad
-			utilization = abs(long_stress / quad["acceptable_sigma_buckling"][frame])
-
+			utilization = abs(sigmav / quad["acceptable_sigma_buckling"][frame])
+			
+			# vorerst noch weglassen
 			# Einführung in die Technische Mechanik - Festigkeitslehre, H.Balke, Springer 2010
 			# Berechnung der strain_energy für Normalkraft
-			normalkraft_energie = (long_stress**2)*(length_x)/(2*quad["E"]*A)
+			# normalkraft_energie = (long_stress**2)*(length_x)/(2*quad["E"]*A)
 
 			# Berechnung der strain_energy für Moment
-			moment_hq = moment_x**2+moment_y**2
-			moment_energie = (moment_hq * length_x) / (quad["E"] * Wy * thickness)
+			# moment_hq = moment_x**2+moment_y**2
+			# moment_energie = (moment_hq * length_x) / (quad["E"] * Wy * thickness)
 
 			# Summe von Normalkraft und Moment-Verzerrunsenergie
-			strain_energy = normalkraft_energie + moment_energie
+			# strain_energy = normalkraft_energie + moment_energie
 
 			# save to dict
 			quad["shear_x"][frame] = shear_x
@@ -1137,7 +1187,7 @@ def interweave_results_pn(feas):
 			quad["membrane_x"][frame] = membrane_x
 			quad["membrane_y"][frame] = membrane_y
 			quad["membrane_xy"][frame] = membrane_xy
-
+			
 			quad["length_x"][frame] = length_x
 			quad["length_y"][frame] = length_y
 
@@ -1147,20 +1197,35 @@ def interweave_results_pn(feas):
 			quad["A"][frame] = A
 			quad["J"][frame] = J
 			quad["Wy"][frame] = Wy
-			quad["moment_h"][frame] = moment_h
-			quad["long_stress"][frame] = long_stress
-			quad["shear_h"][frame] = shear_h
-			quad["tau_shear"][frame] = tau_shear
-			quad["sigmav"][frame] = sigmav
-			quad["sigma"][frame] = quad["long_stress"][frame]
+			#quad["moment_h"][frame] = moment_h
+			#quad["long_stress"][frame] = long_stress
+			#quad["shear_h"][frame] = shear_h
+			#quad["tau_shear"][frame] = tau_shear
+			#quad["sigmav"][frame] = sigmav
+			#quad["sigma"][frame] = quad["long_stress"][frame]
+			
+			quad["s_x_1"][frame] = s_x_1
+			quad["s_x_2"][frame] = s_x_2
+			quad["s_y_1"][frame] = s_y_1
+			quad["s_y_2"][frame] = s_y_2
+			quad["T_xy_1"][frame] = T_xy_1
+			quad["T_xy_2"][frame] = T_xy_2
+
+			quad["s_1_1"][frame] = s_1_1
+			quad["s_1_2"][frame] = s_1_2
+			quad["s_2_1"][frame] = s_2_1
+			quad["s_2_2"][frame] = s_2_2
+
+			quad["alpha_1"][frame] = alpha_1
+			quad["alpha_2"][frame] = alpha_2
 
 			quad["overstress"][frame] = False
 			quad["utilization"][frame] = utilization
 
-			quad["strain_energy"][frame] = strain_energy
-			quad["normal_energy"][frame] = normalkraft_energie
-			quad["moment_energy"][frame] = moment_energie
-
+			#quad["strain_energy"][frame] = strain_energy
+			#quad["normal_energy"][frame] = normalkraft_energie
+			#quad["moment_energy"][frame] = moment_energie
+			
 		# update progress
 		progress.http.update_i()
 

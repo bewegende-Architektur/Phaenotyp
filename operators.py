@@ -550,17 +550,33 @@ def set_quad():
 			quad["A"] = {} # area of the section, not the face
 			quad["J"] = {}
 			quad["Wy"] = {}
-			quad["moment_h"] = {}
-			quad["long_stress"] = {}
-			quad["shear_h"] = {}
-			quad["tau_shear"] = {}
-			quad["sigmav"] = {}
-			quad["sigma"] = {}
+			#quad["moment_h"] = {}
+			#quad["long_stress"] = {}
+			#quad["shear_h"] = {}
+			#quad["tau_shear"] = {}
+			#quad["sigmav"] = {}
+			#quad["sigma"] = {}
 			quad["acceptable_sigma_buckling"] = {}
 			quad["lamda"] = {}
-			quad["strain_energy"] = {}
-			quad["normal_energy"] = {}
-			quad["moment_energy"] = {}
+			
+			quad["s_x_1"] = {}
+			quad["s_x_2"] = {}
+			quad["s_y_1"] = {}
+			quad["s_y_2"] = {}
+			quad["T_xy_1"] = {}
+			quad["T_xy_2"] = {}
+
+			quad["s_1_1"] = {}
+			quad["s_1_2"] = {}
+			quad["s_2_1"] = {}
+			quad["s_2_2"] = {}
+
+			quad["alpha_1"] = {}
+			quad["alpha_2"] = {}
+			
+			#quad["strain_energy"] = {}
+			#quad["normal_energy"] = {}
+			#quad["moment_energy"] = {}
 			
 			data["quads"][str(id)] = quad
 
@@ -2070,7 +2086,7 @@ def text():
 						data_temp.append(text)
 						text = "shear_y: " + str(round(quad["shear_y"][str(frame)], 3))
 						data_temp.append(text)
-						
+
 						data["texts"] = data_temp
 						
 def selection():

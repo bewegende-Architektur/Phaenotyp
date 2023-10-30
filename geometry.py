@@ -709,17 +709,24 @@ def create_quads(structure_obj, quads):
 	mesh.from_pydata(verts, edges, faces)
 
 	# create vertex_color
-	attribute = obj.data.attributes.get("force")
-	if attribute:
-		text = "existing attribute:" + str(attribute)
+	attribute_1 = obj.data.attributes.get("force_1")
+	attribute_2 = obj.data.attributes.get("force_2")
+	
+	if attribute_1:
+		text = "existing attribute_1:" + str(attribute_1)
 	else:
-		bpy.ops.geometry.color_attribute_add(name="force", domain='POINT', data_type='FLOAT_COLOR', color=(255, 0, 255, 1))
+		bpy.ops.geometry.color_attribute_add(name="force_1", domain='POINT', data_type='FLOAT_COLOR', color=(255, 0, 255, 1))
 
-	# create material
-	material_name = "<Phaenotyp>quad"
-	quad_material = bpy.data.materials.get(material_name)
-	if quad_material == None:
-		mat = bpy.data.materials.new(material_name)
+	if attribute_2:
+		text = "existing attribute_2:" + str(attribute_2)
+	else:
+		bpy.ops.geometry.color_attribute_add(name="force_2", domain='POINT', data_type='FLOAT_COLOR', color=(255, 0, 255, 1))
+
+	# create material for side 1
+	material_name_1 = "<Phaenotyp>quad_1"
+	quad_material_1 = bpy.data.materials.get(material_name_1)
+	if quad_material_1 == None:
+		mat = bpy.data.materials.new(material_name_1)
 		
 		mat.use_nodes = True
 		nodetree = mat.node_tree
@@ -728,21 +735,44 @@ def create_quads(structure_obj, quads):
 		ca = nodetree.nodes.new(type="ShaderNodeVertexColor")
 
 		# set group
-		ca.layer_name = "force"
+		ca.layer_name = "force_1"
 
 		# connect to color attribute to base color
 		input = mat.node_tree.nodes['Principled BSDF'].inputs['Base Color']
 		output = ca.outputs['Color']
 		nodetree.links.new(input, output)
 
-	obj.data.materials.append(bpy.data.materials.get(material_name))    
+	obj.data.materials.append(bpy.data.materials.get(material_name_1))    
+	obj.active_material_index = len(obj.data.materials) - 1
+
+	# create material for side 2
+	material_name_2 = "<Phaenotyp>quad_2"
+	quad_material_2 = bpy.data.materials.get(material_name_2)
+	if quad_material_2 == None:
+		mat = bpy.data.materials.new(material_name_2)
+		
+		mat.use_nodes = True
+		nodetree = mat.node_tree
+
+		# add color attribute
+		ca = nodetree.nodes.new(type="ShaderNodeVertexColor")
+
+		# set group
+		ca.layer_name = "force_2"
+
+		# connect to color attribute to base color
+		input = mat.node_tree.nodes['Principled BSDF'].inputs['Base Color']
+		output = ca.outputs['Color']
+		nodetree.links.new(input, output)
+
+	obj.data.materials.append(bpy.data.materials.get(material_name_2))    
 	obj.active_material_index = len(obj.data.materials) - 1
 	
 	# create vertex_group for thickness
 	bpy.ops.object.mode_set(mode = 'OBJECT')
 	thickness_group = obj.vertex_groups.get("thickness")
 	if not thickness_group:
-		thickness_group = obj.vertex_groups.new(name="thickness") 
+		thickness_group = obj.vertex_groups.new(name="thickness")
 
 	# create modifiere if not existing
 	modifier = obj.modifiers.get('<Phaenotyp>')
@@ -753,6 +783,7 @@ def create_quads(structure_obj, quads):
 		modifier_solidify.thickness = 1
 		modifier_solidify.vertex_group = "thickness"
 		modifier_solidify.use_even_offset = True
+		modifier_solidify.material_offset = 1
 	
 	# set the thickness passed from gui
 	for id, quad in quads.items():
@@ -989,9 +1020,13 @@ def update_geometry_post():
 	faces = mesh_for_viz.data.polygons
 
 	thickness_group = mesh_for_viz.vertex_groups.get("thickness")
-	attribute = mesh_for_viz.data.attributes.get("force")
 	
-	nodes = [[] for i in range(len(vertices))]
+	attribute_1 = mesh_for_viz.data.attributes.get("force_1")
+	attribute_2 = mesh_for_viz.data.attributes.get("force_2")
+	
+	# for both sides
+	nodes_1 = [[] for i in range(len(vertices))]
+	nodes_2 = [[] for i in range(len(vertices))]
 	
 	# list of overstressed node_ids
 	# if a quad is overstressed, all nodes are drawn darker
@@ -1001,13 +1036,16 @@ def update_geometry_post():
 		id = int(id)
 		
 		# get selected forcetyp and force
-		result = quad[phaenotyp.forces_quads]
-		force = result[str(frame)]
+		result_1 = quad[str(phaenotyp.forces_quads) + "_1"]
+		result_2 = quad[str(phaenotyp.forces_quads) + "_2"]
+		force_1 = result_1[str(frame)]
+		force_2 = result_2[str(frame)]
 		
 		# append forces to nodes to create average afterwards
 		keys = quad["vertices_ids_viz"]
 		for key in keys:
-			nodes[key].append(force)
+			nodes_1[key].append(force_1)
+			nodes_2[key].append(force_2)
 
 		for i in range(4):
 			position = quad["deflection"][str(frame)][i]
@@ -1027,30 +1065,17 @@ def update_geometry_post():
 		if quad["overstress"][str(frame)]:
 			for key in keys:
 				overstressed.append(key)
-
-	for i, forces in enumerate(nodes):
+	
+	viz_factor = 1
+	# side 1	
+	for i, forces in enumerate(nodes_1):
 		try:
 			force = sum(forces) / len(forces)
 		except:
 			force = 0
-		'''
-		if force > 0:
-			h = 0
-		else:
-			h = 0.666
 
-		# define s
-		s = 1 * abs(force) * phaenotyp.viz_scale #* 0.01
-		'''
-		'''
-		# define v
-		if member["overstress"][str(frame)] == True:
-			v = 0.25
-		else:
-			v = 1.0
-		'''
 		# rainbow
-		h = force * phaenotyp.viz_scale + 0.333
+		h = force * phaenotyp.viz_scale*viz_factor + 0.333
 		#h = 0.333/phaenotyp.viz_scale*force  + 0.333
 		if h > 0.666:
 			h = 0.666
@@ -1066,7 +1091,33 @@ def update_geometry_post():
 		c.hsv = h,s,v
 
 		# colorize faces
-		attribute.data[i].color = [c.r, c.g, c.b, 1.0]
+		attribute_1.data[i].color = [c.r, c.g, c.b, 1.0]
+
+	# side 2
+	for i, forces in enumerate(nodes_2):
+		try:
+			force = sum(forces) / len(forces)
+		except:
+			force = 0
+
+		# rainbow
+		h = force * phaenotyp.viz_scale*viz_factor + 0.333
+		#h = 0.333/phaenotyp.viz_scale*force  + 0.333
+		if h > 0.666:
+			h = 0.666
+		if h < 0:
+			h = 0
+		s = 1
+		
+		if i in overstressed == True:
+			v = 0.25
+		else:
+			v = 1.0
+		
+		c.hsv = h,s,v
+
+		# colorize faces
+		attribute_2.data[i].color = [c.r, c.g, c.b, 1.0]
 
 def create_loads(structure_obj, loads_v, loads_e, loads_f):
 	# like suggested here by Gorgious and CodeManX:
