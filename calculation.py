@@ -1195,7 +1195,7 @@ def interweave_results_pn(feas):
 
 			quad["ir"][frame] = ir
 			quad["A"][frame] = A
-			quad["J"][frame] = J
+			#quad["J"][frame] = J
 			quad["Wy"][frame] = Wy
 			#quad["moment_h"][frame] = moment_h
 			#quad["long_stress"][frame] = long_stress
@@ -1436,6 +1436,24 @@ def complex_sectional():
 			member["Di"][str(frame)] = 0.1
 			member["Do"][str(frame)] = member["Di"][str(frame)] * Do_Di_ratio
 
+def quads_sectional():
+	'''
+	Is adapting the thickness of quads step by step.
+	The reduction is based on the overstress of the elements.
+	'''
+	scene = bpy.context.scene
+	phaenotyp = scene.phaenotyp
+	data = scene["<Phaenotyp>"]
+	quads = data["quads"]
+	frame = bpy.context.scene.frame_current
+
+	for id, quad in quads.items():
+		if quad["overstress"][str(frame)]:
+			quad["thickness"][str(frame)] = quad["thickness"][str(frame)] * 0.9
+		
+		else:
+			quad["thickness"][str(frame)] = quad["thickness"][str(frame)] * 1.1
+			
 def decimate_topology():
 	'''
 	Is creating a vertex-group with the utilization of each member.

@@ -1059,8 +1059,8 @@ def update_geometry_post():
 		
 		# Dicke anwenden
 		# Derzeit ist der Faktor einfach das maximale Moment
-		#thickness = max(moment) * 0.25
-		#thickness_group.add(keys, thickness, 'ADD')
+		thickness = quad["thickness"][str(frame)] * 0.01
+		thickness_group.add(keys, thickness, 'REPLACE')
 		
 		if quad["overstress"][str(frame)]:
 			for key in keys:

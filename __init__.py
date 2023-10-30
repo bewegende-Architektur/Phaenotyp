@@ -1175,6 +1175,19 @@ class WM_OT_optimize_complex(Operator):
 		operators.optimize_complex()
 		return {"FINISHED"}
 
+class WM_OT_optimize_quads(Operator):
+	'''
+	Is calling optimize_quads from the module called operators.
+	Check out further info in there.
+	'''
+	bl_label = "optimize_quads"
+	bl_idname = "wm.optimize_quads"
+	bl_description = "Quad sectional performance"
+
+	def execute(self, context):
+		operators.optimize_quads()
+		return {"FINISHED"}
+		
 class WM_OT_decimate(Operator):
 	'''
 	Is calling decimate from the module called operators.
@@ -1470,6 +1483,7 @@ classes = (
 	WM_OT_optimize_simple,
 	WM_OT_optimize_utilization,
 	WM_OT_optimize_complex,
+	WM_OT_optimize_quads,
 	WM_OT_decimate,
 
 	WM_OT_bf_start,

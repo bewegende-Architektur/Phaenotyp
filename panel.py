@@ -567,12 +567,16 @@ def single_frame(layout):
 
 				result = data["done"].get(str(frame))
 				if result:
-					if calculation_type == "force_distribution":
-						box_opt.operator("wm.optimize_approximate", text="Approximate")
-					else:
-						box_opt.operator("wm.optimize_simple", text="Simple")
-						box_opt.operator("wm.optimize_utilization", text="Utilization")
-						box_opt.operator("wm.optimize_complex", text="Complex")
+					if len(data['members']) > 0:
+						if calculation_type == "force_distribution":
+							box_opt.operator("wm.optimize_approximate", text="Approximate")
+						else:
+							box_opt.operator("wm.optimize_simple", text="Simple")
+							box_opt.operator("wm.optimize_utilization", text="Utilization")
+							box_opt.operator("wm.optimize_complex", text="Complex")
+					
+					if len(data['quads']) > 0:
+						box_opt.operator("wm.optimize_quads", text="Quads")
 				else:
 					box_opt.label(text="Run single analysis first.")
 
