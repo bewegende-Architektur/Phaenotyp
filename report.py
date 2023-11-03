@@ -692,16 +692,33 @@ def append_head(file, report_type, name, unit):
 		file.write("<a href='area.html'>area</a>\n")
 		file.write("<br>\n")
 
-		file.write("<a href='moment_h.html'>moment_h</a> |\n")
-		file.write("<a href='shear_h.html'>shear_h</a> |\n")
-		file.write("<a href='tau_shear.html'>tau_shear |</a>\n")
-		file.write("<a href='sigmav.html'>sigmav</a> |\n")
-		file.write("<a href='sigma.html'>sigma</a>\n")
+		#file.write("<a href='moment_h.html'>moment_h</a> |\n")
+		#file.write("<a href='shear_h.html'>shear_h</a> |\n")
+		#file.write("<a href='tau_shear.html'>tau_shear |</a>\n")
+		#file.write("<a href='sigmav.html'>sigmav</a> |\n")
+		#file.write("<a href='sigma.html'>sigma</a>\n")
+		#file.write("<br>\n")
+		
+		file.write("<a href='s_x_1.html'>s_x_1</a> |\n")
+		file.write("<a href='s_x_2.html'>s_x_2</a> |\n")
+		file.write("<a href='s_y_1.html'>s_y_1</a> |\n")
+		file.write("<a href='s_y_2.html'>s_y_2</a> |\n")
+		file.write("<a href='T_xy_1.html'>T_xy_1</a> |\n")
+		file.write("<a href='T_xy_2.html'>T_xy_2</a>\n")
 		file.write("<br>\n")
 
-		file.write("<a href='strain_energy.html'>strain_energy</a> |\n")
-		file.write("<a href='normal_energy.html'>normal_energy</a> |\n")
-		file.write("<a href='moment_energy.html'>moment_energy</a>\n")
+		file.write("<a href='s_1_1.html'>s_1_1</a> |\n")
+		file.write("<a href='s_1_2.html'>s_1_2</a> |\n")
+		file.write("<a href='s_2_1.html'>s_2_1</a> |\n")
+		file.write("<a href='s_2_2.html'>s_2_2</a>\n")
+		file.write("<br>\n")
+
+		file.write("<a href='utilization.html'>utilization</a>\n")
+		file.write("<br>\n")
+		
+		#file.write("<a href='strain_energy.html'>strain_energy</a> |\n")
+		#file.write("<a href='normal_energy.html'>normal_energy</a> |\n")
+		#file.write("<a href='moment_energy.html'>moment_energy</a>\n")
 		
 		file.write("<br>\n")
 	
@@ -1305,15 +1322,29 @@ def report_quads(directory, start, end):
 	force_types["weight"] = [1, "kg"]
 	force_types["area"] = [1, "m²"]
 	
-	force_types["moment_h"] = [1, "kNcm"]
-	force_types["shear_h"] = [1, "kNcm"]
-	force_types["tau_shear"] = [1, "kNcm"]
-	force_types["sigmav"] = [1, "kNcm"]
-	force_types["sigma"] = [1, "kNcm"]
+	#force_types["moment_h"] = [1, "kNcm"]
+	#force_types["shear_h"] = [1, "kNcm"]
+	#force_types["tau_shear"] = [1, "kNcm"]
+	#force_types["sigmav"] = [1, "kNcm"]
+	#force_types["sigma"] = [1, "kNcm"]
 	
-	force_types["strain_energy"] = [1, "kNcm"]
-	force_types["normal_energy"] = [1, "kNcm"]
-	force_types["moment_energy"] = [1, "kNcm"]
+	force_types["s_x_1"] = [1, None]
+	force_types["s_x_2"] = [1, None]
+	force_types["s_y_1"] = [1, None]
+	force_types["s_y_2"] = [1, None]
+	force_types["T_xy_1"] = [1, None]
+	force_types["T_xy_2"] = [1, None]
+
+	force_types["s_1_1"] = [1, None]
+	force_types["s_1_2"] = [1, None]
+	force_types["s_2_1"] = [1, None]
+	force_types["s_2_2"] = [1, None]
+	
+	force_types["utilization"] = [1, None]
+	
+	#force_types["strain_energy"] = [1, "kNcm"]
+	#force_types["normal_energy"] = [1, "kNcm"]
+	#force_types["moment_energy"] = [1, "kNcm"]
 
 	for force_type, entries in force_types.items():
 		length = entries[0]
