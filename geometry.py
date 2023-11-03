@@ -1032,6 +1032,9 @@ def update_geometry_post():
 	# if a quad is overstressed, all nodes are drawn darker
 	overstressed = []
 	
+	# list of thickness for with each connected quad
+	thickness = [[] for i in range(len(vertices))]
+	
 	for id, quad in quads.items():
 		id = int(id)
 		
@@ -1057,14 +1060,19 @@ def update_geometry_post():
 			node_id = quad["vertices_ids_viz"][i]
 			vertices[node_id].co = (x,y,z)
 		
-		# Dicke anwenden
-		# Derzeit ist der Faktor einfach das maximale Moment
-		thickness = quad["thickness"][str(frame)] * 0.01
-		thickness_group.add(keys, thickness, 'REPLACE')
+			t = quad["thickness"][str(frame)] * 0.01
+			thickness[node_id].append(t)
 		
 		if quad["overstress"][str(frame)]:
 			for key in keys:
 				overstressed.append(key)
+	
+	# get average of thickness for each connecting quad
+	for i, t in enumerate(thickness):
+		t = sum(t) / len(t)
+		
+		# apply to each vertex
+		thickness_group.add([i], t, 'REPLACE')
 	
 	viz_factor = 1
 	# side 1	
