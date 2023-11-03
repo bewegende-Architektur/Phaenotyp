@@ -1060,8 +1060,8 @@ def interweave_results_pn(feas):
 			# Spannungen in x und y Richrtung an den Oberflächen 1 und 2
 			s_x_1 = membrane_x + moment_x/Wy  # für Darstellung
 			s_x_2 = membrane_x - moment_x/Wy  # für Darstellung
-			s_y_1 = membrane_y + moment_x/Wy  # für Darstellung
-			s_y_2 = membrane_y - moment_x/Wy  # für Darstellung
+			s_y_1 = membrane_y + moment_y/Wy  # für Darstellung
+			s_y_2 = membrane_y - moment_y/Wy  # für Darstellung
 			T_xy_1 = membrane_xy/Wy        # am Plattenrand, für Darstellung
 			T_xy_2 = -1 * membrane_xy/Wy   # am Plattenrand, für Darstellung
 			
@@ -1070,10 +1070,10 @@ def interweave_results_pn(feas):
 			T_y = 1.5 * shear_y/A   # in Plattenmitte
 
 			# Hauptspannungen 1 und 2 an den Oberflächen 1 und 2			
-			s_1_1 = (s_x_1 + s_y_1)/2 + sqrt(abs((s_x_1 - s_y_1)/2 + T_xy_1**2))   # für Darstellung
-			s_1_2 = (s_x_1 + s_y_1)/2 - sqrt(abs((s_x_1 - s_y_1)/2 + T_xy_1**2))   # für Darstellung
-			s_2_1 = (s_x_2 + s_y_2)/2 + sqrt(abs((s_x_2 - s_y_2)/2 + T_xy_2**2))   # für Darstellung
-			s_2_2 = (s_x_2 + s_y_2)/2 - sqrt(abs((s_x_2 - s_y_2)/2 + T_xy_2**2))   # für Darstellung
+			s_1_1 = (s_x_1 + s_y_1)/2 + sqrt((s_x_1 - s_y_1)**2 + T_xy_1**2)   # für Darstellung
+			s_1_2 = (s_x_1 + s_y_1)/2 - sqrt((s_x_1 - s_y_1)**2 + T_xy_1**2)   # für Darstellung
+			s_2_1 = (s_x_2 + s_y_2)/2 + sqrt((s_x_2 - s_y_2)**2 + T_xy_2**2)   # für Darstellung
+			s_2_2 = (s_x_2 + s_y_2)/2 - sqrt((s_x_2 - s_y_2)**2 + T_xy_2**2)   # für Darstellung
 			
 			# Winkel der Hautptspannungen an den Oberflächen 1 und 2
 			alpha_1 = (arctan (2* T_xy_1/(s_x_1 - s_y_1)) * 0.5) # in radianten, mit *pi/180 um in grad umzurechnen, für Darstellung
@@ -1099,7 +1099,7 @@ def interweave_results_pn(feas):
 				sigmav = sigmav1
 
 			# Vergleichsspannung in Plattenmitte
-			sigmav_m = sqrt(abs((membrane_x/A)**2 + (membrane_y/A)**2 - (membrane_x/A) * (membrane_y/A) + 3 * T_x * T_y))  # falls notwendig
+			sigmav_m = sqrt((membrane_x/A)**2 + (membrane_y/A)**2 - (membrane_x/A) * (membrane_y/A) + 3 * T_x * T_y)  # falls notwendig
 			
 			overstress = False
 			# check overstress and add 1.05 safety factor
