@@ -967,7 +967,7 @@ def update_geometry_post():
 
 				c.hsv = h,s,v
 				attribute.data[mesh_vertex_ids[i]].color = [c.r, c.g, c.b, 1.0]
-
+			
 		# for force disbribution
 		else:
 			# get forcetyp and force
@@ -1012,121 +1012,123 @@ def update_geometry_post():
 				c.hsv = h,s,v
 				attribute.data[mesh_vertex_ids[i]].color = [c.r, c.g, c.b, 1.0]
 
+
 	# update quads
-	quads = data["quads"]
-	structure_obj_vertices = data["structure"]
-	mesh_for_viz = bpy.data.objects["<Phaenotyp>quads"]
-	vertices = mesh_for_viz.data.vertices
-	faces = mesh_for_viz.data.polygons
+	quads = data.get("quads")
+	if quads:
+			structure_obj_vertices = data["structure"]
+			mesh_for_viz = bpy.data.objects["<Phaenotyp>quads"]
+			vertices = mesh_for_viz.data.vertices
+			faces = mesh_for_viz.data.polygons
 
-	thickness_group = mesh_for_viz.vertex_groups.get("thickness")
-	
-	attribute_1 = mesh_for_viz.data.attributes.get("force_1")
-	attribute_2 = mesh_for_viz.data.attributes.get("force_2")
-	
-	# for both sides
-	nodes_1 = [[] for i in range(len(vertices))]
-	nodes_2 = [[] for i in range(len(vertices))]
-	
-	# list of overstressed node_ids
-	# if a quad is overstressed, all nodes are drawn darker
-	overstressed = []
-	
-	# list of thickness for with each connected quad
-	thickness = [[] for i in range(len(vertices))]
-	
-	for id, quad in quads.items():
-		id = int(id)
-		
-		# get selected forcetyp and force
-		result_1 = quad[str(phaenotyp.forces_quads) + "_1"]
-		result_2 = quad[str(phaenotyp.forces_quads) + "_2"]
-		force_1 = result_1[str(frame)]
-		force_2 = result_2[str(frame)]
-		
-		# append forces to nodes to create average afterwards
-		keys = quad["vertices_ids_viz"]
-		for key in keys:
-			nodes_1[key].append(force_1)
-			nodes_2[key].append(force_2)
-
-		for i in range(4):
-			position = quad["deflection"][str(frame)][i]
-			x = position[0]*(1-viz_deflection) + quad["initial_positions"][str(frame)][i][0]*viz_deflection
-			y = position[1]*(1-viz_deflection) + quad["initial_positions"][str(frame)][i][1]*viz_deflection
-			z = position[2]*(1-viz_deflection) + quad["initial_positions"][str(frame)][i][2]*viz_deflection
+			thickness_group = mesh_for_viz.vertex_groups.get("thickness")
 			
-			# get node of the corresponding vertex id of the viz mesh
-			node_id = quad["vertices_ids_viz"][i]
-			vertices[node_id].co = (x,y,z)
-		
-			t = quad["thickness"][str(frame)] * 0.01
-			thickness[node_id].append(t)
-		
-		if quad["overstress"][str(frame)]:
-			for key in keys:
-				overstressed.append(key)
-	
-	# get average of thickness for each connecting quad
-	for i, t in enumerate(thickness):
-		t = sum(t) / len(t)
-		
-		# apply to each vertex
-		thickness_group.add([i], t, 'REPLACE')
-	
-	viz_factor = 1
-	# side 1	
-	for i, forces in enumerate(nodes_1):
-		try:
-			force = sum(forces) / len(forces)
-		except:
-			force = 0
+			attribute_1 = mesh_for_viz.data.attributes.get("force_1")
+			attribute_2 = mesh_for_viz.data.attributes.get("force_2")
+			
+			# for both sides
+			nodes_1 = [[] for i in range(len(vertices))]
+			nodes_2 = [[] for i in range(len(vertices))]
+			
+			# list of overstressed node_ids
+			# if a quad is overstressed, all nodes are drawn darker
+			overstressed = []
+			
+			# list of thickness for with each connected quad
+			thickness = [[] for i in range(len(vertices))]
+			
+			for id, quad in quads.items():
+				id = int(id)
+				
+				# get selected forcetyp and force
+				result_1 = quad[str(phaenotyp.forces_quads) + "_1"]
+				result_2 = quad[str(phaenotyp.forces_quads) + "_2"]
+				force_1 = result_1[str(frame)]
+				force_2 = result_2[str(frame)]
+				
+				# append forces to nodes to create average afterwards
+				keys = quad["vertices_ids_viz"]
+				for key in keys:
+					nodes_1[key].append(force_1)
+					nodes_2[key].append(force_2)
 
-		# rainbow
-		h = force * phaenotyp.viz_scale*viz_factor + 0.333
-		#h = 0.333/phaenotyp.viz_scale*force  + 0.333
-		if h > 0.666:
-			h = 0.666
-		if h < 0:
-			h = 0
-		s = 1
-		
-		if i in overstressed:
-			v = 0.25
-		else:
-			v = 1.0
-		
-		c.hsv = h,s,v
+				for i in range(4):
+					position = quad["deflection"][str(frame)][i]
+					x = position[0]*(1-viz_deflection) + quad["initial_positions"][str(frame)][i][0]*viz_deflection
+					y = position[1]*(1-viz_deflection) + quad["initial_positions"][str(frame)][i][1]*viz_deflection
+					z = position[2]*(1-viz_deflection) + quad["initial_positions"][str(frame)][i][2]*viz_deflection
+					
+					# get node of the corresponding vertex id of the viz mesh
+					node_id = quad["vertices_ids_viz"][i]
+					vertices[node_id].co = (x,y,z)
+				
+					t = quad["thickness"][str(frame)] * 0.01
+					thickness[node_id].append(t)
+				
+				if quad["overstress"][str(frame)]:
+					for key in keys:
+						overstressed.append(key)
+			
+			# get average of thickness for each connecting quad
+			for i, t in enumerate(thickness):
+				t = sum(t) / len(t)
+				
+				# apply to each vertex
+				thickness_group.add([i], t, 'REPLACE')
+			
+			viz_factor = 1
+			# side 1	
+			for i, forces in enumerate(nodes_1):
+				try:
+					force = sum(forces) / len(forces)
+				except:
+					force = 0
 
-		# colorize faces
-		attribute_1.data[i].color = [c.r, c.g, c.b, 1.0]
+				# rainbow
+				h = force * phaenotyp.viz_scale*viz_factor + 0.333
+				#h = 0.333/phaenotyp.viz_scale*force  + 0.333
+				if h > 0.666:
+					h = 0.666
+				if h < 0:
+					h = 0
+				s = 1
+				
+				if i in overstressed:
+					v = 0.25
+				else:
+					v = 1.0
+				
+				c.hsv = h,s,v
 
-	# side 2
-	for i, forces in enumerate(nodes_2):
-		try:
-			force = sum(forces) / len(forces)
-		except:
-			force = 0
+				# colorize faces
+				attribute_1.data[i].color = [c.r, c.g, c.b, 1.0]
 
-		# rainbow
-		h = force * phaenotyp.viz_scale*viz_factor + 0.333
-		#h = 0.333/phaenotyp.viz_scale*force  + 0.333
-		if h > 0.666:
-			h = 0.666
-		if h < 0:
-			h = 0
-		s = 1
-		
-		if i in overstressed:
-			v = 0.25
-		else:
-			v = 1.0
-		
-		c.hsv = h,s,v
+			# side 2
+			for i, forces in enumerate(nodes_2):
+				try:
+					force = sum(forces) / len(forces)
+				except:
+					force = 0
 
-		# colorize faces
-		attribute_2.data[i].color = [c.r, c.g, c.b, 1.0]
+				# rainbow
+				h = force * phaenotyp.viz_scale*viz_factor + 0.333
+				#h = 0.333/phaenotyp.viz_scale*force  + 0.333
+				if h > 0.666:
+					h = 0.666
+				if h < 0:
+					h = 0
+				s = 1
+				
+				if i in overstressed:
+					v = 0.25
+				else:
+					v = 1.0
+				
+				c.hsv = h,s,v
 
+				# colorize faces
+				attribute_2.data[i].color = [c.r, c.g, c.b, 1.0]
+				
 def create_loads(structure_obj, loads_v, loads_e, loads_f):
 	# like suggested here by Gorgious and CodeManX:
 	# https://blender.stackexchange.com/questions/6155/how-to-convert-coordinates-from-vertex-to-world-space

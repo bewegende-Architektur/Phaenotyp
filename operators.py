@@ -389,7 +389,7 @@ def set_member():
 
 				data["members"][str(id)] = member
 
-	# create new member for PyNite
+	# create new member for fd
 	else:
 		for edge in obj.data.edges:
 			vertex_0_id = edge.vertices[0]
@@ -416,7 +416,7 @@ def set_member():
 
 				member["E"] = material.current["E"] # from gui
 				member["G"] = material.current["G"] # from gui
-				member["rho"] = material.current["d"] # from gui
+				member["rho"] = material.current["rho"] # from gui
 
 				# this variables can change per frame
 				# the key "first" is used to store the user-input of each member
@@ -743,6 +743,10 @@ def set_load():
 					possible = False
 					break
 		
+		# needs to be possible for fd
+		if calculation_type == "force_distribution":
+			possible = True
+			
 		if possible == False:
 			text = ["Loads of type face can only be applied to Members or quads within the structure."]
 			basics.popup(lines = text)

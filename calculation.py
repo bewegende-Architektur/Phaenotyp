@@ -400,6 +400,9 @@ def prepare_fea_fd():
 	frame = bpy.context.scene.frame_current
 
 	basics.timer.start()
+	
+	psf_members = phaenotyp.psf_members
+	psf_loads = phaenotyp.psf_loads
 
 	# apply chromosome if available
 	individuals = data.get("individuals")
@@ -504,7 +507,7 @@ def prepare_fea_fd():
 		lenghtes.append(length)
 
 		# add self weight
-		self_weight = kN * length * 100
+		self_weight = kN * length * 100 * psf_members
 		forces[vertex_0_id] += array([0.0, 0.0, self_weight*0.5])
 		forces[vertex_1_id] += array([0.0, 0.0, self_weight*0.5])
 
@@ -517,7 +520,7 @@ def prepare_fea_fd():
 	# add loads
 	loads_v = data["loads_v"]
 	for id, load in loads_v.items():
-		forces[int(id)] += array([load[0], load[1], load[2]])
+		forces[int(id)] += array([load[0]*100*psf_loads, load[1]*100*psf_loads, load[2]*100*psf_loads])
 
 	loads_e = data["loads_e"]
 	for id, load in loads_e.items():
@@ -525,7 +528,7 @@ def prepare_fea_fd():
 		vertex_0_id = member["vertex_0_id"]
 		vertex_1_id = member["vertex_1_id"]
 		length = lenghtes[int(id)]
-		f = length * 0.5 * 100 # half of the member, m to cm
+		f = length * 0.5 * 100 * psf_loads # half of the member, m to cm + psf
 		forces[int(vertex_0_id)] += array([load[0]*f, load[1]*f, load[2]*f])
 		forces[int(vertex_1_id)] += array([load[0]*f, load[1]*f, load[2]*f])
 
@@ -554,29 +557,27 @@ def prepare_fea_fd():
 		for edge_id, dist in enumerate(distances):
 			# load_normal
 			area_load = load_normal * area
-			edge_load = area_load * ratio / dist * 0.01 # m to cm
+			edge_load = area_load * ratio / dist * 0.01 *psf_loads # m to cm + psf
 			edge_load_normal.append(edge_load)
 
 			# load projected
 			area_load = load_projected * area_projected
-			edge_load = area_load * ratio / dist * 0.01 # m to cm
+			edge_load = area_load * ratio / dist * 0.01 *psf_loads # m to cm + psf
 			edge_load_projected.append(edge_load)
 
 			# load projected
 			area_load = load_area_z * area
-			edge_load = area_load * ratio / dist * 0.01 # m to cm
+			edge_load = area_load * ratio / dist * 0.01 *psf_loads # m to cm + psf
 			edge_load_area_z.append(edge_load)
 
 		# i is the id within the class (0, 1, 3 and maybe more)
 		# edge_id is the id of the edge in the mesh -> the member
 		for i, edge_key in enumerate(edge_keys):
-			# get name <---------------------------------------- maybe better method?
 			for edge in edges:
 				if edge.vertices[0] in edge_key:
 					if edge.vertices[1] in edge_key:
 						id = edge.index
 
-			# edge_load_normal <--------------------------------- to be tested / checked
 			x = edge_load_normal[i] * normal[0]
 			y = edge_load_normal[i] * normal[1]
 			z = edge_load_normal[i] * normal[2]
