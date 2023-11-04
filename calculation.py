@@ -848,7 +848,7 @@ def interweave_results_pn(feas):
 
 			# buckling
 			if member["axial"][frame][0] < 0: # nur für Druckstäbe, axial kann nicht flippen?
-				member["lamda"][frame] = L/buckling_resolution*0.5/member["ir"][frame] # für eingespannte Stäbe ist die Knicklänge 0.5 der Stablänge L, Stablänge muss in cm sein !
+				member["lamda"][frame] = L*buckling_resolution*0.5/member["ir"][frame] # für eingespannte Stäbe ist die Knicklänge 0.5 der Stablänge L, Stablänge muss in cm sein !
 				if member["lamda"][frame] > 20: # für lamda < 20 (kurze Träger) gelten die default-Werte)
 					kn = member["knick_model"]
 					function_to_run = poly1d(polyfit(material.kn_lamda, kn, 6))
