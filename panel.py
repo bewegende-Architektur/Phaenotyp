@@ -178,6 +178,7 @@ def members(layout):
 
 			box_members.prop(phaenotyp, "Do", text="Diameter outside")
 			box_members.prop(phaenotyp, "Di", text="Diameter inside")
+			box_members.prop(phaenotyp, "buckling_resolution", text="Buckling resolution")
 
 			# current setting passed from gui
 			# (because a property can not be set in gui)

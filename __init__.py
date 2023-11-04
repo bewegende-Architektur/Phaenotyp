@@ -80,6 +80,14 @@ class phaenotyp_properties(PropertyGroup):
 		max = 100.0
 		)
 
+	buckling_resolution: IntProperty(
+		name = "buckling_resolution",
+		description = "Amount of connected members that form an entity for buckling (choose 1 if unsure).",
+		default = 1,
+		min = 1,
+		max = 12
+		)
+	
 	member_type: EnumProperty(
 		name = "member_type",
 		description = "Type of member",

@@ -305,6 +305,8 @@ def set_member():
 				# this variables are always fix
 				member["vertex_0_id"] = vertex_0_id # equals id of vertex
 				member["vertex_1_id"] = vertex_1_id # equals id of vertex
+				
+				member["buckling_resolution"] = phaenotyp.buckling_resolution
 
 				member["acceptable_sigma"] = material.current["acceptable_sigma"] # from gui
 				member["acceptable_shear"] = material.current["acceptable_shear"] # from gui
