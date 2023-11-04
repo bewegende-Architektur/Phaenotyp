@@ -274,7 +274,7 @@ def members(layout):
 				text = str(amount) + " edges set as members."
 				box_members.label(text=text)
 			
-			data["panel_state"]["members"] = True
+				data["panel_state"]["members"] = True
 
 			# disable box
 			if data["panel_grayed"]["members"]:
@@ -370,10 +370,10 @@ def quads(layout):
 					text = str(amount) + " faces set as quads."
 					box_quads.label(text=text)
 				
-				data["panel_state"]["quads"] = True
+					data["panel_state"]["quads"] = True
 
 				# disable box
-				if data["panel_grayed"]["members"]:
+				if data["panel_grayed"]["quads"]:
 					box_quads.enabled = False
 
 def loads(layout):
@@ -445,7 +445,7 @@ def file(layout):
 	data = bpy.context.scene.get("<Phaenotyp>")
 
 	if data:
-		if data["panel_state"]["members"]:
+		if data["panel_state"]["members"] or data["panel_state"]["quads"]:
 			if not bpy.data.is_saved:
 				box_file = layout.box()
 				box_file.label(text="Please save Blender-File first.")
@@ -465,10 +465,11 @@ def mode(layout):
 	data = bpy.context.scene.get("<Phaenotyp>")
 
 	if data:
-		if data["panel_state"]["file"] and data["panel_state"]["members"]:
-			box_start = layout.box()
-			box_start.label(text="Mode:")
-			box_start.prop(phaenotyp, "mode", text="")
+		if data["panel_state"]["file"]:
+			if data["panel_state"]["members"] or data["panel_state"]["quads"]:
+				box_start = layout.box()
+				box_start.label(text="Mode:")
+				box_start.prop(phaenotyp, "mode", text="")
 
 def transformation(layout):
 	'''
@@ -482,64 +483,65 @@ def transformation(layout):
 	data = bpy.context.scene.get("<Phaenotyp>")
 
 	if data:
-		if data["panel_state"]["file"] and data["panel_state"]["members"]:
-			box_assimilation = layout.box()
-			box_assimilation.label(text="Assimilation:")
-			box_assimilation.prop(phaenotyp, "assimilate_length", text="Length")
-			box_assimilation.prop(phaenotyp, "assimilate_strength", text="Strength")
-			box_assimilation.prop(phaenotyp, "assimilate_iterations", text="Iterations")
-			box_assimilation.operator("wm.assimilate", text="Start")
+		if data["panel_state"]["file"]:
+			if data["panel_state"]["members"] or data["panel_state"]["quads"]:
+				box_assimilation = layout.box()
+				box_assimilation.label(text="Assimilation:")
+				box_assimilation.prop(phaenotyp, "assimilate_length", text="Length")
+				box_assimilation.prop(phaenotyp, "assimilate_strength", text="Strength")
+				box_assimilation.prop(phaenotyp, "assimilate_iterations", text="Iterations")
+				box_assimilation.operator("wm.assimilate", text="Start")
 
-			box_actuator = layout.box()
-			box_actuator.label(text="Actuator:")
-			box_actuator.prop(phaenotyp, "actuator_length", text="Length")
-			box_actuator.prop(phaenotyp, "actuator_strength", text="Strength")
-			box_actuator.prop(phaenotyp, "actuator_iterations", text="Iterations")
-			box_actuator.operator("wm.actuator", text="Start")
+				box_actuator = layout.box()
+				box_actuator.label(text="Actuator:")
+				box_actuator.prop(phaenotyp, "actuator_length", text="Length")
+				box_actuator.prop(phaenotyp, "actuator_strength", text="Strength")
+				box_actuator.prop(phaenotyp, "actuator_iterations", text="Iterations")
+				box_actuator.operator("wm.actuator", text="Start")
 
-			box_goal = layout.box()
-			box_goal.label(text="Reach goal:")
-			box_goal.prop(phaenotyp, "goal_strength", text="Strength")
-			box_goal.prop(phaenotyp, "goal_iterations", text="Iterations")
-			box_goal.operator("wm.reach_goal", text="Start")
-			
-			box_wool = layout.box()
-			box_wool.label(text="Wool threads:")
-			box_wool.prop(phaenotyp, "gravity_strength", text="Gravity strength")
-			box_wool.prop(phaenotyp, "link_strength", text="Link strength")
-			box_wool.prop(phaenotyp, "bonding_threshold", text="Bonding threshold")
-			box_wool.prop(phaenotyp, "bonding_strength", text="Bonding strength")
-			box_wool.prop(phaenotyp, "wool_iterations", text="Iterations")		
-			box_wool.operator("wm.wool_threads", text="Start")
+				box_goal = layout.box()
+				box_goal.label(text="Reach goal:")
+				box_goal.prop(phaenotyp, "goal_strength", text="Strength")
+				box_goal.prop(phaenotyp, "goal_iterations", text="Iterations")
+				box_goal.operator("wm.reach_goal", text="Start")
+				
+				box_wool = layout.box()
+				box_wool.label(text="Wool threads:")
+				box_wool.prop(phaenotyp, "gravity_strength", text="Gravity strength")
+				box_wool.prop(phaenotyp, "link_strength", text="Link strength")
+				box_wool.prop(phaenotyp, "bonding_threshold", text="Bonding threshold")
+				box_wool.prop(phaenotyp, "bonding_strength", text="Bonding strength")
+				box_wool.prop(phaenotyp, "wool_iterations", text="Iterations")		
+				box_wool.operator("wm.wool_threads", text="Start")
 
-			box_crown = layout.box()
-			box_crown.label(text="Crown shyness:")
-			box_crown.prop(phaenotyp, "shyness_threshold", text="Shyness threshold")
-			box_crown.prop(phaenotyp, "shyness_strength", text="Shyness strength")
-			box_crown.prop(phaenotyp, "growth_strength", text="Growth strength")
-			box_crown.prop(phaenotyp, "crown_iterations", text="Iterations")		
-			box_crown.operator("wm.crown_shyness", text="Start")
-			
-			box_animation = layout.box()
-			box_animation.label(text="Animation:")
-			box_animation.prop(phaenotyp, "assimilate_update", text="Assimilate")
-			box_animation.prop(phaenotyp, "actuator_update", text="Actuator")
-			box_animation.prop(phaenotyp, "goal_update", text="Goal")
-			box_animation.prop(phaenotyp, "wool_update", text="Wool threads")
-			box_animation.prop(phaenotyp, "crown_update", text="Crown shyness")
-			if bpy.context.screen.is_animation_playing:
-				box_animation.operator("screen.animation_play", text="Stop")
-			else:
-				box_animation.operator("screen.animation_play", text="Start")
+				box_crown = layout.box()
+				box_crown.label(text="Crown shyness:")
+				box_crown.prop(phaenotyp, "shyness_threshold", text="Shyness threshold")
+				box_crown.prop(phaenotyp, "shyness_strength", text="Shyness strength")
+				box_crown.prop(phaenotyp, "growth_strength", text="Growth strength")
+				box_crown.prop(phaenotyp, "crown_iterations", text="Iterations")		
+				box_crown.operator("wm.crown_shyness", text="Start")
+				
+				box_animation = layout.box()
+				box_animation.label(text="Animation:")
+				box_animation.prop(phaenotyp, "assimilate_update", text="Assimilate")
+				box_animation.prop(phaenotyp, "actuator_update", text="Actuator")
+				box_animation.prop(phaenotyp, "goal_update", text="Goal")
+				box_animation.prop(phaenotyp, "wool_update", text="Wool threads")
+				box_animation.prop(phaenotyp, "crown_update", text="Crown shyness")
+				if bpy.context.screen.is_animation_playing:
+					box_animation.operator("screen.animation_play", text="Stop")
+				else:
+					box_animation.operator("screen.animation_play", text="Start")
 
-			box_state = layout.box()
-			box_state.label(text="State:")
-			stored = data["process"].get("stored")
-			if stored:
-				box_state.operator("wm.store_co", text="Overwrite")
-				box_state.operator("wm.restore_co", text="Restore")
-			else:
-				box_state.operator("wm.store_co", text="Store")
+				box_state = layout.box()
+				box_state.label(text="State:")
+				stored = data["process"].get("stored")
+				if stored:
+					box_state.operator("wm.store_co", text="Overwrite")
+					box_state.operator("wm.restore_co", text="Restore")
+				else:
+					box_state.operator("wm.store_co", text="Store")
 			
 def single_frame(layout):
 	'''
@@ -554,45 +556,50 @@ def single_frame(layout):
 	calculation_type = phaenotyp.calculation_type
 
 	if data:
-		if data["panel_state"]["file"] and data["panel_state"]["members"]:
-			if calculation_type != "geometrical":
-				# analysis
-				box_analysis = layout.box()
-				box_analysis.label(text="Analysis:")
-				box_analysis.operator("wm.calculate_single_frame", text="Start")
+		if data["panel_state"]["file"]:
+			if data["panel_state"]["members"] or data["panel_state"]["quads"]:
+				if calculation_type != "geometrical":
+					# analysis
+					box_analysis = layout.box()
+					box_analysis.label(text="Analysis:")
+					box_analysis.operator("wm.calculate_single_frame", text="Start")
 
-				# Optimization
-				box_opt = layout.box()
-				box_opt.label(text="Optimization:")
+					# Optimization
+					box_opt = layout.box()
+					box_opt.label(text="Optimization:")
 
-				result = data["done"].get(str(frame))
-				if result:
-					if calculation_type == "force_distribution":
-						box_opt.operator("wm.optimize_approximate", text="Members approximate")
+					result = data["done"].get(str(frame))
+					if result:
+						if calculation_type == "force_distribution":
+							box_opt.operator("wm.optimize_approximate", text="Members approximate")
+						else:
+							box_opt.operator("wm.optimize_simple", text="Members simple")
+							box_opt.operator("wm.optimize_utilization", text="Members utilization")
+							box_opt.operator("wm.optimize_complex", text="Members complex")
+							box_opt.operator("wm.optimize_quads", text="Quads approximate")
 					else:
-						box_opt.operator("wm.optimize_simple", text="Members simple")
-						box_opt.operator("wm.optimize_utilization", text="Members utilization")
-						box_opt.operator("wm.optimize_complex", text="Members complex")
-						box_opt.operator("wm.optimize_quads", text="Quads approximate")
+						box_opt.label(text="Run single analysis first.")
+
+					# Topology
+					box_top = layout.box()
+					box_top.label(text="Topology:")
+					
+					if len(data["members"]) > 0:
+						result = data["done"].get(str(frame))
+						if result:
+							box_top.operator("wm.topolgy_decimate", text="Decimate")
+							decimate_group = data["structure"].vertex_groups.get("<Phaenotyp>decimate")
+							if decimate_group:
+								box_top.label(text="Ajust the ratio of decimate, apply modifier and reset Phänotyp aferwards to restart")
+						else:
+							box_top.label(text="Run single analysis first.")
+					else:
+						box_top.label(text="Decimate topology only works with members.")	
+					
+
 				else:
-					box_opt.label(text="Run single analysis first.")
-
-				# Topology
-				box_opt = layout.box()
-				box_opt.label(text="Topology:")
-
-				result = data["done"].get(str(frame))
-				if result:
-					box_opt.operator("wm.topolgy_decimate", text="Decimate")
-					decimate_group = data["structure"].vertex_groups.get("<Phaenotyp>decimate")
-					if decimate_group:
-						box_opt.label(text="Ajust the ratio of decimate, apply modifier and reset Phänotyp aferwards to restart")
-				else:
-					box_opt.label(text="Run single analysis first.")
-
-			else:
-				box_analysis = layout.box()
-				box_analysis.label(text="Only genetic algorithm is available for geometrical mode.")
+					box_analysis = layout.box()
+					box_analysis.label(text="Only genetic algorithm is available for geometrical mode.")
 
 def animation(layout):
 	'''
@@ -607,33 +614,34 @@ def animation(layout):
 	calculation_type = phaenotyp.calculation_type
 
 	if data:
-		if data["panel_state"]["file"] and data["panel_state"]["members"]:
-			if calculation_type != "geometrical":
-				box_optimization = layout.box()
-				box_optimization.label(text="Optimization:")
-				if phaenotyp.calculation_type != "geometrical":
-					if calculation_type == "force_distribution":
-						box_optimization.prop(phaenotyp, "optimization_fd", text="")
-					else:
-						col = box_optimization.column()
-						split = col.split()
-						split.label(text="Members:")
-						split.prop(phaenotyp, "optimization_pn", text="")
-						col = box_optimization.column()
-						split = col.split()
-						split.label(text="Quads:")
-						split.prop(phaenotyp, "optimization_quads", text="")
-					if phaenotyp.optimization_pn != "none" or phaenotyp.optimization_fd != "none" or phaenotyp.optimization_quads != "none":
-						box_optimization.prop(phaenotyp, "animation_optimization_type", text="")
-						box_optimization.prop(phaenotyp, "optimization_amount", text="Amount of sectional optimization")
+		if data["panel_state"]["file"]:
+			if data["panel_state"]["members"] or data["panel_state"]["quads"]:
+				if calculation_type != "geometrical":
+					box_optimization = layout.box()
+					box_optimization.label(text="Optimization:")
+					if phaenotyp.calculation_type != "geometrical":
+						if calculation_type == "force_distribution":
+							box_optimization.prop(phaenotyp, "optimization_fd", text="")
+						else:
+							col = box_optimization.column()
+							split = col.split()
+							split.label(text="Members:")
+							split.prop(phaenotyp, "optimization_pn", text="")
+							col = box_optimization.column()
+							split = col.split()
+							split.label(text="Quads:")
+							split.prop(phaenotyp, "optimization_quads", text="")
+						if phaenotyp.optimization_pn != "none" or phaenotyp.optimization_fd != "none" or phaenotyp.optimization_quads != "none":
+							box_optimization.prop(phaenotyp, "animation_optimization_type", text="")
+							box_optimization.prop(phaenotyp, "optimization_amount", text="Amount of sectional optimization")
 
-				box_animation = layout.box()
-				box_animation.label(text="Animation:")
-				box_animation.operator("wm.calculate_animation", text="Start")
+					box_animation = layout.box()
+					box_animation.label(text="Animation:")
+					box_animation.operator("wm.calculate_animation", text="Start")
 
-			else:
-				box_optimization = layout.box()
-				box_optimization.label(text="Only genetic algorithm is available for geometrical mode.")
+				else:
+					box_optimization = layout.box()
+					box_optimization.label(text="Only genetic algorithm is available for geometrical mode.")
 
 def bruteforce(layout):
 	'''
@@ -648,104 +656,105 @@ def bruteforce(layout):
 	calculation_type = phaenotyp.calculation_type
 
 	if data:
-		if data["panel_state"]["file"] and data["panel_state"]["members"]:
-			shape_key = data["structure"].data.shape_keys
-			if not shape_key:
-				box_ga = layout.box()
-				box_ga.label(text="Bruteforce:")
-				box_ga.label(text="Please set shape keys first.")
-			else:
-				if calculation_type != "geometrical":
-					box_optimization = layout.box()
-					box_optimization.label(text="Optimization:")
-					if phaenotyp.calculation_type != "geometrical":
-						if calculation_type == "force_distribution":
-							box_optimization.prop(phaenotyp, "optimization_fd", text="")
-						else:
-							col = box_optimization.column()
-							split = col.split()
-							split.label(text="Members:")
-							split.prop(phaenotyp, "optimization_pn", text="")
-							col = box_optimization.column()
-							split = col.split()
-							split.label(text="Quads:")
-							split.prop(phaenotyp, "optimization_quads", text="")
-						if phaenotyp.optimization_pn != "none" or phaenotyp.optimization_fd != "none" or phaenotyp.optimization_quads != "none":
-							box_optimization.prop(phaenotyp, "animation_optimization_type", text="")
-							box_optimization.prop(phaenotyp, "optimization_amount", text="Amount of sectional optimization")
+		if data["panel_state"]["file"]:
+			if data["panel_state"]["members"] or data["panel_state"]["quads"]:
+				shape_key = data["structure"].data.shape_keys
+				if not shape_key:
+					box_ga = layout.box()
+					box_ga.label(text="Bruteforce:")
+					box_ga.label(text="Please set shape keys first.")
+				else:
+					if calculation_type != "geometrical":
+						box_optimization = layout.box()
+						box_optimization.label(text="Optimization:")
+						if phaenotyp.calculation_type != "geometrical":
+							if calculation_type == "force_distribution":
+								box_optimization.prop(phaenotyp, "optimization_fd", text="")
+							else:
+								col = box_optimization.column()
+								split = col.split()
+								split.label(text="Members:")
+								split.prop(phaenotyp, "optimization_pn", text="")
+								col = box_optimization.column()
+								split = col.split()
+								split.label(text="Quads:")
+								split.prop(phaenotyp, "optimization_quads", text="")
+							if phaenotyp.optimization_pn != "none" or phaenotyp.optimization_fd != "none" or phaenotyp.optimization_quads != "none":
+								box_optimization.prop(phaenotyp, "animation_optimization_type", text="")
+								box_optimization.prop(phaenotyp, "optimization_amount", text="Amount of sectional optimization")
 
-				# fitness headline
-				box_fitness = layout.box()
-				box_fitness.label(text="Fitness function:")
+					# fitness headline
+					box_fitness = layout.box()
+					box_fitness.label(text="Fitness function:")
 
-				# architectural fitness
-				col = box_fitness.column()
-				split = col.split()
-				split.prop(phaenotyp, "fitness_volume", text="Volume")
-				split.prop(phaenotyp, "fitness_volume_invert", text="Invert")
-
-				col = box_fitness.column()
-				split = col.split()
-				split.prop(phaenotyp, "fitness_area", text="Area")
-				split.prop(phaenotyp, "fitness_area_invert", text="Invert")
-
-				col = box_fitness.column()
-				split = col.split()
-				split.prop(phaenotyp, "fitness_weight", text="weight")
-				split.prop(phaenotyp, "fitness_weight_invert", text="Invert")
-
-				col = box_fitness.column()
-				split = col.split()
-				split.prop(phaenotyp, "fitness_rise", text="Rise")
-				split.prop(phaenotyp, "fitness_rise_invert", text="Invert")
-
-				col = box_fitness.column()
-				split = col.split()
-				split.prop(phaenotyp, "fitness_span", text="Span")
-				split.prop(phaenotyp, "fitness_span_invert", text="Invert")
-
-				col = box_fitness.column()
-				split = col.split()
-				split.prop(phaenotyp, "fitness_cantilever", text="Cantilever")
-				split.prop(phaenotyp, "fitness_cantilever_invert", text="Invert")
-
-				# structural fitness
-				if phaenotyp.calculation_type != "geometrical":
+					# architectural fitness
 					col = box_fitness.column()
 					split = col.split()
-					split.prop(phaenotyp, "fitness_deflection", text="Deflection")
-					split.prop(phaenotyp, "fitness_deflection_invert", text="Invert")
-					
-					box_fitness.prop(phaenotyp, "fitness_average_sigma", text="Sigma")
-					
-					if phaenotyp.calculation_type != "force_distribution":
-						box_fitness.prop(phaenotyp, "fitness_average_strain_energy", text="Strain energy")
+					split.prop(phaenotyp, "fitness_volume", text="Volume")
+					split.prop(phaenotyp, "fitness_volume_invert", text="Invert")
 
-				box_shape_keys = layout.box()
-				box_shape_keys.label(text="Shape keys:")
-				for keyblock in shape_key.key_blocks:
-					name = keyblock.name
-					box_shape_keys.label(text=name)
+					col = box_fitness.column()
+					split = col.split()
+					split.prop(phaenotyp, "fitness_area", text="Area")
+					split.prop(phaenotyp, "fitness_area_invert", text="Invert")
 
-				# check generation_size and elitism
-				box_start = layout.box()
-				box_start.label(text="Bruteforce:")
-				box_start.operator("wm.bf_start", text="Start")
+					col = box_fitness.column()
+					split = col.split()
+					split.prop(phaenotyp, "fitness_weight", text="weight")
+					split.prop(phaenotyp, "fitness_weight_invert", text="Invert")
 
-				if len(data["individuals"]) > 0 and not bpy.context.screen.is_animation_playing:
-					box_select = layout.box()
-					box_select.label(text="Select individual by fitness:")
-					box_select.prop(phaenotyp, "ranking", text="Result sorted by fitness.")
-					if phaenotyp.ranking >= len(data["individuals"]):
-						text = "Only " + str(len(data["individuals"])) + " available."
-						box_select.label(text=text)
-					else:
-						# show
-						box_select.operator("wm.ranking", text="Generate")
+					col = box_fitness.column()
+					split = col.split()
+					split.prop(phaenotyp, "fitness_rise", text="Rise")
+					split.prop(phaenotyp, "fitness_rise_invert", text="Invert")
 
-					box_rendering = layout.box()
-					box_rendering.label(text="Render sorted indiviuals:")
-					box_rendering.operator("wm.render_animation", text="Generate")
+					col = box_fitness.column()
+					split = col.split()
+					split.prop(phaenotyp, "fitness_span", text="Span")
+					split.prop(phaenotyp, "fitness_span_invert", text="Invert")
+
+					col = box_fitness.column()
+					split = col.split()
+					split.prop(phaenotyp, "fitness_cantilever", text="Cantilever")
+					split.prop(phaenotyp, "fitness_cantilever_invert", text="Invert")
+
+					# structural fitness
+					if phaenotyp.calculation_type != "geometrical":
+						col = box_fitness.column()
+						split = col.split()
+						split.prop(phaenotyp, "fitness_deflection", text="Deflection")
+						split.prop(phaenotyp, "fitness_deflection_invert", text="Invert")
+						
+						box_fitness.prop(phaenotyp, "fitness_average_sigma", text="Sigma")
+						
+						if phaenotyp.calculation_type != "force_distribution":
+							box_fitness.prop(phaenotyp, "fitness_average_strain_energy", text="Strain energy")
+
+					box_shape_keys = layout.box()
+					box_shape_keys.label(text="Shape keys:")
+					for keyblock in shape_key.key_blocks:
+						name = keyblock.name
+						box_shape_keys.label(text=name)
+
+					# check generation_size and elitism
+					box_start = layout.box()
+					box_start.label(text="Bruteforce:")
+					box_start.operator("wm.bf_start", text="Start")
+
+					if len(data["individuals"]) > 0 and not bpy.context.screen.is_animation_playing:
+						box_select = layout.box()
+						box_select.label(text="Select individual by fitness:")
+						box_select.prop(phaenotyp, "ranking", text="Result sorted by fitness.")
+						if phaenotyp.ranking >= len(data["individuals"]):
+							text = "Only " + str(len(data["individuals"])) + " available."
+							box_select.label(text=text)
+						else:
+							# show
+							box_select.operator("wm.ranking", text="Generate")
+
+						box_rendering = layout.box()
+						box_rendering.label(text="Render sorted indiviuals:")
+						box_rendering.operator("wm.render_animation", text="Generate")
 
 def genetic_algorithm(layout):
 	'''
@@ -760,115 +769,116 @@ def genetic_algorithm(layout):
 	calculation_type = phaenotyp.calculation_type
 
 	if data:
-		if data["panel_state"]["file"] and data["panel_state"]["members"]:
-			shape_key = data["structure"].data.shape_keys
-			if not shape_key:
-				box_ga = layout.box()
-				box_ga.label(text="Genetic algorithm:")
-				box_ga.label(text="Please set shape keys first.")
-			else:
-				# Genetic Mutation:
-				box_ga = layout.box()
-				box_ga.label(text="Mutation:")
-				box_ga.prop(phaenotyp, "mate_type", text="Type of mating")
-				box_ga.prop(phaenotyp, "generation_size", text="Size of generation for GA")
-				box_ga.prop(phaenotyp, "elitism", text="Size of elitism for GA")
-				box_ga.prop(phaenotyp, "generation_amount", text="Amount of generations")
+		if data["panel_state"]["file"]:
+			if data["panel_state"]["members"] or data["panel_state"]["quads"]:
+				shape_key = data["structure"].data.shape_keys
+				if not shape_key:
+					box_ga = layout.box()
+					box_ga.label(text="Genetic algorithm:")
+					box_ga.label(text="Please set shape keys first.")
+				else:
+					# Genetic Mutation:
+					box_ga = layout.box()
+					box_ga.label(text="Mutation:")
+					box_ga.prop(phaenotyp, "mate_type", text="Type of mating")
+					box_ga.prop(phaenotyp, "generation_size", text="Size of generation for GA")
+					box_ga.prop(phaenotyp, "elitism", text="Size of elitism for GA")
+					box_ga.prop(phaenotyp, "generation_amount", text="Amount of generations")
 
-				if calculation_type != "geometrical":
-					box_optimization = layout.box()
-					box_optimization.label(text="Optimization:")
-					if phaenotyp.calculation_type != "geometrical":
-						if calculation_type == "force_distribution":
-							box_optimization.prop(phaenotyp, "optimization_fd", text="")
-						else:
-							col = box_optimization.column()
-							split = col.split()
-							split.label(text="Members:")
-							split.prop(phaenotyp, "optimization_pn", text="")
-							col = box_optimization.column()
-							split = col.split()
-							split.label(text="Quads:")
-							split.prop(phaenotyp, "optimization_quads", text="")
-						if phaenotyp.optimization_pn != "none" or phaenotyp.optimization_fd != "none" or phaenotyp.optimization_quads != "none":
-							box_optimization.prop(phaenotyp, "animation_optimization_type", text="")
-							box_optimization.prop(phaenotyp, "optimization_amount", text="Amount of sectional optimization")
+					if calculation_type != "geometrical":
+						box_optimization = layout.box()
+						box_optimization.label(text="Optimization:")
+						if phaenotyp.calculation_type != "geometrical":
+							if calculation_type == "force_distribution":
+								box_optimization.prop(phaenotyp, "optimization_fd", text="")
+							else:
+								col = box_optimization.column()
+								split = col.split()
+								split.label(text="Members:")
+								split.prop(phaenotyp, "optimization_pn", text="")
+								col = box_optimization.column()
+								split = col.split()
+								split.label(text="Quads:")
+								split.prop(phaenotyp, "optimization_quads", text="")
+							if phaenotyp.optimization_pn != "none" or phaenotyp.optimization_fd != "none" or phaenotyp.optimization_quads != "none":
+								box_optimization.prop(phaenotyp, "animation_optimization_type", text="")
+								box_optimization.prop(phaenotyp, "optimization_amount", text="Amount of sectional optimization")
 
-				# fitness headline
-				box_fitness = layout.box()
-				box_fitness.label(text="Fitness function:")
+					# fitness headline
+					box_fitness = layout.box()
+					box_fitness.label(text="Fitness function:")
 
-				# architectural fitness
-				col = box_fitness.column()
-				split = col.split()
-				split.prop(phaenotyp, "fitness_volume", text="Volume")
-				split.prop(phaenotyp, "fitness_volume_invert", text="Invert")
-
-				col = box_fitness.column()
-				split = col.split()
-				split.prop(phaenotyp, "fitness_area", text="Area")
-				split.prop(phaenotyp, "fitness_area_invert", text="Invert")
-
-				col = box_fitness.column()
-				split = col.split()
-				split.prop(phaenotyp, "fitness_weight", text="weight")
-				split.prop(phaenotyp, "fitness_weight_invert", text="Invert")
-
-				col = box_fitness.column()
-				split = col.split()
-				split.prop(phaenotyp, "fitness_rise", text="Rise")
-				split.prop(phaenotyp, "fitness_rise_invert", text="Invert")
-
-				col = box_fitness.column()
-				split = col.split()
-				split.prop(phaenotyp, "fitness_span", text="Span")
-				split.prop(phaenotyp, "fitness_span_invert", text="Invert")
-
-				col = box_fitness.column()
-				split = col.split()
-				split.prop(phaenotyp, "fitness_cantilever", text="Cantilever")
-				split.prop(phaenotyp, "fitness_cantilever_invert", text="Invert")
-
-				# structural fitness
-				if phaenotyp.calculation_type != "geometrical":
+					# architectural fitness
 					col = box_fitness.column()
 					split = col.split()
-					split.prop(phaenotyp, "fitness_deflection", text="Deflection")
-					split.prop(phaenotyp, "fitness_deflection_invert", text="Invert")
-					
-					box_fitness.prop(phaenotyp, "fitness_average_sigma", text="Sigma")
-					
-					if phaenotyp.calculation_type != "force_distribution":
-						box_fitness.prop(phaenotyp, "fitness_average_strain_energy", text="Strain energy")
+					split.prop(phaenotyp, "fitness_volume", text="Volume")
+					split.prop(phaenotyp, "fitness_volume_invert", text="Invert")
 
-				box_shape_keys = layout.box()
-				box_shape_keys.label(text="Shape keys:")
-				for keyblock in shape_key.key_blocks:
-					name = keyblock.name
-					box_shape_keys.label(text=name)
+					col = box_fitness.column()
+					split = col.split()
+					split.prop(phaenotyp, "fitness_area", text="Area")
+					split.prop(phaenotyp, "fitness_area_invert", text="Invert")
 
-				# check generation_size and elitism
-				box_start = layout.box()
-				box_start.label(text="Genetic algorithm:")
-				if phaenotyp.generation_size*0.5 > phaenotyp.elitism:
-					box_start.operator("wm.ga_start", text="Start")
-				else:
-					box_start.label(text="Elitism should be smaller than 50% of generation size.")
+					col = box_fitness.column()
+					split = col.split()
+					split.prop(phaenotyp, "fitness_weight", text="weight")
+					split.prop(phaenotyp, "fitness_weight_invert", text="Invert")
 
-				if len(data["individuals"]) > 0 and not bpy.context.screen.is_animation_playing:
-					box_select = layout.box()
-					box_select.label(text="Select individual by fitness:")
-					box_select.prop(phaenotyp, "ranking", text="Result sorted by fitness.")
-					if phaenotyp.ranking >= len(data["individuals"]):
-						text = "Only " + str(len(data["individuals"])) + " available."
-						box_select.label(text=text)
+					col = box_fitness.column()
+					split = col.split()
+					split.prop(phaenotyp, "fitness_rise", text="Rise")
+					split.prop(phaenotyp, "fitness_rise_invert", text="Invert")
+
+					col = box_fitness.column()
+					split = col.split()
+					split.prop(phaenotyp, "fitness_span", text="Span")
+					split.prop(phaenotyp, "fitness_span_invert", text="Invert")
+
+					col = box_fitness.column()
+					split = col.split()
+					split.prop(phaenotyp, "fitness_cantilever", text="Cantilever")
+					split.prop(phaenotyp, "fitness_cantilever_invert", text="Invert")
+
+					# structural fitness
+					if phaenotyp.calculation_type != "geometrical":
+						col = box_fitness.column()
+						split = col.split()
+						split.prop(phaenotyp, "fitness_deflection", text="Deflection")
+						split.prop(phaenotyp, "fitness_deflection_invert", text="Invert")
+						
+						box_fitness.prop(phaenotyp, "fitness_average_sigma", text="Sigma")
+						
+						if phaenotyp.calculation_type != "force_distribution":
+							box_fitness.prop(phaenotyp, "fitness_average_strain_energy", text="Strain energy")
+
+					box_shape_keys = layout.box()
+					box_shape_keys.label(text="Shape keys:")
+					for keyblock in shape_key.key_blocks:
+						name = keyblock.name
+						box_shape_keys.label(text=name)
+
+					# check generation_size and elitism
+					box_start = layout.box()
+					box_start.label(text="Genetic algorithm:")
+					if phaenotyp.generation_size*0.5 > phaenotyp.elitism:
+						box_start.operator("wm.ga_start", text="Start")
 					else:
-						# show
-						box_select.operator("wm.ranking", text="Generate")
+						box_start.label(text="Elitism should be smaller than 50% of generation size.")
 
-					box_rendering = layout.box()
-					box_rendering.label(text="Render sorted indiviuals:")
-					box_rendering.operator("wm.render_animation", text="Generate")
+					if len(data["individuals"]) > 0 and not bpy.context.screen.is_animation_playing:
+						box_select = layout.box()
+						box_select.label(text="Select individual by fitness:")
+						box_select.prop(phaenotyp, "ranking", text="Result sorted by fitness.")
+						if phaenotyp.ranking >= len(data["individuals"]):
+							text = "Only " + str(len(data["individuals"])) + " available."
+							box_select.label(text=text)
+						else:
+							# show
+							box_select.operator("wm.ranking", text="Generate")
+
+						box_rendering = layout.box()
+						box_rendering.label(text="Render sorted indiviuals:")
+						box_rendering.operator("wm.render_animation", text="Generate")
 
 def gradient_descent(layout):
 	'''
@@ -883,96 +893,97 @@ def gradient_descent(layout):
 	calculation_type = phaenotyp.calculation_type
 
 	if data:
-		if data["panel_state"]["file"] and data["panel_state"]["members"]:
-			shape_key = data["structure"].data.shape_keys
-			if not shape_key:
-				box_gd = layout.box()
-				box_gd.label(text="Gradient descent:")
-				box_gd.label(text="Please set shape keys first.")
-			else:
-				# Genetic Mutation:
-				box_gd = layout.box()
-				box_gd.label(text="Learing:")
-				box_gd.prop(phaenotyp, "gd_delta", text="Delta")
-				box_gd.prop(phaenotyp, "gd_learning_rate", text="Learning rate")
-				box_gd.prop(phaenotyp, "gd_abort", text="Abort")
-				box_gd.prop(phaenotyp, "gd_max_iteration", text="Max iteration")
+		if data["panel_state"]["file"]:
+			if data["panel_state"]["members"] or data["panel_state"]["quads"]:
+				shape_key = data["structure"].data.shape_keys
+				if not shape_key:
+					box_gd = layout.box()
+					box_gd.label(text="Gradient descent:")
+					box_gd.label(text="Please set shape keys first.")
+				else:
+					# Genetic Mutation:
+					box_gd = layout.box()
+					box_gd.label(text="Learing:")
+					box_gd.prop(phaenotyp, "gd_delta", text="Delta")
+					box_gd.prop(phaenotyp, "gd_learning_rate", text="Learning rate")
+					box_gd.prop(phaenotyp, "gd_abort", text="Abort")
+					box_gd.prop(phaenotyp, "gd_max_iteration", text="Max iteration")
 
-				if calculation_type != "geometrical":
-					box_optimization = layout.box()
-					box_optimization.label(text="Optimization:")
-					if phaenotyp.calculation_type != "geometrical":
-						if calculation_type == "force_distribution":
-							box_optimization.prop(phaenotyp, "optimization_fd", text="")
-						else:
-							col = box_optimization.column()
-							split = col.split()
-							split.label(text="Members:")
-							split.prop(phaenotyp, "optimization_pn", text="")
-							col = box_optimization.column()
-							split = col.split()
-							split.label(text="Quads:")
-							split.prop(phaenotyp, "optimization_quads", text="")
-						if phaenotyp.optimization_pn != "none" or phaenotyp.optimization_fd != "none" or phaenotyp.optimization_quads != "none":
-							box_optimization.prop(phaenotyp, "animation_optimization_type", text="")
-							box_optimization.prop(phaenotyp, "optimization_amount", text="Amount of sectional optimization")
+					if calculation_type != "geometrical":
+						box_optimization = layout.box()
+						box_optimization.label(text="Optimization:")
+						if phaenotyp.calculation_type != "geometrical":
+							if calculation_type == "force_distribution":
+								box_optimization.prop(phaenotyp, "optimization_fd", text="")
+							else:
+								col = box_optimization.column()
+								split = col.split()
+								split.label(text="Members:")
+								split.prop(phaenotyp, "optimization_pn", text="")
+								col = box_optimization.column()
+								split = col.split()
+								split.label(text="Quads:")
+								split.prop(phaenotyp, "optimization_quads", text="")
+							if phaenotyp.optimization_pn != "none" or phaenotyp.optimization_fd != "none" or phaenotyp.optimization_quads != "none":
+								box_optimization.prop(phaenotyp, "animation_optimization_type", text="")
+								box_optimization.prop(phaenotyp, "optimization_amount", text="Amount of sectional optimization")
 
-				# fitness headline
-				box_fitness = layout.box()
-				box_fitness.label(text="Fitness function:")
+					# fitness headline
+					box_fitness = layout.box()
+					box_fitness.label(text="Fitness function:")
 
-				# architectural fitness
-				col = box_fitness.column()
-				split = col.split()
-				split.prop(phaenotyp, "fitness_volume", text="Volume")
-				split.prop(phaenotyp, "fitness_volume_invert", text="Invert")
-
-				col = box_fitness.column()
-				split = col.split()
-				split.prop(phaenotyp, "fitness_area", text="Area")
-				split.prop(phaenotyp, "fitness_area_invert", text="Invert")
-
-				col = box_fitness.column()
-				split = col.split()
-				split.prop(phaenotyp, "fitness_weight", text="weight")
-				split.prop(phaenotyp, "fitness_weight_invert", text="Invert")
-
-				col = box_fitness.column()
-				split = col.split()
-				split.prop(phaenotyp, "fitness_rise", text="Rise")
-				split.prop(phaenotyp, "fitness_rise_invert", text="Invert")
-
-				col = box_fitness.column()
-				split = col.split()
-				split.prop(phaenotyp, "fitness_span", text="Span")
-				split.prop(phaenotyp, "fitness_span_invert", text="Invert")
-
-				col = box_fitness.column()
-				split = col.split()
-				split.prop(phaenotyp, "fitness_cantilever", text="Cantilever")
-				split.prop(phaenotyp, "fitness_cantilever_invert", text="Invert")
-
-				# structural fitness
-				if phaenotyp.calculation_type != "geometrical":
+					# architectural fitness
 					col = box_fitness.column()
 					split = col.split()
-					split.prop(phaenotyp, "fitness_deflection", text="Deflection")
-					split.prop(phaenotyp, "fitness_deflection_invert", text="Invert")
-					
-					box_fitness.prop(phaenotyp, "fitness_average_sigma", text="Sigma")
-					
-					if phaenotyp.calculation_type != "force_distribution":
-						box_fitness.prop(phaenotyp, "fitness_average_strain_energy", text="Strain energy")
+					split.prop(phaenotyp, "fitness_volume", text="Volume")
+					split.prop(phaenotyp, "fitness_volume_invert", text="Invert")
 
-				box_shape_keys = layout.box()
-				box_shape_keys.label(text="Shape keys:")
-				for keyblock in shape_key.key_blocks:
-					name = keyblock.name
-					box_shape_keys.label(text=name)
-				
-				box_gd_start = layout.box()
-				box_gd_start.label(text="Genetic descent:")
-				box_gd_start.operator("wm.gd_start", text="Start")
+					col = box_fitness.column()
+					split = col.split()
+					split.prop(phaenotyp, "fitness_area", text="Area")
+					split.prop(phaenotyp, "fitness_area_invert", text="Invert")
+
+					col = box_fitness.column()
+					split = col.split()
+					split.prop(phaenotyp, "fitness_weight", text="weight")
+					split.prop(phaenotyp, "fitness_weight_invert", text="Invert")
+
+					col = box_fitness.column()
+					split = col.split()
+					split.prop(phaenotyp, "fitness_rise", text="Rise")
+					split.prop(phaenotyp, "fitness_rise_invert", text="Invert")
+
+					col = box_fitness.column()
+					split = col.split()
+					split.prop(phaenotyp, "fitness_span", text="Span")
+					split.prop(phaenotyp, "fitness_span_invert", text="Invert")
+
+					col = box_fitness.column()
+					split = col.split()
+					split.prop(phaenotyp, "fitness_cantilever", text="Cantilever")
+					split.prop(phaenotyp, "fitness_cantilever_invert", text="Invert")
+
+					# structural fitness
+					if phaenotyp.calculation_type != "geometrical":
+						col = box_fitness.column()
+						split = col.split()
+						split.prop(phaenotyp, "fitness_deflection", text="Deflection")
+						split.prop(phaenotyp, "fitness_deflection_invert", text="Invert")
+						
+						box_fitness.prop(phaenotyp, "fitness_average_sigma", text="Sigma")
+						
+						if phaenotyp.calculation_type != "force_distribution":
+							box_fitness.prop(phaenotyp, "fitness_average_strain_energy", text="Strain energy")
+
+					box_shape_keys = layout.box()
+					box_shape_keys.label(text="Shape keys:")
+					for keyblock in shape_key.key_blocks:
+						name = keyblock.name
+						box_shape_keys.label(text=name)
+					
+					box_gd_start = layout.box()
+					box_gd_start.label(text="Genetic descent:")
+					box_gd_start.operator("wm.gd_start", text="Start")
 
 def visualization(layout):
 	'''

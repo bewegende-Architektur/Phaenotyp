@@ -72,6 +72,7 @@ def create_data():
 			"calculation_type": False,
 			"supports": False,
 			"members": False,
+			"quads": False,
 			"file": False
 			},
 		"panel_grayed": {
@@ -79,6 +80,7 @@ def create_data():
 			"calculation_type": False,
 			"supports": False,
 			"members": False,
+			"quads": False,
 			"loads": False
 			},
 		"texts": {}

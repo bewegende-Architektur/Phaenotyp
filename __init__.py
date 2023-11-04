@@ -1453,6 +1453,7 @@ class OBJECT_PT_Phaenotyp(Panel):
 					data["panel_grayed"]["scipy"] = True
 					data["panel_grayed"]["supports"] = True
 					data["panel_grayed"]["members"] = True
+					data["panel_grayed"]["quads"] = True
 					data["panel_grayed"]["loads"] = True
 
 					panel.visualization(layout)
