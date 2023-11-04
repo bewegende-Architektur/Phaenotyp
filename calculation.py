@@ -1099,7 +1099,7 @@ def interweave_results_pn(feas):
 				sigmav = sigmav1
 
 			# Vergleichsspannung in Plattenmitte
-			sigmav_m = sqrt((membrane_x/A)**2 + (membrane_y/A)**2 - (membrane_x/A) * (membrane_y/A) + 3 * T_x * T_y)  # falls notwendig
+			sigmav_m = sqrt(abs((membrane_x/A)**2 + (membrane_y/A)**2 - (membrane_x/A) * (membrane_y/A) + 3 * T_x * T_y))  # falls notwendig
 			
 			overstress = False
 			# check overstress and add 1.05 safety factor

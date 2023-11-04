@@ -1091,7 +1091,7 @@ def update_geometry_post():
 			h = 0
 		s = 1
 		
-		if i in overstressed == True:
+		if i in overstressed:
 			v = 0.25
 		else:
 			v = 1.0
@@ -1117,7 +1117,7 @@ def update_geometry_post():
 			h = 0
 		s = 1
 		
-		if i in overstressed == True:
+		if i in overstressed:
 			v = 0.25
 		else:
 			v = 1.0
