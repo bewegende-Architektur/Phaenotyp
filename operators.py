@@ -556,7 +556,7 @@ def set_quad():
 			#quad["long_stress"] = {}
 			#quad["shear_h"] = {}
 			#quad["tau_shear"] = {}
-			#quad["sigmav"] = {}
+			quad["sigmav"] = {}
 			#quad["sigma"] = {}
 			quad["acceptable_sigma_buckling"] = {}
 			quad["lamda"] = {}

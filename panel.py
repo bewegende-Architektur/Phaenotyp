@@ -851,7 +851,7 @@ def genetic_algorithm(layout):
 						box_fitness.prop(phaenotyp, "fitness_average_sigma", text="Sigma")
 						
 						if phaenotyp.calculation_type != "force_distribution":
-							box_fitness.prop(phaenotyp, "fitness_average_strain_energy", text="Strain energy")
+							box_fitness.prop(phaenotyp, "fitness_average_strain_energy", text="Strain energy (members only)")
 
 					box_shape_keys = layout.box()
 					box_shape_keys.label(text="Shape keys:")

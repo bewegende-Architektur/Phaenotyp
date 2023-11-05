@@ -1205,7 +1205,7 @@ def interweave_results_pn(feas):
 			#quad["long_stress"][frame] = long_stress
 			#quad["shear_h"][frame] = shear_h
 			#quad["tau_shear"][frame] = tau_shear
-			#quad["sigmav"][frame] = sigmav
+			quad["sigmav"][frame] = sigmav
 			#quad["sigma"][frame] = quad["long_stress"][frame]
 			
 			quad["s_x_1"][frame] = s_x_1
@@ -1629,6 +1629,7 @@ def calculate_fitness(start, end):
 	data = scene["<Phaenotyp>"]
 	obj = data["structure"]
 	members = data["members"]
+	quads = data["quads"]
 
 	environment = data["environment"]
 	individuals = data["individuals"]
@@ -1671,11 +1672,25 @@ def calculate_fitness(start, end):
 
 					v_0 = array(v_0)
 					v_1 = array(v_1)
-
-					dist = (linalg.norm(v_1) + linalg.norm(v_0))
+					
+					# mulitply with 0.5  because two vertices per member
+					dist = (linalg.norm(v_1) + linalg.norm(v_0)) * 0.5
 
 					forces.append(dist)
 
+				for id, quad in quads.items():
+					for i in range(4):
+						v_0 = quad["initial_positions"][str(frame)][i]
+						v_1 = quad["deflection"][str(frame)][i]
+
+						v_0 = array(v_0)
+						v_1 = array(v_1)
+						
+						# mulitply with 0.25  because four vertices per quad
+						dist = (linalg.norm(v_1) + linalg.norm(v_0)) * 0.25
+
+						forces.append(dist)
+				
 				sum_forces = 0
 				for force in forces:
 					sum_forces = sum_forces + abs(force)
@@ -1688,6 +1703,10 @@ def calculate_fitness(start, end):
 					force = member["max_sigma"][str(frame)]
 					forces.append(force)
 
+				for id, quad in quads.items():
+					force = quad["sigmav"][str(frame)]
+					forces.append(force)
+				
 				sum_forces = 0
 				for force in forces:
 					sum_forces = sum_forces + abs(force)
@@ -1720,8 +1739,11 @@ def calculate_fitness(start, end):
 				sum_forces = 0
 				for force in forces:
 					sum_forces = sum_forces + abs(force)
-
-				fitness_average_strain_energy = sum_forces / len(forces)
+				
+				if len(forces) > 0:
+					fitness_average_strain_energy = sum_forces / len(forces)
+				else:
+					fitness_average_strain_energy = 0
 
 			'''
 			if environment["fitness_function"] == "lever_arm_model":
