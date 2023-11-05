@@ -801,7 +801,8 @@ class phaenotyp_properties(PropertyGroup):
 		description = "Enables sectional optimization after each frame",
 		items = [
 					("none", "None", ""),
-					("approximate", "Approximate", "")
+					("approximate", "Approximate", ""),
+					("utilization", "Utilization", "")
 				]
 		)
 
@@ -1192,17 +1193,30 @@ class WM_OT_optimize_complex(Operator):
 		operators.optimize_complex()
 		return {"FINISHED"}
 
-class WM_OT_optimize_quads(Operator):
+class WM_OT_optimize_quads_approximate(Operator):
 	'''
-	Is calling optimize_quads from the module called operators.
+	Is calling optimize_quads_sectional from the module called operators.
 	Check out further info in there.
 	'''
-	bl_label = "optimize_quads"
-	bl_idname = "wm.optimize_quads"
-	bl_description = "Quad sectional performance"
+	bl_label = "optimize_quads_approximate"
+	bl_idname = "wm.optimize_quads_approximate"
+	bl_description = "Quad approximate sectional performance"
 
 	def execute(self, context):
-		operators.optimize_quads()
+		operators.quads_approximate_sectional()
+		return {"FINISHED"}
+
+class WM_OT_optimize_quads_utilization(Operator):
+	'''
+	Is calling optimize_quads_utilization_sectional from the module called operators.
+	Check out further info in there.
+	'''
+	bl_label = "optimize_quads_utilization"
+	bl_idname = "wm.optimize_quads_utilization"
+	bl_description = "Quad utilization sectional performance"
+
+	def execute(self, context):
+		operators.quads_utilization_sectional()
 		return {"FINISHED"}
 		
 class WM_OT_decimate(Operator):
@@ -1501,7 +1515,8 @@ classes = (
 	WM_OT_optimize_simple,
 	WM_OT_optimize_utilization,
 	WM_OT_optimize_complex,
-	WM_OT_optimize_quads,
+	WM_OT_optimize_quads_approximate,
+	WM_OT_optimize_quads_utilization,
 	WM_OT_decimate,
 
 	WM_OT_bf_start,

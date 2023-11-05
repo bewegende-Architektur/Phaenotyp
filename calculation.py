@@ -1440,7 +1440,7 @@ def complex_sectional():
 			member["Di"][str(frame)] = 0.1
 			member["Do"][str(frame)] = member["Di"][str(frame)] * Do_Di_ratio
 
-def quads_sectional():
+def quads_approximate_sectional():
 	'''
 	Is adapting the thickness of quads step by step.
 	The reduction is based on the overstress of the elements.
@@ -1457,7 +1457,22 @@ def quads_sectional():
 		
 		else:
 			quad["thickness"][str(frame)] = quad["thickness"][str(frame)] * 0.9
-			
+
+def quads_utilization_sectional():
+	'''
+	Is adapting the thickness of quads by utilization.
+	'''
+	scene = bpy.context.scene
+	phaenotyp = scene.phaenotyp
+	data = scene["<Phaenotyp>"]
+	quads = data["quads"]
+	frame = bpy.context.scene.frame_current
+
+	for id, quad in quads.items():
+		ang = quad["utilization"][str(frame)]
+		faktor_d = (abs(ang))**(1/3) # taken from members
+		quad["thickness"][str(frame)] = quad["thickness"][str(frame)] * faktor_d
+		
 def decimate_topology():
 	'''
 	Is creating a vertex-group with the utilization of each member.
@@ -1575,9 +1590,12 @@ def sectional_optimization(start, end):
 
 			if phaenotyp.optimization_pn == "complex":
 				complex_sectional()
-				
+
 			if phaenotyp.optimization_quads == "approximate":
-				quads_sectional()
+				quads_approximate_sectional()
+								
+			if phaenotyp.optimization_quads == "utilization":
+				quads_utilization_sectional()
 
 		# apply shape keys
 		try:

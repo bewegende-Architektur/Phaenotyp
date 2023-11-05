@@ -391,7 +391,7 @@ def loads(layout):
 	calculation_type = phaenotyp.calculation_type
 
 	if data:
-		if data["panel_state"]["members"]:
+		if data["panel_state"]["members"] or data["panel_state"]["quads"]:
 			box_loads = layout.box()
 			box_loads.label(text="Loads:")
 			box_loads.prop(phaenotyp, "load_type", text="")
@@ -577,7 +577,8 @@ def single_frame(layout):
 							box_opt.operator("wm.optimize_simple", text="Members simple")
 							box_opt.operator("wm.optimize_utilization", text="Members utilization")
 							box_opt.operator("wm.optimize_complex", text="Members complex")
-							box_opt.operator("wm.optimize_quads", text="Quads approximate")
+							box_opt.operator("wm.optimize_quads_approximate", text="Quads approximate")
+							box_opt.operator("wm.optimize_quads_utilization", text="Quads utilization")
 					else:
 						box_opt.label(text="Run single analysis first.")
 

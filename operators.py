@@ -1364,8 +1364,11 @@ def calculate_animation():
 							calculation.complex_sectional()
 						
 						if phaenotyp.optimization_quads == "approximate":
-							calculation.quads_sectional()
+							calculation.quads_approximate_sectional()
 
+						if phaenotyp.optimization_quads == "utilization":
+							calculation.quads_utilization_sectional()
+							
 					# calculate new properties for each member
 					geometry.update_geometry_pre()
 
@@ -1437,8 +1440,11 @@ def calculate_animation():
 						optimize_complex()
 
 					if phaenotyp.optimization_quads == "approximate":
-						optimize_quads()
-		
+						quads_approximate_sectional()
+
+					if phaenotyp.optimization_quads == "utilization":
+						quads_utilization_sectional()
+								
 			bpy.context.scene.frame_end = frame
 
 	# without optimization
@@ -1598,16 +1604,16 @@ def optimize_complex():
 
 	basics.view_vertex_colors()
 
-def optimize_quads():
+def quads_approximate_sectional():
 	scene = bpy.context.scene
 	phaenotyp = scene.phaenotyp
 	data = scene["<Phaenotyp>"]
 	members = scene["<Phaenotyp>"]["members"]
 	frame = bpy.context.scene.frame_current
 
-	print_data("quads sectional performance")
+	print_data("quads approximate sectional performance")
 
-	calculation.quads_sectional()
+	calculation.quads_approximate_sectional()
 
 	# calculate new properties for each member
 	geometry.update_geometry_pre()
@@ -1627,6 +1633,35 @@ def optimize_quads():
 
 	basics.view_vertex_colors()
 
+def quads_utilization_sectional():
+	scene = bpy.context.scene
+	phaenotyp = scene.phaenotyp
+	data = scene["<Phaenotyp>"]
+	members = scene["<Phaenotyp>"]["members"]
+	frame = bpy.context.scene.frame_current
+
+	print_data("quads utilization sectional performance")
+
+	calculation.quads_utilization_sectional()
+
+	# calculate new properties for each member
+	geometry.update_geometry_pre()
+
+	# created a model object
+	models = {}
+	models[str(frame)] = calculation.prepare_fea_pn()
+
+	# run singlethread and get results
+	feas = calculation.run_mp(models)
+
+	# wait for it and interweave results to data
+	calculation.interweave_results_pn(feas)
+
+	# calculate new visualization-mesh
+	geometry.update_geometry_post()
+
+	basics.view_vertex_colors()
+	
 def topolgy_decimate():
 	print_data("Decimate topological performance")
 	calculation.decimate_topology()
@@ -1650,7 +1685,7 @@ def bf_start():
 			optimization_amount = 0
 
 	else:
-		if phaenotyp.optimization_pn in ["simple", "utilization", "complex"]:
+		if phaenotyp.optimization_pn in ["simple", "utilization", "complex"] or phaenotyp.optimization_quads in ["approximate", "utilization"]:
 			optimization_amount = phaenotyp.optimization_amount
 		else:
 			optimization_amount = 0
@@ -1755,7 +1790,7 @@ def ga_start():
 			optimization_amount = 0
 
 	else:
-		if phaenotyp.optimization_pn in ["simple", "utilization", "complex"]:
+		if phaenotyp.optimization_pn in ["simple", "utilization", "complex"] or phaenotyp.optimization_quads in ["approximate", "utilization"]:
 			optimization_amount = phaenotyp.optimization_amount
 		else:
 			optimization_amount = 0
@@ -1858,6 +1893,18 @@ def gd_start():
 
 	print_data("Start gradient descent over selected shape keys")
 
+	if phaenotyp.calculation_type == "force_distribution":
+		if phaenotyp.optimization_fd == "approximate":
+			optimization_amount = phaenotyp.optimization_amount
+		else:
+			optimization_amount = 0
+
+	else:
+		if phaenotyp.optimization_pn in ["simple", "utilization", "complex"] or phaenotyp.optimization_quads in ["approximate", "utilization"]:
+			optimization_amount = phaenotyp.optimization_amount
+		else:
+			optimization_amount = 0
+	
 	progress.run()
 
 	gd.start()
