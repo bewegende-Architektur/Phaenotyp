@@ -1892,18 +1892,6 @@ def gd_start():
 	data = scene["<Phaenotyp>"]
 
 	print_data("Start gradient descent over selected shape keys")
-
-	if phaenotyp.calculation_type == "force_distribution":
-		if phaenotyp.optimization_fd == "approximate":
-			optimization_amount = phaenotyp.optimization_amount
-		else:
-			optimization_amount = 0
-
-	else:
-		if phaenotyp.optimization_pn in ["simple", "utilization", "complex"] or phaenotyp.optimization_quads in ["approximate", "utilization"]:
-			optimization_amount = phaenotyp.optimization_amount
-		else:
-			optimization_amount = 0
 	
 	progress.run()
 
