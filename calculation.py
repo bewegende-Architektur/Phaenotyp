@@ -1664,7 +1664,7 @@ def calculate_fitness(start, end):
 
 		if phaenotyp.calculation_type != "geometrical":
 			if phaenotyp.calculation_type != "force_distribution":
-				# deflection
+				# deflection for members
 				forces = []
 				for id, member in members.items():
 					v_0 = member["initial_positions"][str(frame)]
@@ -1678,6 +1678,14 @@ def calculate_fitness(start, end):
 
 					forces.append(dist)
 
+				sum_forces = 0
+				for force in forces:
+					sum_forces = sum_forces + abs(force)
+
+				fitness_deflection_members = basics.avoid_div_zero(sum_forces, len(forces))
+				
+				# deflection for quads
+				forces = []
 				for id, quad in quads.items():
 					for i in range(4):
 						v_0 = quad["initial_positions"][str(frame)][i]
@@ -1695,14 +1703,22 @@ def calculate_fitness(start, end):
 				for force in forces:
 					sum_forces = sum_forces + abs(force)
 
-				fitness_deflection = sum_forces / len(forces)
+				fitness_deflection_quads = basics.avoid_div_zero(sum_forces, len(forces))
 
-				# average_sigma
+				# average_sigma members
 				forces = []
 				for id, member in members.items():
 					force = member["max_sigma"][str(frame)]
 					forces.append(force)
+				
+				sum_forces = 0
+				for force in forces:
+					sum_forces = sum_forces + abs(force)
 
+				fitness_average_sigma_members = basics.avoid_div_zero(sum_forces, len(forces))
+
+				# average_sigmav quads
+				forces = []
 				for id, quad in quads.items():
 					force = quad["sigmav"][str(frame)]
 					forces.append(force)
@@ -1711,8 +1727,8 @@ def calculate_fitness(start, end):
 				for force in forces:
 					sum_forces = sum_forces + abs(force)
 
-				fitness_average_sigma = sum_forces / len(forces)
-
+				fitness_average_sigmav_quads = basics.avoid_div_zero(sum_forces, len(forces))
+				
 			else:
 				# average_sigma for force_distribution -> max_sigma = sigma
 				forces = []
@@ -1724,7 +1740,7 @@ def calculate_fitness(start, end):
 				for force in forces:
 					sum_forces = sum_forces + abs(force)
 
-				fitness_average_sigma = sum_forces / len(forces)
+				fitness_average_sigma_members = sum_forces / len(forces)
 
 			if phaenotyp.calculation_type != "force_distribution":
 				# average_strain_energy
@@ -1779,9 +1795,11 @@ def calculate_fitness(start, end):
 		individual["fitness"]["span"] = fitness_span
 		individual["fitness"]["cantilever"] = fitness_cantilever
 		if phaenotyp.calculation_type != "geometrical":
-			individual["fitness"]["deflection"] = fitness_deflection
-			individual["fitness"]["average_sigma"] = fitness_average_sigma
+			individual["fitness"]["deflection_members"] = fitness_deflection_members
+			individual["fitness"]["average_sigma_members"] = fitness_average_sigma_members
 			if phaenotyp.calculation_type != "force_distribution":
+				individual["fitness"]["deflection_quads"] = fitness_deflection_quads
+				individual["fitness"]["average_sigmav_quads"] = fitness_average_sigmav_quads
 				individual["fitness"]["average_strain_energy"] = fitness_average_strain_energy
 
 		if frame != 0:
@@ -1821,13 +1839,20 @@ def calculate_fitness(start, end):
 				weighted += basics.avoid_div_zero(1, basis_fitness["cantilever"]) * fitness_cantilever * phaenotyp.fitness_cantilever
 
 			if phaenotyp.calculation_type != "geometrical":
-				if phaenotyp.fitness_deflection_invert:
-					weighted += basics.avoid_div_zero(1, fitness_deflection) * basis_fitness["deflection"] * phaenotyp.fitness_deflection
+				if phaenotyp.fitness_deflection_members_invert:
+					weighted += basics.avoid_div_zero(1, fitness_deflection_members) * basis_fitness["deflection_members"] * phaenotyp.fitness_deflection_members
 				else:
-					weighted += basics.avoid_div_zero(1, basis_fitness["deflection"]) * fitness_deflection * phaenotyp.fitness_deflection
+					weighted += basics.avoid_div_zero(1, basis_fitness["deflection_members"]) * fitness_deflection_members * phaenotyp.fitness_deflection_members
 
-				weighted += basics.avoid_div_zero(1, basis_fitness["average_sigma"]) * fitness_average_sigma * phaenotyp.fitness_average_sigma
+				weighted += basics.avoid_div_zero(1, basis_fitness["average_sigma_members"]) * fitness_average_sigma_members * phaenotyp.fitness_average_sigma_members
+				
 				if phaenotyp.calculation_type != "force_distribution":
+					if phaenotyp.fitness_deflection_quads_invert:
+						weighted += basics.avoid_div_zero(1, fitness_deflection_quads) * basis_fitness["deflection_quads"] * phaenotyp.fitness_deflection_quads
+					else:
+						weighted += basics.avoid_div_zero(1, basis_fitness["deflection_quads"]) * fitness_deflection_quads * phaenotyp.fitness_deflection_quads
+						
+					weighted += basics.avoid_div_zero(1, basis_fitness["average_sigmav_quads"]) * fitness_average_sigmav_quads * phaenotyp.fitness_average_sigmav_quads
 					weighted += basics.avoid_div_zero(1, basis_fitness["average_strain_energy"]) * fitness_average_strain_energy * phaenotyp.fitness_average_strain_energy
 
 
@@ -1839,9 +1864,11 @@ def calculate_fitness(start, end):
 			weight += phaenotyp.fitness_span
 			weight += phaenotyp.fitness_cantilever
 			if phaenotyp.calculation_type != "geometrical":
-				weight += phaenotyp.fitness_deflection
-				weight += phaenotyp.fitness_average_sigma
+				weight += phaenotyp.fitness_deflection_members
+				weight += phaenotyp.fitness_deflection_quads
+				weight += phaenotyp.fitness_average_sigma_members
 				if phaenotyp.calculation_type != "force_distribution":
+					weight += phaenotyp.fitness_average_sigmav_quads
 					weight += phaenotyp.fitness_average_strain_energy
 
 			# the overall weighted-value is always 1 for the basis individual

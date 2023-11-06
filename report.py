@@ -1439,7 +1439,7 @@ def report_chromosomes(directory):
 		if phaenotyp.calculation_type == "force_distribution":
 			len_fitness_functions = 9
 		else:
-			len_fitness_functions = 10
+			len_fitness_functions = 12
 	else:
 		len_fitness_functions = 8
 
@@ -1465,8 +1465,10 @@ def report_chromosomes(directory):
 	names.append("cantilever") # m
 
 	if phaenotyp.calculation_type != "geometrical":
-		names.append("deflection")
-		names.append("average_sigma")
+		names.append("deflection_members")
+		names.append("deflection_quads")
+		names.append("average_sigma_members")
+		names.append("average_sigmav_quads")
 		if phaenotyp.calculation_type != "force_distribution":
 			names.append("average_strain_energy")
 	names.append("weighted")

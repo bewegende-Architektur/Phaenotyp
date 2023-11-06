@@ -488,14 +488,22 @@ class phaenotyp_properties(PropertyGroup):
 		default = False
 	)
 
-	fitness_average_sigma: FloatProperty(
+	fitness_average_sigma_members: FloatProperty(
 		name = "average sigma",
 		description = "Average sigma of all members",
 		default = 0.0,
 		min = 0.0,
 		max = 1.0
 		)
-
+		
+	fitness_average_sigmav_quads: FloatProperty(
+		name = "average sigma",
+		description = "Average sigmav of all quads",
+		default = 0.0,
+		min = 0.0,
+		max = 1.0
+		)
+		
 	fitness_average_strain_energy: FloatProperty(
 		name = "average strain energy",
 		description = "Average strain energy of all members",
@@ -504,7 +512,7 @@ class phaenotyp_properties(PropertyGroup):
 		max = 1.0
 		)
 
-	fitness_deflection: FloatProperty(
+	fitness_deflection_members: FloatProperty(
 		name = "deflection",
 		description = "Average deflection of the elements",
 		default = 0.0,
@@ -512,7 +520,21 @@ class phaenotyp_properties(PropertyGroup):
 		max = 1.0
 		)
 
-	fitness_deflection_invert: BoolProperty(
+	fitness_deflection_members_invert: BoolProperty(
+		name = 'deflection invert',
+		description = "Activate to maximize the deflection",
+		default = False
+	)
+	
+	fitness_deflection_quads: FloatProperty(
+		name = "deflection",
+		description = "Average deflection of the elements",
+		default = 0.0,
+		min = 0.0,
+		max = 1.0
+		)
+	
+	fitness_deflection_quads_invert: BoolProperty(
 		name = 'deflection invert',
 		description = "Activate to maximize the deflection",
 		default = False

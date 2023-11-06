@@ -724,13 +724,22 @@ def bruteforce(layout):
 					if phaenotyp.calculation_type != "geometrical":
 						col = box_fitness.column()
 						split = col.split()
-						split.prop(phaenotyp, "fitness_deflection", text="Deflection")
-						split.prop(phaenotyp, "fitness_deflection_invert", text="Invert")
-						
-						box_fitness.prop(phaenotyp, "fitness_average_sigma", text="Sigma")
+						split.prop(phaenotyp, "fitness_deflection_members", text="Deflection members")
+						split.prop(phaenotyp, "fitness_deflection_members_invert", text="Invert")
 						
 						if phaenotyp.calculation_type != "force_distribution":
-							box_fitness.prop(phaenotyp, "fitness_average_strain_energy", text="Strain energy")
+							col = box_fitness.column()
+							split = col.split()
+							split.prop(phaenotyp, "fitness_deflection_quads", text="Deflection quads")
+							split.prop(phaenotyp, "fitness_deflection_quads_invert", text="Invert")
+												
+						box_fitness.prop(phaenotyp, "fitness_average_sigma_members", text="Sigma members")
+						
+						if phaenotyp.calculation_type != "force_distribution":
+							box_fitness.prop(phaenotyp, "fitness_average_sigmav_quads", text="Sigmav quads")
+						
+						if phaenotyp.calculation_type != "force_distribution":
+							box_fitness.prop(phaenotyp, "fitness_average_strain_energy", text="Strain energy (members only)")
 
 					box_shape_keys = layout.box()
 					box_shape_keys.label(text="Shape keys:")
@@ -845,10 +854,19 @@ def genetic_algorithm(layout):
 					if phaenotyp.calculation_type != "geometrical":
 						col = box_fitness.column()
 						split = col.split()
-						split.prop(phaenotyp, "fitness_deflection", text="Deflection")
-						split.prop(phaenotyp, "fitness_deflection_invert", text="Invert")
+						split.prop(phaenotyp, "fitness_deflection_members", text="Deflection members")
+						split.prop(phaenotyp, "fitness_deflection_members_invert", text="Invert")
 						
-						box_fitness.prop(phaenotyp, "fitness_average_sigma", text="Sigma")
+						if phaenotyp.calculation_type != "force_distribution":
+							col = box_fitness.column()
+							split = col.split()
+							split.prop(phaenotyp, "fitness_deflection_quads", text="Deflection quads")
+							split.prop(phaenotyp, "fitness_deflection_quads_invert", text="Invert")
+												
+						box_fitness.prop(phaenotyp, "fitness_average_sigma_members", text="Sigma members")
+						
+						if phaenotyp.calculation_type != "force_distribution":
+							box_fitness.prop(phaenotyp, "fitness_average_sigmav_quads", text="Sigmav quads")
 						
 						if phaenotyp.calculation_type != "force_distribution":
 							box_fitness.prop(phaenotyp, "fitness_average_strain_energy", text="Strain energy (members only)")
@@ -969,13 +987,22 @@ def gradient_descent(layout):
 					if phaenotyp.calculation_type != "geometrical":
 						col = box_fitness.column()
 						split = col.split()
-						split.prop(phaenotyp, "fitness_deflection", text="Deflection")
-						split.prop(phaenotyp, "fitness_deflection_invert", text="Invert")
-						
-						box_fitness.prop(phaenotyp, "fitness_average_sigma", text="Sigma")
+						split.prop(phaenotyp, "fitness_deflection_members", text="Deflection members")
+						split.prop(phaenotyp, "fitness_deflection_members_invert", text="Invert")
 						
 						if phaenotyp.calculation_type != "force_distribution":
-							box_fitness.prop(phaenotyp, "fitness_average_strain_energy", text="Strain energy")
+							col = box_fitness.column()
+							split = col.split()
+							split.prop(phaenotyp, "fitness_deflection_quads", text="Deflection quads")
+							split.prop(phaenotyp, "fitness_deflection_quads_invert", text="Invert")
+												
+						box_fitness.prop(phaenotyp, "fitness_average_sigma_members", text="Sigma members")
+						
+						if phaenotyp.calculation_type != "force_distribution":
+							box_fitness.prop(phaenotyp, "fitness_average_sigmav_quads", text="Sigmav quads")
+						
+						if phaenotyp.calculation_type != "force_distribution":
+							box_fitness.prop(phaenotyp, "fitness_average_strain_energy", text="Strain energy (members only)")
 
 					box_shape_keys = layout.box()
 					box_shape_keys.label(text="Shape keys:")
