@@ -3,7 +3,7 @@ import bpy
 import os
 import webbrowser
 
-from phaenotyp import basics, material, geometry, calculation, bf, ga, gd, panel, report, progress
+from phaenotyp import basics, material, geometry, calculation, bf, ga, gd, panel, report, nn, progress
 import itertools
 
 def print_data(text):
@@ -2515,6 +2515,17 @@ def report_tree():
 	file_to_open = directory + "/index.html"
 	webbrowser.open(file_to_open)
 
+def precast():
+	print_data("Precast result with recent shape-keys")
+
+	scene = bpy.context.scene
+	phaenotyp = scene.phaenotyp
+	data = scene["<Phaenotyp>"]
+	members = data["members"]
+	frame = bpy.context.scene.frame_current
+	
+	nn.start()
+	
 def reset():
 	print_data("reset phaenotyp")
 

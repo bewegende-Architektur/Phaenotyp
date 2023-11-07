@@ -1147,6 +1147,25 @@ def selection(layout):
 		box_selection.prop(phaenotyp, "selection_threshold", text="Threshold:")
 		box_selection.operator("wm.selection", text="Start")
 
+def precast(layout):
+	'''
+	Panel for neural network.
+	:param layout: Passed layout of phaenotyp panel.
+	'''
+	context = bpy.context
+	scene = context.scene
+	phaenotyp = scene.phaenotyp
+	frame = scene.frame_current
+	data = bpy.context.scene.get("<Phaenotyp>")
+
+	shape_key = data["structure"].data.shape_keys
+	if shape_key:
+		box_precast = layout.box()
+		box_precast.label(text="Precast:")			
+		box_precast.prop(phaenotyp, "nn_epochs", text="Epochs:")
+		box_precast.prop(phaenotyp, "nn_learning_rate", text="Learning Rate:")
+		box_precast.operator("wm.precast", text="Start")
+		
 def report(layout):
 	'''
 	Panel for report.

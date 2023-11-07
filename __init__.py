@@ -968,6 +968,22 @@ class phaenotyp_properties(PropertyGroup):
 		max = 1000
 		)
 
+	nn_learning_rate: FloatProperty(
+		name = "nn_learning_rate",
+		description="Learning Rate",
+		default = 0.1,
+		min = 0.001,
+		max = 1.0
+		)
+
+	nn_epochs: IntProperty(
+		name = "nn_epochs",
+		description="Number of iterations",
+		default = 5000,
+		min = 1000,
+		max = 50000
+		)
+		
 class WM_OT_set_structure(Operator):
 	'''
 	Is calling set_structure from the module called operators.
@@ -1423,6 +1439,19 @@ class WM_OT_report_tree(Operator):
 		operators.report_tree()
 		return {"FINISHED"}
 
+class WM_OT_precast(Operator):
+	'''
+	Is calling precast from the module called operators.
+	Check out further info in there.
+	'''
+	bl_label = "precast"
+	bl_idname = "wm.precast"
+	bl_description = "Precast result with given shape-keys"
+
+	def execute(self, context):
+		operators.precast()
+		return {"FINISHED"}
+		
 class WM_OT_reset(Operator):
 	'''
 	Is calling reset from the module called operators.
@@ -1504,6 +1533,7 @@ class OBJECT_PT_Phaenotyp(Panel):
 					panel.text(layout)
 					panel.info(layout)
 					panel.selection(layout)
+					panel.precast(layout)
 					panel.report(layout)
 					
 		except Exception as error:
@@ -1556,6 +1586,8 @@ classes = (
 	WM_OT_report_combined,
 	WM_OT_report_chromosomes,
 	WM_OT_report_tree,
+	
+	WM_OT_precast,
 
 	WM_OT_reset,
 	OBJECT_PT_Phaenotyp
