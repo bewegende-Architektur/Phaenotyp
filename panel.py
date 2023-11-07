@@ -1157,6 +1157,7 @@ def precast(layout):
 	phaenotyp = scene.phaenotyp
 	frame = scene.frame_current
 	data = bpy.context.scene.get("<Phaenotyp>")
+	results = data.get("results")
 
 	shape_key = data["structure"].data.shape_keys
 	if shape_key:
@@ -1165,7 +1166,11 @@ def precast(layout):
 		box_precast.prop(phaenotyp, "nn_epochs", text="Epochs:")
 		box_precast.prop(phaenotyp, "nn_learning_rate", text="Learning Rate:")
 		box_precast.operator("wm.precast", text="Start")
-		
+		if results:
+			for name, result in results.items():
+				text = name + ": " + str(round(result, 3))
+				box_precast.label(text=text)
+
 def report(layout):
 	'''
 	Panel for report.

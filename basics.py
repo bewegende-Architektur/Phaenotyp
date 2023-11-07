@@ -83,7 +83,8 @@ def create_data():
 			"quads": False,
 			"loads": False
 			},
-		"texts": {}
+		"texts": {},
+		"precast": {}
 	}
 
 def sorted_keys(dict):
