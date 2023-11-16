@@ -510,6 +510,8 @@ def set_quad():
 			# this variables are always fix
 			quad["vertices_ids_structure"] = vertices_ids # structure obj
 			quad["vertices_ids_viz"] = {} # obj for visualization
+			quad["face_id_viz"] = None
+			quad["stresslines_viz"] = None
 			
 			quad["E"] = material.current_quads["E"] # from gui
 			quad["G"] = material.current_quads["G"] # from gui
@@ -585,9 +587,13 @@ def set_quad():
 	# delete obj if existing
 	basics.delete_obj_if_existing("<Phaenotyp>quads")
 	basics.delete_mesh_if_existing("<Phaenotyp>quads")
+	
+	basics.delete_obj_if_existing("<Phaenotyp>stresslines")
+	basics.delete_mesh_if_existing("<Phaenotyp>stresslines")
 
 	# create one mesh for all
 	geometry.create_quads(data["structure"], data["quads"])
+	geometry.create_stresslines(data["structure"], data["quads"])
 
 	# leave membersand go to edit-mode
 	# (in order to let the user define more supports)
