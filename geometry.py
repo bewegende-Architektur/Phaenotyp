@@ -786,6 +786,10 @@ def create_quads(structure_obj, quads):
 	if modifier:
 		text = "existing modifier:" + str(modifiers)
 	else:
+		modifier_subsurf = obj.modifiers.new(name="<Phaenotyp>", type='SUBSURF')
+		modifier_subsurf.levels = 2
+		modifier_subsurf.subdivision_type = 'SIMPLE'
+
 		modifier_solidify = obj.modifiers.new(name="<Phaenotyp>", type='SOLIDIFY')
 		modifier_solidify.thickness = 1
 		modifier_solidify.vertex_group = "thickness"
@@ -1218,11 +1222,15 @@ def update_geometry_post():
 
 			mid = (e_1 + e_0) / 2
 			t = e_1 - e_0
-			t = t*0.25
+			t = t*0.5
 			
+			from math import atan2
 			# rotate vector for alpha_1
-			a = quad["alpha_1"][str(frame)]
-
+			#a = quad["alpha_1"][str(frame)]# * 3.14/180
+			x = quad["s_x_1"][str(frame)]
+			y = quad["s_y_1"][str(frame)]
+			a = atan2(y,x)
+			
 			mat = Matrix.Rotation(a, 4, normal)
 			vec = Vector(t)
 			vec.rotate(mat)
@@ -1231,16 +1239,28 @@ def update_geometry_post():
 			stress_vertices[quad["stresslines_viz"][0]].co = mid
 			stress_vertices[quad["stresslines_viz"][1]].co = mid + vec
 
+			x = quad["s_x_1"][str(frame)]
+			y = quad["s_y_1"][str(frame)]
+			a = atan2(y,x)
+			
+			if "40" == id:
+				print(id, ":", x, y)
+			
+			if "57" == id:
+				print(id, ":", x, y)
+			
 			# rotate vector for alpha_2
-			a = quad["alpha_2"][str(frame)]
+			#a = quad["alpha_2"][str(frame)]# * 3.14/180
+			#a = degrees(a)
+			#a = a+90
 
 			mat = Matrix.Rotation(a, 4, normal)
 			vec = Vector(t)
 			vec.rotate(mat)
 
 			# set position of second edge			
-			stress_vertices[quad["stresslines_viz"][2]].co = mid - normal*thickness
-			stress_vertices[quad["stresslines_viz"][3]].co = mid + vec - normal*thickness
+			stress_vertices[quad["stresslines_viz"][2]].co = mid# - normal*thickness
+			stress_vertices[quad["stresslines_viz"][3]].co = mid + vec# - normal*thickness
 			
 					
 def create_loads(structure_obj, loads_v, loads_e, loads_f):
