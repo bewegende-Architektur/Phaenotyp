@@ -1,6 +1,6 @@
 import bpy
 import bmesh
-from math import sqrt, pi, degrees, atan2
+from math import sqrt, radians
 from phaenotyp import operators
 from mathutils import Color, Vector, Matrix
 c = Color()
@@ -1190,7 +1190,6 @@ def update_geometry_post():
 			
 			# rotate vector for alpha_1
 			a = quad["alpha_1"][str(frame)]# * 3.14/180
-			a = degrees(a)
 			
 			x = quad["s_1_1"][str(frame)]
 			y = quad["s_1_2"][str(frame)]
@@ -1202,8 +1201,8 @@ def update_geometry_post():
 					a = a+90
 				else:
 					a = a-90
-					
-			mat = Matrix.Rotation(a, 4, normal)
+
+			mat = Matrix.Rotation(radians(a), 4, normal)
 			vec = Vector(t)
 			vec.rotate(mat)
 			vec = vec * dist
@@ -1214,7 +1213,6 @@ def update_geometry_post():
 			
 			# rotate vector for alpha_2
 			a = quad["alpha_2"][str(frame)]# * 3.14/180
-			a = degrees(a)
 			
 			x = quad["s_2_1"][str(frame)]
 			y = quad["s_2_2"][str(frame)]
@@ -1226,8 +1224,8 @@ def update_geometry_post():
 					a = a+90
 				else:
 					a = a-90
-						
-			mat = Matrix.Rotation(a, 4, normal)
+			
+			mat = Matrix.Rotation(radians(a), 4, normal)
 			vec = Vector(t)
 			vec.rotate(mat)
 			vec = vec * dist

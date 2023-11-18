@@ -1318,7 +1318,7 @@ def report_quads(directory, start, end):
 
 	force_types["length_x"] = [1, "cm"]
 	force_types["length_y"] = [1, "cm"]
-	force_types["thickness"] = [1, "m"]
+	force_types["thickness"] = [1, "cm"]
 	force_types["weight"] = [1, "kg"]
 	force_types["area"] = [1, "m²"]
 	
@@ -1339,6 +1339,9 @@ def report_quads(directory, start, end):
 	force_types["s_1_2"] = [1, None]
 	force_types["s_2_1"] = [1, None]
 	force_types["s_2_2"] = [1, None]
+	
+	force_types["alpha_1"] = [1, None]
+	force_types["alpha_2"] = [1, None]
 	
 	force_types["utilization"] = [1, None]
 	

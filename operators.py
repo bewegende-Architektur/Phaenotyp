@@ -2173,6 +2173,11 @@ def text():
 						text = "shear_y: " + str(round(quad["shear_y"][str(frame)], 3))
 						data_temp.append(text)
 
+						text = "alpha_1: " + str(round(quad["alpha_1"][str(frame)], 3))
+						data_temp.append(text)
+						text = "alpha_2: " + str(round(quad["alpha_2"][str(frame)], 3))
+						data_temp.append(text)
+						
 						data["texts"] = data_temp
 						
 def selection():

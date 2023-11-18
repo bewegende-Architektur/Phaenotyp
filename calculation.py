@@ -3,9 +3,7 @@ import bmesh
 from PyNite import FEModel3D
 from numpy import array, empty, append, poly1d, polyfit, linalg, zeros, intersect1d, arctan
 from phaenotyp import basics, material, geometry, progress
-from math import sqrt
-from math import tanh
-from math import pi
+from math import sqrt, tanh, pi, degrees
 
 from subprocess import Popen, PIPE
 import sys
@@ -1086,8 +1084,19 @@ def interweave_results_pn(feas):
 			s_1_2 = (s_x_2 + s_y_2)/2 - sqrt(((s_x_2 - s_y_2)/2)**2 + T_xy_2**2)   # für Darstellung
 			
 			# Winkel der Hautptspannungen an den Oberflächen 1 und 2
-			alpha_1 = arctan(2* T_xy_1/(s_x_1 - s_y_1)) * 0.5 # in radianten, mit *pi/180 um in grad umzurechnen, für Darstellung
-			alpha_2 = arctan(2* T_xy_2/(s_x_2 - s_y_2)) * 0.5 # in radianten, mit *pi/180 um in grad umzurechnen, für Darstellung
+			v = (2* T_xy_1/(s_x_1 - s_y_1))
+			if v != 0: # to avoid div 0
+				alpha_1_rad = arctan(v) * 0.5 # in radianten, mit *pi/180 um in grad umzurechnen, für Darstellung
+				alpha_1 = degrees(alpha_1_rad)
+			else:
+				alpha_1 = 0
+			
+			v = 2* T_xy_2/(s_x_2 - s_y_2)
+			if v != 0: # to avoid div 0
+				alpha_2_rad = arctan(v) * 0.5 # in radianten, mit *pi/180 um in grad umzurechnen, für Darstellung
+				alpha_2 = degrees(alpha_2_rad)
+			else:
+				alpha_2 = 0
 
 			# long_stress_x = s_x
 			# sigma = s_x
