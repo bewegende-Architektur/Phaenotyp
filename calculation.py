@@ -1073,11 +1073,17 @@ def interweave_results_pn(feas):
 			T_x = 1.5 * shear_x/A   # in Plattenmitte
 			T_y = 1.5 * shear_y/A   # in Plattenmitte
 
-			# Hauptspannungen 1 und 2 an den Oberflächen 1 und 2			
+			# Hauptspannungen 1 und 2 an den Oberflächen 1 und 2
+			'''
 			s_1_1 = (s_x_1 + s_y_1)/2 + sqrt(((s_x_1 - s_y_1)/2)**2 + T_xy_1**2)   # für Darstellung
 			s_1_2 = (s_x_1 + s_y_1)/2 - sqrt(((s_x_1 - s_y_1)/2)**2 + T_xy_1**2)   # für Darstellung
 			s_2_1 = (s_x_2 + s_y_2)/2 + sqrt(((s_x_2 - s_y_2)/2)**2 + T_xy_2**2)   # für Darstellung
 			s_2_2 = (s_x_2 + s_y_2)/2 - sqrt(((s_x_2 - s_y_2)/2)**2 + T_xy_2**2)   # für Darstellung
+			'''
+			s_1_1 = (s_x_1 + s_y_1)/2 + sqrt(((s_x_1 - s_y_1)/2)**2 + T_xy_1**2)   # für Darstellung
+			s_2_2 = (s_x_1 + s_y_1)/2 - sqrt(((s_x_1 - s_y_1)/2)**2 + T_xy_1**2)   # für Darstellung
+			s_2_1 = (s_x_2 + s_y_2)/2 + sqrt(((s_x_2 - s_y_2)/2)**2 + T_xy_2**2)   # für Darstellung
+			s_1_2 = (s_x_2 + s_y_2)/2 - sqrt(((s_x_2 - s_y_2)/2)**2 + T_xy_2**2)   # für Darstellung
 			
 			# Winkel der Hautptspannungen an den Oberflächen 1 und 2
 			alpha_1 = arctan(2* T_xy_1/(s_x_1 - s_y_1)) * 0.5 # in radianten, mit *pi/180 um in grad umzurechnen, für Darstellung

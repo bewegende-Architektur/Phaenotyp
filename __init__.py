@@ -628,9 +628,9 @@ class phaenotyp_properties(PropertyGroup):
 		description = "scale",
 		update = viz_update,
 		subtype = "PERCENTAGE",
-		default = 0.5,
-		min = 0.01,
-		max = 5.0
+		default = 50,
+		min = 0.001,
+		max = 100
 		)
 
 	viz_stressline_type: EnumProperty(

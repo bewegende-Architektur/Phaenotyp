@@ -1163,7 +1163,7 @@ def update_geometry_post():
 		stress_viz = bpy.data.objects["<Phaenotyp>stresslines"]
 		stress_vertices = stress_viz.data.vertices
 		
-		viz_stressline_scale = phaenotyp.viz_stressline_scale
+		viz_stressline_scale = phaenotyp.viz_stressline_scale * 0.01
 		viz_stressline_type = phaenotyp.viz_stressline_type
 		
 		for id, quad in quads.items():
@@ -1187,7 +1187,6 @@ def update_geometry_post():
 
 			mid = (e_1 + e_0) / 2
 			t = e_1 - e_0
-			t = t*0.5
 			
 			# rotate vector for alpha_1
 			a = quad["alpha_1"][str(frame)]# * 3.14/180
