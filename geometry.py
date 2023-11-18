@@ -815,6 +815,11 @@ def create_stresslines(structure_obj, quads):
 	
 	data = scene["<Phaenotyp>"]
 	structure = data["structure"]
+	
+	# like suggested here by Gorgious and CodeManX:
+	# https://blender.stackexchange.com/questions/6155/how-to-convert-coordinates-from-vertex-to-world-space
+	mat = structure_obj.matrix_world
+	
 	structure_faces = structure.data.polygons
 	
 	
@@ -828,6 +833,11 @@ def create_stresslines(structure_obj, quads):
 		face = structure_faces[int(id)]
 		normal = face.normal
 		center = face.center
+		
+		# like suggested here by Gorgious and CodeManX:
+		# https://blender.stackexchange.com/questions/6155/how-to-convert-coordinates-from-vertex-to-world-space
+		normal = mat @ normal
+		center = mat @ center
 		
 		thickness = quad["thickness_first"] * 0.01
 		
