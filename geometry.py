@@ -1,6 +1,6 @@
 import bpy
 import bmesh
-from math import sqrt, radians
+from math import sqrt, radians, pi
 from phaenotyp import operators
 from mathutils import Color, Vector, Matrix
 c = Color()
