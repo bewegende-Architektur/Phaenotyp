@@ -712,6 +712,10 @@ def append_head(file, report_type, name, unit):
 		file.write("<a href='s_2_1.html'>s_2_1</a> |\n")
 		file.write("<a href='s_2_2.html'>s_2_2</a>\n")
 		file.write("<br>\n")
+		
+		file.write("<a href='alpha_1.html'>alpha_1</a> |\n")
+		file.write("<a href='alpha_2.html'>alpha_2</a>\n")
+		file.write("<br>\n")
 
 		file.write("<a href='utilization.html'>utilization</a>\n")
 		file.write("<br>\n")
