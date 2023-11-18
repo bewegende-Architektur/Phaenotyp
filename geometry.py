@@ -1,6 +1,6 @@
 import bpy
 import bmesh
-from math import sqrt, pi
+from math import sqrt, pi, degrees, atan2
 from phaenotyp import operators
 from mathutils import Color, Vector, Matrix
 c = Color()
@@ -960,23 +960,7 @@ def update_geometry_post():
 
 				# if utilization in viz
 				if phaenotyp.forces_pn == "utilization":
-					# red or blue?
 					force = result[str(frame)] - 1
-					"""
-					if force > 0:
-						h = 0
-					else:
-						h = 0.666
-
-					# define s
-					s = 1 * abs(force) * phaenotyp.viz_scale * 0.01
-
-					# define v
-					if member["overstress"][str(frame)] == True:
-						v = 0.25
-					else:
-						v = 1.0
-					"""
 					# rainbow
 					h = force * phaenotyp.viz_scale + 0.333
 					if h > 0.666:
@@ -1001,22 +985,6 @@ def update_geometry_post():
 					else:
 						force = result[str(frame)][i]
 					
-					"""
-					# red or blue?
-					if force > 0:
-						h = 0
-					else:
-						h = 0.666
-
-					# define s
-					s = 1 * abs(force) * phaenotyp.viz_scale * 0.01
-
-					# define v
-					if member["overstress"][str(frame)] == True:
-						v = 0.25
-					else:
-						v = 1.0
-					"""
 					# rainbow
 					h = force * phaenotyp.viz_scale + 0.333
 					if h > 0.666:
@@ -1045,22 +1013,6 @@ def update_geometry_post():
 				vertices[mesh_vertex_ids[i]].co = (x,y,z)
 
 				force = result[str(frame)]
-				"""
-				# red or blue?
-				if force > 0:
-					h = 0
-				else:
-					h = 0.666
-
-				# define s
-				s = 1 * abs(force) * phaenotyp.viz_scale * 0.01
-
-				# define v
-				if member["overstress"][str(frame)] == True:
-					v = 0.25
-				else:
-					v = 1.0
-				"""
 				# rainbow
 				h = force * phaenotyp.viz_scale + 0.333
 				if h > 0.666:
@@ -1201,6 +1153,9 @@ def update_geometry_post():
 		stress_viz = bpy.data.objects["<Phaenotyp>stresslines"]
 		stress_vertices = stress_viz.data.vertices
 		
+		viz_stressline_scale = phaenotyp.viz_stressline_scale
+		viz_stressline_type = phaenotyp.viz_stressline_type
+		
 		for id, quad in quads.items():
 			face = quads_faces[quad["face_id_viz"]]
 			normal = face.normal
@@ -1224,43 +1179,53 @@ def update_geometry_post():
 			t = e_1 - e_0
 			t = t*0.5
 			
-			from math import atan2
 			# rotate vector for alpha_1
-			#a = quad["alpha_1"][str(frame)]# * 3.14/180
-			x = quad["s_x_1"][str(frame)]
-			y = quad["s_y_1"][str(frame)]
-			a = atan2(y,x)
+			a = quad["alpha_1"][str(frame)]# * 3.14/180
+			a = degrees(a)
 			
+			x = quad["s_1_1"][str(frame)]
+			y = quad["s_1_2"][str(frame)]
+			s = Vector((x,y,0))
+			dist = s.length * viz_stressline_scale
+			
+			if viz_stressline_type == "first":
+				if a > 0:
+					a = a+90
+				else:
+					a = a-90
+					
 			mat = Matrix.Rotation(a, 4, normal)
 			vec = Vector(t)
 			vec.rotate(mat)
-
+			vec = vec * dist
+			
 			# set position of first edge			
 			stress_vertices[quad["stresslines_viz"][0]].co = mid
 			stress_vertices[quad["stresslines_viz"][1]].co = mid + vec
-
-			x = quad["s_x_1"][str(frame)]
-			y = quad["s_y_1"][str(frame)]
-			a = atan2(y,x)
-			
-			if "40" == id:
-				print(id, ":", x, y)
-			
-			if "57" == id:
-				print(id, ":", x, y)
 			
 			# rotate vector for alpha_2
-			#a = quad["alpha_2"][str(frame)]# * 3.14/180
-			#a = degrees(a)
-			#a = a+90
-
+			a = quad["alpha_2"][str(frame)]# * 3.14/180
+			a = degrees(a)
+			
+			x = quad["s_2_1"][str(frame)]
+			y = quad["s_2_2"][str(frame)]
+			s = Vector((x,y,0))
+			dist = s.length * viz_stressline_scale
+			
+			if viz_stressline_type == "first":
+				if a > 0:
+					a = a+90
+				else:
+					a = a-90
+						
 			mat = Matrix.Rotation(a, 4, normal)
 			vec = Vector(t)
 			vec.rotate(mat)
-
+			vec = vec * dist
+			
 			# set position of second edge			
-			stress_vertices[quad["stresslines_viz"][2]].co = mid# - normal*thickness
-			stress_vertices[quad["stresslines_viz"][3]].co = mid + vec# - normal*thickness
+			stress_vertices[quad["stresslines_viz"][2]].co = mid- normal*thickness
+			stress_vertices[quad["stresslines_viz"][3]].co = mid + vec - normal*thickness
 			
 					
 def create_loads(structure_obj, loads_v, loads_e, loads_f):

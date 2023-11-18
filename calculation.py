@@ -1080,8 +1080,8 @@ def interweave_results_pn(feas):
 			s_2_2 = (s_x_2 + s_y_2)/2 - sqrt(((s_x_2 - s_y_2)/2)**2 + T_xy_2**2)   # für Darstellung
 			
 			# Winkel der Hautptspannungen an den Oberflächen 1 und 2
-			alpha_1 = (arctan (2* T_xy_1/(s_x_1 - s_y_1)) * 0.5) # in radianten, mit *pi/180 um in grad umzurechnen, für Darstellung
-			alpha_2 = (arctan (2* T_xy_2/(s_x_2 - s_y_2)) * 0.5) # in radianten, mit *pi/180 um in grad umzurechnen, für Darstellung
+			alpha_1 = arctan(2* T_xy_1/(s_x_1 - s_y_1)) * 0.5 # in radianten, mit *pi/180 um in grad umzurechnen, für Darstellung
+			alpha_2 = arctan(2* T_xy_2/(s_x_2 - s_y_2)) * 0.5 # in radianten, mit *pi/180 um in grad umzurechnen, für Darstellung
 
 			# long_stress_x = s_x
 			# sigma = s_x

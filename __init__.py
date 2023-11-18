@@ -612,7 +612,7 @@ class phaenotyp_properties(PropertyGroup):
 		min = 0.001,
 		max = 100
 		)
-
+	
 	viz_deflection: FloatProperty(
 		name = "viz_scale",
 		description = "deflected / original",
@@ -623,6 +623,26 @@ class phaenotyp_properties(PropertyGroup):
 		max = 100
 		)
 
+	viz_stressline_scale: FloatProperty(
+		name = "viz_stressline_scale",
+		description = "scale",
+		update = viz_update,
+		subtype = "PERCENTAGE",
+		default = 0.5,
+		min = 0.01,
+		max = 5.0
+		)
+
+	viz_stressline_type: EnumProperty(
+		name = "viz_stressline_type",
+		description = "First or second stressline",
+		items = [
+					("first", "First", ""),
+					("second", "Second", "")
+				],
+		update = viz_update
+		)
+	
 	assimilate_length: FloatProperty(
 		name = "assimilate_length",
 		description = "Target length for assimilation",
