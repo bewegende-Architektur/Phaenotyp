@@ -812,6 +812,7 @@ def create_stresslines(structure_obj, quads):
 	scene = bpy.context.scene
 	phaenotyp = scene.phaenotyp
 	frame = scene.frame_current
+	viz_stressline_radius = phaenotyp.viz_stressline_radius
 	
 	data = scene["<Phaenotyp>"]
 	structure = data["structure"]
@@ -947,7 +948,7 @@ def create_stresslines(structure_obj, quads):
 		# profile to curve
 		cc = node_group.nodes.new(type="GeometryNodeCurvePrimitiveCircle")
 		cc.inputs[0].default_value = 8 # set amount of vertices of circle
-		cc.inputs[4].default_value = 0.05 # diameter * 0.5
+		cc.inputs[4].default_value = 0.0002 * viz_stressline_radius # diameter * 0.5
 		input = ctm.inputs[1] # curve to mesh, profile curve
 		output = cc.outputs[0] # curve circe, curve
 		node_group.links.new(input, output)
