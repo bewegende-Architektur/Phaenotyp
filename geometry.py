@@ -586,11 +586,11 @@ def create_members(structure_obj, members):
 		nodes = obj.modifiers['<Phaenotyp>'].node_group
 
 		# set name to group
-		if nodes.name == "<Phaenotyp>Nodes":
-			node_group = bpy.data.node_groups['<Phaenotyp>Nodes']
+		if nodes.name == "<Phaenotyp>Members":
+			node_group = bpy.data.node_groups['<Phaenotyp>Members']
 		else:
-			nodes.name = "<Phaenotyp>Nodes"
-			node_group = bpy.data.node_groups['<Phaenotyp>Nodes']
+			nodes.name = "<Phaenotyp>Members"
+			node_group = bpy.data.node_groups['<Phaenotyp>Members']
 
 		# mesh to curve
 		mtc = node_group.nodes.new(type="GeometryNodeMeshToCurve")
@@ -861,11 +861,109 @@ def create_stresslines(structure_obj, quads):
 		# update id of new vertices
 		len_verts += 2
 		
-		# store for later for ids of start_first, end_first, start_second, end_second
-		quad["stresslines_viz"] = [len_verts-4, len_verts-3, len_verts-2, len_verts-1]
+		# append vertices for third edge
+		verts.append(center)
+		verts.append(center+normal)
+				
+		# add third edge
+		edges.append([len_verts, len_verts+1])
+		
+		# update id of new vertices
+		len_verts += 2
+		
+		# append vertices for fourth edge
+		verts.append(center-normal*thickness)
+		verts.append(center-normal-normal*thickness)
+				
+		# add fourth edge
+		edges.append([len_verts, len_verts+1])
+		
+		# update id of new vertices
+		len_verts += 2
+		
+		# store for later for ids of start_first, end_first, start_second, end_second ...
+		quad["stresslines_viz"] = [len_verts-8, len_verts-7, len_verts-6, len_verts-5, len_verts-4, len_verts-3, len_verts-2, len_verts-1]
 		
 	mesh.from_pydata(verts, edges, faces)
 
+	# create vertex_color
+	attribute = obj.data.attributes.get("stressline")
+	if attribute:
+		text = "existing attribute:" + str(attribute)
+	else:
+		bpy.ops.geometry.color_attribute_add(name="stressline", domain='POINT', data_type='FLOAT_COLOR', color=(255, 0, 255, 1))
+
+	# create material
+	material_name =  "<Phaenotyp>Stresslines"
+	member_material = bpy.data.materials.get(material_name)
+	if member_material == None:
+		mat = bpy.data.materials.new(material_name)
+		
+		mat.use_nodes = True
+		nodetree = mat.node_tree
+
+		# add color attribute
+		ca = nodetree.nodes.new(type="ShaderNodeVertexColor")
+
+		# set group
+		ca.layer_name = "stressline"
+
+		# connect to color attribute to base color
+		input = mat.node_tree.nodes['Principled BSDF'].inputs['Base Color']
+		output = ca.outputs['Color']
+		nodetree.links.new(input, output)
+
+	obj.data.materials.append(bpy.data.materials.get(material_name))
+	obj.active_material_index = len(obj.data.materials) - 1
+	
+	# create modifiere if not existing
+	modifier = obj.modifiers.get('<Phaenotyp>')
+	if modifier:
+		text = "existing modifier:" + str(modifiers)
+	else:
+		modifier_nodes = obj.modifiers.new(name="<Phaenotyp>", type='NODES')
+		bpy.ops.node.new_geometry_node_group_assign()
+		nodes = obj.modifiers['<Phaenotyp>'].node_group
+
+		# set name to group
+		if nodes.name == "<Phaenotyp>Stresslines":
+			node_group = bpy.data.node_groups['<Phaenotyp>Stresslines']
+		else:
+			nodes.name = "<Phaenotyp>Stresslines"
+			node_group = bpy.data.node_groups['<Phaenotyp>Stresslines']
+
+		# mesh to curve
+		mtc = node_group.nodes.new(type="GeometryNodeMeshToCurve")
+		input = mtc.inputs[0] # mesh to curve, mesh
+		output = node_group.nodes[0].outputs[0] # group input, geometry
+		node_group.links.new(input, output)
+
+		# curve to mesh
+		ctm = node_group.nodes.new(type="GeometryNodeCurveToMesh")
+		input = mtc.outputs[0] # mesh to curve, curve
+		output = ctm.inputs[0] # curve to mesh, curve
+		node_group.links.new(input, output)
+
+		# profile to curve
+		cc = node_group.nodes.new(type="GeometryNodeCurvePrimitiveCircle")
+		cc.inputs[0].default_value = 8 # set amount of vertices of circle
+		cc.inputs[4].default_value = 0.05 # diameter * 0.5
+		input = ctm.inputs[1] # curve to mesh, profile curve
+		output = cc.outputs[0] # curve circe, curve
+		node_group.links.new(input, output)
+
+		# set material
+		gnsm = node_group.nodes.new(type="GeometryNodeSetMaterial")
+		gnsm.inputs[2].default_value = bpy.data.materials[ "<Phaenotyp>Stresslines"]
+		input = gnsm.inputs[0] # geometry
+		output = ctm.outputs[0] # curve to mesh, mesh
+		node_group.links.new(input, output)
+
+		# link to output
+		output = gnsm.outputs[0] # gnsm, geometry
+		input = node_group.nodes[1].inputs[0] # group output, geometry
+		node_group.links.new(input, output)
+		
 def update_translation():
 	phaenotyp = bpy.context.scene.phaenotyp
 	
@@ -1163,8 +1261,13 @@ def update_geometry_post():
 		stress_viz = bpy.data.objects["<Phaenotyp>stresslines"]
 		stress_vertices = stress_viz.data.vertices
 		
+		attribute = stress_viz.data.attributes.get("stressline")
+		
 		viz_stressline_scale = phaenotyp.viz_stressline_scale * 0.01
-		viz_stressline_type = phaenotyp.viz_stressline_type
+		viz_stressline_radius = phaenotyp.viz_stressline_radius 
+		
+		# update radius
+		bpy.data.node_groups["<Phaenotyp>Stresslines"].nodes["Curve Circle"].inputs[4].default_value = 0.0002 * viz_stressline_radius
 		
 		for id, quad in quads.items():
 			face = quads_faces[quad["face_id_viz"]]
@@ -1195,21 +1298,37 @@ def update_geometry_post():
 			y = quad["s_1_2"][str(frame)]
 			s = Vector((x,y,0))
 			dist = s.length * viz_stressline_scale
-			
-			if viz_stressline_type == "first":
-				if a > 0:
-					a = a+90
-				else:
-					a = a-90
 
 			mat = Matrix.Rotation(radians(a), 4, normal)
 			vec = Vector(t)
 			vec.rotate(mat)
 			vec = vec * dist
 			
+			# set color
+			attribute.data[quad["stresslines_viz"][0]].color = [0, 0, 1, 1.0]
+			attribute.data[quad["stresslines_viz"][1]].color = [0, 0, 1, 1.0]
+			
 			# set position of first edge			
 			stress_vertices[quad["stresslines_viz"][0]].co = mid - vec
 			stress_vertices[quad["stresslines_viz"][1]].co = mid + vec
+			
+			if a > 0:
+				a = a+90
+			else:
+				a = a-90
+
+			mat = Matrix.Rotation(radians(a), 4, normal)
+			vec = Vector(t)
+			vec.rotate(mat)
+			vec = vec * dist
+			
+			# set color
+			attribute.data[quad["stresslines_viz"][4]].color = [1, 0, 0, 1.0]
+			attribute.data[quad["stresslines_viz"][5]].color = [1, 0, 0, 1.0]
+			
+			# set position of first edge			
+			stress_vertices[quad["stresslines_viz"][4]].co = mid - vec
+			stress_vertices[quad["stresslines_viz"][5]].co = mid + vec
 			
 			# rotate vector for alpha_2
 			a = quad["alpha_2"][str(frame)]# * 3.14/180
@@ -1219,12 +1338,6 @@ def update_geometry_post():
 			s = Vector((x,y,0))
 			dist = s.length * viz_stressline_scale
 			
-			if viz_stressline_type == "first":
-				if a > 0:
-					a = a+90
-				else:
-					a = a-90
-			
 			mat = Matrix.Rotation(radians(a), 4, normal)
 			vec = Vector(t)
 			vec.rotate(mat)
@@ -1233,8 +1346,29 @@ def update_geometry_post():
 			# set position of second edge			
 			stress_vertices[quad["stresslines_viz"][2]].co = mid - vec - normal*thickness
 			stress_vertices[quad["stresslines_viz"][3]].co = mid + vec - normal*thickness
+
+			# set color
+			attribute.data[quad["stresslines_viz"][2]].color = [0, 0, 1, 1.0]
+			attribute.data[quad["stresslines_viz"][3]].color = [0, 0, 1, 1.0]
+
+			if a > 0:
+				a = a+90
+			else:
+				a = a-90
 			
-					
+			mat = Matrix.Rotation(radians(a), 4, normal)
+			vec = Vector(t)
+			vec.rotate(mat)
+			vec = vec * dist
+			
+			# set position of second edge			
+			stress_vertices[quad["stresslines_viz"][6]].co = mid - vec - normal*thickness
+			stress_vertices[quad["stresslines_viz"][7]].co = mid + vec - normal*thickness
+
+			# set color
+			attribute.data[quad["stresslines_viz"][6]].color = [1, 0, 0, 1.0]
+			attribute.data[quad["stresslines_viz"][7]].color = [1, 0, 0, 1.0]
+			
 def create_loads(structure_obj, loads_v, loads_e, loads_f):
 	# like suggested here by Gorgious and CodeManX:
 	# https://blender.stackexchange.com/questions/6155/how-to-convert-coordinates-from-vertex-to-world-space

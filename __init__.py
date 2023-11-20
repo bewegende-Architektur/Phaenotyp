@@ -633,14 +633,14 @@ class phaenotyp_properties(PropertyGroup):
 		max = 100
 		)
 
-	viz_stressline_type: EnumProperty(
-		name = "viz_stressline_type",
-		description = "First or second stressline",
-		items = [
-					("first", "First", ""),
-					("second", "Second", "")
-				],
-		update = viz_update
+	viz_stressline_radius: FloatProperty(
+		name = "viz_stressline_radius",
+		description = "radius",
+		update = viz_update,
+		subtype = "PERCENTAGE",
+		default = 50,
+		min = 0.001,
+		max = 100
 		)
 	
 	assimilate_length: FloatProperty(

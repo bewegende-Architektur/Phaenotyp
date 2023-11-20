@@ -1047,8 +1047,8 @@ def visualization(layout):
 		# stresslines
 		quads = data.get("quads")
 		if quads:
-			box_viz.prop(phaenotyp, "viz_stressline_type", text="Streslines type")
-			box_viz.prop(phaenotyp, "viz_stressline_scale", text="Scale stresslines", slider=True)
+			box_viz.prop(phaenotyp, "viz_stressline_radius", text="Radius of stresslines")
+			box_viz.prop(phaenotyp, "viz_stressline_scale", text="Scale of stresslines", slider=True)
 
 def text(layout):
 	'''
