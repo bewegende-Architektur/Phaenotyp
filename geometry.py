@@ -1208,7 +1208,7 @@ def update_geometry_post():
 			vec = vec * dist
 			
 			# set position of first edge			
-			stress_vertices[quad["stresslines_viz"][0]].co = mid
+			stress_vertices[quad["stresslines_viz"][0]].co = mid - vec
 			stress_vertices[quad["stresslines_viz"][1]].co = mid + vec
 			
 			# rotate vector for alpha_2
@@ -1231,7 +1231,7 @@ def update_geometry_post():
 			vec = vec * dist
 			
 			# set position of second edge			
-			stress_vertices[quad["stresslines_viz"][2]].co = mid- normal*thickness
+			stress_vertices[quad["stresslines_viz"][2]].co = mid - vec - normal*thickness
 			stress_vertices[quad["stresslines_viz"][3]].co = mid + vec - normal*thickness
 			
 					
