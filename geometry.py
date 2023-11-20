@@ -844,7 +844,7 @@ def create_stresslines(structure_obj, quads):
 		
 		# append vertices for first edge
 		verts.append(center)
-		verts.append(center+normal)
+		verts.append(center+normal*0.2)
 				
 		# add first edge
 		edges.append([len_verts, len_verts+1])
@@ -853,8 +853,8 @@ def create_stresslines(structure_obj, quads):
 		len_verts += 2
 		
 		# append vertices for second edge
-		verts.append(center-normal*thickness)
-		verts.append(center-normal-normal*thickness)
+		verts.append(center-normal*0.2*thickness)
+		verts.append(center-normal*0.2-normal*thickness)
 				
 		# add second edge
 		edges.append([len_verts, len_verts+1])
@@ -864,7 +864,7 @@ def create_stresslines(structure_obj, quads):
 		
 		# append vertices for third edge
 		verts.append(center)
-		verts.append(center+normal)
+		verts.append(center+normal*0.2)
 				
 		# add third edge
 		edges.append([len_verts, len_verts+1])
@@ -874,7 +874,7 @@ def create_stresslines(structure_obj, quads):
 		
 		# append vertices for fourth edge
 		verts.append(center-normal*thickness)
-		verts.append(center-normal-normal*thickness)
+		verts.append(center-normal*0.2-normal*thickness)
 				
 		# add fourth edge
 		edges.append([len_verts, len_verts+1])
