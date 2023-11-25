@@ -632,16 +632,6 @@ class phaenotyp_properties(PropertyGroup):
 		min = 0.001,
 		max = 100
 		)
-
-	viz_stressline_radius: FloatProperty(
-		name = "viz_stressline_radius",
-		description = "radius",
-		update = viz_update,
-		subtype = "PERCENTAGE",
-		default = 50,
-		min = 0.001,
-		max = 100
-		)
 	
 	assimilate_length: FloatProperty(
 		name = "assimilate_length",

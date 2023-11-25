@@ -812,7 +812,6 @@ def create_stresslines(structure_obj, quads):
 	scene = bpy.context.scene
 	phaenotyp = scene.phaenotyp
 	frame = scene.frame_current
-	viz_stressline_radius = phaenotyp.viz_stressline_radius
 	
 	data = scene["<Phaenotyp>"]
 	structure = data["structure"]
@@ -822,7 +821,6 @@ def create_stresslines(structure_obj, quads):
 	mat = structure_obj.matrix_world
 	
 	structure_faces = structure.data.polygons
-	
 	
 	verts = []
 	edges = []
@@ -896,8 +894,8 @@ def create_stresslines(structure_obj, quads):
 
 	# create material
 	material_name =  "<Phaenotyp>Stresslines"
-	member_material = bpy.data.materials.get(material_name)
-	if member_material == None:
+	stressline_material = bpy.data.materials.get(material_name)
+	if stressline_material == None:
 		mat = bpy.data.materials.new(material_name)
 		
 		mat.use_nodes = True
@@ -948,7 +946,7 @@ def create_stresslines(structure_obj, quads):
 		# profile to curve
 		cc = node_group.nodes.new(type="GeometryNodeCurvePrimitiveCircle")
 		cc.inputs[0].default_value = 8 # set amount of vertices of circle
-		cc.inputs[4].default_value = 0.0002 * viz_stressline_radius # diameter * 0.5
+		cc.inputs[4].default_value = 0.05 # diameter
 		input = ctm.inputs[1] # curve to mesh, profile curve
 		output = cc.outputs[0] # curve circe, curve
 		node_group.links.new(input, output)
@@ -964,6 +962,16 @@ def create_stresslines(structure_obj, quads):
 		output = gnsm.outputs[0] # gnsm, geometry
 		input = node_group.nodes[1].inputs[0] # group output, geometry
 		node_group.links.new(input, output)
+
+	# create vertex_group for radius
+	# radius is automatically choosen by geometry nodes for radius-input
+	bpy.ops.object.mode_set(mode = 'OBJECT')
+	radius_group = obj.vertex_groups.get("radius")
+	if not radius_group:
+		radius_group = obj.vertex_groups.new(name="radius")
+	
+	ids = [i for i in range(len(obj.data.vertices))]
+	radius_group.add(ids, 0, 'REPLACE')
 		
 def update_translation():
 	phaenotyp = bpy.context.scene.phaenotyp
@@ -1264,11 +1272,9 @@ def update_geometry_post():
 		
 		attribute = stress_viz.data.attributes.get("stressline")
 		
+		# update radius scale
 		viz_stressline_scale = phaenotyp.viz_stressline_scale * 0.01
-		viz_stressline_radius = phaenotyp.viz_stressline_radius 
-		
-		# update radius
-		bpy.data.node_groups["<Phaenotyp>Stresslines"].nodes["Curve Circle"].inputs[4].default_value = 0.0002 * viz_stressline_radius
+		radius_group = stress_viz.vertex_groups.get("radius")
 		
 		for id, quad in quads.items():
 			face = quads_faces[quad["face_id_viz"]]
@@ -1291,6 +1297,7 @@ def update_geometry_post():
 
 			mid = (e_1 + e_0) / 2
 			t = e_1 - e_0
+			t = t*0.25
 			
 			# rotate vector for alpha_1
 			a = quad["alpha_1"][str(frame)]# * 3.14/180
@@ -1298,12 +1305,15 @@ def update_geometry_post():
 			x = quad["s_1_1"][str(frame)]
 			y = quad["s_1_2"][str(frame)]
 			s = Vector((x,y,0))
-			dist = s.length * viz_stressline_scale
+			radius = s.length * viz_stressline_scale
 
 			mat = Matrix.Rotation(radians(a), 4, normal)
 			vec = Vector(t)
 			vec.rotate(mat)
-			vec = vec * dist
+			
+			# set radius
+			ids = [quad["stresslines_viz"][0], quad["stresslines_viz"][1]]
+			radius_group.add(ids, radius, 'REPLACE')
 			
 			# set color
 			attribute.data[quad["stresslines_viz"][0]].color = [0, 0, 1, 1.0]
@@ -1321,7 +1331,10 @@ def update_geometry_post():
 			mat = Matrix.Rotation(radians(a), 4, normal)
 			vec = Vector(t)
 			vec.rotate(mat)
-			vec = vec * dist
+			
+			# set radius
+			ids = [quad["stresslines_viz"][4], quad["stresslines_viz"][5]]
+			radius_group.add(ids, radius, 'REPLACE')
 			
 			# set color
 			attribute.data[quad["stresslines_viz"][4]].color = [1, 0, 0, 1.0]
@@ -1337,12 +1350,15 @@ def update_geometry_post():
 			x = quad["s_2_1"][str(frame)]
 			y = quad["s_2_2"][str(frame)]
 			s = Vector((x,y,0))
-			dist = s.length * viz_stressline_scale
+			radius = s.length * viz_stressline_scale
 			
 			mat = Matrix.Rotation(radians(a), 4, normal)
 			vec = Vector(t)
 			vec.rotate(mat)
-			vec = vec * dist
+			
+			# set radius
+			ids = [quad["stresslines_viz"][2], quad["stresslines_viz"][3]]
+			radius_group.add(ids, radius, 'REPLACE')
 			
 			# set position of second edge			
 			stress_vertices[quad["stresslines_viz"][2]].co = mid - vec - normal*thickness
@@ -1360,7 +1376,10 @@ def update_geometry_post():
 			mat = Matrix.Rotation(radians(a), 4, normal)
 			vec = Vector(t)
 			vec.rotate(mat)
-			vec = vec * dist
+			
+			# set radius
+			ids = [quad["stresslines_viz"][6], quad["stresslines_viz"][7]]
+			radius_group.add(ids, radius, 'REPLACE')
 			
 			# set position of second edge			
 			stress_vertices[quad["stresslines_viz"][6]].co = mid - vec - normal*thickness
