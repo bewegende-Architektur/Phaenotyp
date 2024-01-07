@@ -74,7 +74,7 @@ def generate_basis(chromosome):
 	# run singlethread and get results
 	feas = calculation.run_mp(models)
 	
-	interweave_results(fea, members)
+	interweave_results(feas)
 	geometry.update_geometry_post()
 
 	# optimization
@@ -146,7 +146,7 @@ def make_step_st(chromosome, frame):
 	# run singlethread and get results
 	feas = calculation.run_mp(models)
 	
-	interweave_results(fea, members)
+	interweave_results(feas)
 	geometry.update_geometry_post()
 
 	# optimization

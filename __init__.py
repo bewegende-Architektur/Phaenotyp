@@ -2,8 +2,8 @@ bl_info = {
 	"name": "Phänotyp",
 	"description": "Genetic algorithm for architectural structures",
 	"author": "bewegende Architektur e.U. and Karl Deix",
-	"version": (0,2,5),
-	"blender": (3,5,1),
+	"version": (0,3,0),
+	"blender": (4,0,2),
 	"location": "3D View > Tools",
 }
 
@@ -1479,7 +1479,7 @@ class OBJECT_PT_Phaenotyp(Panel):
 	'''
 	Panel for Phaenotyp.
 	'''
-	bl_label = "Phänotyp 0.2.5"
+	bl_label = "Phänotyp 0.3.0"
 	bl_idname = "OBJECT_PT_custom_panel"
 	bl_space_type = "VIEW_3D"
 	bl_region_type = "UI"
