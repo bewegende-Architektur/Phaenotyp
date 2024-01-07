@@ -178,7 +178,8 @@ def members(layout):
 
 			box_members.prop(phaenotyp, "Do", text="Diameter outside")
 			box_members.prop(phaenotyp, "Di", text="Diameter inside")
-			box_members.prop(phaenotyp, "buckling_resolution", text="Buckling resolution")
+			if calculation_type != "force_distribution":
+				box_members.prop(phaenotyp, "buckling_resolution", text="Buckling resolution")
 
 			# current setting passed from gui
 			# (because a property can not be set in gui)
@@ -265,7 +266,8 @@ def members(layout):
 			box_members.label(text="A = " + str(round(material.current["A"], 4)) + " cm²")
 			box_members.label(text="Weight = " + str(round(material.current["weight_A"], 4)) + " kg/m")
 			
-			box_members.prop(phaenotyp, "psf_members", text="Partial safety factor")
+			if calculation_type != "force_distribution":
+				box_members.prop(phaenotyp, "psf_members", text="Partial safety factor")
 				
 			box_members.operator("wm.set_member", text="Set")
 
@@ -421,7 +423,8 @@ def loads(layout):
 				box_loads.prop(phaenotyp, "load_projected", text="Projected (Like snow)")
 				box_loads.prop(phaenotyp, "load_area_z", text="Area z (Like weight of facade)")
 			
-			box_loads.prop(phaenotyp, "psf_loads", text="Partial safety factor")
+			if calculation_type != "force_distribution":
+				box_loads.prop(phaenotyp, "psf_loads", text="Partial safety factor")
 			
 			box_loads.operator("wm.set_load", text="Set")
 
