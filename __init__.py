@@ -33,966 +33,980 @@ class phaenotyp_properties(PropertyGroup):
 	'''
 	Is holding all variables for the panel.
 	'''
-	use_scipy: BoolProperty(
-		name = 'use_scipy',
-		description = "Scipy is available! Calculation will be much faster. Anyway: Try to uncheck if something is crashing",
-		default = True
-	)
-
-	calculation_type: EnumProperty(
-		name = "calculation_type",
-		description = "Calculation types",
-		items = [
-				("-", "-", ""),
-				("geometrical", "Geometrical", ""),
-				("force_distribution", "Force distribution", ""),
-				("first_order", "First order (choose this if unsure)", ""),
-				("first_order_linear", "First order linear", ""),
-				("second_order", "Second order", "")
-				],
-		default = "-",
-		update = basics.force_distribution_info
+	if "setup":
+		use_scipy: BoolProperty(
+			name = 'use_scipy',
+			description = "Scipy is available! Calculation will be much faster. Anyway: Try to uncheck if something is crashing",
+			default = True
 		)
 
-	type_of_joints: EnumProperty(
-		name="type_of_joints:",
-		description="Released Moments",
-		items=[
-				("-", "-", ""),
-				("release_moments", "Release moments", ""),
-				("fixed_joints", "Fixed joints (choose this if unsure)", "")
-			   ]
-		)
-	
-	Do: FloatProperty(
-		name = "Do",
-		description = "Diameter of pipe outside in cm",
-		default = 6.0,
-		min = 0.1,
-		max = 100.0
-		)
+		calculation_type: EnumProperty(
+			name = "calculation_type",
+			description = "Calculation types",
+			items = [
+					("-", "-", ""),
+					("geometrical", "Geometrical", ""),
+					("force_distribution", "Force distribution", ""),
+					("first_order", "First order (choose this if unsure)", ""),
+					("first_order_linear", "First order linear", ""),
+					("second_order", "Second order", "")
+					],
+			default = "-",
+			update = basics.force_distribution_info
+			)
 
-	Di: FloatProperty(
-		name = "Di",
-		description = "Diameter of pipe inside in cm. Needs to be smaller than Diameter outside",
-		default = 5.0,
-		min = 0.1,
-		max = 100.0
-		)
+		type_of_joints: EnumProperty(
+			name="type_of_joints:",
+			description="Released Moments",
+			items=[
+					("-", "-", ""),
+					("release_moments", "Release moments", ""),
+					("fixed_joints", "Fixed joints (choose this if unsure)", "")
+				   ]
+			)
 
-	buckling_resolution: IntProperty(
-		name = "buckling_resolution",
-		description = "Amount of connected members that form an entity for buckling (choose 1 if unsure).",
-		default = 1,
-		min = 1,
-		max = 12
-		)
-	
-	member_type: EnumProperty(
-		name = "member_type",
-		description = "Type of member",
-		items = [
-				("full", "Full", ""),
-				("tension_only", "Tension only", ""),
-				("comp_only", "Compression only", "")
-			   ]
-		)
-	
-	material: EnumProperty(
-		name = "material",
-		description = "Predefined materials",
-		items = material.dropdown
-		)
+	if "supports":
+		loc_x: BoolProperty(name = 'loc_x', default = True)
+		loc_y: BoolProperty(name = 'loc_y', default = True)
+		loc_z: BoolProperty(name = 'loc_z', default = True)
+		rot_x: BoolProperty(name = 'rot_x', default = False)
+		rot_y: BoolProperty(name = 'rot_y', default = False)
+		rot_z: BoolProperty(name = 'rot_z', default = False)
 
-	E: IntProperty(
-		name = "E",
-		description = "Elasticity modulus in kN/cm²",
-		default = 21000,
-		min = 15000,
-		max = 50000
-		)
+	if "members":
+		Do: FloatProperty(
+			name = "Do",
+			description = "Diameter of pipe outside in cm",
+			default = 6.0,
+			min = 0.1,
+			max = 100.0
+			)
 
-	G: IntProperty(
-		name = "G",
-		description = "Shear modulus kN/cm²",
-		default = 8100,
-		min = 10000,
-		max = 30000
-		)
+		Di: FloatProperty(
+			name = "Di",
+			description = "Diameter of pipe inside in cm. Needs to be smaller than Diameter outside",
+			default = 5.0,
+			min = 0.1,
+			max = 100.0
+			)
 
-	rho: FloatProperty(
-		name = "rho",
-		description = "Density in g/cm3",
-		default = 7.85,
-		min = 0.01,
-		max = 30.0
-		)
+		buckling_resolution: IntProperty(
+			name = "buckling_resolution",
+			description = "Amount of connected members that form an entity for buckling (choose 1 if unsure).",
+			default = 1,
+			min = 1,
+			max = 12
+			)
+		
+		member_type: EnumProperty(
+			name = "member_type",
+			description = "Type of member",
+			items = [
+					("full", "Full", ""),
+					("tension_only", "Tension only", ""),
+					("comp_only", "Compression only", "")
+				   ]
+			)
+		
+		material: EnumProperty(
+			name = "material",
+			description = "Predefined materials",
+			items = material.dropdown
+			)
 
-	psf_members: FloatProperty(
-		name = "rho",
-		description = "Will be applied to all defined members",
-		default = 1.35,
-		min = 0.8,
-		max = 1.5
-		)
-	
-	acceptable_sigma: FloatProperty(
-		name = "acceptable_sigma",
-		description = "Acceptable sigma kN/cm²",
-		default = 16.0,
-		min = 0.01,
-		max = 30.0
-		)
+		E: IntProperty(
+			name = "E",
+			description = "Elasticity modulus in kN/cm²",
+			default = 21000,
+			min = 15000,
+			max = 50000
+			)
 
-	acceptable_shear: FloatProperty(
-		name = "acceptable_shear",
-		description = "Acceptable shear kN/cm²",
-		default = 9.5,
-		min = 0.01,
-		max = 30.0
-		)
+		G: IntProperty(
+			name = "G",
+			description = "Shear modulus kN/cm²",
+			default = 8100,
+			min = 10000,
+			max = 30000
+			)
 
-	acceptable_torsion: FloatProperty(
-		name = "acceptable_torsion",
-		description = "Acceptable torsion kN/cm²",
-		default = 10.5,
-		min = 0.01,
-		max = 30.0
-		)
+		rho: FloatProperty(
+			name = "rho",
+			description = "Density in g/cm3",
+			default = 7.85,
+			min = 0.01,
+			max = 30.0
+			)
 
-	acceptable_sigmav: FloatProperty(
-		name = "acceptable_sigmav kN/cm²",
-		description = "Acceptable sigmav",
-		default = 10.5,
-		min = 23.5,
-		max = 30.0
-		)
+		psf_members: FloatProperty(
+			name = "rho",
+			description = "Will be applied to all defined members",
+			default = 1.35,
+			min = 0.8,
+			max = 1.5
+			)
+		
+		acceptable_sigma: FloatProperty(
+			name = "acceptable_sigma",
+			description = "Acceptable sigma kN/cm²",
+			default = 16.0,
+			min = 0.01,
+			max = 30.0
+			)
 
-	kn_custom: StringProperty(
-		name = "kn_custom",
-		description = "kn of custom material",
-		default = "16.5, 15.8, 15.3, 14.8, 14.2, 13.5, 12.7, 11.8, 10.7, 9.5, 8.2, 6.9, 5.9, 5.1, 4.4, 3.9, 3.4, 3.1, 2.7, 2.5, 2.2, 2.0, 1.9, 1.7, 1.6"
-		)
-	
-	acceptable_sigma_quads: FloatProperty(
-		name = "acceptable_sigma_quads",
-		description = "Acceptable sigma kN/cm²",
-		default = 16.0,
-		min = 0.01,
-		max = 30.0
-		)
+		acceptable_shear: FloatProperty(
+			name = "acceptable_shear",
+			description = "Acceptable shear kN/cm²",
+			default = 9.5,
+			min = 0.01,
+			max = 30.0
+			)
 
-	acceptable_shear_quads: FloatProperty(
-		name = "acceptable_shear_quads",
-		description = "Acceptable shear kN/cm²",
-		default = 9.5,
-		min = 0.01,
-		max = 30.0
-		)
+		acceptable_torsion: FloatProperty(
+			name = "acceptable_torsion",
+			description = "Acceptable torsion kN/cm²",
+			default = 10.5,
+			min = 0.01,
+			max = 30.0
+			)
 
-	acceptable_sigmav_quads: FloatProperty(
-		name = "acceptable_sigmav kN/cm²",
-		description = "Acceptable sigmav",
-		default = 10.5,
-		min = 23.5,
-		max = 30.0
-		)
+		acceptable_sigmav: FloatProperty(
+			name = "acceptable_sigmav kN/cm²",
+			description = "Acceptable sigmav",
+			default = 10.5,
+			min = 23.5,
+			max = 30.0
+			)
 
-	kn_custom_quads: StringProperty(
-		name = "kn_custom_quads",
-		description = "kn of custom material",
-		default = "16.5, 15.8, 15.3, 14.8, 14.2, 13.5, 12.7, 11.8, 10.7, 9.5, 8.2, 6.9, 5.9, 5.1, 4.4, 3.9, 3.4, 3.1, 2.7, 2.5, 2.2, 2.0, 1.9, 1.7, 1.6"
-		)
+		kn_custom: StringProperty(
+			name = "kn_custom",
+			description = "kn of custom material",
+			default = "16.5, 15.8, 15.3, 14.8, 14.2, 13.5, 12.7, 11.8, 10.7, 9.5, 8.2, 6.9, 5.9, 5.1, 4.4, 3.9, 3.4, 3.1, 2.7, 2.5, 2.2, 2.0, 1.9, 1.7, 1.6"
+			)
+		
+		acceptable_sigma_quads: FloatProperty(
+			name = "acceptable_sigma_quads",
+			description = "Acceptable sigma kN/cm²",
+			default = 16.0,
+			min = 0.01,
+			max = 30.0
+			)
 
-	loc_x: BoolProperty(name = 'loc_x', default = True)
-	loc_y: BoolProperty(name = 'loc_y', default = True)
-	loc_z: BoolProperty(name = 'loc_z', default = True)
-	rot_x: BoolProperty(name = 'rot_x', default = False)
-	rot_y: BoolProperty(name = 'rot_y', default = False)
-	rot_z: BoolProperty(name = 'rot_z', default = False)
-	   
-	thickness: FloatProperty(
-		name = "thickness",
-		description = "Thickness in cm",
-		default = 25.0,
-		min = 0.01,
-		max = 100.0
-		)
+		acceptable_shear_quads: FloatProperty(
+			name = "acceptable_shear_quads",
+			description = "Acceptable shear kN/cm²",
+			default = 9.5,
+			min = 0.01,
+			max = 30.0
+			)
 
-	material_quads: EnumProperty(
-		name = "material",
-		description = "Predefined materials",
-		items = material.dropdown_quads
-		)
-	
-	E_quads: IntProperty(
-		name = "E",
-		description = "Elasticity modulus in kN/cm²",
-		default = 1500,
-		min = 500,
-		max = 50000
-		)
+		acceptable_sigmav_quads: FloatProperty(
+			name = "acceptable_sigmav kN/cm²",
+			description = "Acceptable sigmav",
+			default = 10.5,
+			min = 23.5,
+			max = 30.0
+			)
 
-	G_quads: IntProperty(
-		name = "G",
-		description = "Shear modulus kN/cm²",
-		default = 400,
-		min = 100,
-		max = 25000
+		kn_custom_quads: StringProperty(
+			name = "kn_custom_quads",
+			description = "kn of custom material",
+			default = "16.5, 15.8, 15.3, 14.8, 14.2, 13.5, 12.7, 11.8, 10.7, 9.5, 8.2, 6.9, 5.9, 5.1, 4.4, 3.9, 3.4, 3.1, 2.7, 2.5, 2.2, 2.0, 1.9, 1.7, 1.6"
+			)
+		
+	if "quads":
+		thickness: FloatProperty(
+			name = "thickness",
+			description = "Thickness in cm",
+			default = 25.0,
+			min = 0.01,
+			max = 100.0
+			)
+
+		material_quads: EnumProperty(
+			name = "material",
+			description = "Predefined materials",
+			items = material.dropdown_quads
+			)
+		
+		E_quads: IntProperty(
+			name = "E",
+			description = "Elasticity modulus in kN/cm²",
+			default = 1500,
+			min = 500,
+			max = 50000
+			)
+
+		G_quads: IntProperty(
+			name = "G",
+			description = "Shear modulus kN/cm²",
+			default = 400,
+			min = 100,
+			max = 25000
+			)
+			
+		nu_quads: FloatProperty(
+			name = "nu",
+			description = "Poisson's ratio",
+			default = 0.17,
+			min = 0.01,
+			max = 30.0
+			)
+
+		rho_quads: FloatProperty(
+			name = "rho",
+			description = "Density in g/cm3",
+			default = 1.0,
+			min = 0.01,
+			max = 30.0
+			)
+
+		psf_quads: FloatProperty(
+			name = "rho",
+			description = "Will be applied to all defined quads",
+			default = 1.35,
+			min = 0.8,
+			max = 1.5
+			)
+			
+	if "loads":
+		load_type: EnumProperty(
+			name = "load_type",
+			description = "Load types",
+			items = [
+					("vertices", "Vertices", ""),
+					("edges", "Edges", ""),
+					("faces", "Faces", "")
+				   ],
+			update = basics.set_selection_for_load,
+			)
+
+		load_FX: FloatProperty(
+			name = "load_FX",
+			description = "Axial in x-Direction in kN",
+			default = 0.0,
+			min = -1000,
+			max = 1000.0
+			)
+
+		load_FY: FloatProperty(
+			name = "load_FY",
+			description = "Axial in y-Direction in kN",
+			default = 0.0,
+			min = -1000,
+			max = 1000.0
+			)
+
+		load_FZ: FloatProperty(
+			name = "load_FZ",
+			description = "Axial in z-Direction in kN",
+			default = 0.0,
+			min = -1000,
+			max = 1000.0
+			)
+
+		load_MX: FloatProperty(
+			name = "load_MX",
+			description = "Moment in x-Direction in kN",
+			default = 0.0,
+			min = -1000,
+			max = 1000.0
+			)
+
+		load_MY: FloatProperty(
+			name = "load_MY",
+			description = "Moment in y-Direction in kN",
+			default = 0.0,
+			min = -1000,
+			max = 1000.0
+			)
+
+		load_MZ: FloatProperty(
+			name = "load_MZ",
+			description = "Moment in z-Direction in kN",
+			default = 0.0,
+			min = -1000,
+			max = 1000.0
+			)
+
+		load_Fx: FloatProperty(
+			name = "load_Fx",
+			description = "Local axial in x-Direction in kN",
+			default = 0.0,
+			min = -1000,
+			max = 1000.0
+			)
+
+		load_Fy: FloatProperty(
+			name = "load_Fy",
+			description = "Local axial in y-Direction in kN",
+			default = 0.0,
+			min = -1000,
+			max = 1000.0
+			)
+
+		load_Fz: FloatProperty(
+			name = "load_Fz",
+			description = "Local axial in z-Direction in kN",
+			default = 0.0,
+			min = -1000,
+			max = 1000.0
+			)
+		
+		load_normal: FloatProperty(
+			name = "load_normal",
+			description = "Load in normal-Direction in kN",
+			default = 0.0,
+			min = -1000,
+			max = 1000.0
+			)
+
+		load_projected: FloatProperty(
+			name = "load_projected",
+			description = "Load projected on floor in kN",
+			default = 0.0,
+			min = -1000,
+			max = 1000.0
+			)
+
+		load_area_z: FloatProperty(
+			name = "load_area_z",
+			description = "Load of full area in z-direction",
+			default = 0.0,
+			min = -1000,
+			max = 1000.0
+			)
+
+		psf_loads: FloatProperty(
+			name = "rho",
+			description = "Will be applied to all defined loads",
+			default = 1.5,
+			min = 0.8,
+			max = 4
+			)
+
+	if "transformation":
+		assimilate_length: FloatProperty(
+			name = "assimilate_length",
+			description = "Target length for assimilation",
+			default = 4,
+			min = 0.1,
+			max = 100
+			)
+
+		assimilate_strength: FloatProperty(
+			name = "assimilate_strength",
+			description = "Strength of assimilation",
+			default = 1,
+			min = 0.1,
+			max = 10
+			)
+
+		assimilate_iterations: IntProperty(
+			name = "assimilate_iterations",
+			description = "Iterations of assimilation",
+			default = 10,
+			min = 1,
+			max = 100
+			)
+		
+		assimilate_update: BoolProperty(
+			name = 'Update after frame change',
+			default = False
 		)
 		
-	nu_quads: FloatProperty(
-		name = "nu",
-		description = "Poisson's ratio",
-		default = 0.17,
-		min = 0.01,
-		max = 30.0
-		)
+		actuator_length: FloatProperty(
+			name = "actuator_length",
+			description = "Target length for actuator",
+			default = 4,
+			min = 0.1,
+			max = 100
+			)
+	 
+		actuator_strength: FloatProperty(
+			name = "actuator_strength",
+			description = "Strength of actuator",
+			default = 1,
+			min = 0.1,
+			max = 10
+			)
 
-	rho_quads: FloatProperty(
-		name = "rho",
-		description = "Density in g/cm3",
-		default = 1.0,
-		min = 0.01,
-		max = 30.0
-		)
-
-	psf_quads: FloatProperty(
-		name = "rho",
-		description = "Will be applied to all defined quads",
-		default = 1.35,
-		min = 0.8,
-		max = 1.5
-		)
-	
-	load_type: EnumProperty(
-		name = "load_type",
-		description = "Load types",
-		items = [
-				("vertices", "Vertices", ""),
-				("edges", "Edges", ""),
-				("faces", "Faces", "")
-			   ],
-		update = basics.set_selection_for_load,
-		)
-
-	load_FX: FloatProperty(
-		name = "load_FX",
-		description = "Axial in x-Direction in kN",
-		default = 0.0,
-		min = -1000,
-		max = 1000.0
-		)
-
-	load_FY: FloatProperty(
-		name = "load_FY",
-		description = "Axial in y-Direction in kN",
-		default = 0.0,
-		min = -1000,
-		max = 1000.0
-		)
-
-	load_FZ: FloatProperty(
-		name = "load_FZ",
-		description = "Axial in z-Direction in kN",
-		default = 0.0,
-		min = -1000,
-		max = 1000.0
-		)
-
-	load_MX: FloatProperty(
-		name = "load_MX",
-		description = "Moment in x-Direction in kN",
-		default = 0.0,
-		min = -1000,
-		max = 1000.0
-		)
-
-	load_MY: FloatProperty(
-		name = "load_MY",
-		description = "Moment in y-Direction in kN",
-		default = 0.0,
-		min = -1000,
-		max = 1000.0
-		)
-
-	load_MZ: FloatProperty(
-		name = "load_MZ",
-		description = "Moment in z-Direction in kN",
-		default = 0.0,
-		min = -1000,
-		max = 1000.0
-		)
-
-	load_Fx: FloatProperty(
-		name = "load_Fx",
-		description = "Local axial in x-Direction in kN",
-		default = 0.0,
-		min = -1000,
-		max = 1000.0
-		)
-
-	load_Fy: FloatProperty(
-		name = "load_Fy",
-		description = "Local axial in y-Direction in kN",
-		default = 0.0,
-		min = -1000,
-		max = 1000.0
-		)
-
-	load_Fz: FloatProperty(
-		name = "load_Fz",
-		description = "Local axial in z-Direction in kN",
-		default = 0.0,
-		min = -1000,
-		max = 1000.0
-		)
-	
-	load_normal: FloatProperty(
-		name = "load_normal",
-		description = "Load in normal-Direction in kN",
-		default = 0.0,
-		min = -1000,
-		max = 1000.0
-		)
-
-	load_projected: FloatProperty(
-		name = "load_projected",
-		description = "Load projected on floor in kN",
-		default = 0.0,
-		min = -1000,
-		max = 1000.0
-		)
-
-	load_area_z: FloatProperty(
-		name = "load_area_z",
-		description = "Load of full area in z-direction",
-		default = 0.0,
-		min = -1000,
-		max = 1000.0
-		)
-
-	psf_loads: FloatProperty(
-		name = "rho",
-		description = "Will be applied to all defined loads",
-		default = 1.5,
-		min = 0.8,
-		max = 4
-		)
-	
-	generation_size: IntProperty(
-		name = "generation_size",
-		description="Size of generation for GA",
-		default = 20,
-		min = 10,
-		max = 1000
-		)
-
-	elitism: IntProperty(
-		name = "elitism",
-		description="Size of elitism for GA",
-		default = 2,
-		min = 1,
-		max = 100
-		)
-
-	generation_amount: IntProperty(
-		name = "generation_amount",
-		description="Amount of generations",
-		default = 10,
-		min = 1,
-		max = 250
-		)
-
-	fitness_volume: FloatProperty(
-		name = "volume",
-		description = "Volume of the enclosed parts of the structure",
-		default = 0.0,
-		min = 0.0,
-		max = 1.0
-		)
-
-	fitness_volume_invert: BoolProperty(
-		name = 'volume invert',
-		description = "Activate to maximize the volume",
-		default = False
-	)
-
-	fitness_area: FloatProperty(
-		name = "area",
-		description = "Area of all faces of the structure",
-		default = 0.0,
-		min = 0.0,
-		max = 1.0
-		)
-
-	fitness_area_invert: BoolProperty(
-		name = 'area invert',
-		description = "Activate to maximize the area",
-		default = False
-	)
-
-	fitness_weight: FloatProperty(
-		name = "weight",
-		description = "Weight the structure (without loads)",
-		default = 0.0,
-		min = 0.0,
-		max = 1.0
-		)
-
-	fitness_weight_invert: BoolProperty(
-		name = 'weight invert',
-		description = "Activate to maximize the weight",
-		default = False
-	)
-
-	fitness_rise: FloatProperty(
-		name = "rise",
-		description = "Rise of the structure (distances between lowest and highest vertex)",
-		default = 0.0,
-		min = 0.0,
-		max = 1.0
-		)
-
-	fitness_rise_invert: BoolProperty(
-		name = 'rise invert',
-		description = "Activate to maximize the rise",
-		default = False
-	)
-
-	fitness_span: FloatProperty(
-		name = "span",
-		description = "Span distance of the structure (highest distance between supports)",
-		default = 0.0,
-		min = 0.0,
-		max = 1.0
-		)
-
-	fitness_span_invert: BoolProperty(
-		name = 'span invert',
-		description = "Activate to maximize the span",
-		default = False
-	)
-
-	fitness_cantilever: FloatProperty(
-		name = "cantilever",
-		description = "Cantilever of the structure (lowest distance from all vertices to all supports)",
-		default = 0.0,
-		min = 0.0,
-		max = 1.0
-		)
-
-	fitness_cantilever_invert: BoolProperty(
-		name = 'cantilever invert',
-		description = "Activate to maximize the cantilever",
-		default = False
-	)
-
-	fitness_average_sigma_members: FloatProperty(
-		name = "average sigma",
-		description = "Average sigma of all members",
-		default = 0.0,
-		min = 0.0,
-		max = 1.0
-		)
+		actuator_iterations: IntProperty(
+			name = "actuator_iterations",
+			description = "Iterations of actuator",
+			default = 10,
+			min = 1,
+			max = 100
+			)
 		
-	fitness_average_sigmav_quads: FloatProperty(
-		name = "average sigma",
-		description = "Average sigmav of all quads",
-		default = 0.0,
-		min = 0.0,
-		max = 1.0
+		actuator_update: BoolProperty(
+			name = 'Update after frame change',
+			default = False
 		)
+
+		goal_strength: FloatProperty(
+			name = "goal_strength",
+			description = "Strength of goal",
+			default = 1,
+			min = 0.1,
+			max = 10
+			)
+
+		goal_iterations: IntProperty(
+			name = "goal_iterations",
+			description = "Iterations of goal",
+			default = 10,
+			min = 1,
+			max = 100
+			)
 		
-	fitness_average_strain_energy: FloatProperty(
-		name = "average strain energy",
-		description = "Average strain energy of all members",
-		default = 1.0,
-		min = 0.0,
-		max = 1.0
-		)
-
-	fitness_deflection_members: FloatProperty(
-		name = "deflection",
-		description = "Average deflection of the elements",
-		default = 0.0,
-		min = 0.0,
-		max = 1.0
-		)
-
-	fitness_deflection_members_invert: BoolProperty(
-		name = 'deflection invert',
-		description = "Activate to maximize the deflection",
-		default = False
-	)
-	
-	fitness_deflection_quads: FloatProperty(
-		name = "deflection",
-		description = "Average deflection of the elements",
-		default = 0.0,
-		min = 0.0,
-		max = 1.0
-		)
-	
-	fitness_deflection_quads_invert: BoolProperty(
-		name = 'deflection invert',
-		description = "Activate to maximize the deflection",
-		default = False
-	)
-	
-	mate_type: EnumProperty(
-		name = "mate_type",
-		description = "Type of mating",
-		items = [
-				("direct", "direct", ""),
-				("morph", "morph", "")
-			   ]
-		)
-
-	ranking: IntProperty(
-		name = "ranking",
-		description="Show results from best to worth fitness",
-		default = 0,
-		min = 0,
-		max = 250
-		)
-
-	forces_fd: EnumProperty(
-		name = "forces_fd",
-		description = "Force types",
-		items = [
-					("sigma", "Sigma", ""),
-					("axial", "Axial", ""),
-					("utilization", "Utilization", "")
-				],
-		update = viz_update
-		)
-
-	forces_pn: EnumProperty(
-		name = "forces_pn",
-		description = "Force types",
-		items = [
-					("sigma", "Sigma", ""),
-					("axial", "Axial", ""),
-					("moment_y", "Moment Y", ""),
-					("moment_z", "Moment Z", ""),
-					("moment_h", "Moment H", ""),
-					("shear_y", "Shear Y", ""),
-					("shear_z", "Shear y", ""),
-					("torque", "Torque", ""),
-					("lever_arm", "Lever arm", ""),
-					("utilization", "Utilization", ""),
-					("normal_energy", "Normal energy", ""),
-					("moment_energy", "Moment energy", ""),
-					("strain_energy", "Strain energy", "")
-				],
-		update = viz_update
+		goal_update: BoolProperty(
+			name = 'Update after frame change',
+			default = False
 		)
 			
-	forces_quads: EnumProperty(
-		name = "forces_quads",
-		description = "Force types",
-		items = [
-					("s_x", "S X", ""),
-					("s_y", "S Y", ""),
-					("T_xy", "T XY", ""),
-					("s_1", "S 1", ""),
-					("s_2", "S 2", "")
-				],
-		update = viz_update,
-		default = "T_xy"
-		)
+		gravity_strength: FloatProperty(
+			name = "gravity_strength",
+			description = "Gravity of wool",
+			default = 1.0,
+			min = 0.01,
+			max = 10.0
+			)
+
+		link_strength: FloatProperty(
+			name = "link_strength",
+			description = "Strength of links",
+			default = 0.1,
+			min = 0.01,
+			max = 10.0
+			)
 			
-	viz_scale: FloatProperty(
-		name = "viz_scale",
-		description = "scale",
-		update = viz_update,
-		subtype = "PERCENTAGE",
-		default = 50,
-		min = 0.001,
-		max = 100
-		)
-	
-	viz_deflection: FloatProperty(
-		name = "viz_scale",
-		description = "deflected / original",
-		update = viz_update,
-		subtype = "PERCENTAGE",
-		default = 50,
-		min = 0.001,
-		max = 100
-		)
+		bonding_threshold: FloatProperty(
+			name = "bonding_threshold",
+			description = "Threshold of bonding",
+			default = 1.0,
+			min = 0.01,
+			max = 10.0
+			)
+			
+		bonding_strength: FloatProperty(
+			name = "bonding_strength",
+			description = "Target length for actuator",
+			default = 1.0,
+			min = 0.01,
+			max = 10.0
+			)
+			
+		wool_iterations: IntProperty(
+			name = "wool_iterations",
+			description = "Iterations of wool",
+			default = 10,
+			min = 1,
+			max = 100
+			)
 
-	viz_stressline_scale: FloatProperty(
-		name = "viz_stressline_scale",
-		description = "scale",
-		update = viz_update,
-		subtype = "PERCENTAGE",
-		default = 50,
-		min = 0.001,
-		max = 100
-		)
-	
-	assimilate_length: FloatProperty(
-		name = "assimilate_length",
-		description = "Target length for assimilation",
-		default = 4,
-		min = 0.1,
-		max = 100
-		)
-
-	assimilate_strength: FloatProperty(
-		name = "assimilate_strength",
-		description = "Strength of assimilation",
-		default = 1,
-		min = 0.1,
-		max = 10
-		)
-
-	assimilate_iterations: IntProperty(
-		name = "assimilate_iterations",
-		description = "Iterations of assimilation",
-		default = 10,
-		min = 1,
-		max = 100
-		)
-	
-	assimilate_update: BoolProperty(
-		name = 'Update after frame change',
-		default = False
-	)
-	
-	actuator_length: FloatProperty(
-		name = "actuator_length",
-		description = "Target length for actuator",
-		default = 4,
-		min = 0.1,
-		max = 100
-		)
- 
-	actuator_strength: FloatProperty(
-		name = "actuator_strength",
-		description = "Strength of actuator",
-		default = 1,
-		min = 0.1,
-		max = 10
-		)
-
-	actuator_iterations: IntProperty(
-		name = "actuator_iterations",
-		description = "Iterations of actuator",
-		default = 10,
-		min = 1,
-		max = 100
-		)
-	
-	actuator_update: BoolProperty(
-		name = 'Update after frame change',
-		default = False
-	)
-
-	goal_strength: FloatProperty(
-		name = "goal_strength",
-		description = "Strength of goal",
-		default = 1,
-		min = 0.1,
-		max = 10
-		)
-
-	goal_iterations: IntProperty(
-		name = "goal_iterations",
-		description = "Iterations of goal",
-		default = 10,
-		min = 1,
-		max = 100
-		)
-	
-	goal_update: BoolProperty(
-		name = 'Update after frame change',
-		default = False
-	)
-		
-	gravity_strength: FloatProperty(
-		name = "gravity_strength",
-		description = "Gravity of wool",
-		default = 1.0,
-		min = 0.01,
-		max = 10.0
-		)
-
-	link_strength: FloatProperty(
-		name = "link_strength",
-		description = "Strength of links",
-		default = 0.1,
-		min = 0.01,
-		max = 10.0
+		wool_update: BoolProperty(
+			name = 'Update after frame change',
+			default = False
 		)
 		
-	bonding_threshold: FloatProperty(
-		name = "bonding_threshold",
-		description = "Threshold of bonding",
-		default = 1.0,
-		min = 0.01,
-		max = 10.0
+		shyness_threshold: FloatProperty(
+			name = "shyness_threshold",
+			description = "Threshold of crown shyness",
+			default = 1.0,
+			min = 0.01,
+			max = 10.0
+			)
+
+		shyness_strength: FloatProperty(
+			name = "shyness_strength",
+			description = "Strength of crown shyness",
+			default = 0.2,
+			min = 0.01,
+			max = 10.0
+			)
+
+		growth_strength: FloatProperty(
+			name = "growth_strength",
+			description = "Strength of growth",
+			default = 0.1,
+			min = 0.01,
+			max = 10.0
+			)
+		
+		crown_iterations: IntProperty(
+			name = "crown_iterations",
+			description = "Iterations of crown shyness",
+			default = 10,
+			min = 1,
+			max = 100
+			)
+
+		crown_update: BoolProperty(
+			name = 'Update after frame change',
+			default = False
+		)
+
+	if "mode":
+		mode: EnumProperty(
+			name = "mode",
+			description = "Select mode to start",
+			items = [
+						("transformation", "Transformation", ""),
+						("single_frame", "Single frame", ""),
+						("animation", "Animation", ""),
+						("bruteforce", "Bruteforce", ""),
+						("gradient_descent", "Gradient descent", ""),
+						("genetic_algorithm", "Genetic algorithm", "")
+				   ],
+			default = "single_frame"
+			)
+	
+	if "ga":
+		generation_size: IntProperty(
+			name = "generation_size",
+			description="Size of generation for GA",
+			default = 20,
+			min = 10,
+			max = 1000
+			)
+
+		elitism: IntProperty(
+			name = "elitism",
+			description="Size of elitism for GA",
+			default = 2,
+			min = 1,
+			max = 100
+			)
+
+		generation_amount: IntProperty(
+			name = "generation_amount",
+			description="Amount of generations",
+			default = 10,
+			min = 1,
+			max = 250
+			)
+
+		mate_type: EnumProperty(
+			name = "mate_type",
+			description = "Type of mating",
+			items = [
+					("direct", "direct", ""),
+					("morph", "morph", "")
+				   ]
+			)
+
+	if "gd":
+		gd_delta: FloatProperty(
+			name = "gd_delta",
+			description="Step size for gradient",
+			default = 0.1,
+			min = 0.01,
+			max = 0.2
+			)
+
+		gd_learning_rate: FloatProperty(
+			name = "gd_learning_rate",
+			description="Learning rate.",
+			default = 0.05,
+			min = 0.05,
+			max = 0.5
+			)
+
+		gd_abort: FloatProperty(
+			name = "gd_abort",
+			description="Abort criterion",
+			default = 0.01,
+			min = 0.001,
+			max = 0.1
+			)
+
+		gd_max_iteration: IntProperty(
+			name = "gd_max_iteration",
+			description="Max number of iteration to avoid endless loop",
+			default = 100,
+			min = 10,
+			max = 1000
+			)
+	
+	if "fitness":
+		fitness_volume: FloatProperty(
+			name = "volume",
+			description = "Volume of the enclosed parts of the structure",
+			default = 0.0,
+			min = 0.0,
+			max = 1.0
+			)
+
+		fitness_volume_invert: BoolProperty(
+			name = 'volume invert',
+			description = "Activate to maximize the volume",
+			default = False
+		)
+
+		fitness_area: FloatProperty(
+			name = "area",
+			description = "Area of all faces of the structure",
+			default = 0.0,
+			min = 0.0,
+			max = 1.0
+			)
+
+		fitness_area_invert: BoolProperty(
+			name = 'area invert',
+			description = "Activate to maximize the area",
+			default = False
+		)
+
+		fitness_weight: FloatProperty(
+			name = "weight",
+			description = "Weight the structure (without loads)",
+			default = 0.0,
+			min = 0.0,
+			max = 1.0
+			)
+
+		fitness_weight_invert: BoolProperty(
+			name = 'weight invert',
+			description = "Activate to maximize the weight",
+			default = False
+		)
+
+		fitness_rise: FloatProperty(
+			name = "rise",
+			description = "Rise of the structure (distances between lowest and highest vertex)",
+			default = 0.0,
+			min = 0.0,
+			max = 1.0
+			)
+
+		fitness_rise_invert: BoolProperty(
+			name = 'rise invert',
+			description = "Activate to maximize the rise",
+			default = False
+		)
+
+		fitness_span: FloatProperty(
+			name = "span",
+			description = "Span distance of the structure (highest distance between supports)",
+			default = 0.0,
+			min = 0.0,
+			max = 1.0
+			)
+
+		fitness_span_invert: BoolProperty(
+			name = 'span invert',
+			description = "Activate to maximize the span",
+			default = False
+		)
+
+		fitness_cantilever: FloatProperty(
+			name = "cantilever",
+			description = "Cantilever of the structure (lowest distance from all vertices to all supports)",
+			default = 0.0,
+			min = 0.0,
+			max = 1.0
+			)
+
+		fitness_cantilever_invert: BoolProperty(
+			name = 'cantilever invert',
+			description = "Activate to maximize the cantilever",
+			default = False
+		)
+
+		fitness_average_sigma_members: FloatProperty(
+			name = "average sigma",
+			description = "Average sigma of all members",
+			default = 0.0,
+			min = 0.0,
+			max = 1.0
+			)
+			
+		fitness_average_sigmav_quads: FloatProperty(
+			name = "average sigma",
+			description = "Average sigmav of all quads",
+			default = 0.0,
+			min = 0.0,
+			max = 1.0
+			)
+			
+		fitness_average_strain_energy: FloatProperty(
+			name = "average strain energy",
+			description = "Average strain energy of all members",
+			default = 1.0,
+			min = 0.0,
+			max = 1.0
+			)
+
+		fitness_deflection_members: FloatProperty(
+			name = "deflection",
+			description = "Average deflection of the elements",
+			default = 0.0,
+			min = 0.0,
+			max = 1.0
+			)
+
+		fitness_deflection_members_invert: BoolProperty(
+			name = 'deflection invert',
+			description = "Activate to maximize the deflection",
+			default = False
 		)
 		
-	bonding_strength: FloatProperty(
-		name = "bonding_strength",
-		description = "Target length for actuator",
-		default = 1.0,
-		min = 0.01,
-		max = 10.0
-		)
+		fitness_deflection_quads: FloatProperty(
+			name = "deflection",
+			description = "Average deflection of the elements",
+			default = 0.0,
+			min = 0.0,
+			max = 1.0
+			)
 		
-	wool_iterations: IntProperty(
-		name = "wool_iterations",
-		description = "Iterations of wool",
-		default = 10,
-		min = 1,
-		max = 100
+		fitness_deflection_quads_invert: BoolProperty(
+			name = 'deflection invert',
+			description = "Activate to maximize the deflection",
+			default = False
 		)
 
-	wool_update: BoolProperty(
-		name = 'Update after frame change',
-		default = False
-	)
+	if "viz":
+		ranking: IntProperty(
+			name = "ranking",
+			description="Show results from best to worth fitness",
+			default = 0,
+			min = 0,
+			max = 250
+			)
+
+		forces_fd: EnumProperty(
+			name = "forces_fd",
+			description = "Force types",
+			items = [
+						("sigma", "Sigma", ""),
+						("axial", "Axial", ""),
+						("utilization", "Utilization", "")
+					],
+			update = viz_update
+			)
+
+		forces_pn: EnumProperty(
+			name = "forces_pn",
+			description = "Force types",
+			items = [
+						("sigma", "Sigma", ""),
+						("axial", "Axial", ""),
+						("moment_y", "Moment Y", ""),
+						("moment_z", "Moment Z", ""),
+						("moment_h", "Moment H", ""),
+						("shear_y", "Shear Y", ""),
+						("shear_z", "Shear y", ""),
+						("torque", "Torque", ""),
+						("lever_arm", "Lever arm", ""),
+						("utilization", "Utilization", ""),
+						("normal_energy", "Normal energy", ""),
+						("moment_energy", "Moment energy", ""),
+						("strain_energy", "Strain energy", "")
+					],
+			update = viz_update
+			)
+				
+		forces_quads: EnumProperty(
+			name = "forces_quads",
+			description = "Force types",
+			items = [
+						("s_x", "S X", ""),
+						("s_y", "S Y", ""),
+						("T_xy", "T XY", ""),
+						("s_1", "S 1", ""),
+						("s_2", "S 2", "")
+					],
+			update = viz_update,
+			default = "T_xy"
+			)
+				
+		viz_scale: FloatProperty(
+			name = "viz_scale",
+			description = "scale",
+			update = viz_update,
+			subtype = "PERCENTAGE",
+			default = 50,
+			min = 0.001,
+			max = 100
+			)
+		
+		viz_deflection: FloatProperty(
+			name = "viz_scale",
+			description = "deflected / original",
+			update = viz_update,
+			subtype = "PERCENTAGE",
+			default = 50,
+			min = 0.001,
+			max = 100
+			)
+
+		viz_stressline_scale: FloatProperty(
+			name = "viz_stressline_scale",
+			description = "scale",
+			update = viz_update,
+			subtype = "PERCENTAGE",
+			default = 50,
+			min = 0.001,
+			max = 100
+			)
 	
-	shyness_threshold: FloatProperty(
-		name = "shyness_threshold",
-		description = "Threshold of crown shyness",
-		default = 1.0,
-		min = 0.01,
-		max = 10.0
-		)
+	if "optimization":
+		optimization_fd: EnumProperty(
+			name = "optimization",
+			description = "Enables sectional optimization after each frame",
+			items = [
+						("none", "None", ""),
+						("approximate", "Approximate", "")
+					]
+			)
 
-	shyness_strength: FloatProperty(
-		name = "shyness_strength",
-		description = "Strength of crown shyness",
-		default = 0.2,
-		min = 0.01,
-		max = 10.0
-		)
+		optimization_pn: EnumProperty(
+			name = "optimization",
+			description = "Enables sectional optimization after each frame",
+			items = [
+						("none", "None", ""),
+						("simple", "Simple", ""),
+						("utilization", "Utilization", ""),
+						("complex", "Complex", "")
+					]
+			)
 
-	growth_strength: FloatProperty(
-		name = "growth_strength",
-		description = "Strength of growth",
-		default = 0.1,
-		min = 0.01,
-		max = 10.0
-		)
+		optimization_quads: EnumProperty(
+			name = "optimization",
+			description = "Enables sectional optimization after each frame",
+			items = [
+						("none", "None", ""),
+						("approximate", "Approximate", ""),
+						("utilization", "Utilization", "")
+					]
+			)
+
+		optimization_amount: IntProperty(
+			name = "optimization_amount",
+			description = "Amount of optimization to run for each member",
+			default = 3,
+			min = 1,
+			max = 100
+			)
+
+		animation_optimization_type: EnumProperty(
+			name = "animation_optimization_type",
+			description = "Optimize each frame by amount or create gradient with amount",
+			items = [
+					("each_frame", "Each frame", ""),
+					("gradient", "Gradient", "")
+				   ]
+			)
 	
-	crown_iterations: IntProperty(
-		name = "crown_iterations",
-		description = "Iterations of crown shyness",
-		default = 10,
-		min = 1,
-		max = 100
-		)
+	if "selection":
+		selection_type: EnumProperty(
+			name = "selection_type",
+			description = "Member or Quad",
+			items = [
+						("member", "Member", ""),
+						("quad", "Quad", "")
+					]
+			)
+		
+		selection_key_fd: EnumProperty(
+			name = "selection_key_fd",
+			description = "Key for selection",
+			items = [
+						("id", "id", ""),
+						("Do", "Do", ""),
+						("Di", "Di", ""),
+						("weight", "weight", ""),
+						("length", "length", ""),
+						("sigma", "Sigma", ""),
+						("axial", "Axial", ""),
+						("utilization", "Utilization", "")
+					],
+			default = "Do"
+			)
 
-	crown_update: BoolProperty(
-		name = 'Update after frame change',
-		default = False
-	)
+		selection_key_pn: EnumProperty(
+			name = "selection_key_pn",
+			description = "Key for selection",
+			items = [
+						("id", "Id", ""),
+						("Do", "Do", ""),
+						("Di", "Di", ""),
+						("weight", "weight", ""),
+						("length", "Length", ""),
+						("max_long_stress", "Max long stress", ""),
+						("max_tau_shear", "Max tau shear", ""),
+						("max_tau_torsion", "Max tau torsion", ""),
+						("max_sum_tau", "Max sum tau", ""),
+						("max_sigmav", "Max sigmav", ""),
+						("max_sigma", "Max sigma", ""),
+						("max_lever_arm", "Max lever arm", ""),
+						("utilization", "Utilization", "")
+					],
+			default = "Do"
+			)
+
+		selection_key_quads: EnumProperty(
+			name = "selection_key_quads",
+			description = "Key for selection",
+			items = [
+						("id", "Id", ""),
+						("thickness", "Thickness", ""),
+						("membrane_x", "Membrane X", ""),
+						("membrane_y", "Membrane Y", ""),
+						("membrane_xy", "Membrane XY", ""),
+						("moment_x", "Moment X", ""),
+						("moment_y", "Moment Y", ""),
+						("moment_xy", "Moment XY", ""),
+						("shear_x", "Shear_X", ""),
+						("shear_y", "Shear_Y", ""),
+						("s_x", "S X", ""),
+						("s_y", "S Y", ""),
+						("T_xy", "T XY", ""),
+						("s_1", "S 1", ""),
+						("s_2", "S 2", "")
+					],
+			default = "thickness"
+			)
+		
+		selection_compare: EnumProperty(
+			name = "selection_compare",
+			description = "Type of comparsion",
+			items = [
+						("Equal", "Equal", ""),
+						("Greater", "Greater", ""),
+						("Less", "Less", "")
+					]
+			)
+
+		selection_value: StringProperty(
+			name = "selection_value",
+			description = "Value for selection",
+			default = "0"
+			)
+
+		selection_threshold: StringProperty(
+			name = "selection_threshold",
+			description = "Threshold for selection",
+			default = "0"
+			)
 	
-	mode: EnumProperty(
-		name = "mode",
-		description = "Select mode to start",
-		items = [
-					("transformation", "Transformation", ""),
-					("single_frame", "Single frame", ""),
-					("animation", "Animation", ""),
-					("bruteforce", "Bruteforce", ""),
-					("gradient_descent", "Gradient descent", ""),
-					("genetic_algorithm", "Genetic algorithm", "")
-			   ],
-		default = "single_frame"
-		)
+	if "nn":
+		nn_learning_rate: FloatProperty(
+			name = "nn_learning_rate",
+			description="Learning Rate",
+			default = 0.1,
+			min = 0.001,
+			max = 1.0
+			)
 
-	optimization_fd: EnumProperty(
-		name = "optimization",
-		description = "Enables sectional optimization after each frame",
-		items = [
-					("none", "None", ""),
-					("approximate", "Approximate", "")
-				]
-		)
-
-	optimization_pn: EnumProperty(
-		name = "optimization",
-		description = "Enables sectional optimization after each frame",
-		items = [
-					("none", "None", ""),
-					("simple", "Simple", ""),
-					("utilization", "Utilization", ""),
-					("complex", "Complex", "")
-				]
-		)
-
-	optimization_quads: EnumProperty(
-		name = "optimization",
-		description = "Enables sectional optimization after each frame",
-		items = [
-					("none", "None", ""),
-					("approximate", "Approximate", ""),
-					("utilization", "Utilization", "")
-				]
-		)
-
-	optimization_amount: IntProperty(
-		name = "optimization_amount",
-		description = "Amount of optimization to run for each member",
-		default = 3,
-		min = 1,
-		max = 100
-		)
-
-	animation_optimization_type: EnumProperty(
-		name = "animation_optimization_type",
-		description = "Optimize each frame by amount or create gradient with amount",
-		items = [
-				("each_frame", "Each frame", ""),
-				("gradient", "Gradient", "")
-			   ]
-		)
-
-	selection_type: EnumProperty(
-		name = "selection_type",
-		description = "Member or Quad",
-		items = [
-					("member", "Member", ""),
-					("quad", "Quad", "")
-				]
-		)
-	
-	selection_key_fd: EnumProperty(
-		name = "selection_key_fd",
-		description = "Key for selection",
-		items = [
-					("id", "id", ""),
-					("Do", "Do", ""),
-					("Di", "Di", ""),
-					("weight", "weight", ""),
-					("length", "length", ""),
-					("sigma", "Sigma", ""),
-					("axial", "Axial", ""),
-					("utilization", "Utilization", "")
-				],
-		default = "Do"
-		)
-
-	selection_key_pn: EnumProperty(
-		name = "selection_key_pn",
-		description = "Key for selection",
-		items = [
-					("id", "Id", ""),
-					("Do", "Do", ""),
-					("Di", "Di", ""),
-					("weight", "weight", ""),
-					("length", "Length", ""),
-					("max_long_stress", "Max long stress", ""),
-					("max_tau_shear", "Max tau shear", ""),
-					("max_tau_torsion", "Max tau torsion", ""),
-					("max_sum_tau", "Max sum tau", ""),
-					("max_sigmav", "Max sigmav", ""),
-					("max_sigma", "Max sigma", ""),
-					("max_lever_arm", "Max lever arm", ""),
-					("utilization", "Utilization", "")
-				],
-		default = "Do"
-		)
-
-	selection_key_quads: EnumProperty(
-		name = "selection_key_quads",
-		description = "Key for selection",
-		items = [
-					("id", "Id", ""),
-					("thickness", "Thickness", ""),
-					("membrane_x", "Membrane X", ""),
-					("membrane_y", "Membrane Y", ""),
-					("membrane_xy", "Membrane XY", ""),
-					("moment_x", "Moment X", ""),
-					("moment_y", "Moment Y", ""),
-					("moment_xy", "Moment XY", ""),
-					("shear_x", "Shear_X", ""),
-					("shear_y", "Shear_Y", ""),
-					("s_x", "S X", ""),
-					("s_y", "S Y", ""),
-					("T_xy", "T XY", ""),
-					("s_1", "S 1", ""),
-					("s_2", "S 2", "")
-				],
-		default = "thickness"
-		)
-	
-	selection_compare: EnumProperty(
-		name = "selection_compare",
-		description = "Type of comparsion",
-		items = [
-					("Equal", "Equal", ""),
-					("Greater", "Greater", ""),
-					("Less", "Less", "")
-				]
-		)
-
-	selection_value: StringProperty(
-		name = "selection_value",
-		description = "Value for selection",
-		default = "0"
-		)
-
-	selection_threshold: StringProperty(
-		name = "selection_threshold",
-		description = "Threshold for selection",
-		default = "0"
-		)
-
-	gd_delta: FloatProperty(
-		name = "gd_delta",
-		description="Step size for gradient",
-		default = 0.1,
-		min = 0.01,
-		max = 0.2
-		)
-
-	gd_learning_rate: FloatProperty(
-		name = "gd_learning_rate",
-		description="Learning rate.",
-		default = 0.05,
-		min = 0.05,
-		max = 0.5
-		)
-
-	gd_abort: FloatProperty(
-		name = "gd_abort",
-		description="Abort criterion",
-		default = 0.01,
-		min = 0.001,
-		max = 0.1
-		)
-
-	gd_max_iteration: IntProperty(
-		name = "gd_max_iteration",
-		description="Max number of iteration to avoid endless loop",
-		default = 100,
-		min = 10,
-		max = 1000
-		)
-
-	nn_learning_rate: FloatProperty(
-		name = "nn_learning_rate",
-		description="Learning Rate",
-		default = 0.1,
-		min = 0.001,
-		max = 1.0
-		)
-
-	nn_epochs: IntProperty(
-		name = "nn_epochs",
-		description="Number of iterations",
-		default = 5000,
-		min = 1000,
-		max = 50000
-		)
+		nn_epochs: IntProperty(
+			name = "nn_epochs",
+			description="Number of iterations",
+			default = 5000,
+			min = 1000,
+			max = 50000
+			)
 		
 class WM_OT_set_structure(Operator):
 	'''
