@@ -1,6 +1,59 @@
 import bpy
 from phaenotyp import material
 
+def pre(layout):
+	'''
+	Panel for creating and preparing structure.
+	:param layout: Passed layout of phaenotyp panel.
+	'''
+	context = bpy.context
+	scene = context.scene
+	phaenotyp = scene.phaenotyp
+	frame = scene.frame_current
+	data = bpy.context.scene.get("<Phaenotyp>")
+
+	# create box
+	box_pre = layout.box()
+
+	# from hull
+	#box_pre.label(text="From hull:")
+	'''
+	grid or spline
+	Set
+	w = 3
+	d = 7
+	h = 3
+	o_x = 3
+	o_y = 7
+	o_z = 3
+	Start
+	'''
+	
+	# convert
+	box_pre.label(text="Convert:")
+	box_pre.operator("wm.curve_to_mesh_straight", text="Curve to mesh straight")
+	box_pre.operator("wm.curve_to_mesh_curved", text="Curve to mesh curved")
+	box_pre.operator("wm.mesh_to_quads_simple", text="Mesh to quads simple")
+	box_pre.operator("wm.mesh_to_quads_complex", text="Mesh to quads complex")
+	box_pre.operator("wm.meta_to_mesh", text="Meta to mesh")
+	
+	'''
+	Prepare:
+	triangulate
+	delete_loose
+	seperate_by_loose
+	remove_doubles
+	automerge
+	union
+	simplify_edges
+	'''
+
+	# gray out, if a structure is set allready
+	if data:
+		structure = data.get("structure")
+		if structure:
+			box_pre.enabled = False
+		
 def structure(layout):
 	'''
 	Panel for structure.

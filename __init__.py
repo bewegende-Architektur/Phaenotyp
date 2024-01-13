@@ -1007,7 +1007,72 @@ class phaenotyp_properties(PropertyGroup):
 			min = 1000,
 			max = 50000
 			)
-		
+
+class WM_OT_curve_to_mesh_straight(Operator):
+	'''
+	Is curve_to_mesh_straight set_structure from the module called operators.
+	Check out further info in there.
+	'''
+	bl_label = "curve_to_mesh_straight"
+	bl_idname = "wm.curve_to_mesh_straight"
+	bl_description = "Please select an object in Object-Mode and press set"
+
+	def execute(self, context):
+		operators.curve_to_mesh_straight()
+		return {"FINISHED"}
+
+class WM_OT_curve_to_mesh_curved(Operator):
+	'''
+	Is calling curve_to_mesh_curved from the module called operators.
+	Check out further info in there.
+	'''
+	bl_label = "curve_to_mesh_curved"
+	bl_idname = "wm.curve_to_mesh_curved"
+	bl_description = "Please select an object in Object-Mode and press set"
+
+	def execute(self, context):
+		operators.curve_to_mesh_curved()
+		return {"FINISHED"}
+
+class WM_OT_mesh_to_quads_simple(Operator):
+	'''
+	Is calling mesh_to_quads_simple from the module called operators.
+	Check out further info in there.
+	'''
+	bl_label = "mesh_to_quads_simple"
+	bl_idname = "wm.mesh_to_quads_simple"
+	bl_description = "Please select an object in Object-Mode and press set"
+
+	def execute(self, context):
+		operators.mesh_to_quads_simple()
+		return {"FINISHED"}
+
+class WM_OT_mesh_to_quads_complex(Operator):
+	'''
+	Is calling mesh_to_quads_complex from the module called operators.
+	Check out further info in there.
+	'''
+	bl_label = "mesh_to_quads_complex"
+	bl_idname = "wm.mesh_to_quads_complex"
+	bl_description = "Please select an object in Object-Mode and press set"
+
+	def execute(self, context):
+		operators.mesh_to_quads_complex()
+		return {"FINISHED"}
+
+class WM_OT_meta_to_mesh(Operator):
+	'''
+	Is calling meta_to_mesh from the module called operators.
+	Check out further info in there.
+	'''
+	bl_label = "meta_to_mesh"
+	bl_idname = "wm.meta_to_mesh"
+	bl_description = "Please select an object in Object-Mode and press set"
+
+	def execute(self, context):
+		operators.meta_to_mesh()
+		return {"FINISHED"}
+	
 class WM_OT_set_structure(Operator):
 	'''
 	Is calling set_structure from the module called operators.
@@ -1520,7 +1585,10 @@ class OBJECT_PT_Phaenotyp(Panel):
 		# if there is an error during the other panels
 		# for example: the file has been created with an older version
 		try:
-			# prepare everything
+			# from hull and prepare
+			panel.pre(layout)
+			
+			# setup and start
 			panel.structure(layout)
 			panel.scipy(layout)
 			panel.calculation_type(layout)
@@ -1568,6 +1636,12 @@ class OBJECT_PT_Phaenotyp(Panel):
 
 classes = (
 	phaenotyp_properties,
+
+	WM_OT_curve_to_mesh_straight,
+	WM_OT_curve_to_mesh_curved,
+	WM_OT_mesh_to_quads_simple,
+	WM_OT_mesh_to_quads_complex,
+	WM_OT_meta_to_mesh,
 
 	WM_OT_set_structure,
 	WM_OT_fix_structure,

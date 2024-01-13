@@ -13,11 +13,81 @@ def print_data(text):
 	"""
 	print("Phaenotyp |", text)
 
+def curve_to_mesh_straight():
+	bpy.ops.object.mode_set(mode='OBJECT')
+	
+	selected = bpy.context.selected_objects
+	
+	# check if curves are selected
+	valid_selection = True
+	for obj in selected:
+		if obj.type != 'CURVE':
+			valid_selection = False
+	
+	if not valid_selection:
+		text = ["Select multiple curves only."]
+		basics.popup(lines = text)
+	else:		
+		# join curves
+		bpy.ops.object.join()
+		
+		# set resolution
+		bpy.context.object.data.resolution_u = 1
+		bpy.context.scene.phaenotyp.buckling_resolution = 1
+		bpy.ops.object.mode_set(mode='EDIT')
+		bpy.ops.curve.select_all(action='SELECT')
+		bpy.ops.curve.spline_type_set(type='POLY')
+		
+		# convert
+		bpy.ops.object.mode_set(mode='OBJECT')
+		geometry.to_be_fixed = "curve_to_mesh"
+		fix_structure()
+		print_data("Convert curve to mesh straight")
+
+def curve_to_mesh_curved():
+	bpy.ops.object.mode_set(mode='OBJECT')
+	
+	selected = bpy.context.selected_objects
+	
+	# check if curves are selected
+	valid_selection = True
+	for obj in selected:
+		if obj.type != 'CURVE':
+			valid_selection = False
+	
+	if not valid_selection:
+		text = ["Select multiple curves only."]
+		basics.popup(lines = text)
+	else:		
+		# join curves
+		bpy.ops.object.join()
+		
+		# set resolution for buckling
+		res = bpy.context.object.data.resolution_u
+		bpy.context.scene.phaenotyp.buckling_resolution = res
+		
+		# convert
+		bpy.ops.object.mode_set(mode='OBJECT')
+		geometry.to_be_fixed = "curve_to_mesh"
+		fix_structure()
+		print_data("Convert curve to mesh curved")
+	
+def mesh_to_quads_simple():
+	pass
+	
+def mesh_to_quads_complex():
+	pass
+	
+def meta_to_mesh():
+	pass
+
 def set_structure():
 	context = bpy.context
 	scene = context.scene
 	phaenotyp = scene.phaenotyp
-
+	
+	bpy.ops.object.mode_set(mode='OBJECT')
+	
 	selected_objects = context.selected_objects
 	obj = context.active_object
 
@@ -125,6 +195,8 @@ def fix_structure():
 		print_data("Try to convert the curves to mesh")
 		bpy.ops.object.mode_set(mode="OBJECT")
 		bpy.ops.object.join()
+		res = bpy.context.object.data.resolution_u
+		bpy.context.scene.phaenotyp.buckling_resolution = res
 		bpy.ops.object.convert(target='MESH')
 		bpy.ops.object.mode_set(mode='EDIT')
 		bpy.ops.mesh.select_all(action='SELECT')

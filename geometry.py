@@ -141,7 +141,7 @@ def delete_selected_faces():
 	Is handling the mode-switch and deletes all selected faces.
 	'''
 	obj = bpy.context.active_object
-	bpy.ops.object.mode_set(mode = 'OBJECT')
+	bpy.ops.object.mode_set(mode='OBJECT')
 	selected_faces = []
 	for face in obj.data.polygons:
 		# collect all selected faces
