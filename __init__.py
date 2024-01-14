@@ -25,10 +25,33 @@ def viz_update(self, context):
 	:param self: Passed from the panel.
 	:param context: Passed from the panel.
 	'''
-	scene = context.scene
-	phaenotyp = scene.phaenotyp
 	geometry.update_geometry_post()
 
+def fh_update(self, context):
+	'''
+	Triggers the update from hull.
+	:param self: Passed from the panel.
+	:param context: Passed from the panel.
+	'''
+	scene = context.scene
+	phaenotyp = scene.phaenotyp
+	fh_methode = phaenotyp.fh_methode
+	
+	# check if all objects are available
+	valid_objects = True
+	hull = scene["<Phaenotyp>fh_hull"]
+	if not hull:
+		valid_objects = False
+		
+	if fh_methode == "path":
+		path = scene["<Phaenotyp>fh_path"]
+		if not path:
+			valid_objects = False
+	
+	# run update
+	if valid_objects:
+		operators.from_hull()
+	
 class phaenotyp_properties(PropertyGroup):
 	'''
 	Is holding all variables for the panel.
@@ -61,15 +84,8 @@ class phaenotyp_properties(PropertyGroup):
 			description = "Width of structure",
 			default = 7.0,
 			min = 1.0,
-			max = 100.0
-			)
-		
-		fh_w: FloatProperty(
-			name = "fh_w",
-			description = "Width of structure",
-			default = 7.0,
-			min = 1.0,
-			max = 100.0
+			max = 100.0,
+			update = fh_update
 			)
 		
 		fh_d: FloatProperty(
@@ -77,7 +93,8 @@ class phaenotyp_properties(PropertyGroup):
 			description = "Depth of structure",
 			default = 7.0,
 			min = 1.0,
-			max = 100.0
+			max = 100.0,
+			update = fh_update
 			)
 		
 		fh_h: FloatProperty(
@@ -85,7 +102,8 @@ class phaenotyp_properties(PropertyGroup):
 			description = "Height of structure",
 			default = 3.0,
 			min = 1.0,
-			max = 100.0
+			max = 100.0,
+			update = fh_update
 			)
 		
 		fh_o_x: FloatProperty(
@@ -93,7 +111,8 @@ class phaenotyp_properties(PropertyGroup):
 			description = "Offset in x-direction",
 			default = 0.0,
 			min = -10.0,
-			max = 10.0
+			max = 10.0,
+			update = fh_update
 			)
 		
 		fh_o_y: FloatProperty(
@@ -101,7 +120,8 @@ class phaenotyp_properties(PropertyGroup):
 			description = "Offset in y-direction",
 			default = 0.0,
 			min = -10.0,
-			max = 10.0
+			max = 10.0,
+			update = fh_update
 			)
 		
 		fh_o_z: FloatProperty(
@@ -109,7 +129,8 @@ class phaenotyp_properties(PropertyGroup):
 			description = "Offset in z-direction",
 			default = 0.0,
 			min = -10.0,
-			max = 10.0
+			max = 10.0,
+			update = fh_update
 			)
 
 		fh_rot: FloatProperty(
@@ -117,7 +138,8 @@ class phaenotyp_properties(PropertyGroup):
 			description = "Rotation in z-direction",
 			default = 0.0,
 			min = 0.0,
-			max = 360.0
+			max = 360.0,
+			update = fh_update
 			)
 
 		fh_amount: IntProperty(
@@ -125,7 +147,8 @@ class phaenotyp_properties(PropertyGroup):
 			description = "Amount of segments",
 			default = 3,
 			min = 1,
-			max = 12
+			max = 12,
+			update = fh_update
 			)
 
 		fh_o_c: FloatProperty(
@@ -133,7 +156,8 @@ class phaenotyp_properties(PropertyGroup):
 			description = "Offset along path",
 			default = 0.0,
 			min = 0.0,
-			max = 10.0
+			max = 10.0,
+			update = fh_update
 			)
 		
 	if "setup":
@@ -381,7 +405,7 @@ class phaenotyp_properties(PropertyGroup):
 					("edges", "Edges", ""),
 					("faces", "Faces", "")
 				   ],
-			update = basics.set_selection_for_load,
+			update = basics.set_selection_for_load
 			)
 
 		load_FX: FloatProperty(
