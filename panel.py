@@ -31,11 +31,12 @@ def pre(layout):
 	
 	# convert
 	box_pre.label(text="Convert:")
-	box_pre.operator("wm.curve_to_mesh_straight", text="Curve to mesh straight")
-	box_pre.operator("wm.curve_to_mesh_curved", text="Curve to mesh curved")
+	box_pre.operator("wm.curve_to_mesh_straight", text="Curves to mesh straight")
+	box_pre.operator("wm.curve_to_mesh_curved", text="Curves to mesh curved")
+	box_pre.operator("wm.meta_to_mesh", text="Meta to mesh")
+	
 	box_pre.operator("wm.mesh_to_quads_simple", text="Mesh to quads simple")
 	box_pre.operator("wm.mesh_to_quads_complex", text="Mesh to quads complex")
-	box_pre.operator("wm.meta_to_mesh", text="Meta to mesh")
 	
 	'''
 	Prepare:

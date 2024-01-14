@@ -1015,7 +1015,7 @@ class WM_OT_curve_to_mesh_straight(Operator):
 	'''
 	bl_label = "curve_to_mesh_straight"
 	bl_idname = "wm.curve_to_mesh_straight"
-	bl_description = "Please select an object in Object-Mode and press set"
+	bl_description = "Is converting straight curves to work with phaenotyp"
 
 	def execute(self, context):
 		operators.curve_to_mesh_straight()
@@ -1028,12 +1028,25 @@ class WM_OT_curve_to_mesh_curved(Operator):
 	'''
 	bl_label = "curve_to_mesh_curved"
 	bl_idname = "wm.curve_to_mesh_curved"
-	bl_description = "Please select an object in Object-Mode and press set"
+	bl_description = "Is converting curved curves to work with phaenotyp"
 
 	def execute(self, context):
 		operators.curve_to_mesh_curved()
 		return {"FINISHED"}
 
+class WM_OT_meta_to_mesh(Operator):
+	'''
+	Is calling meta_to_mesh from the module called operators.
+	Check out further info in there.
+	'''
+	bl_label = "meta_to_mesh"
+	bl_idname = "wm.meta_to_mesh"
+	bl_description = "Is converting metaballss to work with phaenotyp"
+
+	def execute(self, context):
+		operators.meta_to_mesh()
+		return {"FINISHED"}
+		
 class WM_OT_mesh_to_quads_simple(Operator):
 	'''
 	Is calling mesh_to_quads_simple from the module called operators.
@@ -1041,7 +1054,7 @@ class WM_OT_mesh_to_quads_simple(Operator):
 	'''
 	bl_label = "mesh_to_quads_simple"
 	bl_idname = "wm.mesh_to_quads_simple"
-	bl_description = "Please select an object in Object-Mode and press set"
+	bl_description = "Is converting triangels to quads by calling buildin operator to work with phaenotyp quads"
 
 	def execute(self, context):
 		operators.mesh_to_quads_simple()
@@ -1054,23 +1067,10 @@ class WM_OT_mesh_to_quads_complex(Operator):
 	'''
 	bl_label = "mesh_to_quads_complex"
 	bl_idname = "wm.mesh_to_quads_complex"
-	bl_description = "Please select an object in Object-Mode and press set"
+	bl_description = "Is subdividing the mesh to create quad meshes to work with phaenotyp quads"
 
 	def execute(self, context):
 		operators.mesh_to_quads_complex()
-		return {"FINISHED"}
-
-class WM_OT_meta_to_mesh(Operator):
-	'''
-	Is calling meta_to_mesh from the module called operators.
-	Check out further info in there.
-	'''
-	bl_label = "meta_to_mesh"
-	bl_idname = "wm.meta_to_mesh"
-	bl_description = "Please select an object in Object-Mode and press set"
-
-	def execute(self, context):
-		operators.meta_to_mesh()
 		return {"FINISHED"}
 	
 class WM_OT_set_structure(Operator):
