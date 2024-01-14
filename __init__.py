@@ -1631,12 +1631,12 @@ class OBJECT_PT_Phaenotyp_pre(Panel):
 			# run error panel
 			panel.error(layout, basics.phaenotyp_version)
 
-class OBJECT_PT_Phaenotyp_setup_run(Panel):
+class OBJECT_PT_Phaenotyp_setup(Panel):
 	'''
 	Panel for Phaenotyp.
 	'''
-	bl_label = "Setup | Run"
-	bl_idname = "OBJECT_PT_Phaenotyp_setup_run"
+	bl_label = "Setup"
+	bl_idname = "OBJECT_PT_Phaenotyp_setup"
 	bl_space_type = "VIEW_3D"
 	bl_region_type = "UI"
 	bl_category = "Phänotyp 0.3.0"
@@ -1671,6 +1671,48 @@ class OBJECT_PT_Phaenotyp_setup_run(Panel):
 			panel.quads(layout)
 			panel.loads(layout)
 			panel.file(layout)
+					
+		except Exception as error:
+			# run error panel
+			panel.error(layout, basics.phaenotyp_version)
+
+class OBJECT_PT_Phaenotyp_run(Panel):
+	'''
+	Panel for Phaenotyp.
+	'''
+	bl_label = "Run"
+	bl_idname = "OBJECT_PT_Phaenotyp_run"
+	bl_space_type = "VIEW_3D"
+	bl_region_type = "UI"
+	bl_category = "Phänotyp 0.3.0"
+
+	@classmethod
+	def poll(self,context):
+		'''
+		To hide the panel if no object is available.
+		'''
+		scene = context.scene
+		data = scene.get("<Phaenotyp>")
+		if data:
+			if data["panel_state"]["file"]:
+				if data["panel_state"]["members"] or data["panel_state"]["quads"]:
+					return True
+
+	def draw(self, context):
+		'''
+		Is running all functions from the module called panel.
+		'''
+		layout = self.layout
+		scene = context.scene
+		phaenotyp = scene.phaenotyp
+		frame = scene.frame_current
+		
+		# try to create panels
+		# this will make the restart-button also available
+		# if there is an error during the other panels
+		# for example: the file has been created with an older version
+		try:
+			# setup and start
 			panel.mode(layout)
 
 			# select and run mode
@@ -1680,9 +1722,7 @@ class OBJECT_PT_Phaenotyp_setup_run(Panel):
 		except Exception as error:
 			# run error panel
 			panel.error(layout, basics.phaenotyp_version)
-		
-		panel.reset(layout)
-
+				
 class OBJECT_PT_Phaenotyp_post(Panel):
 	'''
 	Panel for Phaenotyp.
@@ -1748,9 +1788,31 @@ class OBJECT_PT_Phaenotyp_post(Panel):
 		except Exception as error:
 			# run error panel
 			panel.error(layout, basics.phaenotyp_version)
-		
-		panel.reset(layout)
 
+class OBJECT_PT_Phaenotyp_reset(Panel):
+	'''
+	Panel for Phaenotyp.
+	'''
+	bl_label = "Reset"
+	bl_idname = "OBJECT_PT_Phaenotyp_reset"
+	bl_space_type = "VIEW_3D"
+	bl_region_type = "UI"
+	bl_category = "Phänotyp 0.3.0"
+
+	@classmethod
+	def poll(self,context):
+		'''
+		To hide the panel if no object is available.
+		'''
+		return context.object is not None
+
+	def draw(self, context):
+		'''
+		Is running all functions from the module called panel.
+		'''
+		layout = self.layout
+		panel.reset(layout)
+	
 classes = (
 	phaenotyp_properties,
 
@@ -1811,8 +1873,10 @@ classes = (
 	WM_OT_reset,
 	
 	OBJECT_PT_Phaenotyp_pre,
-	OBJECT_PT_Phaenotyp_setup_run,
-	OBJECT_PT_Phaenotyp_post
+	OBJECT_PT_Phaenotyp_setup,
+	OBJECT_PT_Phaenotyp_run,
+	OBJECT_PT_Phaenotyp_post,
+	OBJECT_PT_Phaenotyp_reset
 )
 
 @persistent

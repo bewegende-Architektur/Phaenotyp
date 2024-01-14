@@ -516,12 +516,9 @@ def mode(layout):
 	frame = scene.frame_current
 	data = bpy.context.scene.get("<Phaenotyp>")
 
-	if data:
-		if data["panel_state"]["file"]:
-			if data["panel_state"]["members"] or data["panel_state"]["quads"]:
-				box_start = layout.box()
-				box_start.label(text="Mode:")
-				box_start.prop(phaenotyp, "mode", text="")
+	box_start = layout.box()
+	box_start.label(text="Mode:")
+	box_start.prop(phaenotyp, "mode", text="")
 
 def transformation(layout):
 	'''
@@ -1331,4 +1328,4 @@ def reset(layout):
 
 	# reset data
 	box_reset = layout.box()
-	box_reset.operator("wm.reset", text="Reset")
+	box_reset.operator("wm.reset", icon="TRASH", text="")
