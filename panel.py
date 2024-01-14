@@ -1,6 +1,40 @@
 import bpy
 from phaenotyp import material
 
+# handle lists in panel
+# based on code by sinestesia and support by Gorgious
+# check out this pages for explanation:
+# https://sinestesia.co/blog/tutorials/using-uilists-in-blender/
+# https://blenderartists.org/t/create-and-handle-multiple-uilists
+def draw_list(scene, layout, phaenotyp_lists, current_index):
+	row = layout.row()
+	col = row.column(align=True)
+
+	# draw list
+	col.template_list("PHAENOTYP_UL_List", "", scene, phaenotyp_lists, scene, current_index)
+	
+	# new column
+	col = row.column(align=True)
+	
+	# create items
+	new = col.operator('phaenotyp_lists.new_item', icon='ADD', text="")
+	delete = col.operator('phaenotyp_lists.delete_item', icon='REMOVE', text="")
+	up = col.operator('phaenotyp_lists.move_item', icon='TRIA_UP', text="")
+	up.direction = "UP"
+	down = col.operator('phaenotyp_lists.move_item', icon='TRIA_DOWN', text="")
+	down.direction = "DOWN"
+	
+	# pass arguments
+	for op in [new, delete, up, down]:
+		op.phaenotyp_lists = phaenotyp_lists
+		op.current_index = current_index
+	
+	# update attribute
+	if getattr(bpy.context.scene, current_index) >= 0 and getattr(bpy.context.scene, phaenotyp_lists):
+		item = getattr(bpy.context.scene, phaenotyp_lists)[getattr(bpy.context.scene, current_index)]
+		col.prop(item, "item_name", text="")
+		col.prop(item, "item_value", text="")
+
 def pre(layout):
 	'''
 	Panel for creating and preparing structure.
@@ -12,42 +46,105 @@ def pre(layout):
 	frame = scene.frame_current
 	data = bpy.context.scene.get("<Phaenotyp>")
 
-	# create box
-	box_pre = layout.box()
-	
 	# convert
-	box_pre.label(text="Convert:")
-	box_pre.operator("wm.curve_to_mesh_straight", text="Curves to mesh straight")
-	box_pre.operator("wm.curve_to_mesh_curved", text="Curves to mesh curved")
-	box_pre.operator("wm.meta_to_mesh", text="Meta to mesh")
-
+	box_convert = layout.box()
+	box_convert.label(text="Convert:")
+	box_convert.operator("wm.curve_to_mesh_straight", text="Curves to mesh straight")
+	box_convert.operator("wm.curve_to_mesh_curved", text="Curves to mesh curved")
+	box_convert.operator("wm.meta_to_mesh", text="Meta to mesh")
+	
 	# from hull
-	#box_pre.label(text="From hull:")
-	'''
-	grid or spline
-	Set
-	w = 3
-	d = 7
-	h = 3
-	o_x = 3
-	o_y = 7
-	o_z = 3
-	Start
-	'''
+	box_fh = layout.box()
+	box_fh.label(text="From hull:")
+	box_fh.prop(phaenotyp, "fh_input_type", text="")
+	fh_input_type = phaenotyp.fh_input_type
+	
+	if fh_input_type == "even":
+		# width, depth and height of structre
+		box_fh.prop(phaenotyp, "fh_w", text="Width")
+		box_fh.prop(phaenotyp, "fh_d", text="Depth")
+		box_fh.prop(phaenotyp, "fh_h", text="Height")
+	
+	if fh_input_type == "individual":
+		# based on code by sinestesia and support by Gorgious
+		# check out this pages for explanation:
+		# https://sinestesia.co/blog/tutorials/using-uilists-in-blender/
+		# https://blenderartists.org/t/create-and-handle-multiple-uilists-pass-argument/1508288/7
 		
-	# prepare
-	box_pre.label(text="Refine:")
-	box_pre.operator("wm.mesh_to_quads_simple", text="Mesh to quads simple")
-	box_pre.operator("wm.mesh_to_quads_complex", text="Mesh to quads complex")
-	box_pre.operator("wm.automerge", text="Automerge")
-	box_pre.operator("wm.union", text="Union")
-	box_pre.operator("wm.simplify_edges", text="Simplify edges")
+		#box_fh = layout.row()
+		box_fh.label(text="Width:")
+		draw_list(scene, box_fh, "phaenotyp_fh_w", "phaenotyp_fh_w_index")
+
+		#box_fh = layout.row()
+		box_fh.label(text="Depth:")
+		draw_list(scene, box_fh, "phaenotyp_fh_d", "phaenotyp_fh_d_index")
+		
+		#box_fh = layout.row()
+		box_fh.label(text="Height:")
+		draw_list(scene, box_fh, "phaenotyp_fh_h", "phaenotyp_fh_h_index")
+	
+	if fh_input_type != "-":
+		box_fh.prop(phaenotyp, "fh_methode", text="")
+		fh_methode = phaenotyp.fh_methode
+		if fh_methode != "-":
+			# offset
+			if fh_methode == "grid":
+				box_fh.prop(phaenotyp, "fh_o_x", text="Offset x")
+				box_fh.prop(phaenotyp, "fh_o_y", text="Offset y")
+				box_fh.prop(phaenotyp, "fh_o_z", text="Offset z")
+				box_fh.prop(phaenotyp, "fh_rot", text="Rotation")
+				
+				# get hull form user
+				hull = scene.get("<Phaenotyp>fh_hull")
+				if not hull:
+					box_fh.label(text="Hull:")
+					box_fh.operator("wm.set_hull", text="Set")
+				else:
+					text = hull.name_full + " set as hull"
+					box_fh.label(text=text)
+					
+					box_fh.operator("wm.from_hull", text="Create | Recreate")
+			
+			if fh_methode == "path":
+				box_fh.prop(phaenotyp, "fh_amount", text="Rotation")
+				box_fh.prop(phaenotyp, "fh_o_c", text="Rotation")
+				
+				# get hull form user
+				hull = scene.get("<Phaenotyp>fh_hull")
+				if not hull:
+					box_fh.label(text="Hull:")
+					box_fh.operator("wm.set_hull", text="Set")
+				else:
+					text = hull.name_full + " set as hull"
+					box_fh.label(text=text)
+					
+					# get path form user
+					path = scene.get("<Phaenotyp>fh_path")
+					if not path:
+						box_fh.label(text="Path:")
+						box_fh.operator("wm.set_path", text="Set")
+					else:
+						text = path.name_full + " set as path"
+						box_fh.label(text=text)
+						
+						box_fh.operator("wm.from_hull", text="Create | Recreate")
+		
+	# refine
+	box_refine = layout.box()
+	box_refine.label(text="Refine:")
+	box_refine.operator("wm.mesh_to_quads_simple", text="Mesh to quads simple")
+	box_refine.operator("wm.mesh_to_quads_complex", text="Mesh to quads complex")
+	box_refine.operator("wm.automerge", text="Automerge")
+	box_refine.operator("wm.union", text="Union")
+	box_refine.operator("wm.simplify_edges", text="Simplify edges")
 	
 	# gray out, if a structure is set allready
 	if data:
 		structure = data.get("structure")
 		if structure:
-			box_pre.enabled = False
+			box_convert.enabled = False
+			box_fh.enabled = False
+			box_refine.enabled = False
 		
 def structure(layout):
 	'''

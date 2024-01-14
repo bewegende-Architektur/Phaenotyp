@@ -8,8 +8,8 @@ bl_info = {
 }
 
 import bpy
-from bpy.props import (IntProperty, FloatProperty, BoolProperty, StringProperty, EnumProperty, PointerProperty)
-from bpy.types import (Panel, Menu, Operator, PropertyGroup)
+from bpy.props import IntProperty, FloatProperty, BoolProperty, StringProperty, EnumProperty, PointerProperty, CollectionProperty
+from bpy.types import Panel, Menu, Operator, PropertyGroup, UIList
 from bpy.app.handlers import persistent
 
 from phaenotyp import basics, panel, operators, material, geometry, calculation, ga, report, progress
@@ -33,6 +33,109 @@ class phaenotyp_properties(PropertyGroup):
 	'''
 	Is holding all variables for the panel.
 	'''
+	if "from_hull":
+		fh_methode: EnumProperty(
+			name = "fh_methode",
+			description = "Work with grid or spline",
+			items = [
+					("-", "-", ""),
+					("grid", "Grid", ""),
+					("path", "Path", "")
+					],
+			default = "-",
+			)
+
+		fh_input_type: EnumProperty(
+			name = "fh_input_type",
+			description = "Work with grid or spline",
+			items = [
+					("-", "-", ""),
+					("even", "Even", ""),
+					("individual", "Individual", "")
+					],
+			default = "-",
+			)
+		
+		fh_w: FloatProperty(
+			name = "fh_w",
+			description = "Width of structure",
+			default = 7.0,
+			min = 1.0,
+			max = 100.0
+			)
+		
+		fh_w: FloatProperty(
+			name = "fh_w",
+			description = "Width of structure",
+			default = 7.0,
+			min = 1.0,
+			max = 100.0
+			)
+		
+		fh_d: FloatProperty(
+			name = "fh_d",
+			description = "Depth of structure",
+			default = 7.0,
+			min = 1.0,
+			max = 100.0
+			)
+		
+		fh_h: FloatProperty(
+			name = "fh_h",
+			description = "Height of structure",
+			default = 3.0,
+			min = 1.0,
+			max = 100.0
+			)
+		
+		fh_o_x: FloatProperty(
+			name = "fh_o_x",
+			description = "Offset in x-direction",
+			default = 0.0,
+			min = -10.0,
+			max = 10.0
+			)
+		
+		fh_o_y: FloatProperty(
+			name = "fh_o_y",
+			description = "Offset in y-direction",
+			default = 0.0,
+			min = -10.0,
+			max = 10.0
+			)
+		
+		fh_o_z: FloatProperty(
+			name = "fh_o_z",
+			description = "Offset in z-direction",
+			default = 0.0,
+			min = -10.0,
+			max = 10.0
+			)
+
+		fh_rot: FloatProperty(
+			name = "fh_rot",
+			description = "Rotation in z-direction",
+			default = 0.0,
+			min = 0.0,
+			max = 360.0
+			)
+
+		fh_amount: IntProperty(
+			name = "fh_amount",
+			description = "Amount of segments",
+			default = 3,
+			min = 1,
+			max = 12
+			)
+
+		fh_o_c: FloatProperty(
+			name = "fh_o_c",
+			description = "Offset along path",
+			default = 0.0,
+			min = 0.0,
+			max = 10.0
+			)
+		
 	if "setup":
 		use_scipy: BoolProperty(
 			name = 'use_scipy',
@@ -1008,9 +1111,115 @@ class phaenotyp_properties(PropertyGroup):
 			max = 50000
 			)
 
+# handle lists in panel
+# based on code by sinestesia and support by Gorgious
+# check out this pages for explanation:
+# https://sinestesia.co/blog/tutorials/using-uilists-in-blender/
+# https://blenderartists.org/t/create-and-handle-multiple-uilists
+class PHAENOTYP_list_item(PropertyGroup):
+	item_name: StringProperty(name="item_name", default="Name")
+	item_value: FloatProperty(name="item_value", default=3.0)
+
+class PHAENOTYP_UL_List(UIList):
+	def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
+		layout.label(text=item.item_name)
+		layout.label(text=str(item.item_value))
+
+class LIST_OT_new_item(Operator):
+	bl_idname = "phaenotyp_lists.new_item"
+	bl_label = "Add a new item"
+
+	phaenotyp_lists: bpy.props.StringProperty()
+	current_index: bpy.props.StringProperty()
+	
+	def execute(self, context):
+		phaenotyp_lists = getattr(context.scene, self.phaenotyp_lists)
+		phaenotyp_lists.add()
+		return{'FINISHED'}
+
+class LIST_OT_delete_item(Operator):
+	bl_idname = "phaenotyp_lists.delete_item"
+	bl_label = "Deletes an item"
+
+	phaenotyp_lists: bpy.props.StringProperty()
+	current_index: bpy.props.StringProperty()
+
+	def execute(self, context):
+		phaenotyp_lists = getattr(context.scene, self.phaenotyp_lists)
+		index = getattr(context.scene, self.current_index)
+		
+		phaenotyp_lists.remove(index)
+		
+		new_index = min(max(0, index - 1), len(phaenotyp_lists) - 1)
+		bpy.context.scene[self.current_index] = new_index
+		
+		return{'FINISHED'}
+
+class LIST_OT_move_item(Operator):
+	bl_idname = "phaenotyp_lists.move_item"
+	bl_label = "Move an item in the list"
+	
+	direction: bpy.props.EnumProperty(items=(('UP', 'Up', ""), ('DOWN', 'Down', ""),))
+	phaenotyp_lists: bpy.props.StringProperty()
+	current_index: bpy.props.StringProperty()
+	
+	def move_index(self, phaenotyp_lists, index):
+		list_length = len(phaenotyp_lists) - 1
+		new_index = index + (-1 if self.direction == 'UP' else 1)
+		new_index = max(0, min(new_index, list_length))
+		bpy.context.scene[self.current_index] = new_index
+		
+	def execute(self, context):
+		phaenotyp_lists = getattr(context.scene, self.phaenotyp_lists) 
+		index = getattr(context.scene, self.current_index) 
+		neighbor = index + (-1 if self.direction == 'UP' else 1)
+		phaenotyp_lists.move(neighbor, index)
+		self.move_index(phaenotyp_lists, index)
+		
+		return{'FINISHED'}
+
+class WM_OT_set_hull(Operator):
+	'''
+	Is calling set_hull from the module called operators.
+	Check out further info in there.
+	'''
+	bl_label = "set_hull"
+	bl_idname = "wm.set_hull"
+	bl_description = "Set hull to work with"
+
+	def execute(self, context):
+		operators.set_hull()
+		return {"FINISHED"}
+
+class WM_OT_set_path(Operator):
+	'''
+	Is calling set_path from the module called operators.
+	Check out further info in there.
+	'''
+	bl_label = "set_path"
+	bl_idname = "wm.set_path"
+	bl_description = "Set path to work with"
+
+	def execute(self, context):
+		operators.set_path()
+		return {"FINISHED"}
+		
+class WM_OT_from_hull(Operator):
+	'''
+	Is calling from_hull from the module called operators.
+	Check out further info in there.
+	'''
+	bl_label = "from_hull"
+	bl_idname = "wm.from_hull"
+	bl_description = "Is creating a structure from the given hull"
+
+	def execute(self, context):
+		operators.from_hull()
+		return {"FINISHED"}
+					
 class WM_OT_curve_to_mesh_straight(Operator):
 	'''
-	Is curve_to_mesh_straight set_structure from the module called operators.
+	Is calling curve_to_mesh_straight from the module called operators.
 	Check out further info in there.
 	'''
 	bl_label = "curve_to_mesh_straight"
@@ -1822,6 +2031,10 @@ classes = (
 	WM_OT_mesh_to_quads_complex,
 	WM_OT_meta_to_mesh,
 	
+	WM_OT_set_hull,
+	WM_OT_set_path,
+	WM_OT_from_hull,
+	
 	WM_OT_automerge,
 	WM_OT_union,
 	WM_OT_simplify_edges,
@@ -1953,6 +2166,28 @@ def register():
 	bpy.types.Scene.phaenotyp = PointerProperty(type=phaenotyp_properties)
 	bpy.app.handlers.frame_change_post.append(update_post)
 	bpy.app.handlers.undo_pre.append(undo)
+	
+	# handle lists in panel
+	# based on code by sinestesia and support by Gorgious
+	# check out this pages for explanation:
+	# https://sinestesia.co/blog/tutorials/using-uilists-in-blender/
+	# https://blenderartists.org/t/create-and-handle-multiple-uilists-pass-argument/1508288/7
+
+	bpy.utils.register_class(PHAENOTYP_list_item)
+	bpy.utils.register_class(PHAENOTYP_UL_List)
+	bpy.utils.register_class(LIST_OT_new_item)
+	bpy.utils.register_class(LIST_OT_delete_item)
+	bpy.utils.register_class(LIST_OT_move_item)
+	
+	# multiple lists
+	bpy.types.Scene.phaenotyp_fh_w = CollectionProperty(type = PHAENOTYP_list_item)
+	bpy.types.Scene.phaenotyp_fh_d = CollectionProperty(type = PHAENOTYP_list_item)
+	bpy.types.Scene.phaenotyp_fh_h = CollectionProperty(type = PHAENOTYP_list_item)
+	
+	# multiple indices
+	bpy.types.Scene.phaenotyp_fh_w_index = IntProperty(name = "Index for phaenotyp_lists", default = 0)
+	bpy.types.Scene.phaenotyp_fh_d_index = IntProperty(name = "Index for phaenotyp_lists", default = 0)
+	bpy.types.Scene.phaenotyp_fh_h_index = IntProperty(name = "Index for phaenotyp_lists", default = 0)
 
 def unregister():
 	'''
@@ -1965,7 +2200,27 @@ def unregister():
 	del bpy.types.Scene.phaenotyp
 	bpy.app.handlers.frame_change_post.remove(update_post)
 	bpy.app.handlers.undo_pre.remove(undo)
-
+	
+	# handle lists in panel
+	# based on code by sinestesia and support by Gorgious
+	# check out this pages for explanation:
+	# https://sinestesia.co/blog/tutorials/using-uilists-in-blender/
+	# https://blenderartists.org/t/create-and-handle-multiple-uilists-pass-argument/1508288/7
+	
+	del bpy.types.Scene.phaenotyp_fh_w
+	del bpy.types.Scene.phaenotyp_fh_d
+	del bpy.types.Scene.phaenotyp_fh_h
+	
+	del bpy.types.Scene.phaenotyp_fh_w_index
+	del bpy.types.Scene.phaenotyp_fh_d_index
+	del bpy.types.Scene.phaenotyp_fh_h_index
+	
+	bpy.utils.unregister_class(PHAENOTYP_list_item)
+	bpy.utils.unregister_class(PHAENOTYP_UL_List)
+	bpy.utils.unregister_class(LIST_OT_new_item)
+	bpy.utils.unregister_class(LIST_OT_delete_item)
+	bpy.utils.unregister_class(LIST_OT_move_item)
+	
 if __name__ == "__main__":
 	'''
 	Run mainloop and register all blender specific stuff.

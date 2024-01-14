@@ -1,6 +1,7 @@
 import bpy
 import bmesh
 import numpy as np
+from math import radians
 
 import os
 import webbrowser
@@ -117,7 +118,7 @@ def mesh_to_quads_simple():
 		bpy.ops.mesh.tris_convert_to_quads()
 		
 		print_data("Mesh to quads simple")
-    
+	
 def mesh_to_quads_complex():
 	bpy.ops.object.mode_set(mode='OBJECT')
 	
@@ -161,23 +162,245 @@ def mesh_to_quads_complex():
 		
 		print_data("Mesh to quads complex")
 
-'''
-From hull:
-grid or spline
-Set
-w = 3
-d = 7
-h = 3
-o_x = 3
-o_y = 7
-o_z = 3
-Start
+def set_hull():
+	context = bpy.context
+	scene = context.scene
+	phaenotyp = scene.phaenotyp
+	
+	bpy.ops.object.mode_set(mode='OBJECT')
+	
+	selected = context.selected_objects
+	
+	# check if curves are selected
+	valid_selection = True
+	for obj in selected:
+		if obj.type != 'MESH':
+			valid_selection = False
+	
+	# check if one mesh only
+	if len(selected) != 1:
+		valid_selection = False
+	
+	if not valid_selection:
+		text = ["Select one mesh only."]
+		basics.popup(lines = text)
+	else:
+		obj = selected[0]
+		scene["<Phaenotyp>fh_hull"] = obj
+		text = obj.name_full + " set as hull"
+		print_data(text)
+		
+def set_path():
+	context = bpy.context
+	scene = context.scene
+	phaenotyp = scene.phaenotyp
+	
+	bpy.ops.object.mode_set(mode='OBJECT')
+	
+	selected = context.selected_objects
+	
+	# check if curves are selected
+	valid_selection = True
+	for obj in selected:
+		if obj.type != 'CURVE':
+			valid_selection = False
+	
+	# check if one mesh only
+	if len(selected) != 1:
+		valid_selection = False
+	
+	if not valid_selection:
+		text = ["Select one curve only."]
+		basics.popup(lines = text)
+	else:
+		obj = selected[0]
+		scene["<Phaenotyp>fh_path"] = obj
+		text = obj.name_full + " set as path"
+		print_data(text)
+		
+def from_hull():
+	context = bpy.context
+	scene = context.scene
+	phaenotyp = scene.phaenotyp
+		
+	# get parameters
+	fh_methode = phaenotyp.fh_methode
+	fh_input_type = phaenotyp.fh_input_type
+	
+	w = phaenotyp.fh_w
+	d = phaenotyp.fh_d
+	h = phaenotyp.fh_h
+	
+	o_x = phaenotyp.fh_o_x
+	o_y = phaenotyp.fh_o_y
+	o_z = phaenotyp.fh_o_z
+	rot_z = radians(phaenotyp.fh_rot)
+	
+	amount = phaenotyp.fh_amount
+	o_c = phaenotyp.fh_o_c
+	
+	# get objects
+	hull = scene["<Phaenotyp>fh_hull"]
+	if fh_methode == "path":
+		path = scene["<Phaenotyp>fh_path"]
+	
+	# delete hull and path if exisiting
+	for obj in bpy.data.objects:
+		if "_<Phaenotyp>fh" in obj.name_full:
+			basics.delete_obj_if_existing(obj.name_full)
 
-Prepare:
-automerge
-union
-simplify_edges
-'''
+	# copy structure
+	copy = hull.copy()
+	copy.data = copy.data.copy()
+	copy.name = hull.name + "_<Phaenotyp>fh"
+	bpy.context.collection.objects.link(copy)
+	
+	# copy modifiers
+	hull.select_set(True)
+	bpy.context.view_layer.objects.active = hull
+	copy.select_set(True)
+	bpy.ops.object.make_links_data(type='MODIFIERS')
+	bpy.ops.object.select_all(action='DESELECT')
+
+	# hide structure
+	hull.hide_set(True)
+
+	# work with copy from now on
+	structure = copy
+
+	# set structure active
+	bpy.context.view_layer.objects.active = structure
+	
+	# apply rotation and scale
+	bpy.ops.object.select_all(action='DESELECT')
+	structure.select_set(True)
+	bpy.ops.object.transform_apply(location=False, rotation=True, scale=True)
+
+	# convert to mesh
+	bpy.ops.object.convert(target='MESH')
+	
+	# set origin of hull to centre of bounds
+	bpy.ops.object.origin_set(type='ORIGIN_GEOMETRY', center='BOUNDS')
+	loc = structure.location
+
+	# create cube
+	bpy.ops.mesh.primitive_cube_add(
+		size = 2.0,
+		calc_uvs = True,
+		enter_editmode = False,
+		align = 'WORLD',
+		location = [loc[0]+o_x, loc[1]+o_y, loc[2]+o_z],
+		rotation = (0.0, 0.0, 0.0),
+		scale = (1.0, 1.0, 1.0)
+		)
+
+	grid = bpy.context.selected_objects[0]
+
+	# select everything
+	vertices = grid.data.polygons
+	for vertex in vertices:
+		vertex.select = True
+
+	bpy.ops.object.mode_set(mode = 'EDIT')
+	bpy.ops.object.mode_set(mode = 'OBJECT')
+
+	# set and apply scale
+	bpy.ops.object.mode_set(mode = 'OBJECT')
+	grid.dimensions = [w,d,h]
+	bpy.ops.object.transform_apply(location=False, rotation=False, scale=True)
+
+	# create modifiere if not existing
+	modifier = grid.modifiers.get('<Phaenotyp>')
+	if modifier:
+		text = "existing modifier:" + str(modifiers)
+	else:
+		# get highest dim and offset for x and y
+		# max of x and y because the object is rotated in z-direction
+		max_dim = max(structure.dimensions[0], structure.dimensions[1])
+		max_w_d = max(w, d)
+		offset = max_dim + max_w_d + 10
+		
+		array_x = grid.modifiers.new(name="<Phaenotyp>_array-x", type='ARRAY')
+		array_x.fit_type = 'FIT_LENGTH'
+		array_x.relative_offset_displace = [1,0,0]
+		array_x.fit_length = offset
+		array_x.use_merge_vertices = True
+		
+		array_y = grid.modifiers.new(name="<Phaenotyp>_array-y", type='ARRAY')
+		array_y.fit_type = 'FIT_LENGTH'
+		array_y.relative_offset_displace = [0,1,0]
+		array_y.fit_length = offset
+		array_y.use_merge_vertices = True
+		
+		array_z = grid.modifiers.new(name="<Phaenotyp>_array-z", type='ARRAY')
+		array_z.fit_type = 'FIT_LENGTH'
+		array_z.relative_offset_displace = [0,0,1]
+		array_z.fit_length = structure.dimensions[2] + h + 10
+		array_z.use_merge_vertices = True
+
+		bpy.ops.object.convert(target='MESH')
+
+	# set cube to centre
+	t = grid.dimensions * 0.5
+	grid.location = grid.location - t
+
+	# set origin to centre of bounds
+	bpy.ops.object.origin_set(type='ORIGIN_GEOMETRY', center='BOUNDS')
+
+	# rotate grid z
+	grid.rotation_euler[2] = rot_z
+
+	# select all in structure edit-mode
+	bpy.ops.object.select_all(action='DESELECT')
+	grid.select_set(True)
+	bpy.context.view_layer.objects.active = grid
+	bpy.ops.object.mode_set(mode = 'EDIT')
+	bpy.ops.mesh.select_mode(type="VERT")
+	bpy.ops.mesh.select_all(action = 'SELECT')
+	bpy.ops.object.mode_set(mode = 'OBJECT')
+
+	bpy.ops.object.select_all(action='DESELECT')
+	structure.select_set(True)
+	bpy.context.view_layer.objects.active = structure
+	bpy.ops.object.mode_set(mode = 'EDIT')
+	bpy.ops.mesh.select_mode(type="VERT")
+	bpy.ops.mesh.select_all(action = 'DESELECT')
+	bpy.ops.object.mode_set(mode = 'OBJECT')
+
+	# join cube and structure
+	grid.select_set(True)
+	structure.select_set(True)
+	bpy.ops.object.join()
+
+	# select array of cube only
+	bpy.ops.object.mode_set(mode = 'EDIT')
+	#bpy.ops.mesh.select_all(action='INVERT')
+
+	# intersect array with structre
+	bpy.ops.mesh.intersect_boolean()
+
+	# keep columns and layers only
+	faces = structure.data.polygons
+	bpy.context.view_layer.objects.active = structure
+
+	bpy.ops.object.mode_set(mode = 'EDIT')
+	bpy.ops.mesh.select_mode(type="FACE")
+	bpy.ops.mesh.select_all(action='DESELECT')
+
+	bpy.ops.object.mode_set(mode = 'OBJECT')
+
+	for face in faces:
+		if round(face.normal[0], 3) == 0: # round for threshold
+			if round(face.normal[1], 3) == 0:
+				if round(face.normal[2], 3) in [1,-1]:
+					face.select = True
+
+	bpy.ops.object.mode_set(mode = 'EDIT')
+	bpy.ops.mesh.select_all(action='INVERT')
+	bpy.ops.mesh.delete(type='ONLY_FACE')
+	bpy.ops.object.mode_set(mode = 'OBJECT')
+	
+	print_data("Structure from hull")
 
 def automerge():
 	bpy.ops.object.mode_set(mode='OBJECT')
@@ -2846,6 +3069,10 @@ def reset():
 
 	scene = bpy.context.scene
 	phaenotyp = scene.phaenotyp
+	
+	# delete active hull and path of from_hull
+	scene["<Phaenotyp>fh_hull"] = False
+	scene["<Phaenotyp>fh_path"] = False
 	
 	# make structure visible
 	# try only because the object is maybe allready deleted
