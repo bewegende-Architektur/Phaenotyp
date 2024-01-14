@@ -1072,7 +1072,46 @@ class WM_OT_mesh_to_quads_complex(Operator):
 	def execute(self, context):
 		operators.mesh_to_quads_complex()
 		return {"FINISHED"}
-	
+
+class WM_OT_union(Operator):
+	'''
+	Is calling union from the module called operators.
+	Check out further info in there.
+	'''
+	bl_label = "union"
+	bl_idname = "wm.union"
+	bl_description = "Is creating intersections of faces with boolean operator"
+
+	def execute(self, context):
+		operators.union()
+		return {"FINISHED"}
+
+class WM_OT_automerge(Operator):
+	'''
+	Is calling automerge from the module called operators.
+	Check out further info in there.
+	'''
+	bl_label = "automerge"
+	bl_idname = "wm.automerge"
+	bl_description = "Is creating vertices on intersections by calling automerge"
+
+	def execute(self, context):
+		operators.automerge()
+		return {"FINISHED"}
+
+class WM_OT_simplify_edges(Operator):
+	'''
+	Is calling simplify_edges from the module called operators.
+	Check out further info in there.
+	'''
+	bl_label = "simplify_edges"
+	bl_idname = "wm.simplify_edges"
+	bl_description = "Is combining edges to work as single columns in phanotyp"
+
+	def execute(self, context):
+		operators.simplify_edges()
+		return {"FINISHED"}
+
 class WM_OT_set_structure(Operator):
 	'''
 	Is calling set_structure from the module called operators.
@@ -1642,6 +1681,10 @@ classes = (
 	WM_OT_mesh_to_quads_simple,
 	WM_OT_mesh_to_quads_complex,
 	WM_OT_meta_to_mesh,
+	
+	WM_OT_automerge,
+	WM_OT_union,
+	WM_OT_simplify_edges,
 
 	WM_OT_set_structure,
 	WM_OT_fix_structure,

@@ -14,6 +14,12 @@ def pre(layout):
 
 	# create box
 	box_pre = layout.box()
+	
+	# convert
+	box_pre.label(text="Convert:")
+	box_pre.operator("wm.curve_to_mesh_straight", text="Curves to mesh straight")
+	box_pre.operator("wm.curve_to_mesh_curved", text="Curves to mesh curved")
+	box_pre.operator("wm.meta_to_mesh", text="Meta to mesh")
 
 	# from hull
 	#box_pre.label(text="From hull:")
@@ -28,27 +34,15 @@ def pre(layout):
 	o_z = 3
 	Start
 	'''
-	
-	# convert
-	box_pre.label(text="Convert:")
-	box_pre.operator("wm.curve_to_mesh_straight", text="Curves to mesh straight")
-	box_pre.operator("wm.curve_to_mesh_curved", text="Curves to mesh curved")
-	box_pre.operator("wm.meta_to_mesh", text="Meta to mesh")
-	
+		
+	# prepare
+	box_pre.label(text="Prepare:")
 	box_pre.operator("wm.mesh_to_quads_simple", text="Mesh to quads simple")
 	box_pre.operator("wm.mesh_to_quads_complex", text="Mesh to quads complex")
+	box_pre.operator("wm.automerge", text="Automerge")
+	box_pre.operator("wm.union", text="Union")
+	box_pre.operator("wm.simplify_edges", text="Simplify edges")
 	
-	'''
-	Prepare:
-	triangulate
-	delete_loose
-	seperate_by_loose
-	remove_doubles
-	automerge
-	union
-	simplify_edges
-	'''
-
 	# gray out, if a structure is set allready
 	if data:
 		structure = data.get("structure")

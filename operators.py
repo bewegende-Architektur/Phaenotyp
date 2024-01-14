@@ -162,13 +162,6 @@ def mesh_to_quads_complex():
 		print_data("Mesh to quads complex")
 
 '''
-Convert:
-curve to mesh straight (set buckling)
-curve to mesh curved (set buckling)
-mesh to quads simple
-mesh to quads complex
-meta to mesh
-
 From hull:
 grid or spline
 Set
@@ -181,116 +174,144 @@ o_z = 3
 Start
 
 Prepare:
-triangulate
-delete_loose
-seperate_by_loose
-remove_doubles
 automerge
 union
 simplify_edges
 '''
 
 def automerge():
-    scene = bpy.context.scene
-    tool_settings = scene.tool_settings
+	bpy.ops.object.mode_set(mode='OBJECT')
+	
+	selected = bpy.context.selected_objects
+	
+	# check if curves are selected
+	valid_selection = True
+	for obj in selected:
+		if obj.type != 'MESH':
+			valid_selection = False
+	
+	# check if one mesh only
+	if len(selected) != 1:
+		valid_selection = False
+	
+	if not valid_selection:
+		text = ["Select one mesh only."]
+		basics.popup(lines = text)
+	else:
+		scene = bpy.context.scene
+		tool_settings = scene.tool_settings
 
-    # get current settings
-    bpy.ops.object.mode_set(mode = 'EDIT')
-    current_automerge = tool_settings.use_mesh_automerge
-    current_am_split = tool_settings.use_mesh_automerge_and_split
-    current_double_threshold = tool_settings.double_threshold
+		# get current settings
+		bpy.ops.object.mode_set(mode = 'EDIT')
+		current_automerge = tool_settings.use_mesh_automerge
+		current_am_split = tool_settings.use_mesh_automerge_and_split
+		current_double_threshold = tool_settings.double_threshold
 
-    # toggle to automerge and split
-    bpy.context.scene.tool_settings.use_mesh_automerge = True
-    bpy.context.scene.tool_settings.use_mesh_automerge_and_split = True
-    bpy.context.scene.tool_settings.double_threshold = 0.001
+		# toggle to automerge and split
+		bpy.context.scene.tool_settings.use_mesh_automerge = True
+		bpy.context.scene.tool_settings.use_mesh_automerge_and_split = True
+		bpy.context.scene.tool_settings.double_threshold = 0.001
 
-    # move to trigger automerge and split
-    bpy.ops.mesh.select_all(action='SELECT')
-    bpy.ops.transform.translate(
-        value=(0, 0, 1), orient_type='GLOBAL',
-        orient_matrix=((1, 0, 0), (0, 1, 0), (0, 0, 1)),
-        orient_matrix_type='GLOBAL',
-        constraint_axis=(False, False, True),
-        mirror=True, use_proportional_edit=False,
-        proportional_edit_falloff='SMOOTH',
-        proportional_size=1, use_proportional_connected=False,
-        use_proportional_projected=False, snap=False,
-        snap_elements={'INCREMENT'}, use_snap_project=False,
-        snap_target='CLOSEST', use_snap_self=True,
-        use_snap_edit=True, use_snap_nonedit=True,
-        use_snap_selectable=False, alt_navigation=True
-        )
-    
-    # move to original position
-    bpy.ops.mesh.select_all(action='SELECT')
-    bpy.ops.transform.translate(
-        value=(0, 0, -1), orient_type='GLOBAL',
-        orient_matrix=((1, 0, 0), (0, 1, 0), (0, 0, 1)),
-        orient_matrix_type='GLOBAL',
-        constraint_axis=(False, False, True),
-        mirror=True, use_proportional_edit=False,
-        proportional_edit_falloff='SMOOTH',
-        proportional_size=1, use_proportional_connected=False,
-        use_proportional_projected=False, snap=False,
-        snap_elements={'INCREMENT'}, use_snap_project=False,
-        snap_target='CLOSEST', use_snap_self=True,
-        use_snap_edit=True, use_snap_nonedit=True,
-        use_snap_selectable=False, alt_navigation=True
-        )
-    
-    # reset settings
-    tool_settings.use_mesh_automerge = current_automerge
-    tool_settings.use_mesh_automerge_and_split = current_am_split
-    tool_settings.double_threshold = current_double_threshold
+		# move to trigger automerge and split
+		bpy.ops.mesh.select_all(action='SELECT')
+		bpy.ops.transform.translate(
+			value=(0, 0, 1), orient_type='GLOBAL',
+			orient_matrix=((1, 0, 0), (0, 1, 0), (0, 0, 1)),
+			orient_matrix_type='GLOBAL',
+			constraint_axis=(False, False, True),
+			mirror=True, use_proportional_edit=False,
+			proportional_edit_falloff='SMOOTH',
+			proportional_size=1, use_proportional_connected=False,
+			use_proportional_projected=False, snap=False,
+			snap_elements={'INCREMENT'}, use_snap_project=False,
+			snap_target='CLOSEST', use_snap_self=True,
+			use_snap_edit=True, use_snap_nonedit=True,
+			use_snap_selectable=False, alt_navigation=True
+			)
+		
+		# move to original position
+		bpy.ops.mesh.select_all(action='SELECT')
+		bpy.ops.transform.translate(
+			value=(0, 0, -1), orient_type='GLOBAL',
+			orient_matrix=((1, 0, 0), (0, 1, 0), (0, 0, 1)),
+			orient_matrix_type='GLOBAL',
+			constraint_axis=(False, False, True),
+			mirror=True, use_proportional_edit=False,
+			proportional_edit_falloff='SMOOTH',
+			proportional_size=1, use_proportional_connected=False,
+			use_proportional_projected=False, snap=False,
+			snap_elements={'INCREMENT'}, use_snap_project=False,
+			snap_target='CLOSEST', use_snap_self=True,
+			use_snap_edit=True, use_snap_nonedit=True,
+			use_snap_selectable=False, alt_navigation=True
+			)
+		
+		# reset settings
+		tool_settings.use_mesh_automerge = current_automerge
+		tool_settings.use_mesh_automerge_and_split = current_am_split
+		tool_settings.double_threshold = current_double_threshold
 
 def union():
-    bpy.ops.object.mode_set(mode = 'EDIT')
-    bpy.ops.mesh.select_all(action='SELECT')
-    bpy.ops.mesh.intersect_boolean(
-        operation = 'UNION',
-        solver = 'EXACT',
-        use_swap = False,
-        use_self = True,
-        threshold = 0.000001
-        )
-
-# was macht dieser Tei?
-def test():
-    #bpy.ops.object.mode_set(mode = 'EDIT')
-    #bpy.ops.mesh.select_all(action='SELECT')
-    bpy.ops.mesh.intersect_boolean(
-        operation = 'INTERSECT',
-        solver = 'FAST',
-        use_swap = False,
-        use_self = True,
-        threshold = 0.000001
-        )
-
-    bpy.ops.mesh.select_mode(
-        use_extend=False,
-        use_expand=False,
-        type='EDGE'
-        )
-
-    bpy.ops.mesh.delete(type='EDGE')
-    bpy.ops.mesh.select_all(action='SELECT')
-    bpy.ops.mesh.delete(type='ONLY_FACE')
+	bpy.ops.object.mode_set(mode='OBJECT')
+	
+	selected = bpy.context.selected_objects
+	
+	# check if curves are selected
+	valid_selection = True
+	for obj in selected:
+		if obj.type != 'MESH':
+			valid_selection = False
+	
+	# check if one mesh only
+	if len(selected) != 1:
+		valid_selection = False
+	
+	if not valid_selection:
+		text = ["Select one mesh only."]
+		basics.popup(lines = text)
+	else:
+		bpy.ops.object.mode_set(mode = 'EDIT')
+		bpy.ops.mesh.select_all(action='SELECT')
+		bpy.ops.mesh.intersect_boolean(
+			operation = 'UNION',
+			solver = 'EXACT',
+			use_swap = False,
+			use_self = True,
+			threshold = 0.000001
+			)
 
 def simplify_edges():
-    obj = bpy.context.selected_objects[0]
-    bpy.ops.object.mode_set(mode = 'EDIT')
-    bpy.ops.mesh.select_all(action='DESELECT')
+	bpy.ops.object.mode_set(mode='OBJECT')
+	
+	selected = bpy.context.selected_objects
+	
+	# check if curves are selected
+	valid_selection = True
+	for obj in selected:
+		if obj.type != 'MESH':
+			valid_selection = False
+	
+	# check if one mesh only
+	if len(selected) != 1:
+		valid_selection = False
+	
+	if not valid_selection:
+		text = ["Select one mesh only."]
+		basics.popup(lines = text)
+	else:
+		obj = selected[0]
+		bpy.ops.object.mode_set(mode = 'EDIT')
+		bpy.ops.mesh.select_all(action='DESELECT')
 
-    me = bpy.context.object.data
-    bm = bmesh.from_edit_mesh(me)
-    
-    linked_with_two_edges = lambda v: len(v.link_edges) == 2
-    for vertex in bm.verts:
-        vertex.select = linked_with_two_edges(vertex)
-    bmesh.update_edit_mesh(me)
-    
-    bpy.ops.mesh.dissolve_verts()
+		me = bpy.context.object.data
+		bm = bmesh.from_edit_mesh(me)
+		
+		linked_with_two_edges = lambda v: len(v.link_edges) == 2
+		for vertex in bm.verts:
+			vertex.select = linked_with_two_edges(vertex)
+		bmesh.update_edit_mesh(me)
+		
+		bpy.ops.mesh.dissolve_verts()
 
 def set_structure():
 	context = bpy.context
