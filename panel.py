@@ -36,7 +36,7 @@ def pre(layout):
 	'''
 		
 	# prepare
-	box_pre.label(text="Prepare:")
+	box_pre.label(text="Refine:")
 	box_pre.operator("wm.mesh_to_quads_simple", text="Mesh to quads simple")
 	box_pre.operator("wm.mesh_to_quads_complex", text="Mesh to quads complex")
 	box_pre.operator("wm.automerge", text="Automerge")
