@@ -239,6 +239,10 @@ def from_hull():
 	amount = phaenotyp.fh_amount
 	o_c = phaenotyp.fh_o_c
 	
+	w_list = bpy.context.scene.phaenotyp_fh_w
+	d_list = bpy.context.scene.phaenotyp_fh_d
+	h_list = bpy.context.scene.phaenotyp_fh_h
+	
 	# get objects
 	hull = scene["<Phaenotyp>fh_hull"]
 	if fh_methode == "path":
@@ -283,74 +287,166 @@ def from_hull():
 	bpy.ops.object.origin_set(type='ORIGIN_GEOMETRY', center='BOUNDS')
 	loc = structure.location
 	
-	if fh_input_type == "even":
-		# create cube
-		bpy.ops.mesh.primitive_cube_add(
-			size = 2.0,
-			calc_uvs = True,
-			enter_editmode = False,
-			align = 'WORLD',
-			location = [loc[0]+o_x, loc[1]+o_y, loc[2]+o_z],
-			rotation = (0.0, 0.0, 0.0),
-			scale = (1.0, 1.0, 1.0)
-			)
+	#if fh_input_type == "even":
+	# create cube
+	bpy.ops.mesh.primitive_cube_add(
+		size = 2.0,
+		calc_uvs = True,
+		enter_editmode = False,
+		align = 'WORLD',
+		location = [loc[0]+o_x, loc[1]+o_y, loc[2]+o_z],
+		rotation = (0.0, 0.0, 0.0),
+		scale = (1.0, 1.0, 1.0)
+		)
 
-		grid = bpy.context.selected_objects[0]
+	grid = bpy.context.selected_objects[0]
 
-		# select everything
-		vertices = grid.data.polygons
-		for vertex in vertices:
-			vertex.select = True
+	# select everything
+	vertices = grid.data.polygons
+	for vertex in vertices:
+		vertex.select = True
+
+	bpy.ops.object.mode_set(mode = 'EDIT')
+	bpy.ops.object.mode_set(mode = 'OBJECT')
+
+	# set and apply scale
+	bpy.ops.object.mode_set(mode = 'OBJECT')
+	grid.dimensions = [w,d,h]
+	bpy.ops.object.transform_apply(location=False, rotation=False, scale=True)
+
+	# create modifiere if not existing
+	modifier = grid.modifiers.get('<Phaenotyp>')
+	if modifier:
+		text = "existing modifier:" + str(modifiers)
+	else:
+		# get highest dim and offset for x and y
+		# max of x and y because the object is rotated in z-direction
+		max_dim = max(structure.dimensions[0], structure.dimensions[1])
+		max_w_d = max(w, d)
+		offset = max_dim + max_w_d + 10
+		
+		array_x = grid.modifiers.new(name="<Phaenotyp>_array-x", type='ARRAY')
+		array_x.fit_type = 'FIT_LENGTH'
+		array_x.relative_offset_displace = [1,0,0]
+		array_x.fit_length = offset
+		array_x.use_merge_vertices = True
+		
+		array_y = grid.modifiers.new(name="<Phaenotyp>_array-y", type='ARRAY')
+		array_y.fit_type = 'FIT_LENGTH'
+		array_y.relative_offset_displace = [0,1,0]
+		array_y.fit_length = offset
+		array_y.use_merge_vertices = True
+		
+		array_z = grid.modifiers.new(name="<Phaenotyp>_array-z", type='ARRAY')
+		array_z.fit_type = 'FIT_LENGTH'
+		array_z.relative_offset_displace = [0,0,1]
+		array_z.fit_length = structure.dimensions[2] + h + 10
+		array_z.use_merge_vertices = True
+
+		bpy.ops.object.convert(target='MESH')
+
+	# set cube to center
+	t = grid.dimensions * 0.5
+	grid.location = grid.location - t
+
+	# set origin to centre of bounds
+	bpy.ops.object.origin_set(type='ORIGIN_GEOMETRY', center='BOUNDS')
+
+	# rotate grid z
+	grid.rotation_euler[2] = rot_z
+	'''
+	if fh_input_type == "individual":
+		# create lists to work with
+		x_list = [o_x]
+		y_list = [o_y]
+		z_list = [o_z]
+		
+		lists = [[x_list, w_list], [y_list, d_list], [z_list, h_list]]
+
+		for target_list, input_list in lists:
+			for i, v in enumerate(input_list):
+				# first entry
+				if i == 0:
+					target_list.append(v.item_value)
+				
+				# other entries
+				else:
+					prev_v = target_list[i-1]
+					target_list.append(prev_v+v.item_value)
+		
+		# empty lists to store geometry
+		verts = []
+		edges = []
+		faces = []
+
+		# create cubes
+		for x_i in range(len(x_list)-1):
+			for y_i in range(len(y_list)-1):
+				for z_i in range(len(z_list)-1):
+					x = x_list[x_i]
+					y = y_list[y_i]
+					z = z_list[z_i]
+					
+					w = x_list[x_i+1] - x_list[x_i]
+					d = y_list[y_i+1] - y_list[y_i]
+					h = z_list[z_i+1] - z_list[z_i]
+
+					l = len(verts)
+
+					v_0 = (x,y,z)
+					v_1 = (x+w,y,z)
+					v_2 = (x+w,y+d,z)
+					v_3 = (x,y+d,z)
+					v_4 = (x,y,z+h)
+					v_5 = (x+w,y,z+h)
+					v_6 = (x+w,y+d,z+h)
+					v_7 = (x,y+d,z+h)
+
+					verts.append(v_0)
+					verts.append(v_1)
+					verts.append(v_2)
+					verts.append(v_3)
+					verts.append(v_4)
+					verts.append(v_5)
+					verts.append(v_6)
+					verts.append(v_7)
+
+					faces.append([l+0, l+1, l+2, l+3]) # bottom
+					faces.append([l+4, l+5, l+6, l+7]) # top
+					faces.append([l+0, l+3, l+7, l+4]) # side left
+					faces.append([l+1, l+2, l+6, l+5]) # side right
+					faces.append([l+2, l+3, l+7, l+6]) # back
+					faces.append([l+0, l+1, l+5, l+4]) # front
+
+
+		new_mesh = bpy.data.meshes.new('new_mesh')
+		new_mesh.from_pydata(verts, edges, faces)
+		new_mesh.update()
+
+		new_obj = bpy.data.objects.new('new_object', new_mesh)
+		bpy.context.collection.objects.link(new_obj)
+
+		bpy.context.view_layer.objects.active = new_obj
 
 		bpy.ops.object.mode_set(mode = 'EDIT')
+		bpy.ops.mesh.select_all(action='SELECT')
+		bpy.ops.mesh.remove_doubles()
+		
+		grid = new_obj
+		
 		bpy.ops.object.mode_set(mode = 'OBJECT')
-
-		# set and apply scale
-		bpy.ops.object.mode_set(mode = 'OBJECT')
-		grid.dimensions = [w,d,h]
-		bpy.ops.object.transform_apply(location=False, rotation=False, scale=True)
-
-		# create modifiere if not existing
-		modifier = grid.modifiers.get('<Phaenotyp>')
-		if modifier:
-			text = "existing modifier:" + str(modifiers)
-		else:
-			# get highest dim and offset for x and y
-			# max of x and y because the object is rotated in z-direction
-			max_dim = max(structure.dimensions[0], structure.dimensions[1])
-			max_w_d = max(w, d)
-			offset = max_dim + max_w_d + 10
-			
-			array_x = grid.modifiers.new(name="<Phaenotyp>_array-x", type='ARRAY')
-			array_x.fit_type = 'FIT_LENGTH'
-			array_x.relative_offset_displace = [1,0,0]
-			array_x.fit_length = offset
-			array_x.use_merge_vertices = True
-			
-			array_y = grid.modifiers.new(name="<Phaenotyp>_array-y", type='ARRAY')
-			array_y.fit_type = 'FIT_LENGTH'
-			array_y.relative_offset_displace = [0,1,0]
-			array_y.fit_length = offset
-			array_y.use_merge_vertices = True
-			
-			array_z = grid.modifiers.new(name="<Phaenotyp>_array-z", type='ARRAY')
-			array_z.fit_type = 'FIT_LENGTH'
-			array_z.relative_offset_displace = [0,0,1]
-			array_z.fit_length = structure.dimensions[2] + h + 10
-			array_z.use_merge_vertices = True
-
-			bpy.ops.object.convert(target='MESH')
-
+		
 		# set cube to center
-		t = grid.dimensions * 0.5
-		grid.location = grid.location - t
+		#t = grid.dimensions * 0.5
+		#grid.location = grid.location - t
 
 		# set origin to centre of bounds
-		bpy.ops.object.origin_set(type='ORIGIN_GEOMETRY', center='BOUNDS')
+		#bpy.ops.object.origin_set(type='ORIGIN_GEOMETRY', center='BOUNDS')
 
 		# rotate grid z
 		grid.rotation_euler[2] = rot_z
-
+	'''
+	
 	# select all in structure edit-mode
 	bpy.ops.object.select_all(action='DESELECT')
 	grid.select_set(True)

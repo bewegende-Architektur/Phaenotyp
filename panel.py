@@ -56,9 +56,39 @@ def pre(layout):
 	# from hull
 	box_fh = layout.box()
 	box_fh.label(text="From hull:")
-	box_fh.prop(phaenotyp, "fh_input_type", text="")
-	fh_input_type = phaenotyp.fh_input_type
+	#box_fh.prop(phaenotyp, "fh_input_type", text="")
+	#fh_input_type = phaenotyp.fh_input_type
 	
+	# simple approach even grid
+	# add more features later like individual and path
+	box_fh.prop(phaenotyp, "fh_w", text="Width")
+	box_fh.prop(phaenotyp, "fh_d", text="Depth")
+	box_fh.prop(phaenotyp, "fh_h", text="Height")
+
+	box_fh.prop(phaenotyp, "fh_o_x", text="Offset x")
+	box_fh.prop(phaenotyp, "fh_o_y", text="Offset y")
+	box_fh.prop(phaenotyp, "fh_o_z", text="Offset z")
+	box_fh.prop(phaenotyp, "fh_rot", text="Rotation")
+	
+	# get hull form user
+	hull = scene.get("<Phaenotyp>fh_hull")
+	if not hull:
+		box_fh.label(text="Hull:")
+		box_fh.operator("wm.set_hull", text="Set")
+	else:
+		text = hull.name_full + " set as hull"
+		box_fh.label(text=text)
+		
+		box_fh.operator("wm.from_hull", text="Create | Recreate")
+
+	# area
+	area = scene.get("<Phaenotyp>fh_area")
+	if area:
+		text = "Area: " + str(round(area,2)) + " m²"
+		box_fh.label(text=text)
+	
+	# more features
+	'''
 	if fh_input_type == "even":
 		# width, depth and height of structre
 		box_fh.prop(phaenotyp, "fh_w", text="Width")
@@ -128,12 +158,13 @@ def pre(layout):
 						box_fh.label(text=text)
 						
 						box_fh.operator("wm.from_hull", text="Create | Recreate")
-			
+						
 		# area
 		area = scene.get("<Phaenotyp>fh_area")
 		if area:
 			text = "Area: " + str(round(area,2)) + " m²"
 			box_fh.label(text=text)
+	'''
 		
 	# refine
 	box_refine = layout.box()
