@@ -1593,15 +1593,53 @@ class WM_OT_reset(Operator):
 		operators.reset()
 		return {"FINISHED"}
 
-class OBJECT_PT_Phaenotyp(Panel):
+class OBJECT_PT_Phaenotyp_pre(Panel):
 	'''
 	Panel for Phaenotyp.
 	'''
-	bl_label = "Phänotyp 0.3.0"
-	bl_idname = "OBJECT_PT_Phaenotyp"
+	bl_label = "Prepare"
+	bl_idname = "OBJECT_PT_Phaenotyp_pre"
 	bl_space_type = "VIEW_3D"
 	bl_region_type = "UI"
-	bl_category = "Phänotyp"
+	bl_category = "Phänotyp 0.3.0"
+
+	@classmethod
+	def poll(self,context):
+		'''
+		To hide the panel if no object is available.
+		'''
+		return context.object is not None
+
+	def draw(self, context):
+		'''
+		Is running all functions from the module called panel.
+		'''
+		layout = self.layout
+		scene = context.scene
+		phaenotyp = scene.phaenotyp
+		frame = scene.frame_current
+
+		# try to create panels
+		# this will make the restart-button also available
+		# if there is an error during the other panels
+		# for example: the file has been created with an older version
+		try:
+			# from hull and prepare
+			panel.pre(layout)
+					
+		except Exception as error:
+			# run error panel
+			panel.error(layout, basics.phaenotyp_version)
+
+class OBJECT_PT_Phaenotyp_setup_run(Panel):
+	'''
+	Panel for Phaenotyp.
+	'''
+	bl_label = "Setup | Run"
+	bl_idname = "OBJECT_PT_Phaenotyp_setup_run"
+	bl_space_type = "VIEW_3D"
+	bl_region_type = "UI"
+	bl_category = "Phänotyp 0.3.0"
 
 	@classmethod
 	def poll(self,context):
@@ -1624,9 +1662,6 @@ class OBJECT_PT_Phaenotyp(Panel):
 		# if there is an error during the other panels
 		# for example: the file has been created with an older version
 		try:
-			# from hull and prepare
-			panel.pre(layout)
-			
 			# setup and start
 			panel.structure(layout)
 			panel.scipy(layout)
@@ -1641,10 +1676,53 @@ class OBJECT_PT_Phaenotyp(Panel):
 			# select and run mode
 			selected_mode = eval("panel." + phaenotyp.mode)
 			selected_mode(layout)
+					
+		except Exception as error:
+			# run error panel
+			panel.error(layout, basics.phaenotyp_version)
+		
+		panel.reset(layout)
 
-			# fitness und optimization als Funktion?
+class OBJECT_PT_Phaenotyp_post(Panel):
+	'''
+	Panel for Phaenotyp.
+	'''
+	bl_label = "Post"
+	bl_idname = "OBJECT_PT_Phaenotyp_post"
+	bl_space_type = "VIEW_3D"
+	bl_region_type = "UI"
+	bl_category = "Phänotyp 0.3.0"
 
-			# run if there is a result
+	@classmethod
+	def poll(self,context):
+		'''
+		To hide the panel if no object is available.
+		'''
+		scene = context.scene
+		data = scene.get("<Phaenotyp>")
+		frame = scene.frame_current
+		
+		# only show if result is available
+		if data:
+			result = data["done"].get(str(frame))
+			if result:
+				return True
+
+	def draw(self, context):
+		'''
+		Is running all functions from the module called panel.
+		'''
+		layout = self.layout
+		scene = context.scene
+		phaenotyp = scene.phaenotyp
+		frame = scene.frame_current
+		
+		# try to create panels
+		# this will make the restart-button also available
+		# if there is an error during the other panels
+		# for example: the file has been created with an older version
+		try:
+			# get data and result
 			data = scene.get("<Phaenotyp>")
 			if data:
 				result = data["done"].get(str(frame))
@@ -1731,7 +1809,10 @@ classes = (
 	WM_OT_precast,
 
 	WM_OT_reset,
-	OBJECT_PT_Phaenotyp
+	
+	OBJECT_PT_Phaenotyp_pre,
+	OBJECT_PT_Phaenotyp_setup_run,
+	OBJECT_PT_Phaenotyp_post
 )
 
 @persistent
