@@ -128,6 +128,12 @@ def pre(layout):
 						box_fh.label(text=text)
 						
 						box_fh.operator("wm.from_hull", text="Create | Recreate")
+			
+		# area
+		area = scene.get("<Phaenotyp>fh_area")
+		if area:
+			text = "Area: " + str(round(area,2)) + " m²"
+			box_fh.label(text=text)
 		
 	# refine
 	box_refine = layout.box()
