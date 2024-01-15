@@ -293,7 +293,7 @@ def from_hull():
 			calc_uvs = True,
 			enter_editmode = False,
 			align = 'WORLD',
-			location = [0,0,0],
+			location = [0,0,h/2],
 			rotation = [0,0,0],
 			scale = [1,1,1]
 			)
@@ -389,17 +389,18 @@ def from_hull():
 		bpy.ops.object.origin_set(type='ORIGIN_GEOMETRY', center='BOUNDS')
 		bpy.context.view_layer.update()
 	
-	# move offset
+	# move grid to bottom of structure in z
 	loc = structure.location
-	grid.location[0] = loc[0] + o_x
-	grid.location[1] = loc[1] + o_y
-	grid.location[2] = loc[2] + o_z
+	bottom_of_structure = loc[2] - structure.dimensions[2]*0.5
+	z_position_grid = grid.location[2] + bottom_of_structure
+	grid.location[2] = z_position_grid + o_z
 	
-	# create modifiere if not existing
-	modifier = grid.modifiers.get('<Phaenotyp>')
-	if modifier:
-		pass
-	else:
+	# create modifiere
+	if fh_methode == "grid":
+		# move grid to center of structure in x and y
+		grid.location[0] = loc[0] + o_x
+		grid.location[1] = loc[1] + o_y
+	
 		# get highest dim and offset for x and y
 		# max of x and y because the object is rotated in z-direction
 		max_dim = max(structure.dimensions[0], structure.dimensions[1])
@@ -420,20 +421,74 @@ def from_hull():
 		array_z = grid.modifiers.new(name="<Phaenotyp>_array-z", type='ARRAY')
 		array_z.fit_type = 'FIT_LENGTH'
 		array_z.relative_offset_displace = [0,0,1]
-		array_z.fit_length = structure.dimensions[2] + 20
+		array_z.fit_length = structure.dimensions[2]+10
 		array_z.use_merge_vertices = True
-
+		
 		bpy.ops.object.convert(target='MESH')
+		
+		# set to center	
+		grid.location[0] -= grid.dimensions[0] * 0.5
+		grid.location[1] -= grid.dimensions[1] * 0.5
+		
+		# set origin to centre of bounds
+		bpy.ops.object.origin_set(type='ORIGIN_GEOMETRY', center='BOUNDS')
 
-	# set cube to center
-	t = grid.dimensions * 0.5
-	grid.location = grid.location - t
+	if fh_methode == "path":
+		array_x = grid.modifiers.new(name="<Phaenotyp>_array-x", type='ARRAY')
+		array_x.fit_type = 'FIT_CURVE'
+		array_x.curve = path
+		array_x.relative_offset_displace = [1,0,0]
+		array_x.use_merge_vertices = True
+		
+		array_y = grid.modifiers.new(name="<Phaenotyp>_array-x", type='ARRAY')
+		array_y.fit_type = 'FIXED_COUNT'
+		array_y.count = amount
+		array_y.relative_offset_displace = [0,1,0]
+		array_y.use_merge_vertices = True
+		
+		array_z = grid.modifiers.new(name="<Phaenotyp>_array-z", type='ARRAY')
+		array_z.fit_type = 'FIT_LENGTH'
+		array_z.fit_length = structure.dimensions[2]+10
+		array_z.relative_offset_displace = [0,0,1]
+		array_z.use_merge_vertices = True
+		
+		path.select_set(False)
+		grid.select_set(True)
+		bpy.context.view_layer.objects.active = grid
+		bpy.ops.object.convert(target='MESH')
+		
+		# curve modifier
+		curve = grid.modifiers.new(name="<Phaenotyp>_curve", type='CURVE')
+		curve.object = path
+		
+	if fh_methode == "grid":
+		# rotate grid z
+		grid.rotation_euler[2] = rot_z
 	
-	# set origin to centre of bounds
-	bpy.ops.object.origin_set(type='ORIGIN_GEOMETRY', center='BOUNDS')
-
-	# rotate grid z
-	grid.rotation_euler[2] = rot_z
+	if fh_methode == "path":
+		# set origin of path to center
+		bpy.context.scene.cursor.location = [0,0,0]
+		path.select_set(True)
+		bpy.context.view_layer.objects.active = path
+		bpy.ops.object.origin_set(type='ORIGIN_CURSOR')
+		
+		# move to match path
+		if fh_input_type == "even":
+			grid.location[1] -= amount*d/2
+		if fh_input_type == "individual":
+			d = y_list[len(y_list)-1]
+			grid.location[1] -= amount*d/2
+		
+		grid.location[1] += o_c
+		
+		# apply rotation
+		bpy.ops.object.transform_apply(location=False, rotation=True, scale=True)
+		
+		# convert to mesh
+		path.select_set(False)
+		grid.select_set(True)
+		bpy.context.view_layer.objects.active = grid
+		bpy.ops.object.convert(target='MESH')
 	
 	# select all in structure edit-mode
 	bpy.ops.object.select_all(action='DESELECT')
@@ -491,7 +546,7 @@ def from_hull():
 	
 	text = "Structure from hull created with area " + str(round(area,2)) + " m²"
 	print_data(text)
-
+	
 def automerge():
 	bpy.ops.object.mode_set(mode='OBJECT')
 	
