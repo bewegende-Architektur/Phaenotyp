@@ -277,96 +277,109 @@ def prepare_fea_pn():
 			model.add_member_dist_load(id, 'Fz', load[5]*0.01 * psf_loads, load[2]*0.01 * psf_loads) # m to cm
 
 	for id, load in loads_f.items():
-		# int(id), otherwise crashing Speicherzugriffsfehler
-		face = data["structure"].data.polygons[int(id)]
-		normal = face.normal
+		# apply force to quad if a quad is available
+		quad = quads.get(str(id))
+		if quad:
+			# int(id), otherwise crashing Speicherzugriffsfehler
+			face = data["structure"].data.polygons[int(id)]
+			normal = face.normal
 
-		edge_keys = face.edge_keys
-		area = face.area
+			edge_keys = face.edge_keys
+			area = face.area
 
-		load_normal = load[0]
-		load_projected = load[1]
-		load_area_z = load[2]
+			load_normal = load[0]
+			load_projected = load[1]
+			load_area_z = load[2]
 
-		area_projected = geometry.area_projected(face, vertices)
+			area_projected = geometry.area_projected(face, vertices)
 
-		# new version: applied to vertices
-		# a quad is needed to apply forces to
-		for vertex_id in quads[id]["vertices_ids_structure"]:
-			vertex_id = str(vertex_id)
-			x,y,z = 0,0,0
+			# a quad is available to apply forces to
+			for vertex_id in quads[id]["vertices_ids_structure"]:
+				vertex_id = str(vertex_id)
+				x,y,z = 0,0,0
 
-			# load normal
-			area_load = load_normal * area
-			x += area_load * normal[0]
-			y += area_load * normal[1]
-			z += area_load * normal[2]
+				# load normal
+				area_load = load_normal * area
+				x += area_load * normal[0]
+				y += area_load * normal[1]
+				z += area_load * normal[2]
 
-			# load projected
-			area_load = load_projected * area_projected
-			z += area_load * (-0.25) # divided by four points of each quad
+				# load projected
+				area_load = load_projected * area_projected
+				z += area_load * (-0.25) # divided by four points of each quad
+				
+				# load z
+				area_load = load_area_z * area
+				z += area_load * (-0.25) # divided by four points of each quad
+				
+				model.add_node_load(vertex_id, 'FX', x*0.01 * psf_loads) # to cm
+				model.add_node_load(vertex_id, 'FY', y*0.01 * psf_loads) # to cm
+				model.add_node_load(vertex_id, 'FZ', z*0.01 * psf_loads) # to cm
+				
+		# apply force to members
+		else:
+			# int(id), otherwise crashing Speicherzugriffsfehler
+			face = data["structure"].data.polygons[int(id)]
+			normal = face.normal
 
-			# load z
-			area_load = load_area_z * area
-			z += area_load * (-0.25) # divided by four points of each quad
+			edge_keys = face.edge_keys
+			area = face.area
 
-			model.add_node_load(vertex_id, 'FX', x*0.01 * psf_loads) # to cm
-			model.add_node_load(vertex_id, 'FY', y*0.01 * psf_loads) # to cm
-			model.add_node_load(vertex_id, 'FZ', z*0.01 * psf_loads) # to cm
+			load_normal = load[0]
+			load_projected = load[1]
+			load_area_z = load[2]
 
+			area_projected = geometry.area_projected(face, vertices)
 
-		# old version: applied to edges
-		'''
-		distances, perimeter = geometry.perimeter(edge_keys, vertices)
+			distances, perimeter = geometry.perimeter(edge_keys, vertices)
 
-		# define loads for each edge
-		edge_load_normal = []
-		edge_load_projected = []
-		edge_load_area_z = []
+			# define loads for each edge
+			edge_load_normal = []
+			edge_load_projected = []
+			edge_load_area_z = []
 
-		ratio = 1 / len(edge_keys)
-		for edge_id, dist in enumerate(distances):
-			# load_normal
-			area_load = load_normal * area
-			edge_load = area_load * ratio / dist * 0.01 # m to cm
-			edge_load_normal.append(edge_load)
+			ratio = 1 / len(edge_keys)
+			for edge_id, dist in enumerate(distances):
+				# load_normal
+				area_load = load_normal * area
+				edge_load = area_load * ratio / dist * 0.01 # m to cm
+				edge_load_normal.append(edge_load)
 
-			# load projected
-			area_load = load_projected * area_projected
-			edge_load = area_load * ratio / dist * 0.01 # m to cm
-			edge_load_projected.append(edge_load)
+				# load projected
+				area_load = load_projected * area_projected
+				edge_load = area_load * ratio / dist * 0.01 # m to cm
+				edge_load_projected.append(edge_load)
 
-			# load projected
-			area_load = load_area_z * area
-			edge_load = area_load * ratio / dist * 0.01 # m to cm
-			edge_load_area_z.append(edge_load)
+				# load projected
+				area_load = load_area_z * area
+				edge_load = area_load * ratio / dist * 0.01 # m to cm
+				edge_load_area_z.append(edge_load)
 
-		# i is the id within the class (0, 1, 3 and maybe more)
-		# edge_id is the id of the edge in the mesh -> the member
-		for i, edge_key in enumerate(edge_keys):
-			# get name <---------------------------------------- maybe better method?
-			for edge in edges:
-				if edge.vertices[0] in edge_key:
-					if edge.vertices[1] in edge_key:
-						name = "member_" + str(edge.index)
+			# i is the id within the class (0, 1, 3 and maybe more)
+			# edge_id is the id of the edge in the mesh -> the member
+			for i, edge_key in enumerate(edge_keys):
+				# get name <---------------------------------------- maybe better method?
+				for edge in edges:
+					if edge.vertices[0] in edge_key:
+						if edge.vertices[1] in edge_key:
+							name = str(edge.index)
 
-			# edge_load_normal <--------------------------------- to be tested / checked
-			x = edge_load_normal[i] * normal[0]
-			y = edge_load_normal[i] * normal[1]
-			z = edge_load_normal[i] * normal[2]
+				# edge_load_normal <--------------------------------- to be tested / checked
+				x = edge_load_normal[i] * normal[0]
+				y = edge_load_normal[i] * normal[1]
+				z = edge_load_normal[i] * normal[2]
 
-			model.add_member_dist_load(name, 'FX', x, x)
-			model.add_member_dist_load(name, 'FY', y, y)
-			model.add_member_dist_load(name, 'FZ', z, z)
+				model.add_member_dist_load(name, 'FX', x, x)
+				model.add_member_dist_load(name, 'FY', y, y)
+				model.add_member_dist_load(name, 'FZ', z, z)
 
-			# edge_load_projected
-			z = edge_load_projected[i]
-			model.add_member_dist_load(name, 'FZ', z, z)
+				# edge_load_projected
+				z = edge_load_projected[i]
+				model.add_member_dist_load(name, 'FZ', z, z)
 
-			# edge_load_area_z
-			z = edge_load_area_z[i]
-			model.add_member_dist_load(name, 'FZ', z, z)
-		'''
+				# edge_load_area_z
+				z = edge_load_area_z[i]
+				model.add_member_dist_load(name, 'FZ', z, z)
 
 	# store frame based data
 	data["frames"][str(frame)]["volume"] = geometry.volume(mesh)

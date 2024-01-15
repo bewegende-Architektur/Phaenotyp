@@ -1412,14 +1412,38 @@ def set_load():
 						data["loads_e"].pop(str(id))
 
 	if phaenotyp.load_type == "faces":
-		# loads can only be applied to existing nodes, members and quads
+		# check if quad is available
 		possible = True
-		for polygon in obj.data.polygons:
-			if polygon.select:
-				id = polygon.index
+		for face in obj.data.polygons:
+			if face.select:
+				id = face.index
 				if str(id) not in quads:
 					possible = False
 					break
+		
+		# if not possible for quads
+		if possible == False:
+			# check if edges are available
+			possible = True
+			for face in obj.data.polygons:
+				if face.select:
+					edge_keys = face.edge_keys
+					for key in edge_keys:
+						for edge in obj.data.edges:
+							v_0 = edge.vertices[0]
+							v_1 = edge.vertices[1]
+							if key[0] == v_0 and key[1] == v_1:
+								id = edge.index
+								if str(id) not in members:
+									possible = False
+									break
+							
+							if key[1] == v_0 and key[0] == v_1:
+								id = edge.index
+								if str(id) not in members:
+									possible = False
+									break
+									
 		
 		# needs to be possible for fd
 		if calculation_type == "force_distribution":
@@ -1431,9 +1455,9 @@ def set_load():
 		
 		# apply loads
 		else:
-			for polygon in obj.data.polygons:
-				if polygon.select:
-					id = polygon.index
+			for face in obj.data.polygons:
+				if face.select:
+					id = face.index
 					load = [
 						phaenotyp.load_normal,
 						phaenotyp.load_projected,
