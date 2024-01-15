@@ -285,81 +285,30 @@ def from_hull():
 	
 	# set origin of hull to centre of bounds
 	bpy.ops.object.origin_set(type='ORIGIN_GEOMETRY', center='BOUNDS')
-	loc = structure.location
 	
-	#if fh_input_type == "even":
-	# create cube
-	bpy.ops.mesh.primitive_cube_add(
-		size = 2.0,
-		calc_uvs = True,
-		enter_editmode = False,
-		align = 'WORLD',
-		location = [loc[0]+o_x, loc[1]+o_y, loc[2]+o_z],
-		rotation = (0.0, 0.0, 0.0),
-		scale = (1.0, 1.0, 1.0)
-		)
+	if fh_input_type == "even":
+		# create cube
+		bpy.ops.mesh.primitive_cube_add(
+			size = 1,
+			calc_uvs = True,
+			enter_editmode = False,
+			align = 'WORLD',
+			location = [0,0,0],
+			rotation = [0,0,0],
+			scale = [1,1,1]
+			)
 
-	grid = bpy.context.selected_objects[0]
-
-	# select everything
-	vertices = grid.data.polygons
-	for vertex in vertices:
-		vertex.select = True
-
-	bpy.ops.object.mode_set(mode = 'EDIT')
-	bpy.ops.object.mode_set(mode = 'OBJECT')
-
-	# set and apply scale
-	bpy.ops.object.mode_set(mode = 'OBJECT')
-	grid.dimensions = [w,d,h]
-	bpy.ops.object.transform_apply(location=False, rotation=False, scale=True)
-
-	# create modifiere if not existing
-	modifier = grid.modifiers.get('<Phaenotyp>')
-	if modifier:
-		text = "existing modifier:" + str(modifiers)
-	else:
-		# get highest dim and offset for x and y
-		# max of x and y because the object is rotated in z-direction
-		max_dim = max(structure.dimensions[0], structure.dimensions[1])
-		max_w_d = max(w, d)
-		offset = max_dim + max_w_d + 10
+		grid = context.selected_objects[0]
 		
-		array_x = grid.modifiers.new(name="<Phaenotyp>_array-x", type='ARRAY')
-		array_x.fit_type = 'FIT_LENGTH'
-		array_x.relative_offset_displace = [1,0,0]
-		array_x.fit_length = offset
-		array_x.use_merge_vertices = True
-		
-		array_y = grid.modifiers.new(name="<Phaenotyp>_array-y", type='ARRAY')
-		array_y.fit_type = 'FIT_LENGTH'
-		array_y.relative_offset_displace = [0,1,0]
-		array_y.fit_length = offset
-		array_y.use_merge_vertices = True
-		
-		array_z = grid.modifiers.new(name="<Phaenotyp>_array-z", type='ARRAY')
-		array_z.fit_type = 'FIT_LENGTH'
-		array_z.relative_offset_displace = [0,0,1]
-		array_z.fit_length = structure.dimensions[2] + h + 10
-		array_z.use_merge_vertices = True
+		# set and apply scale
+		grid.dimensions = [w,d,h]
+		bpy.ops.object.transform_apply(location=False, rotation=False, scale=True)
 
-		bpy.ops.object.convert(target='MESH')
-
-	# set cube to center
-	t = grid.dimensions * 0.5
-	grid.location = grid.location - t
-
-	# set origin to centre of bounds
-	bpy.ops.object.origin_set(type='ORIGIN_GEOMETRY', center='BOUNDS')
-
-	# rotate grid z
-	grid.rotation_euler[2] = rot_z
-	'''
 	if fh_input_type == "individual":
 		# create lists to work with
-		x_list = [o_x]
-		y_list = [o_y]
-		z_list = [o_z]
+		x_list = [0]
+		y_list = [0]
+		z_list = [0]
 		
 		lists = [[x_list, w_list], [y_list, d_list], [z_list, h_list]]
 
@@ -371,7 +320,7 @@ def from_hull():
 				
 				# other entries
 				else:
-					prev_v = target_list[i-1]
+					prev_v = target_list[i]
 					target_list.append(prev_v+v.item_value)
 		
 		# empty lists to store geometry
@@ -431,21 +380,60 @@ def from_hull():
 		bpy.ops.object.mode_set(mode = 'EDIT')
 		bpy.ops.mesh.select_all(action='SELECT')
 		bpy.ops.mesh.remove_doubles()
-		
+		bpy.ops.object.mode_set(mode = 'OBJECT')
+
 		grid = new_obj
 		
-		bpy.ops.object.mode_set(mode = 'OBJECT')
+		# set origin to center
+		grid.select_set(True)
+		bpy.ops.object.origin_set(type='ORIGIN_GEOMETRY', center='BOUNDS')
+		bpy.context.view_layer.update()
+	
+	# move offset
+	loc = structure.location
+	grid.location[0] = loc[0] + o_x
+	grid.location[1] = loc[1] + o_y
+	grid.location[2] = loc[2] + o_z
+	
+	# create modifiere if not existing
+	modifier = grid.modifiers.get('<Phaenotyp>')
+	if modifier:
+		pass
+	else:
+		# get highest dim and offset for x and y
+		# max of x and y because the object is rotated in z-direction
+		max_dim = max(structure.dimensions[0], structure.dimensions[1])
+		offset = max_dim + 20
 		
-		# set cube to center
-		#t = grid.dimensions * 0.5
-		#grid.location = grid.location - t
+		array_x = grid.modifiers.new(name="<Phaenotyp>_array-x", type='ARRAY')
+		array_x.fit_type = 'FIT_LENGTH'
+		array_x.relative_offset_displace = [1,0,0]
+		array_x.fit_length = offset
+		array_x.use_merge_vertices = True
+		
+		array_y = grid.modifiers.new(name="<Phaenotyp>_array-y", type='ARRAY')
+		array_y.fit_type = 'FIT_LENGTH'
+		array_y.relative_offset_displace = [0,1,0]
+		array_y.fit_length = offset
+		array_y.use_merge_vertices = True
+		
+		array_z = grid.modifiers.new(name="<Phaenotyp>_array-z", type='ARRAY')
+		array_z.fit_type = 'FIT_LENGTH'
+		array_z.relative_offset_displace = [0,0,1]
+		array_z.fit_length = structure.dimensions[2] + 20
+		array_z.use_merge_vertices = True
 
-		# set origin to centre of bounds
-		#bpy.ops.object.origin_set(type='ORIGIN_GEOMETRY', center='BOUNDS')
+		bpy.ops.object.convert(target='MESH')
 
-		# rotate grid z
-		grid.rotation_euler[2] = rot_z
-	'''
+	# set cube to center
+	t = grid.dimensions * 0.5
+	grid.location = grid.location - t
+	
+	# set origin to centre of bounds
+	bpy.ops.object.origin_set(type='ORIGIN_GEOMETRY', center='BOUNDS')
+
+	# rotate grid z
+	grid.rotation_euler[2] = rot_z
 	
 	# select all in structure edit-mode
 	bpy.ops.object.select_all(action='DESELECT')

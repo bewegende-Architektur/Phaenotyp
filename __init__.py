@@ -39,12 +39,12 @@ def fh_update(self, context):
 	
 	# check if all objects are available
 	valid_objects = True
-	hull = scene["<Phaenotyp>fh_hull"]
+	hull = scene.get("<Phaenotyp>fh_hull")
 	if not hull:
 		valid_objects = False
 		
 	if fh_methode == "path":
-		path = scene["<Phaenotyp>fh_path"]
+		path = scene.get("<Phaenotyp>fh_path")
 		if not path:
 			valid_objects = False
 	
@@ -66,6 +66,7 @@ class phaenotyp_properties(PropertyGroup):
 					("path", "Path", "")
 					],
 			default = "-",
+			update = fh_update
 			)
 
 		fh_input_type: EnumProperty(
@@ -77,6 +78,7 @@ class phaenotyp_properties(PropertyGroup):
 					("individual", "Individual", "")
 					],
 			default = "-",
+			update = fh_update
 			)
 		
 		fh_w: FloatProperty(
@@ -1141,8 +1143,8 @@ class phaenotyp_properties(PropertyGroup):
 # https://sinestesia.co/blog/tutorials/using-uilists-in-blender/
 # https://blenderartists.org/t/create-and-handle-multiple-uilists
 class PHAENOTYP_list_item(PropertyGroup):
-	item_name: StringProperty(name="item_name", default="Name")
-	item_value: FloatProperty(name="item_value", default=3.0)
+	item_name: StringProperty(name="item_name", default="Name", update = fh_update)
+	item_value: FloatProperty(name="item_value", default=3.0, update = fh_update)
 
 class PHAENOTYP_UL_List(UIList):
 	def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
