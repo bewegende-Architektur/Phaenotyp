@@ -949,7 +949,21 @@ class phaenotyp_properties(PropertyGroup):
 			update = viz_update,
 			default = "T_xy"
 			)
-				
+
+		viz_boundaries_members: FloatProperty(
+			name = "viz_boundaries_members",
+			description = "Max / min value of selected force in all frames",
+			update = viz_update,
+			default = 0
+			)
+
+		viz_boundaries_quads: FloatProperty(
+			name = "viz_boundaries_quads",
+			description = "Max / min value of selected force in all frames",
+			update = viz_update,
+			default = 0
+			)
+		
 		viz_scale: FloatProperty(
 			name = "viz_scale",
 			description = "scale",
@@ -1207,7 +1221,7 @@ class LIST_OT_move_item(Operator):
 		
 		fh_update(self, context)
 		return{'FINISHED'}
-
+		
 class WM_OT_set_hull(Operator):
 	'''
 	Is calling set_hull from the module called operators.
@@ -1676,6 +1690,19 @@ class WM_OT_gd_start(Operator):
 		operators.gd_start()
 		return {"FINISHED"}
 
+class WM_OT_get_boundaries(Operator):
+	'''
+	Is calling get_boundaries from the module called operators.
+	Check out further info in there.
+	'''
+	bl_label = "get_boundaries"
+	bl_idname = "wm.get_boundaries"
+	bl_description = "Get the lowest and highest value of all frames"
+
+	def execute(self, context):
+		operators.get_boundaries()
+		return {"FINISHED"}
+		
 class WM_OT_ranking(Operator):
 	'''
 	Is calling ranking from the module called operators.
@@ -2098,9 +2125,10 @@ classes = (
 	WM_OT_bf_start,
 	WM_OT_ga_start,
 	WM_OT_gd_start,
+	
+	WM_OT_get_boundaries,
 	WM_OT_ranking,
 	WM_OT_render_animation,
-
 	WM_OT_text,
 	WM_OT_selection,
 

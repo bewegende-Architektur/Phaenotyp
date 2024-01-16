@@ -2606,6 +2606,91 @@ def gd_start():
 	if phaenotyp.calculation_type != "geometrical":
 		basics.view_vertex_colors()
 
+def get_boundaries():
+	print_data("get boundaries")
+	
+	scene = bpy.context.scene
+	data = scene["<Phaenotyp>"]
+	phaenotyp = scene.phaenotyp
+	calculation_type = phaenotyp.calculation_type
+	members = data["members"]
+	quads = data["quads"]
+	
+	start = scene.frame_start
+	end = scene.frame_end
+	
+	lowest = 0
+	highest = 0
+	
+	# get forces of members
+	if phaenotyp.calculation_type != "force_distribution":
+		force_type = phaenotyp.forces_pn
+					
+		for frame in range(start, end):
+			for id in members:
+				member = members[id]
+				results = member[force_type].get(str(frame))
+				if results:
+					# if utilization in viz
+					if force_type == "utilization":
+						if results > highest:
+							highest = results
+						if results < lowest:
+							lowest = results
+							
+					# for more than one entrie
+					else:
+						for result in results:
+							if result > highest:
+								highest = result
+							if result < lowest:
+								lowest = result
+	
+	else:
+		force_type = phaenotyp.forces_fn
+					
+		for frame in range(start, end):
+			for id in members:
+				member = members[id]
+				results = member[force_type].get(str(frame))
+				if results > highest:
+					highest = results
+				if results < lowest:
+					lowest = results
+								
+	print("Boundary of members " + force_type + ":", lowest, "|", highest)
+	max_diff = basics.return_max_diff_to_zero([lowest, highest])
+	phaenotyp.viz_boundaries_members = max_diff
+	
+	# get forces of quads
+	
+	lowest = 0
+	highest = 0
+	
+	force_type = phaenotyp.forces_quads
+	for frame in range(start, end):
+		for id in quads:
+			quad = quads[id]
+			result_1 = quad[force_type + "_1"]
+			results = result_1.get(str(frame))
+			if results:			
+				if results > highest:
+					highest = results
+				if results < lowest:
+					lowest = results
+
+				result_2 = quad[force_type + "_2"]
+				results = result_1.get(str(frame))
+				
+				if results > highest:
+					highest = results
+				if results < lowest:
+					lowest = results
+											
+	print("Boundary of quads " + force_type + ":", lowest, "|", highest)
+	max_diff = basics.return_max_diff_to_zero([lowest, highest])
+	phaenotyp.viz_boundaries_quads = max_diff
+	
 def ranking():
 	scene = bpy.context.scene
 	data = scene["<Phaenotyp>"]

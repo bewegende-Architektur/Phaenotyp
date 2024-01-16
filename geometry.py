@@ -1054,6 +1054,10 @@ def update_geometry_post():
 	
 	viz_deflection = phaenotyp.viz_deflection * 0.01
 	
+	viz_boundaries_members = phaenotyp.viz_boundaries_members
+	viz_boundaries_quads = phaenotyp.viz_boundaries_quads
+	viz_scale = phaenotyp.viz_scale / 100 # for percentage
+	
 	for id, member in members.items():
 		id = int(id)
 
@@ -1079,7 +1083,7 @@ def update_geometry_post():
 				if phaenotyp.forces_pn == "utilization":
 					force = result[str(frame)] - 1
 					# rainbow
-					h = force * phaenotyp.viz_scale + 0.333
+					h = force / viz_boundaries_members * viz_scale + 0.333
 					if h > 0.666:
 						h = 0.666
 					if h < 0:
@@ -1103,7 +1107,7 @@ def update_geometry_post():
 						force = result[str(frame)][i]
 					
 					# rainbow
-					h = force * phaenotyp.viz_scale + 0.333
+					h = force / viz_boundaries_members * viz_scale + 0.333
 					if h > 0.666:
 						h = 0.666
 					if h < 0:
@@ -1131,7 +1135,7 @@ def update_geometry_post():
 
 				force = result[str(frame)]
 				# rainbow
-				h = force * phaenotyp.viz_scale + 0.333
+				h = force / viz_boundaries_members * viz_scale + 0.333
 				if h > 0.666:
 					h = 0.666
 				if h < 0:
@@ -1218,7 +1222,7 @@ def update_geometry_post():
 				force = 0
 
 			# rainbow
-			h = force * phaenotyp.viz_scale*viz_factor + 0.333
+			h = force / viz_boundaries_quads * viz_scale + 0.333
 			#h = 0.333/phaenotyp.viz_scale*force  + 0.333
 			if h > 0.666:
 				h = 0.666
@@ -1244,7 +1248,7 @@ def update_geometry_post():
 				force = 0
 
 			# rainbow
-			h = force * phaenotyp.viz_scale*viz_factor + 0.333
+			h = force / viz_boundaries_quads * viz_scale + 0.333
 			#h = 0.333/phaenotyp.viz_scale*force  + 0.333
 			if h > 0.666:
 				h = 0.666
