@@ -1513,6 +1513,8 @@ def decimate_topology():
 	members = data["members"]
 	obj = data["structure"] # applied to structure
 	frame = bpy.context.scene.frame_current
+	
+	obj.hide_set(False)
 
 	bpy.context.view_layer.objects.active = obj
 
