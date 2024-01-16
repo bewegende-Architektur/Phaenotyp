@@ -2660,10 +2660,11 @@ def get_boundaries():
 								
 	print("Boundary of members " + force_type + ":", lowest, "|", highest)
 	max_diff = basics.return_max_diff_to_zero([lowest, highest])
+	if abs(max_diff) < 0.001:
+		max_diff = 0.001 # to avoid diff zero
 	phaenotyp.viz_boundaries_members = max_diff
 	
 	# get forces of quads
-	
 	lowest = 0
 	highest = 0
 	
@@ -2689,6 +2690,8 @@ def get_boundaries():
 											
 	print("Boundary of quads " + force_type + ":", lowest, "|", highest)
 	max_diff = basics.return_max_diff_to_zero([lowest, highest])
+	if abs(max_diff) < 0.001:
+		max_diff = 0.001 # to avoid diff zero
 	phaenotyp.viz_boundaries_quads = max_diff
 	
 def ranking():

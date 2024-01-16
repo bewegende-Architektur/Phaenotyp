@@ -1054,8 +1054,8 @@ def update_geometry_post():
 	
 	viz_deflection = phaenotyp.viz_deflection * 0.01
 	
-	viz_boundaries_members = phaenotyp.viz_boundaries_members
-	viz_boundaries_quads = phaenotyp.viz_boundaries_quads
+	viz_boundaries_members = abs(phaenotyp.viz_boundaries_members)
+	viz_boundaries_quads = abs(phaenotyp.viz_boundaries_quads)
 	viz_scale = phaenotyp.viz_scale / 100 # for percentage
 	
 	for id, member in members.items():

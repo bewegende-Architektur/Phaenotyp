@@ -5,8 +5,8 @@ from queue import Queue
 from time import time
 from datetime import timedelta
 
-blender_version = (3,5,1)
-phaenotyp_version = (0,2,4)
+blender_version = (4,0,2)
+phaenotyp_version = (0,3,0)
 phaenotyp_name = (
 	"Phänotyp " 
 	+ str(phaenotyp_version[0]) + "."
