@@ -954,14 +954,14 @@ class phaenotyp_properties(PropertyGroup):
 			name = "viz_boundaries_members",
 			description = "Max / min value of selected force in all frames",
 			update = viz_update,
-			default = 0
+			default = 50
 			)
 
 		viz_boundaries_quads: FloatProperty(
 			name = "viz_boundaries_quads",
 			description = "Max / min value of selected force in all frames",
 			update = viz_update,
-			default = 0
+			default = 50
 			)
 		
 		viz_scale: FloatProperty(
