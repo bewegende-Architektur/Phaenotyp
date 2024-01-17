@@ -1303,15 +1303,16 @@ def update_geometry_post():
 			t = e_1 - e_0
 			t = t*0.25
 			
+			### first side
+			
 			# rotate vector for alpha_1
 			a = quad["alpha_1"][str(frame)]# * 3.14/180
 			
-			x = quad["s_1_1"][str(frame)]
-			y = quad["s_1_2"][str(frame)]
-			s = Vector((x,y,0))
-			radius = s.length * viz_stressline_scale
+			main_force_1 = quad["s_1_1"][str(frame)]
+			main_force_2 = quad["s_2_1"][str(frame)]
+			radius = abs(main_force_1 * viz_stressline_scale)
 
-			mat = Matrix.Rotation(radians(a), 4, normal)
+			mat = Matrix.Rotation(radians(a+90), 4, normal)
 			vec = Vector(t)
 			vec.rotate(mat)
 			
@@ -1320,18 +1321,19 @@ def update_geometry_post():
 			radius_group.add(ids, radius, 'REPLACE')
 			
 			# set color
-			attribute.data[quad["stresslines_viz"][0]].color = [0, 0, 1, 1.0]
-			attribute.data[quad["stresslines_viz"][1]].color = [0, 0, 1, 1.0]
-			
+			if main_force_1 < 0: # pressure is blue
+				attribute.data[quad["stresslines_viz"][0]].color = [0, 0, 1, 1.0]
+				attribute.data[quad["stresslines_viz"][1]].color = [0, 0, 1, 1.0]
+			else: # tension is red
+				attribute.data[quad["stresslines_viz"][0]].color = [1, 0, 0, 1.0]
+				attribute.data[quad["stresslines_viz"][1]].color = [1, 0, 0, 1.0]
+				
 			# set position of first edge			
 			stress_vertices[quad["stresslines_viz"][0]].co = mid - vec
 			stress_vertices[quad["stresslines_viz"][1]].co = mid + vec
 			
-			if a > 0:
-				a = a+90
-			else:
-				a = a-90
-
+			radius = abs(main_force_2 * viz_stressline_scale)
+			
 			mat = Matrix.Rotation(radians(a), 4, normal)
 			vec = Vector(t)
 			vec.rotate(mat)
@@ -1341,22 +1343,28 @@ def update_geometry_post():
 			radius_group.add(ids, radius, 'REPLACE')
 			
 			# set color
-			attribute.data[quad["stresslines_viz"][4]].color = [1, 0, 0, 1.0]
-			attribute.data[quad["stresslines_viz"][5]].color = [1, 0, 0, 1.0]
+			if main_force_2 < 0: # pressure is blue
+				attribute.data[quad["stresslines_viz"][4]].color = [0, 0, 1, 1.0]
+				attribute.data[quad["stresslines_viz"][5]].color = [0, 0, 1, 1.0]
+			else: # tension is red
+				attribute.data[quad["stresslines_viz"][4]].color = [1, 0, 0, 1.0]
+				attribute.data[quad["stresslines_viz"][5]].color = [1, 0, 0, 1.0]
 			
 			# set position of first edge			
 			stress_vertices[quad["stresslines_viz"][4]].co = mid - vec
 			stress_vertices[quad["stresslines_viz"][5]].co = mid + vec
 			
+			### second side
+			
 			# rotate vector for alpha_2
 			a = quad["alpha_2"][str(frame)]# * 3.14/180
 			
-			x = quad["s_2_1"][str(frame)]
-			y = quad["s_2_2"][str(frame)]
-			s = Vector((x,y,0))
-			radius = s.length * viz_stressline_scale
+			main_force_1 = quad["s_1_2"][str(frame)]
+			main_force_2 = quad["s_2_2"][str(frame)]
 			
-			mat = Matrix.Rotation(radians(a), 4, normal)
+			radius = abs(main_force_1 * viz_stressline_scale)
+			
+			mat = Matrix.Rotation(radians(a+90), 4, normal)
 			vec = Vector(t)
 			vec.rotate(mat)
 			
@@ -1369,14 +1377,14 @@ def update_geometry_post():
 			stress_vertices[quad["stresslines_viz"][3]].co = mid + vec - normal*thickness
 
 			# set color
-			attribute.data[quad["stresslines_viz"][2]].color = [0, 0, 1, 1.0]
-			attribute.data[quad["stresslines_viz"][3]].color = [0, 0, 1, 1.0]
-
-			if a > 0:
-				a = a+90
-			else:
-				a = a-90
+			if main_force_1 < 0: # pressure is blue
+				attribute.data[quad["stresslines_viz"][2]].color = [0, 0, 1, 1.0]
+				attribute.data[quad["stresslines_viz"][3]].color = [0, 0, 1, 1.0]
+			else: # tension is red
+				attribute.data[quad["stresslines_viz"][2]].color = [1, 0, 0, 1.0]
+				attribute.data[quad["stresslines_viz"][3]].color = [1, 0, 0, 1.0]
 			
+			radius = abs(main_force_2 * viz_stressline_scale)
 			mat = Matrix.Rotation(radians(a), 4, normal)
 			vec = Vector(t)
 			vec.rotate(mat)
@@ -1390,8 +1398,12 @@ def update_geometry_post():
 			stress_vertices[quad["stresslines_viz"][7]].co = mid + vec - normal*thickness
 
 			# set color
-			attribute.data[quad["stresslines_viz"][6]].color = [1, 0, 0, 1.0]
-			attribute.data[quad["stresslines_viz"][7]].color = [1, 0, 0, 1.0]
+			if main_force_2 < 0: # pressure is blue
+				attribute.data[quad["stresslines_viz"][6]].color = [0, 0, 1, 1.0]
+				attribute.data[quad["stresslines_viz"][7]].color = [0, 0, 1, 1.0]
+			else: # tension is red
+				attribute.data[quad["stresslines_viz"][6]].color = [1, 0, 0, 1.0]
+				attribute.data[quad["stresslines_viz"][7]].color = [1, 0, 0, 1.0]
 			
 def create_loads(structure_obj, loads_v, loads_e, loads_f):
 	# like suggested here by Gorgious and CodeManX:

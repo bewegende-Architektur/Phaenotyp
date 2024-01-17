@@ -283,7 +283,7 @@ def prepare_fea_pn():
 			normal = face.normal
 
 			edge_keys = face.edge_keys
-			area = face.area
+			area = face.area # in m²
 
 			load_normal = load[0]
 			load_projected = load[1]
@@ -321,7 +321,7 @@ def prepare_fea_pn():
 			normal = face.normal
 
 			edge_keys = face.edge_keys
-			area = face.area
+			area = face.area # in m²
 
 			load_normal = load[0]
 			load_projected = load[1]
@@ -348,7 +348,7 @@ def prepare_fea_pn():
 				edge_load = area_load * ratio / dist * 0.01 # m to cm
 				edge_load_projected.append(edge_load)
 
-				# load projected
+				# load in z
 				area_load = load_area_z * area
 				edge_load = area_load * ratio / dist * 0.01 # m to cm
 				edge_load_area_z.append(edge_load)
@@ -564,7 +564,7 @@ def prepare_fea_fd():
 
 		ratio = 1 / len(edge_keys)
 		for edge_id, dist in enumerate(distances):
-			# load_normal
+			# load normal
 			area_load = load_normal * area
 			edge_load = area_load * ratio / dist * 0.01 *psf_loads # m to cm + psf
 			edge_load_normal.append(edge_load)
@@ -574,7 +574,7 @@ def prepare_fea_fd():
 			edge_load = area_load * ratio / dist * 0.01 *psf_loads # m to cm + psf
 			edge_load_projected.append(edge_load)
 
-			# load projected
+			# load in z
 			area_load = load_area_z * area
 			edge_load = area_load * ratio / dist * 0.01 *psf_loads # m to cm + psf
 			edge_load_area_z.append(edge_load)
@@ -1089,10 +1089,27 @@ def interweave_results_pn(feas):
 			s_2_1 = (s_x_2 + s_y_2)/2 + sqrt(((s_x_2 - s_y_2)/2)**2 + T_xy_2**2)   # für Darstellung
 			s_2_2 = (s_x_2 + s_y_2)/2 - sqrt(((s_x_2 - s_y_2)/2)**2 + T_xy_2**2)   # für Darstellung
 			'''
-			s_1_1 = (s_x_1 + s_y_1)/2 + sqrt(((s_x_1 - s_y_1)/2)**2 + T_xy_1**2)   # für Darstellung
-			s_2_2 = (s_x_1 + s_y_1)/2 - sqrt(((s_x_1 - s_y_1)/2)**2 + T_xy_1**2)   # für Darstellung
-			s_2_1 = (s_x_2 + s_y_2)/2 + sqrt(((s_x_2 - s_y_2)/2)**2 + T_xy_2**2)   # für Darstellung
-			s_1_2 = (s_x_2 + s_y_2)/2 - sqrt(((s_x_2 - s_y_2)/2)**2 + T_xy_2**2)   # für Darstellung
+			# f = force, s = side
+			s_f1_s1 = (s_x_1 + s_y_1)/2 + sqrt(((s_x_1 - s_y_1)/2)**2 + T_xy_1**2)   # für Darstellung
+			s_f2_s1 = (s_x_1 + s_y_1)/2 - sqrt(((s_x_1 - s_y_1)/2)**2 + T_xy_1**2)   # für Darstellung
+			s_f1_s2 = (s_x_2 + s_y_2)/2 + sqrt(((s_x_2 - s_y_2)/2)**2 + T_xy_2**2)   # für Darstellung
+			s_f2_s2 = (s_x_2 + s_y_2)/2 - sqrt(((s_x_2 - s_y_2)/2)**2 + T_xy_2**2)   # für Darstellung
+			
+			# first side
+			if abs(s_f1_s1) > abs(s_f2_s1):
+				s_1_1 = s_f1_s1
+				s_2_1 = s_f2_s1
+			else:
+				s_2_1 = s_f1_s1
+				s_1_1 = s_f2_s1
+
+			# second side
+			if abs(s_f1_s2) > abs(s_f2_s2):
+				s_1_2 = s_f1_s2
+				s_2_2 = s_f2_s2
+			else:
+				s_2_2 = s_f1_s2
+				s_1_2 = s_f2_s2
 			
 			# Winkel der Hautptspannungen an den Oberflächen 1 und 2
 			v = (2* T_xy_1/(s_x_1 - s_y_1))

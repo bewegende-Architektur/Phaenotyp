@@ -109,12 +109,7 @@ def start():
 	data["results"] = {}
 	results = data["results"]
 
-	# get data from gui
-	delta = phaenotyp.gd_delta
-	learning_rate = phaenotyp.gd_learning_rate
-	abort = phaenotyp.gd_abort
-	maxiteration = phaenotyp.gd_max_iteration
-	
+	# get data from gui	
 	learning_rate = phaenotyp.nn_learning_rate
 	epochs = phaenotyp.nn_epochs
 	
@@ -146,4 +141,4 @@ def start():
 			result = nn.predict([0.1, 0.7, 0.2])*scale
 			results[fitness_function] = result
 		except:
-			print("error to solve")
+			pass
