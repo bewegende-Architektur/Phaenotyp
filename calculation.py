@@ -260,21 +260,19 @@ def prepare_fea_pn():
 		model.add_node_load(id, 'FX', load[0] * psf_loads)
 		model.add_node_load(id, 'FY', load[1] * psf_loads)
 		model.add_node_load(id, 'FZ', load[2] * psf_loads)
-
-		if calculation_type not in ["geometrical", "force_distribution"]:
-			model.add_node_load(id, 'MX', load[3] * psf_loads)
-			model.add_node_load(id, 'MY', load[4] * psf_loads)
-			model.add_node_load(id, 'MZ', load[5] * psf_loads)
+		
+		model.add_node_load(id, 'MX', load[3] * psf_loads)
+		model.add_node_load(id, 'MY', load[4] * psf_loads)
+		model.add_node_load(id, 'MZ', load[5] * psf_loads)
 
 	for id, load in loads_e.items():
 		model.add_member_dist_load(id, 'FX', load[0]*0.01 * psf_loads, load[0]*0.01 * psf_loads) # m to cm
 		model.add_member_dist_load(id, 'FY', load[1]*0.01 * psf_loads, load[1]*0.01 * psf_loads) # m to cm
 		model.add_member_dist_load(id, 'FZ', load[2]*0.01 * psf_loads, load[2]*0.01 * psf_loads) # m to cm
-
-		if calculation_type not in ["geometrical", "force_distribution"]:
-			model.add_member_dist_load(id, 'Fx', load[3]*0.01 * psf_loads, load[0]*0.01 * psf_loads) # m to cm
-			model.add_member_dist_load(id, 'Fy', load[4]*0.01 * psf_loads, load[1]*0.01 * psf_loads) # m to cm
-			model.add_member_dist_load(id, 'Fz', load[5]*0.01 * psf_loads, load[2]*0.01 * psf_loads) # m to cm
+		
+		model.add_member_dist_load(id, 'Fx', load[3]*0.01 * psf_loads, load[3]*0.01 * psf_loads) # m to cm
+		model.add_member_dist_load(id, 'Fy', load[4]*0.01 * psf_loads, load[4]*0.01 * psf_loads) # m to cm
+		model.add_member_dist_load(id, 'Fz', load[5]*0.01 * psf_loads, load[5]*0.01 * psf_loads) # m to cm
 
 	for id, load in loads_f.items():
 		# apply force to quad if a quad is available
