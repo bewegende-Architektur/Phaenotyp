@@ -1,7 +1,7 @@
 import bpy
 import bmesh
 from PyNite import FEModel3D
-from numpy import array, empty, append, poly1d, polyfit, linalg, zeros, intersect1d, arctan
+from numpy import array, empty, append, poly1d, polyfit, linalg, zeros, intersect1d, arctan, sin, cos
 from phaenotyp import basics, material, geometry, progress
 from math import sqrt, tanh, pi, degrees
 
@@ -1123,38 +1123,55 @@ def interweave_results_pn(feas):
 			'''
 			# first side
 			# midpoint
-			s_m = (s_x_1 + s_y_1)*0.5
+			#s_m = (s_x_1 + s_y_1)*0.5
 
 			# pythagoras
-			a = s_y_1 - s_m
-			b = T_xy_1
-			c = sqrt(a**2 + b**2)
+			#a = s_y_1 - s_m
+			#b = T_xy_1
+			#c = sqrt(a**2 + b**2)
 
 			# alpha
-			tan_alpha = b / a
-			alpha_1 = degrees(arctan(tan_alpha)) * (-0.5)
-
-			# forces
-			s_1_1 = s_m + c
-			s_2_1 = s_m - c
-
+			#tan_alpha = b / a
+			alpha_1_1 = degrees(0.5 * arctan((2 * T_xy_1) / (s_x_1 - s_y_1)))
+			alpha_2_1 = alpha_1_1 + 90
+			
+			s_1 = (s_x_1 + s_y_1)/2 + (s_x_1 - s_y_1)/2 * cos(2*alpha_1_1) + T_xy_1 * sin(2*alpha_1_1)
+			s_2 = (s_x_1 + s_y_1)/2 + (s_x_1 - s_y_1)/2 * cos(2*alpha_2_1) + T_xy_1 * sin(2*alpha_2_1)
+			
+			# main forces
+			# https://www.umwelt-campus.de/fileadmin/Umwelt-Campus/User/TPreussler/Download/Festigkeitslehre/Foliensaetze/01_Spannungszustand.pdf
+			if abs(s_1) > abs(s_2):
+				s_1_1 = s_1
+				s_2_1 = s_2
+			else:
+				s_1_1 = s_2
+				s_2_1 = s_1
 			
 			# seconde side
 			# midpoint
-			s_m = (s_x_2 + s_y_2)*0.5
+			#s_m = (s_x_2 + s_y_2)*0.5
 
 			# pythagoras
-			a = s_y_2 - s_m
-			b = T_xy_2
-			c = sqrt(a**2 + b**2)
+			#a = s_y_2 - s_m
+			#b = T_xy_2
+			#c = sqrt(a**2 + b**2)
 
 			# alpha
-			tan_alpha = b / a
-			alpha_2 = degrees(arctan(tan_alpha)) * (-0.5)
-
-			# forces
-			s_1_2 = s_m + c
-			s_2_2 = s_m - c
+			#tan_alpha = b / a
+			alpha_1_2 = degrees(0.5 * arctan((2 * T_xy_2) / (s_x_2 - s_y_2)))
+			alpha_2_2 = alpha_1_2 + 90
+			
+			s_1 = (s_x_2 + s_y_2)/2 + (s_x_2 - s_y_2)/2 * cos(2*alpha_1_2) + T_xy_2 * sin(2*alpha_1_2)
+			s_2 = (s_x_2 + s_y_2)/2 + (s_x_2 - s_y_2)/2 * cos(2*alpha_2_2) + T_xy_2 * sin(2*alpha_2_2)
+			
+			# main forces
+			# https://www.umwelt-campus.de/fileadmin/Umwelt-Campus/User/TPreussler/Download/Festigkeitslehre/Foliensaetze/01_Spannungszustand.pdf
+			if abs(s_1) > abs(s_2):
+				s_1_2 = s_1
+				s_2_2 = s_2
+			else:
+				s_1_2 = s_2
+				s_2_2 = s_1
 			
 			# long_stress_x = s_x
 			# sigma = s_x
@@ -1289,12 +1306,12 @@ def interweave_results_pn(feas):
 			quad["T_xy_2"][frame] = T_xy_2
 
 			quad["s_1_1"][frame] = s_1_1
-			quad["s_1_2"][frame] = s_1_2
 			quad["s_2_1"][frame] = s_2_1
+			quad["s_1_2"][frame] = s_1_2
 			quad["s_2_2"][frame] = s_2_2
 
-			quad["alpha_1"][frame] = alpha_1
-			quad["alpha_2"][frame] = alpha_2
+			quad["alpha_1"][frame] = alpha_1_1
+			quad["alpha_2"][frame] = alpha_1_2
 
 			quad["overstress"][frame] = overstress
 			quad["utilization"][frame] = utilization

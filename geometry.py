@@ -1385,6 +1385,7 @@ def update_geometry_post():
 				attribute.data[quad["stresslines_viz"][3]].color = [1, 0, 0, 1.0]
 			
 			radius = abs(main_force_2 * viz_stressline_scale)
+			
 			mat = Matrix.Rotation(radians(a+90), 4, normal)
 			vec = Vector(t)
 			vec.rotate(mat)
