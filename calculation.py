@@ -1084,11 +1084,6 @@ def interweave_results_pn(feas):
 
 			# Hauptspannungen 1 und 2 an den Oberflächen 1 und 2
 			'''
-			s_1_1 = (s_x_1 + s_y_1)/2 + sqrt(((s_x_1 - s_y_1)/2)**2 + T_xy_1**2)   # für Darstellung
-			s_1_2 = (s_x_1 + s_y_1)/2 - sqrt(((s_x_1 - s_y_1)/2)**2 + T_xy_1**2)   # für Darstellung
-			s_2_1 = (s_x_2 + s_y_2)/2 + sqrt(((s_x_2 - s_y_2)/2)**2 + T_xy_2**2)   # für Darstellung
-			s_2_2 = (s_x_2 + s_y_2)/2 - sqrt(((s_x_2 - s_y_2)/2)**2 + T_xy_2**2)   # für Darstellung
-			'''
 			# f = force, s = side
 			s_f1_s1 = (s_x_1 + s_y_1)/2 + sqrt(((s_x_1 - s_y_1)/2)**2 + T_xy_1**2)   # für Darstellung
 			s_f2_s1 = (s_x_1 + s_y_1)/2 - sqrt(((s_x_1 - s_y_1)/2)**2 + T_xy_1**2)   # für Darstellung
@@ -1125,7 +1120,42 @@ def interweave_results_pn(feas):
 				alpha_2 = degrees(alpha_2_rad)
 			else:
 				alpha_2 = 0
+			'''
+			# first side
+			# midpoint
+			s_m = (s_x_1 + s_y_1)*0.5
 
+			# pythagoras
+			a = s_y_1 - s_m
+			b = T_xy_1
+			c = sqrt(a**2 + b**2)
+
+			# alpha
+			tan_alpha = b / a
+			alpha_1 = degrees(arctan(tan_alpha)) * (-0.5)
+
+			# forces
+			s_1_1 = s_m + c
+			s_2_1 = s_m - c
+
+			
+			# seconde side
+			# midpoint
+			s_m = (s_x_2 + s_y_2)*0.5
+
+			# pythagoras
+			a = s_y_2 - s_m
+			b = T_xy_2
+			c = sqrt(a**2 + b**2)
+
+			# alpha
+			tan_alpha = b / a
+			alpha_2 = degrees(arctan(tan_alpha)) * (-0.5)
+
+			# forces
+			s_1_2 = s_m + c
+			s_2_2 = s_m - c
+			
 			# long_stress_x = s_x
 			# sigma = s_x
 			# long_stress_y = s_y

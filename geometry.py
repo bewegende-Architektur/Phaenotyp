@@ -1312,7 +1312,7 @@ def update_geometry_post():
 			main_force_2 = quad["s_2_1"][str(frame)]
 			radius = abs(main_force_1 * viz_stressline_scale)
 
-			mat = Matrix.Rotation(radians(a+90), 4, normal)
+			mat = Matrix.Rotation(radians(a), 4, normal)
 			vec = Vector(t)
 			vec.rotate(mat)
 			
@@ -1334,7 +1334,7 @@ def update_geometry_post():
 			
 			radius = abs(main_force_2 * viz_stressline_scale)
 			
-			mat = Matrix.Rotation(radians(a), 4, normal)
+			mat = Matrix.Rotation(radians(a+90), 4, normal)
 			vec = Vector(t)
 			vec.rotate(mat)
 			
@@ -1364,7 +1364,7 @@ def update_geometry_post():
 			
 			radius = abs(main_force_1 * viz_stressline_scale)
 			
-			mat = Matrix.Rotation(radians(a+90), 4, normal)
+			mat = Matrix.Rotation(radians(a), 4, normal)
 			vec = Vector(t)
 			vec.rotate(mat)
 			
@@ -1385,7 +1385,7 @@ def update_geometry_post():
 				attribute.data[quad["stresslines_viz"][3]].color = [1, 0, 0, 1.0]
 			
 			radius = abs(main_force_2 * viz_stressline_scale)
-			mat = Matrix.Rotation(radians(a), 4, normal)
+			mat = Matrix.Rotation(radians(a+90), 4, normal)
 			vec = Vector(t)
 			vec.rotate(mat)
 			
