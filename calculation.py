@@ -3,7 +3,7 @@ import bmesh
 from PyNite import FEModel3D
 from numpy import array, empty, append, poly1d, polyfit, linalg, zeros, intersect1d, arctan, sin, cos
 from phaenotyp import basics, material, geometry, progress
-from math import sqrt, tanh, pi, degrees
+from math import sqrt, tanh, pi, degrees, radians
 
 from subprocess import Popen, PIPE
 import sys
@@ -1121,6 +1121,8 @@ def interweave_results_pn(feas):
 			else:
 				alpha_2 = 0
 			'''
+			# based on:
+			# https://www.umwelt-campus.de/fileadmin/Umwelt-Campus/User/TPreussler/Download/Festigkeitslehre/Foliensaetze/01_Spannungszustand.pdf
 			# first side
 			# midpoint
 			#s_m = (s_x_1 + s_y_1)*0.5
@@ -1135,12 +1137,12 @@ def interweave_results_pn(feas):
 			alpha_1_1 = degrees(0.5 * arctan((2 * T_xy_1) / (s_x_1 - s_y_1)))
 			alpha_2_1 = alpha_1_1 + 90
 			
-			s_1 = (s_x_1 + s_y_1)/2 + (s_x_1 - s_y_1)/2 * cos(2*alpha_1_1) + T_xy_1 * sin(2*alpha_1_1)
-			s_2 = (s_x_1 + s_y_1)/2 + (s_x_1 - s_y_1)/2 * cos(2*alpha_2_1) + T_xy_1 * sin(2*alpha_2_1)
+			s_1 = (s_x_1 + s_y_1)/2 + (s_x_1 - s_y_1)/2 * cos(2*radians(alpha_1_1)) + T_xy_1 * sin(2*radians(alpha_1_1))
+			s_2 = (s_x_1 + s_y_1)/2 + (s_x_1 - s_y_1)/2 * cos(2*radians(alpha_2_1)) + T_xy_1 * sin(2*radians(alpha_2_1))
 			
 			# main forces
-			# https://www.umwelt-campus.de/fileadmin/Umwelt-Campus/User/TPreussler/Download/Festigkeitslehre/Foliensaetze/01_Spannungszustand.pdf
-			if abs(s_1) > abs(s_2):
+			#if abs(s_1) > abs(s_2):
+			if s_1 > s_2:
 				s_1_1 = s_1
 				s_2_1 = s_2
 			else:
@@ -1161,12 +1163,13 @@ def interweave_results_pn(feas):
 			alpha_1_2 = degrees(0.5 * arctan((2 * T_xy_2) / (s_x_2 - s_y_2)))
 			alpha_2_2 = alpha_1_2 + 90
 			
-			s_1 = (s_x_2 + s_y_2)/2 + (s_x_2 - s_y_2)/2 * cos(2*alpha_1_2) + T_xy_2 * sin(2*alpha_1_2)
-			s_2 = (s_x_2 + s_y_2)/2 + (s_x_2 - s_y_2)/2 * cos(2*alpha_2_2) + T_xy_2 * sin(2*alpha_2_2)
+			s_1 = (s_x_2 + s_y_2)/2 + (s_x_2 - s_y_2)/2 * cos(2*radians(alpha_1_2)) + T_xy_2 * sin(2*radians(alpha_1_2))
+			s_2 = (s_x_2 + s_y_2)/2 + (s_x_2 - s_y_2)/2 * cos(2*radians(alpha_2_2)) + T_xy_2 * sin(2*radians(alpha_2_2))
 			
 			# main forces
 			# https://www.umwelt-campus.de/fileadmin/Umwelt-Campus/User/TPreussler/Download/Festigkeitslehre/Foliensaetze/01_Spannungszustand.pdf
-			if abs(s_1) > abs(s_2):
+			#if abs(s_1) > abs(s_2):
+			if s_1 > s_2:
 				s_1_2 = s_1
 				s_2_2 = s_2
 			else:

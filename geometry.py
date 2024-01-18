@@ -1310,9 +1310,17 @@ def update_geometry_post():
 			
 			main_force_1 = quad["s_1_1"][str(frame)]
 			main_force_2 = quad["s_2_1"][str(frame)]
+			
 			radius = abs(main_force_1 * viz_stressline_scale)
-
-			mat = Matrix.Rotation(radians(a), 4, normal)
+			
+			if main_force_1 > main_force_2:
+				a_1 = a
+				a_2 = a+90
+			else:
+				a_1 = a+90
+				a_2 = a
+			
+			mat = Matrix.Rotation(radians(a_1), 4, normal)
 			vec = Vector(t)
 			vec.rotate(mat)
 			
@@ -1334,7 +1342,7 @@ def update_geometry_post():
 			
 			radius = abs(main_force_2 * viz_stressline_scale)
 			
-			mat = Matrix.Rotation(radians(a+90), 4, normal)
+			mat = Matrix.Rotation(radians(a_2), 4, normal)
 			vec = Vector(t)
 			vec.rotate(mat)
 			
@@ -1364,7 +1372,14 @@ def update_geometry_post():
 			
 			radius = abs(main_force_1 * viz_stressline_scale)
 			
-			mat = Matrix.Rotation(radians(a), 4, normal)
+			if main_force_1 > main_force_2:
+				a_1 = a
+				a_2 = a+90
+			else:
+				a_1 = a+90
+				a_2 = a
+			
+			mat = Matrix.Rotation(radians(a_1), 4, normal)
 			vec = Vector(t)
 			vec.rotate(mat)
 			
@@ -1386,7 +1401,7 @@ def update_geometry_post():
 			
 			radius = abs(main_force_2 * viz_stressline_scale)
 			
-			mat = Matrix.Rotation(radians(a+90), 4, normal)
+			mat = Matrix.Rotation(radians(a_2), 4, normal)
 			vec = Vector(t)
 			vec.rotate(mat)
 			

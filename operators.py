@@ -2956,7 +2956,32 @@ def text():
 						data_temp.append(text)
 						text = "shear_y: " + str(round(quad["shear_y"][str(frame)], 3))
 						data_temp.append(text)
-
+						
+						text = "T_xy_1: " + str(round(quad["T_xy_1"][str(frame)], 3))
+						data_temp.append(text)
+						text = "T_xy_2: " + str(round(quad["T_xy_2"][str(frame)], 3))
+						data_temp.append(text)
+						
+						text = "s_x_1: " + str(round(quad["s_x_1"][str(frame)], 3))
+						data_temp.append(text)
+						text = "s_x_2: " + str(round(quad["s_x_2"][str(frame)], 3))
+						data_temp.append(text)
+						
+						text = "s_y_1: " + str(round(quad["s_y_1"][str(frame)], 3))
+						data_temp.append(text)
+						text = "s_y_2: " + str(round(quad["s_y_2"][str(frame)], 3))
+						data_temp.append(text)
+						
+						text = "s_1_1: " + str(round(quad["s_1_1"][str(frame)], 3))
+						data_temp.append(text)
+						text = "s_2_1: " + str(round(quad["s_2_1"][str(frame)], 3))
+						data_temp.append(text)
+						
+						text = "s_1_2: " + str(round(quad["s_1_2"][str(frame)], 3))
+						data_temp.append(text)
+						text = "s_2_2: " + str(round(quad["s_2_2"][str(frame)], 3))
+						data_temp.append(text)
+						
 						text = "alpha_1: " + str(round(quad["alpha_1"][str(frame)], 3))
 						data_temp.append(text)
 						text = "alpha_2: " + str(round(quad["alpha_2"][str(frame)], 3))
