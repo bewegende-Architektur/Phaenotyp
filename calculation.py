@@ -1128,22 +1128,37 @@ def interweave_results_pn(feas):
 			
 			# first side
 			alpha = degrees(0.5 * arctan((2 * T_xy_1) / (s_x_1 - s_y_1)))
-			s_1_1 = (s_x_1 + s_y_1)/2 + sqrt(((s_x_1 - s_y_1)/2)**2 + T_xy_1**2)
-			s_2_1 = (s_x_1 + s_y_1)/2 - sqrt(((s_x_1 - s_y_1)/2)**2 + T_xy_1**2)
+			s_1 = (s_x_1 + s_y_1)/2 + sqrt(((s_x_1 - s_y_1)/2)**2 + T_xy_1**2)
+			s_2 = (s_x_1 + s_y_1)/2 - sqrt(((s_x_1 - s_y_1)/2)**2 + T_xy_1**2)
 			s_xi = (s_x_1 + s_y_1)/2 + (s_x_1 - s_y_1)/2 * cos(2*radians(alpha)) + T_xy_1 * sin(2*radians(alpha))
 			
-			if round(s_1_1,2) == round(s_xi,2):
+			#if abs(s_1) > abs(s_2):
+			if abs(s_1) > abs(s_2):
+				s_1_1 = s_1
+				s_2_1 = s_2
+			else:
+				s_1_1 = s_2
+				s_2_1 = s_1
+				
+			if abs(round(s_1_1,2)) == abs(round(s_xi,2)):
 				alpha_1 = alpha + 90
 			else:
 				alpha_1 = alpha
 			
 			# second side
 			alpha = degrees(0.5 * arctan((2 * T_xy_2) / (s_x_2 - s_y_2)))
-			s_1_2 = (s_x_2 + s_y_2)/2 + sqrt(((s_x_2 - s_y_2)/2)**2 + T_xy_2**2)
-			s_2_2 = (s_x_2 + s_y_2)/2 - sqrt(((s_x_2 - s_y_2)/2)**2 + T_xy_2**2)
+			s_1 = (s_x_2 + s_y_2)/2 + sqrt(((s_x_2 - s_y_2)/2)**2 + T_xy_2**2)
+			s_2 = (s_x_2 + s_y_2)/2 - sqrt(((s_x_2 - s_y_2)/2)**2 + T_xy_2**2)
 			s_xi = (s_x_2 + s_y_2)/2 + (s_x_2 - s_y_2)/2 * cos(2*radians(alpha)) + T_xy_2 * sin(2*radians(alpha))
 
-			if round(s_1_2,2) == round(s_xi,2):
+			if abs(s_1) > abs(s_2):
+				s_1_2 = s_1
+				s_2_2 = s_2
+			else:
+				s_1_2 = s_2
+				s_2_2 = s_1
+			
+			if abs(round(s_1_2,2)) == abs(round(s_xi,2)):
 				alpha_2 = alpha + 90
 			else:
 				alpha_2 = alpha
