@@ -446,8 +446,7 @@ def fill_matrix_quads(matrix, result_type, length):
 				force = basics.return_max_diff_to_zero(force_list)
 
 			# force, overstress and utilization
-			#overstress = quad["overstress"][str(frame_id)]
-			overstress = False # to be solved
+			overstress = quad["overstress"][str(frame_id)]
 			if result_type == "utilization":
 				utilization = True
 			else:
@@ -1042,25 +1041,6 @@ def append_matrix_frames(file, matrix, highest, lowest, length):
 			else:
 				value = force
 			
-			"""
-			# red or blue?
-			if value > 0:
-				h = 0
-			else:
-				h = 0.666
-
-			# saturation
-			max_diff = basics.return_max_diff_to_zero([lowest, highest])
-			s = abs(basics.avoid_div_zero(1, max_diff) * value)
-
-			# define v
-			if overstress:
-				# like in update_post put not so strong
-				# to make it readable in html
-				v = 0.75
-			else:
-				v = 1.0
-			"""
 			max_diff = basics.return_max_diff_to_zero([lowest, highest])
 			if max_diff != 0:
 				h = 0.333/max_diff*force + 0.333
@@ -1069,7 +1049,7 @@ def append_matrix_frames(file, matrix, highest, lowest, length):
 
 			s = 1
 			if overstress == True:
-				v = 0.25
+				v = 0.75
 			else:
 				v = 1.0
 
@@ -1113,25 +1093,6 @@ def append_matrix_quads(file, matrix, highest, lowest, length):
 			else:
 				value = force
 			
-			"""
-			# red or blue?
-			if value > 0:
-				h = 0
-			else:
-				h = 0.666
-
-			# saturation
-			max_diff = basics.return_max_diff_to_zero([lowest, highest])
-			s = abs(basics.avoid_div_zero(1, max_diff) * value)
-
-			# define v
-			if overstress:
-				# like in update_post put not so strong
-				# to make it readable in html
-				v = 0.75
-			else:
-				v = 1.0
-			"""
 			max_diff = basics.return_max_diff_to_zero([lowest, highest])
 			if max_diff != 0:
 				h = 0.333/max_diff*force + 0.333
@@ -1140,7 +1101,7 @@ def append_matrix_quads(file, matrix, highest, lowest, length):
 
 			s = 1
 			if overstress == True:
-				v = 0.25
+				v = 0.75
 			else:
 				v = 1.0
 
