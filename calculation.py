@@ -1567,11 +1567,10 @@ def decimate_topology():
 	frame = bpy.context.scene.frame_current
 	
 	obj.hide_set(False)
-
 	bpy.context.view_layer.objects.active = obj
+	bpy.ops.object.mode_set(mode = 'OBJECT')
 
 	# create vertex-group if not existing
-	bpy.ops.object.mode_set(mode = 'OBJECT')
 	decimate_group = obj.vertex_groups.get("<Phaenotyp>decimate")
 	if not decimate_group:
 		decimate_group = obj.vertex_groups.new(name="<Phaenotyp>decimate")

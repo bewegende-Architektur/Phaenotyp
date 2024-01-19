@@ -3002,6 +3002,10 @@ def selection():
 
 	print_data("Select edges by given key and value.")
 
+	obj.hide_set(False)
+	bpy.context.view_layer.objects.active = obj
+	bpy.ops.object.mode_set(mode = 'OBJECT')
+		
 	# get data from gui
 	if phaenotyp.calculation_type == "force_distribution":
 		key = phaenotyp.selection_key_fd
