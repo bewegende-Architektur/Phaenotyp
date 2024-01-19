@@ -1109,7 +1109,7 @@ def update_geometry_post():
 						force = result[str(frame)][i]
 					
 					# rainbow
-					h = force / viz_boundaries_members * viz_scale + 0.333
+					h = force*(-1) / viz_boundaries_members * viz_scale + 0.333
 					if h > 0.666:
 						h = 0.666
 					if h < 0:
@@ -1137,7 +1137,7 @@ def update_geometry_post():
 
 				force = result[str(frame)]
 				# rainbow
-				h = force / viz_boundaries_members * viz_scale + 0.333
+				h = force*(-1) / viz_boundaries_members * viz_scale + 0.333
 				if h > 0.666:
 					h = 0.666
 				if h < 0:
