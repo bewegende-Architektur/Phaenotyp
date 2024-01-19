@@ -795,7 +795,7 @@ def create_quads(structure_obj, quads):
 		modifier_solidify.vertex_group = "thickness"
 		modifier_solidify.use_even_offset = True
 		modifier_solidify.material_offset = 1
-		modifier_solidify.offset = 1
+		modifier_solidify.offset = -1
 		modifier_solidify.use_rim = False
 	
 	# set the thickness passed from gui
@@ -1042,7 +1042,7 @@ def update_geometry_pre():
 	update_translation()
 
 def rainbow(force, overstress, viz_boundaries, viz_scale):
-	h = force / viz_boundaries * viz_scale + 0.333
+	h = force*(-1) / viz_boundaries * viz_scale + 0.333
 	if h > 0.666:
 		h = 0.666
 	if h < 0:
@@ -1055,19 +1055,7 @@ def rainbow(force, overstress, viz_boundaries, viz_scale):
 		v = 1.0
 	
 	c.hsv = h,s,v
-	return c
-
-def red_blue(force, overstress, viz_boundaries, viz_scale):
-	if force > 0:
-		h = 0
-	else:
-		h = 0.666
-		
-	s = 1
-	v = 1
-	
-	c.hsv = h,s,v
-	return c
+	return [c.r, c.g, c.b, 1.0]
 	
 def update_geometry_post():
 	scene = bpy.context.scene
@@ -1114,7 +1102,7 @@ def update_geometry_post():
 				# if utilization in viz
 				if phaenotyp.forces_pn == "utilization":
 					force = result[str(frame)] - 1
-					c = rainbow(force*(-1), overstress, viz_boundaries_members, viz_scale)
+					c = rainbow(force, overstress, viz_boundaries_members, viz_scale)
 
 				# for 11 entries
 				else:
@@ -1127,9 +1115,9 @@ def update_geometry_post():
 					else:
 						force = result[str(frame)][i]
 					
-					c = rainbow(force*(-1), overstress, viz_boundaries_members, viz_scale)
+					color = rainbow(force, overstress, viz_boundaries_members, viz_scale)
 
-				attribute.data[mesh_vertex_ids[i]].color = [c.r, c.g, c.b, 1.0]
+				attribute.data[mesh_vertex_ids[i]].color = color
 			
 		# for force disbribution
 		else:
@@ -1145,8 +1133,8 @@ def update_geometry_post():
 
 				force = result[str(frame)]
 				overstress = member["overstress"][str(frame)]
-				c = rainbow(force*(-1), overstress, viz_boundaries_members, viz_scale)
-				attribute.data[mesh_vertex_ids[i]].color = [c.r, c.g, c.b, 1.0]
+				color = rainbow(force, overstress, viz_boundaries_members, viz_scale)
+				attribute.data[mesh_vertex_ids[i]].color = color
 
 
 	# update quads
@@ -1225,10 +1213,10 @@ def update_geometry_post():
 			else:
 				overstress = False
 			
-			c = rainbow(force, overstress, viz_boundaries_quads, viz_scale)
+			color = rainbow(force, overstress, viz_boundaries_quads, viz_scale)
 
 			# colorize faces
-			attribute_1.data[i].color = [c.r, c.g, c.b, 1.0]
+			attribute_1.data[i].color = color
 
 		# side 2
 		for i, forces in enumerate(nodes_2):
@@ -1242,10 +1230,10 @@ def update_geometry_post():
 			else:
 				overstress = False
 			
-			c = rainbow(force, overstress, viz_boundaries_quads, viz_scale)
+			color = rainbow(force, overstress, viz_boundaries_quads, viz_scale)
 
 			# colorize faces
-			attribute_2.data[i].color = [c.r, c.g, c.b, 1.0]
+			attribute_2.data[i].color = color
 
 		# change stresslines
 		quads_viz = bpy.data.objects["<Phaenotyp>quads"]
@@ -1285,97 +1273,51 @@ def update_geometry_post():
 			t = e_1 - e_0
 			t = t*0.25
 			
-			### first side
+			a_1_1 = quad["alpha_1"][str(frame)]
+			a_2_1 = a_1_1 + 90
+			a_1_2 = quad["alpha_2"][str(frame)]
+			a_2_2 = a_1_1 + 90
 			
-			# rotate vector for alpha_1
-			a = quad["alpha_1"][str(frame)]# * 3.14/180
+			s_1_1 = quad["s_1_1"][str(frame)]
+			s_2_1 = quad["s_2_1"][str(frame)]
+			s_1_2 = quad["s_1_2"][str(frame)]
+			s_2_2 = quad["s_2_2"][str(frame)]
 			
-			main_force_1 = quad["s_1_1"][str(frame)]
-			main_force_2 = quad["s_2_1"][str(frame)]
+			o_1_1 = 0
+			o_2_1 = 0
+			o_1_2 = thickness
+			o_2_2 = thickness
 			
-			radius = abs(main_force_1 * viz_stressline_scale)
+			v_1_1 = [0,1]
+			v_2_1 = [4,5]
+			v_1_2 = [2,3]
+			v_2_2 = [6,7]
 			
-			mat = Matrix.Rotation(radians(a), 4, normal)
-			vec = Vector(t)
-			vec.rotate(mat)
+			a = [a_1_1, a_2_1, a_1_2, a_2_2] # alphas
+			s = [s_1_1, s_2_1, s_1_2, s_2_2] # forces
+			o = [o_1_1, o_2_1, o_1_2, o_2_2] # offset
+			v = [v_1_1, v_2_1, v_1_2, v_2_2] # vertex
 			
-			# set radius
-			ids = [quad["stresslines_viz"][0], quad["stresslines_viz"][1]]
-			radius_group.add(ids, radius, 'REPLACE')
-			
-			# set color
-			c = red_blue(main_force_1, overstress, viz_boundaries_quads, viz_scale)
-			attribute.data[quad["stresslines_viz"][0]].color = [c.r, c.g, c.b, 1.0]
-			attribute.data[quad["stresslines_viz"][1]].color = [c.r, c.g, c.b, 1.0]
+			for i in range(4):
+				mat = Matrix.Rotation(radians(a[i]), 4, normal)
+				vec = Vector(t)
+				vec.rotate(mat)
 				
-			# set position of first edge			
-			stress_vertices[quad["stresslines_viz"][0]].co = mid - vec
-			stress_vertices[quad["stresslines_viz"][1]].co = mid + vec
-			
-			radius = abs(main_force_2 * viz_stressline_scale)
-			
-			mat = Matrix.Rotation(radians(a+90), 4, normal)
-			vec = Vector(t)
-			vec.rotate(mat)
-			
-			# set radius
-			ids = [quad["stresslines_viz"][4], quad["stresslines_viz"][5]]
-			radius_group.add(ids, radius, 'REPLACE')
-			
-			# set color
-			c = red_blue(main_force_2, overstress, viz_boundaries_quads, viz_scale)
-			attribute.data[quad["stresslines_viz"][4]].color = [c.r, c.g, c.b, 1.0]
-			attribute.data[quad["stresslines_viz"][5]].color = [c.r, c.g, c.b, 1.0]
-			
-			# set position of first edge			
-			stress_vertices[quad["stresslines_viz"][4]].co = mid - vec
-			stress_vertices[quad["stresslines_viz"][5]].co = mid + vec
-			
-			### second side
-			
-			# rotate vector for alpha_2
-			a = quad["alpha_2"][str(frame)]# * 3.14/180
-			
-			main_force_1 = quad["s_1_2"][str(frame)]
-			main_force_2 = quad["s_2_2"][str(frame)]
-			
-			radius = abs(main_force_1 * viz_stressline_scale)
-			
-			mat = Matrix.Rotation(radians(a), 4, normal)
-			vec = Vector(t)
-			vec.rotate(mat)
-			
-			# set radius
-			ids = [quad["stresslines_viz"][2], quad["stresslines_viz"][3]]
-			radius_group.add(ids, radius, 'REPLACE')
-			
-			# set position of second edge			
-			stress_vertices[quad["stresslines_viz"][2]].co = mid - vec + normal*thickness
-			stress_vertices[quad["stresslines_viz"][3]].co = mid + vec + normal*thickness
-
-			# set color
-			c = red_blue(main_force_1, overstress, viz_boundaries_quads, viz_scale)
-			attribute.data[quad["stresslines_viz"][2]].color = [c.r, c.g, c.b, 1.0]
-			attribute.data[quad["stresslines_viz"][3]].color = [c.r, c.g, c.b, 1.0]
-			
-			radius = abs(main_force_2 * viz_stressline_scale)
-			
-			mat = Matrix.Rotation(radians(a+90), 4, normal)
-			vec = Vector(t)
-			vec.rotate(mat)
-			
-			# set radius
-			ids = [quad["stresslines_viz"][6], quad["stresslines_viz"][7]]
-			radius_group.add(ids, radius, 'REPLACE')
-			
-			# set position of second edge			
-			stress_vertices[quad["stresslines_viz"][6]].co = mid - vec + normal*thickness
-			stress_vertices[quad["stresslines_viz"][7]].co = mid + vec + normal*thickness
-
-			# set color
-			c = red_blue(main_force_2, overstress, viz_boundaries_quads, viz_scale)
-			attribute.data[quad["stresslines_viz"][6]].color = [c.r, c.g, c.b, 1.0]
-			attribute.data[quad["stresslines_viz"][7]].color = [c.r, c.g, c.b, 1.0]
+				i_0 = v[i][0]
+				i_1 = v[i][1]
+				
+				# set radius
+				ids = [quad["stresslines_viz"][i_0], quad["stresslines_viz"][i_1]]
+				radius_group.add(ids, abs(s[i]), 'REPLACE')
+				
+				# set color
+				color = rainbow(s[i], overstress, viz_boundaries_quads, viz_scale)
+				attribute.data[quad["stresslines_viz"][i_0]].color = color
+				attribute.data[quad["stresslines_viz"][i_1]].color = color
+					
+				# set position of first edge			
+				stress_vertices[quad["stresslines_viz"][i_0]].co = mid - vec - normal * o[i]
+				stress_vertices[quad["stresslines_viz"][i_1]].co = mid + vec - normal * o[i]
 			
 def create_loads(structure_obj, loads_v, loads_e, loads_f):
 	# like suggested here by Gorgious and CodeManX:
