@@ -1319,6 +1319,7 @@ def interweave_results_pn(feas):
 		print_data(text)
 
 		data["done"][str(frame)] = True
+		bpy.ops.object.mode_set(mode = 'OBJECT')
 
 def interweave_results_fd(feas):
 	'''
@@ -1399,6 +1400,7 @@ def interweave_results_fd(feas):
 		print_data(text)
 
 		data["done"][str(frame)] = True
+		bpy.ops.object.mode_set(mode = 'OBJECT')
 
 def approximate_sectional():
 	'''

@@ -1076,8 +1076,6 @@ def update_geometry_post():
 	viz_boundaries_quads = abs(phaenotyp.viz_boundaries_quads)
 	viz_scale = phaenotyp.viz_scale / 100 # for percentage
 	
-	bpy.ops.object.mode_set(mode = 'OBJECT')
-	
 	for id, member in members.items():
 		id = int(id)
 
