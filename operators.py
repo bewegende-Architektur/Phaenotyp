@@ -2647,16 +2647,16 @@ def get_boundaries():
 								lowest = result
 	
 	else:
-		force_type = phaenotyp.forces_fn
-					
+		force_type = phaenotyp.forces_fd
 		for frame in range(start, end):
 			for id in members:
 				member = members[id]
 				results = member[force_type].get(str(frame))
-				if results > highest:
-					highest = results
-				if results < lowest:
-					lowest = results
+				if results:
+					if results > highest:
+						highest = results
+					if results < lowest:
+						lowest = results
 								
 	print("Boundary of members " + force_type + ":", lowest, "|", highest)
 	max_diff = basics.return_max_diff_to_zero([lowest, highest])

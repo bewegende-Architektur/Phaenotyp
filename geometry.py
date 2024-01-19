@@ -1040,7 +1040,35 @@ def update_geometry_pre():
 		'''
 		
 	update_translation()
+
+def rainbow(force, overstress, viz_boundaries, viz_scale):
+	h = force / viz_boundaries * viz_scale + 0.333
+	if h > 0.666:
+		h = 0.666
+	if h < 0:
+		h = 0
+	s = 1
+	
+	if overstress == True:
+		v = 0.25
+	else:
+		v = 1.0
+	
+	c.hsv = h,s,v
+	return c
+
+def red_blue(force, overstress, viz_boundaries, viz_scale):
+	if force > 0:
+		h = 0
+	else:
+		h = 0.666
 		
+	s = 1
+	v = 1
+	
+	c.hsv = h,s,v
+	return c
+	
 def update_geometry_post():
 	scene = bpy.context.scene
 	phaenotyp = scene.phaenotyp
@@ -1080,22 +1108,13 @@ def update_geometry_post():
 				y = position[1]*(1-viz_deflection) + member["initial_positions"][str(frame)][10-i][1]*viz_deflection
 				z = position[2]*(1-viz_deflection) + member["initial_positions"][str(frame)][10-i][2]*viz_deflection
 				vertices[mesh_vertex_ids[i]].co = (x,y,z)
-
+				
+				overstress = member["overstress"][str(frame)]
+				
 				# if utilization in viz
 				if phaenotyp.forces_pn == "utilization":
 					force = result[str(frame)] - 1
-					# rainbow
-					h = force / viz_boundaries_members * viz_scale + 0.333
-					if h > 0.666:
-						h = 0.666
-					if h < 0:
-						h = 0
-					s = 1
-					
-					if member["overstress"][str(frame)] == True:
-						v = 0.25
-					else:
-						v = 1.0
+					c = rainbow(force*(-1), overstress, viz_boundaries_members, viz_scale)
 
 				# for 11 entries
 				else:
@@ -1108,19 +1127,8 @@ def update_geometry_post():
 					else:
 						force = result[str(frame)][i]
 					
-					# rainbow
-					h = force*(-1) / viz_boundaries_members * viz_scale + 0.333
-					if h > 0.666:
-						h = 0.666
-					if h < 0:
-						h = 0
-					s = 1
-					if member["overstress"][str(frame)] == True:
-						v = 0.25
-					else:
-						v = 1.0
+					c = rainbow(force*(-1), overstress, viz_boundaries_members, viz_scale)
 
-				c.hsv = h,s,v
 				attribute.data[mesh_vertex_ids[i]].color = [c.r, c.g, c.b, 1.0]
 			
 		# for force disbribution
@@ -1136,19 +1144,8 @@ def update_geometry_post():
 				vertices[mesh_vertex_ids[i]].co = (x,y,z)
 
 				force = result[str(frame)]
-				# rainbow
-				h = force*(-1) / viz_boundaries_members * viz_scale + 0.333
-				if h > 0.666:
-					h = 0.666
-				if h < 0:
-					h = 0
-				s = 1
-				if member["overstress"][str(frame)] == True:
-					v = 0.25
-				else:
-					v = 1.0
-
-				c.hsv = h,s,v
+				overstress = member["overstress"][str(frame)]
+				c = rainbow(force*(-1), overstress, viz_boundaries_members, viz_scale)
 				attribute.data[mesh_vertex_ids[i]].color = [c.r, c.g, c.b, 1.0]
 
 
@@ -1222,22 +1219,13 @@ def update_geometry_post():
 				force = sum(forces) / len(forces)
 			except:
 				force = 0
-
-			# rainbow
-			h = force / viz_boundaries_quads * viz_scale + 0.333
-			#h = 0.333/phaenotyp.viz_scale*force  + 0.333
-			if h > 0.666:
-				h = 0.666
-			if h < 0:
-				h = 0
-			s = 1
 			
 			if i in overstressed:
-				v = 0.25
+				overstress = True
 			else:
-				v = 1.0
+				overstress = False
 			
-			c.hsv = h,s,v
+			c = rainbow(force, overstress, viz_boundaries_quads, viz_scale)
 
 			# colorize faces
 			attribute_1.data[i].color = [c.r, c.g, c.b, 1.0]
@@ -1249,21 +1237,12 @@ def update_geometry_post():
 			except:
 				force = 0
 
-			# rainbow
-			h = force / viz_boundaries_quads * viz_scale + 0.333
-			#h = 0.333/phaenotyp.viz_scale*force  + 0.333
-			if h > 0.666:
-				h = 0.666
-			if h < 0:
-				h = 0
-			s = 1
-			
 			if i in overstressed:
-				v = 0.25
+				overstress = True
 			else:
-				v = 1.0
+				overstress = False
 			
-			c.hsv = h,s,v
+			c = rainbow(force, overstress, viz_boundaries_quads, viz_scale)
 
 			# colorize faces
 			attribute_2.data[i].color = [c.r, c.g, c.b, 1.0]
@@ -1287,6 +1266,7 @@ def update_geometry_post():
 			normal = face.normal
 			center = face.center
 			thickness = quad["thickness"][str(frame)] * 0.01
+			overstress = quad["overstress"][str(frame)]
 			
 			v_0 = quad["vertices_ids_viz"][0]
 			v_1 = quad["vertices_ids_viz"][1]
@@ -1324,12 +1304,9 @@ def update_geometry_post():
 			radius_group.add(ids, radius, 'REPLACE')
 			
 			# set color
-			if main_force_1 < 0: # pressure is blue
-				attribute.data[quad["stresslines_viz"][0]].color = [0, 0, 1, 1.0]
-				attribute.data[quad["stresslines_viz"][1]].color = [0, 0, 1, 1.0]
-			else: # tension is red
-				attribute.data[quad["stresslines_viz"][0]].color = [1, 0, 0, 1.0]
-				attribute.data[quad["stresslines_viz"][1]].color = [1, 0, 0, 1.0]
+			c = red_blue(main_force_1, overstress, viz_boundaries_quads, viz_scale)
+			attribute.data[quad["stresslines_viz"][0]].color = [c.r, c.g, c.b, 1.0]
+			attribute.data[quad["stresslines_viz"][1]].color = [c.r, c.g, c.b, 1.0]
 				
 			# set position of first edge			
 			stress_vertices[quad["stresslines_viz"][0]].co = mid - vec
@@ -1346,12 +1323,9 @@ def update_geometry_post():
 			radius_group.add(ids, radius, 'REPLACE')
 			
 			# set color
-			if main_force_2 < 0: # pressure is blue
-				attribute.data[quad["stresslines_viz"][4]].color = [0, 0, 1, 1.0]
-				attribute.data[quad["stresslines_viz"][5]].color = [0, 0, 1, 1.0]
-			else: # tension is red
-				attribute.data[quad["stresslines_viz"][4]].color = [1, 0, 0, 1.0]
-				attribute.data[quad["stresslines_viz"][5]].color = [1, 0, 0, 1.0]
+			c = red_blue(main_force_2, overstress, viz_boundaries_quads, viz_scale)
+			attribute.data[quad["stresslines_viz"][4]].color = [c.r, c.g, c.b, 1.0]
+			attribute.data[quad["stresslines_viz"][5]].color = [c.r, c.g, c.b, 1.0]
 			
 			# set position of first edge			
 			stress_vertices[quad["stresslines_viz"][4]].co = mid - vec
@@ -1380,12 +1354,9 @@ def update_geometry_post():
 			stress_vertices[quad["stresslines_viz"][3]].co = mid + vec + normal*thickness
 
 			# set color
-			if main_force_1 < 0: # pressure is blue
-				attribute.data[quad["stresslines_viz"][2]].color = [0, 0, 1, 1.0]
-				attribute.data[quad["stresslines_viz"][3]].color = [0, 0, 1, 1.0]
-			else: # tension is red
-				attribute.data[quad["stresslines_viz"][2]].color = [1, 0, 0, 1.0]
-				attribute.data[quad["stresslines_viz"][3]].color = [1, 0, 0, 1.0]
+			c = red_blue(main_force_1, overstress, viz_boundaries_quads, viz_scale)
+			attribute.data[quad["stresslines_viz"][2]].color = [c.r, c.g, c.b, 1.0]
+			attribute.data[quad["stresslines_viz"][3]].color = [c.r, c.g, c.b, 1.0]
 			
 			radius = abs(main_force_2 * viz_stressline_scale)
 			
@@ -1402,12 +1373,9 @@ def update_geometry_post():
 			stress_vertices[quad["stresslines_viz"][7]].co = mid + vec + normal*thickness
 
 			# set color
-			if main_force_2 < 0: # pressure is blue
-				attribute.data[quad["stresslines_viz"][6]].color = [0, 0, 1, 1.0]
-				attribute.data[quad["stresslines_viz"][7]].color = [0, 0, 1, 1.0]
-			else: # tension is red
-				attribute.data[quad["stresslines_viz"][6]].color = [1, 0, 0, 1.0]
-				attribute.data[quad["stresslines_viz"][7]].color = [1, 0, 0, 1.0]
+			c = red_blue(main_force_2, overstress, viz_boundaries_quads, viz_scale)
+			attribute.data[quad["stresslines_viz"][6]].color = [c.r, c.g, c.b, 1.0]
+			attribute.data[quad["stresslines_viz"][7]].color = [c.r, c.g, c.b, 1.0]
 			
 def create_loads(structure_obj, loads_v, loads_e, loads_f):
 	# like suggested here by Gorgious and CodeManX:
