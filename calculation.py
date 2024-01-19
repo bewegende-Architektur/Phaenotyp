@@ -1083,44 +1083,6 @@ def interweave_results_pn(feas):
 			T_y = 1.5 * shear_y/A   # in Plattenmitte
 
 			# Hauptspannungen 1 und 2 an den Oberflächen 1 und 2
-			'''
-			# f = force, s = side
-			s_f1_s1 = (s_x_1 + s_y_1)/2 + sqrt(((s_x_1 - s_y_1)/2)**2 + T_xy_1**2)   # für Darstellung
-			s_f2_s1 = (s_x_1 + s_y_1)/2 - sqrt(((s_x_1 - s_y_1)/2)**2 + T_xy_1**2)   # für Darstellung
-			s_f1_s2 = (s_x_2 + s_y_2)/2 + sqrt(((s_x_2 - s_y_2)/2)**2 + T_xy_2**2)   # für Darstellung
-			s_f2_s2 = (s_x_2 + s_y_2)/2 - sqrt(((s_x_2 - s_y_2)/2)**2 + T_xy_2**2)   # für Darstellung
-			
-			# first side
-			if abs(s_f1_s1) > abs(s_f2_s1):
-				s_1_1 = s_f1_s1
-				s_2_1 = s_f2_s1
-			else:
-				s_2_1 = s_f1_s1
-				s_1_1 = s_f2_s1
-
-			# second side
-			if abs(s_f1_s2) > abs(s_f2_s2):
-				s_1_2 = s_f1_s2
-				s_2_2 = s_f2_s2
-			else:
-				s_2_2 = s_f1_s2
-				s_1_2 = s_f2_s2
-			
-			# Winkel der Hautptspannungen an den Oberflächen 1 und 2
-			v = (2* T_xy_1/(s_x_1 - s_y_1))
-			if v != 0: # to avoid div 0
-				alpha_1_rad = arctan(v) * 0.5 # in radianten, mit *pi/180 um in grad umzurechnen, für Darstellung
-				alpha_1 = degrees(alpha_1_rad)
-			else:
-				alpha_1 = 0
-			
-			v = 2* T_xy_2/(s_x_2 - s_y_2)
-			if v != 0: # to avoid div 0
-				alpha_2_rad = arctan(v) * 0.5 # in radianten, mit *pi/180 um in grad umzurechnen, für Darstellung
-				alpha_2 = degrees(alpha_2_rad)
-			else:
-				alpha_2 = 0
-			'''
 			# based on:
 			# https://www.umwelt-campus.de/fileadmin/Umwelt-Campus/User/TPreussler/Download/Festigkeitslehre/Foliensaetze/01_Spannungszustand.pdf
 			# https://technikermathe.de/tm2-hauptnormalspannung-berechnen
@@ -1319,7 +1281,6 @@ def interweave_results_pn(feas):
 		print_data(text)
 
 		data["done"][str(frame)] = True
-		bpy.ops.object.mode_set(mode = 'OBJECT')
 
 def interweave_results_fd(feas):
 	'''
@@ -1400,7 +1361,6 @@ def interweave_results_fd(feas):
 		print_data(text)
 
 		data["done"][str(frame)] = True
-		bpy.ops.object.mode_set(mode = 'OBJECT')
 
 def approximate_sectional():
 	'''
