@@ -796,7 +796,7 @@ def create_quads(structure_obj, quads):
 		modifier_solidify.use_even_offset = True
 		modifier_solidify.material_offset = 1
 		modifier_solidify.offset = 1
-
+		modifier_solidify.use_rim = False
 	
 	# set the thickness passed from gui
 	for id, quad in quads.items():
