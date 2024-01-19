@@ -1123,58 +1123,30 @@ def interweave_results_pn(feas):
 			'''
 			# based on:
 			# https://www.umwelt-campus.de/fileadmin/Umwelt-Campus/User/TPreussler/Download/Festigkeitslehre/Foliensaetze/01_Spannungszustand.pdf
+			# https://technikermathe.de/tm2-hauptnormalspannung-berechnen
+			# midpoint
+			
 			# first side
-			# midpoint
-			#s_m = (s_x_1 + s_y_1)*0.5
-
-			# pythagoras
-			#a = s_y_1 - s_m
-			#b = T_xy_1
-			#c = sqrt(a**2 + b**2)
-
-			# alpha
-			#tan_alpha = b / a
-			alpha_1_1 = degrees(0.5 * arctan((2 * T_xy_1) / (s_x_1 - s_y_1)))
-			alpha_2_1 = alpha_1_1 + 90
+			alpha = degrees(0.5 * arctan((2 * T_xy_1) / (s_x_1 - s_y_1)))
+			s_1_1 = (s_x_1 + s_y_1)/2 + sqrt(((s_x_1 - s_y_1)/2)**2 + T_xy_1**2)
+			s_2_1 = (s_x_1 + s_y_1)/2 - sqrt(((s_x_1 - s_y_1)/2)**2 + T_xy_1**2)
+			s_xi = (s_x_1 + s_y_1)/2 + (s_x_1 - s_y_1)/2 * cos(2*radians(alpha)) + T_xy_1 * sin(2*radians(alpha))
 			
-			s_1 = (s_x_1 + s_y_1)/2 + (s_x_1 - s_y_1)/2 * cos(2*radians(alpha_1_1)) + T_xy_1 * sin(2*radians(alpha_1_1))
-			s_2 = (s_x_1 + s_y_1)/2 + (s_x_1 - s_y_1)/2 * cos(2*radians(alpha_2_1)) + T_xy_1 * sin(2*radians(alpha_2_1))
-			
-			# main forces
-			#if abs(s_1) > abs(s_2):
-			if s_1 > s_2:
-				s_1_1 = s_1
-				s_2_1 = s_2
+			if round(s_1_1,2) == round(s_xi,2):
+				alpha_1 = alpha + 90
 			else:
-				s_1_1 = s_2
-				s_2_1 = s_1
+				alpha_1 = alpha
 			
-			# seconde side
-			# midpoint
-			#s_m = (s_x_2 + s_y_2)*0.5
+			# second side
+			alpha = degrees(0.5 * arctan((2 * T_xy_2) / (s_x_2 - s_y_2)))
+			s_1_2 = (s_x_2 + s_y_2)/2 + sqrt(((s_x_2 - s_y_2)/2)**2 + T_xy_2**2)
+			s_2_2 = (s_x_2 + s_y_2)/2 - sqrt(((s_x_2 - s_y_2)/2)**2 + T_xy_2**2)
+			s_xi = (s_x_2 + s_y_2)/2 + (s_x_2 - s_y_2)/2 * cos(2*radians(alpha)) + T_xy_2 * sin(2*radians(alpha))
 
-			# pythagoras
-			#a = s_y_2 - s_m
-			#b = T_xy_2
-			#c = sqrt(a**2 + b**2)
-
-			# alpha
-			#tan_alpha = b / a
-			alpha_1_2 = degrees(0.5 * arctan((2 * T_xy_2) / (s_x_2 - s_y_2)))
-			alpha_2_2 = alpha_1_2 + 90
-			
-			s_1 = (s_x_2 + s_y_2)/2 + (s_x_2 - s_y_2)/2 * cos(2*radians(alpha_1_2)) + T_xy_2 * sin(2*radians(alpha_1_2))
-			s_2 = (s_x_2 + s_y_2)/2 + (s_x_2 - s_y_2)/2 * cos(2*radians(alpha_2_2)) + T_xy_2 * sin(2*radians(alpha_2_2))
-			
-			# main forces
-			# https://www.umwelt-campus.de/fileadmin/Umwelt-Campus/User/TPreussler/Download/Festigkeitslehre/Foliensaetze/01_Spannungszustand.pdf
-			#if abs(s_1) > abs(s_2):
-			if s_1 > s_2:
-				s_1_2 = s_1
-				s_2_2 = s_2
+			if round(s_1_2,2) == round(s_xi,2):
+				alpha_2 = alpha + 90
 			else:
-				s_1_2 = s_2
-				s_2_2 = s_1
+				alpha_2 = alpha
 			
 			# long_stress_x = s_x
 			# sigma = s_x
@@ -1313,8 +1285,8 @@ def interweave_results_pn(feas):
 			quad["s_1_2"][frame] = s_1_2
 			quad["s_2_2"][frame] = s_2_2
 
-			quad["alpha_1"][frame] = alpha_1_1
-			quad["alpha_2"][frame] = alpha_1_2
+			quad["alpha_1"][frame] = alpha_1
+			quad["alpha_2"][frame] = alpha_2
 
 			quad["overstress"][frame] = overstress
 			quad["utilization"][frame] = utilization
