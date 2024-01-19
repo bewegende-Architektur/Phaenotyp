@@ -795,6 +795,8 @@ def create_quads(structure_obj, quads):
 		modifier_solidify.vertex_group = "thickness"
 		modifier_solidify.use_even_offset = True
 		modifier_solidify.material_offset = 1
+		modifier_solidify.offset = 1
+
 	
 	# set the thickness passed from gui
 	for id, quad in quads.items():
@@ -1374,8 +1376,8 @@ def update_geometry_post():
 			radius_group.add(ids, radius, 'REPLACE')
 			
 			# set position of second edge			
-			stress_vertices[quad["stresslines_viz"][2]].co = mid - vec - normal*thickness
-			stress_vertices[quad["stresslines_viz"][3]].co = mid + vec - normal*thickness
+			stress_vertices[quad["stresslines_viz"][2]].co = mid - vec + normal*thickness
+			stress_vertices[quad["stresslines_viz"][3]].co = mid + vec + normal*thickness
 
 			# set color
 			if main_force_1 < 0: # pressure is blue
@@ -1396,8 +1398,8 @@ def update_geometry_post():
 			radius_group.add(ids, radius, 'REPLACE')
 			
 			# set position of second edge			
-			stress_vertices[quad["stresslines_viz"][6]].co = mid - vec - normal*thickness
-			stress_vertices[quad["stresslines_viz"][7]].co = mid + vec - normal*thickness
+			stress_vertices[quad["stresslines_viz"][6]].co = mid - vec + normal*thickness
+			stress_vertices[quad["stresslines_viz"][7]].co = mid + vec + normal*thickness
 
 			# set color
 			if main_force_2 < 0: # pressure is blue
