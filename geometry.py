@@ -853,7 +853,7 @@ def create_stresslines(structure_obj, quads):
 		len_verts += 2
 		
 		# append vertices for second edge
-		verts.append(center-normal*0.2*thickness)
+		verts.append(center-normal*thickness)
 		verts.append(center-normal*0.2-normal*thickness)
 				
 		# add second edge
@@ -1074,7 +1074,10 @@ def update_geometry_post():
 	
 	viz_boundaries_members = abs(phaenotyp.viz_boundaries_members)
 	viz_boundaries_quads = abs(phaenotyp.viz_boundaries_quads)
+	
 	viz_scale = phaenotyp.viz_scale / 100 # for percentage
+	
+	viz_stressline_scale = phaenotyp.viz_stressline_scale
 	
 	for id, member in members.items():
 		id = int(id)
@@ -1307,8 +1310,9 @@ def update_geometry_post():
 				i_1 = v[i][1]
 				
 				# set radius
+				r = abs(s[i]) * viz_stressline_scale
 				ids = [quad["stresslines_viz"][i_0], quad["stresslines_viz"][i_1]]
-				radius_group.add(ids, abs(s[i]), 'REPLACE')
+				radius_group.add(ids, r, 'REPLACE')
 				
 				# set color
 				color = rainbow(s[i], overstress, viz_boundaries_quads, viz_scale)
