@@ -497,9 +497,13 @@ def fill_matrix_chromosomes(matrix, len_chromosome):
 	fitness_types = ["volume", "area", "weight", "rise", "span", "cantilever"]
 
 	if phaenotyp.calculation_type != "geometrical":
-		fitness_types.append("deflection")
-		fitness_types.append("average_sigma")
+		if phaenotyp.calculation_type == "force_distribution":
+			fitness_types.append("average_sigma")
 		if phaenotyp.calculation_type != "force_distribution":
+			fitness_types.append("deflection_members")
+			fitness_types.append("deflection_quads")
+			fitness_types.append("average_sigma_members")
+			fitness_types.append("average_sigmav_quads")
 			fitness_types.append("average_strain_energy")
 
 	fitness_types.append("weighted")

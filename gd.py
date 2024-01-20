@@ -343,7 +343,7 @@ def start():
 		print_data("start optimization:")
 		for i in range(optimization_amount):
 			start_opt = calculated_frames[0]
-			end_opt = calculated_frames[len(calculated_frames)-1]
+			end_opt = calculated_frames[len(calculated_frames)-1]+1
 			calculation.sectional_optimization(start_opt, end_opt)
 			
 			# to avoid wrong counting
