@@ -963,7 +963,7 @@ def genetic_algorithm(layout):
 								split.label(text="Quads:")
 								split.prop(phaenotyp, "optimization_quads", text="")
 							if phaenotyp.optimization_pn != "none" or phaenotyp.optimization_fd != "none" or phaenotyp.optimization_quads != "none":
-								box_optimization.prop(phaenotyp, "animation_optimization_type", text="")
+								#box_optimization.prop(phaenotyp, "animation_optimization_type", text="")
 								box_optimization.prop(phaenotyp, "optimization_amount", text="Amount of sectional optimization")
 
 					# fitness headline
@@ -1096,7 +1096,7 @@ def gradient_descent(layout):
 								split.label(text="Quads:")
 								split.prop(phaenotyp, "optimization_quads", text="")
 							if phaenotyp.optimization_pn != "none" or phaenotyp.optimization_fd != "none" or phaenotyp.optimization_quads != "none":
-								box_optimization.prop(phaenotyp, "animation_optimization_type", text="")
+								#box_optimization.prop(phaenotyp, "animation_optimization_type", text="")
 								box_optimization.prop(phaenotyp, "optimization_amount", text="Amount of sectional optimization")
 
 					# fitness headline
