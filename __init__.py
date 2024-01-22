@@ -1022,8 +1022,8 @@ class phaenotyp_properties(PropertyGroup):
 			name = "optimization",
 			description = "Enables sectional optimization after each frame",
 			items = [
-						("none", "None", ""),
-						("approximate", "Approximate", "")
+						("none", "Members none", ""),
+						("approximate", "Members approximate", "")
 					]
 			)
 
@@ -1031,10 +1031,10 @@ class phaenotyp_properties(PropertyGroup):
 			name = "optimization",
 			description = "Enables sectional optimization after each frame",
 			items = [
-						("none", "None", ""),
-						("simple", "Simple", ""),
-						("utilization", "Utilization", ""),
-						("complex", "Complex", "")
+						("none", "Members none", ""),
+						("simple", "Members simple", ""),
+						("utilization", "Members utilization", ""),
+						("complex", "Members complex", "")
 					]
 			)
 
@@ -1042,9 +1042,9 @@ class phaenotyp_properties(PropertyGroup):
 			name = "optimization",
 			description = "Enables sectional optimization after each frame",
 			items = [
-						("none", "None", ""),
-						("approximate", "Approximate", ""),
-						("utilization", "Utilization", "")
+						("none", "Quads none", ""),
+						("approximate", "Quads approximate", ""),
+						("utilization", "Quads utilization", "")
 					]
 			)
 
@@ -2093,7 +2093,8 @@ class OBJECT_PT_Phaenotyp_reset(Panel):
 		'''
 		To hide the panel if no object is available.
 		'''
-		return context.object is not None
+		#return context.object is not None
+		return True
 
 	def draw(self, context):
 		'''

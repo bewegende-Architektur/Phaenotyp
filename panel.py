@@ -707,6 +707,9 @@ def single_frame(layout):
 	data = bpy.context.scene.get("<Phaenotyp>")
 	calculation_type = phaenotyp.calculation_type
 
+	members = data.get("members")
+	quads = data.get("quads")
+		
 	if data:
 		if data["panel_state"]["file"]:
 			if data["panel_state"]["members"] or data["panel_state"]["quads"]:
@@ -725,11 +728,13 @@ def single_frame(layout):
 						if calculation_type == "force_distribution":
 							box_opt.operator("wm.optimize_approximate", text="Members approximate")
 						else:
-							box_opt.operator("wm.optimize_simple", text="Members simple")
-							box_opt.operator("wm.optimize_utilization", text="Members utilization")
-							box_opt.operator("wm.optimize_complex", text="Members complex")
-							box_opt.operator("wm.optimize_quads_approximate", text="Quads approximate")
-							box_opt.operator("wm.optimize_quads_utilization", text="Quads utilization")
+							if members:
+								box_opt.operator("wm.optimize_simple", text="Members simple")
+								box_opt.operator("wm.optimize_utilization", text="Members utilization")
+								box_opt.operator("wm.optimize_complex", text="Members complex")
+							if quads:
+								box_opt.operator("wm.optimize_quads_approximate", text="Quads approximate")
+								box_opt.operator("wm.optimize_quads_utilization", text="Quads utilization")
 					else:
 						box_opt.label(text="Run single analysis first.")
 
@@ -737,7 +742,7 @@ def single_frame(layout):
 					box_top = layout.box()
 					box_top.label(text="Topology:")
 					
-					if len(data["members"]) > 0:
+					if members:
 						result = data["done"].get(str(frame))
 						if result:
 							box_top.operator("wm.topolgy_decimate", text="Decimate")
@@ -766,6 +771,9 @@ def animation(layout):
 	data = bpy.context.scene.get("<Phaenotyp>")
 	calculation_type = phaenotyp.calculation_type
 
+	members = data.get("members")
+	quads = data.get("quads")
+	
 	if data:
 		if data["panel_state"]["file"]:
 			if data["panel_state"]["members"] or data["panel_state"]["quads"]:
@@ -776,14 +784,10 @@ def animation(layout):
 						if calculation_type == "force_distribution":
 							box_optimization.prop(phaenotyp, "optimization_fd", text="")
 						else:
-							col = box_optimization.column()
-							split = col.split()
-							split.label(text="Members:")
-							split.prop(phaenotyp, "optimization_pn", text="")
-							col = box_optimization.column()
-							split = col.split()
-							split.label(text="Quads:")
-							split.prop(phaenotyp, "optimization_quads", text="")
+							if members:
+								box_optimization.prop(phaenotyp, "optimization_pn", text="")
+							if quads:
+								box_optimization.prop(phaenotyp, "optimization_quads", text="")
 						if phaenotyp.optimization_pn != "none" or phaenotyp.optimization_fd != "none" or phaenotyp.optimization_quads != "none":
 							box_optimization.prop(phaenotyp, "animation_optimization_type", text="")
 							box_optimization.prop(phaenotyp, "optimization_amount", text="Amount of sectional optimization")
@@ -807,7 +811,10 @@ def bruteforce(layout):
 	frame = scene.frame_current
 	data = bpy.context.scene.get("<Phaenotyp>")
 	calculation_type = phaenotyp.calculation_type
-
+	
+	members = data.get("members")
+	quads = data.get("quads")
+	
 	if data:
 		if data["panel_state"]["file"]:
 			if data["panel_state"]["members"] or data["panel_state"]["quads"]:
@@ -824,14 +831,10 @@ def bruteforce(layout):
 							if calculation_type == "force_distribution":
 								box_optimization.prop(phaenotyp, "optimization_fd", text="")
 							else:
-								col = box_optimization.column()
-								split = col.split()
-								split.label(text="Members:")
-								split.prop(phaenotyp, "optimization_pn", text="")
-								col = box_optimization.column()
-								split = col.split()
-								split.label(text="Quads:")
-								split.prop(phaenotyp, "optimization_quads", text="")
+								if members:
+									box_optimization.prop(phaenotyp, "optimization_pn", text="")
+								if quads:
+									box_optimization.prop(phaenotyp, "optimization_quads", text="")
 							if phaenotyp.optimization_pn != "none" or phaenotyp.optimization_fd != "none" or phaenotyp.optimization_quads != "none":
 								box_optimization.prop(phaenotyp, "animation_optimization_type", text="")
 								box_optimization.prop(phaenotyp, "optimization_amount", text="Amount of sectional optimization")
@@ -929,7 +932,10 @@ def genetic_algorithm(layout):
 	frame = scene.frame_current
 	data = bpy.context.scene.get("<Phaenotyp>")
 	calculation_type = phaenotyp.calculation_type
-
+	
+	members = data.get("members")
+	quads = data.get("quads")
+	
 	if data:
 		if data["panel_state"]["file"]:
 			if data["panel_state"]["members"] or data["panel_state"]["quads"]:
@@ -954,14 +960,10 @@ def genetic_algorithm(layout):
 							if calculation_type == "force_distribution":
 								box_optimization.prop(phaenotyp, "optimization_fd", text="")
 							else:
-								col = box_optimization.column()
-								split = col.split()
-								split.label(text="Members:")
-								split.prop(phaenotyp, "optimization_pn", text="")
-								col = box_optimization.column()
-								split = col.split()
-								split.label(text="Quads:")
-								split.prop(phaenotyp, "optimization_quads", text="")
+								if members:
+									box_optimization.prop(phaenotyp, "optimization_pn", text="")
+								if quads:
+									box_optimization.prop(phaenotyp, "optimization_quads", text="")
 							if phaenotyp.optimization_pn != "none" or phaenotyp.optimization_fd != "none" or phaenotyp.optimization_quads != "none":
 								#box_optimization.prop(phaenotyp, "animation_optimization_type", text="")
 								box_optimization.prop(phaenotyp, "optimization_amount", text="Amount of sectional optimization")
@@ -1062,7 +1064,10 @@ def gradient_descent(layout):
 	frame = scene.frame_current
 	data = bpy.context.scene.get("<Phaenotyp>")
 	calculation_type = phaenotyp.calculation_type
-
+	
+	members = data.get("members")
+	quads = data.get("quads")
+	
 	if data:
 		if data["panel_state"]["file"]:
 			if data["panel_state"]["members"] or data["panel_state"]["quads"]:
@@ -1087,14 +1092,10 @@ def gradient_descent(layout):
 							if calculation_type == "force_distribution":
 								box_optimization.prop(phaenotyp, "optimization_fd", text="")
 							else:
-								col = box_optimization.column()
-								split = col.split()
-								split.label(text="Members:")
-								split.prop(phaenotyp, "optimization_pn", text="")
-								col = box_optimization.column()
-								split = col.split()
-								split.label(text="Quads:")
-								split.prop(phaenotyp, "optimization_quads", text="")
+								if members:
+									box_optimization.prop(phaenotyp, "optimization_pn", text="")
+								if quads:
+									box_optimization.prop(phaenotyp, "optimization_quads", text="")
 							if phaenotyp.optimization_pn != "none" or phaenotyp.optimization_fd != "none" or phaenotyp.optimization_quads != "none":
 								#box_optimization.prop(phaenotyp, "animation_optimization_type", text="")
 								box_optimization.prop(phaenotyp, "optimization_amount", text="Amount of sectional optimization")
@@ -1207,9 +1208,6 @@ def visualization(layout):
 		### members and quads
 		if members:
 			box_viz.prop(phaenotyp, "viz_show_members", text="Members")
-				
-		if quads:
-			box_viz.prop(phaenotyp, "viz_show_quads", text="Quads")
 		
 		if phaenotyp.calculation_type == "force_distribution":
 			if phaenotyp.viz_show_members == True:
@@ -1217,7 +1215,7 @@ def visualization(layout):
 		else:
 			if members:
 				if phaenotyp.viz_show_members == True:
-					box_viz.prop(phaenotyp, "forces_pn", text="Members")
+					box_viz.prop(phaenotyp, "forces_pn", text="")
 					box_viz.operator("wm.get_boundaries", text="Get boundaries")
 					box_viz.prop(phaenotyp, "viz_boundaries_members", text="Boundaries members")
 					
@@ -1226,14 +1224,16 @@ def visualization(layout):
 						box_viz.prop(phaenotyp, "viz_deflection", text="Deflected / original", slider=True)
 				
 			if quads:
-				if phaenotyp.viz_show_quads == True:
-					box_viz.prop(phaenotyp, "forces_quads", text="Quads")
-					box_viz.operator("wm.get_boundaries", text="Get boundaries")
-					box_viz.prop(phaenotyp, "viz_boundaries_quads", text="Boundaries quads")
-					
-					box_viz.prop(phaenotyp, "viz_scale", text="Scale force", slider=True)
-					if phaenotyp.calculation_type != "force_distribution":
-						box_viz.prop(phaenotyp, "viz_deflection", text="Deflected / original", slider=True)
+				if quads:
+					box_viz.prop(phaenotyp, "viz_show_quads", text="Quads")
+					if phaenotyp.viz_show_quads == True:
+						box_viz.prop(phaenotyp, "forces_quads", text="")
+						box_viz.operator("wm.get_boundaries", text="Get boundaries")
+						box_viz.prop(phaenotyp, "viz_boundaries_quads", text="Boundaries quads")
+						
+						box_viz.prop(phaenotyp, "viz_scale", text="Scale force", slider=True)
+						if phaenotyp.calculation_type != "force_distribution":
+							box_viz.prop(phaenotyp, "viz_deflection", text="Deflected / original", slider=True)
 		
 		# stresslines
 		if quads:
