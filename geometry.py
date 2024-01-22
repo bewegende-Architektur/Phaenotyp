@@ -18,6 +18,7 @@ def print_data(text):
 def viz_update(self, context):
 	'''
 	Triggers the update of the vizulisation.
+	This function is used to handle self and context.
 	:param self: Passed from the panel.
 	:param context: Passed from the panel.
 	'''
