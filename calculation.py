@@ -1,13 +1,18 @@
 import bpy
 import bmesh
+
+import sys
+import os
+path_addons = os.path.dirname(__file__) # path to the folder of addons
+path_phaenotyp = path_addons + "/phaenotyp"
+sys.path.append(path_addons)
 from PyNite import FEModel3D
+
 from numpy import array, empty, append, poly1d, polyfit, linalg, zeros, intersect1d, arctan, sin, cos
 from phaenotyp import basics, material, geometry, progress
 from math import sqrt, tanh, pi, degrees, radians
 
 from subprocess import Popen, PIPE
-import sys
-import os
 import pickle
 import gc
 gc.disable()

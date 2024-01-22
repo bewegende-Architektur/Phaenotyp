@@ -298,10 +298,8 @@ class svg_individuals:
 			file.write(text)
 
 def copy_sorttable(directory):
-	script_folder = os.path.dirname(__file__)
-	parent_dir = script_folder[:-9]
-
-	source = parent_dir + "sorttable.js"
+	path_addons = os.path.dirname(__file__) # path to the folder of addons
+	source = path_addons + "/sorttable/sorttable.js"
 	destination = directory + "sorttable.js"
 	shutil.copyfile(source, destination)
 
@@ -957,7 +955,7 @@ def append_matrix_members(file, matrix, frame, highest, lowest, length):
 				s = 1
 
 				if overstress == True:
-					v = 0.25
+					v = 0.75
 				else:
 					v = 1.0
 
