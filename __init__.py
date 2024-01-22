@@ -7,6 +7,11 @@ bl_info = {
 	"location": "3D View > Tools",
 }
 
+'''
+The __init__ file is the main-file to be registert from blender.
+It contains and handles all blender properties as well as the panel.
+'''
+
 import bpy
 from bpy.props import IntProperty, FloatProperty, BoolProperty, StringProperty, EnumProperty, PointerProperty, CollectionProperty
 from bpy.types import Panel, Menu, Operator, PropertyGroup, UIList
@@ -14,13 +19,10 @@ from bpy.app.handlers import persistent
 
 from phaenotyp import basics, panel, operators, material, geometry, calculation, ga, report, progress
 
+# pass infos to basics to keep control of used version
+# the phaenotyp_version is stored in saved files
 basics.blender_version = bl_info["blender"]
 basics.phaenotyp_version = bl_info["version"]
-
-'''
-The __init__ file is the main-file to be registert from blender.
-It contains and handles all blender properties as well as the panel.
-'''
 
 def viz_update(self, context):
 	'''
