@@ -1071,13 +1071,23 @@ def interweave_results_pn(feas):
 			Wy = (thickness**2)/6  # auf 1 cm Schalenbreite
 			
 			# Spannungen in x und y Richrtung an den Oberflächen 1 und 2
+			'''
 			s_x_1 = membrane_x + moment_x/Wy  # für Darstellung
 			s_x_2 = membrane_x - moment_x/Wy  # für Darstellung
 			s_y_1 = membrane_y + moment_y/Wy  # für Darstellung
 			s_y_2 = membrane_y - moment_y/Wy  # für Darstellung
 			T_xy_1 = membrane_xy +  moment_xy/Wy # am Plattenrand, für Darstellung
 			T_xy_2 = membrane_xy -  moment_xy/Wy # am Plattenrand, für Darstellung
+			'''
+
+			s_x_1 = membrane_x - moment_x/Wy  # für Darstellung
+			s_x_2 = membrane_x + moment_x/Wy  # für Darstellung
+			s_y_1 = membrane_y - moment_y/Wy  # für Darstellung
+			s_y_2 = membrane_y + moment_y/Wy  # für Darstellung
+			T_xy_1 = membrane_xy -  moment_xy/Wy # am Plattenrand, für Darstellung
+			T_xy_2 = membrane_xy +  moment_xy/Wy # am Plattenrand, für Darstellung
 			
+						
 			# Schubspannungen in x und y Richtung  infolge Querkraft in Plattenmitte
 			T_x = 1.5 * shear_x/A   # in Plattenmitte
 			T_y = 1.5 * shear_y/A   # in Plattenmitte
