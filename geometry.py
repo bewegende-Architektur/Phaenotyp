@@ -1041,6 +1041,51 @@ def update_geometry_pre():
 		
 	update_translation()
 
+def hide_reveal():
+	scene = bpy.context.scene
+	phaenotyp = scene.phaenotyp
+	objs = bpy.data.objects
+	
+	if phaenotyp.viz_show_supports == True:
+		objs['<Phaenotyp>support'].hide_viewport = False
+		objs['<Phaenotyp>support'].hide_render = False
+	else:
+		objs['<Phaenotyp>support'].hide_viewport = True
+		objs['<Phaenotyp>support'].hide_render = True
+	
+	if phaenotyp.viz_show_loads == True:
+		for obj in objs:
+			if "<Phaenotyp>load" in obj.name_full:
+				obj.hide_viewport = False
+				obj.hide_render = False
+	else:
+		for obj in objs:
+			if "<Phaenotyp>load" in obj.name_full:
+				obj.hide_viewport = True
+				obj.hide_render = True
+		
+	if phaenotyp.viz_show_members == True:
+		objs['<Phaenotyp>members'].hide_viewport = False
+		objs['<Phaenotyp>members'].hide_render = False
+	else:
+		objs['<Phaenotyp>support'].hide_viewport = True
+		objs['<Phaenotyp>support'].hide_render = True
+		
+	if phaenotyp.viz_show_quads == True:
+		objs['<Phaenotyp>quads'].hide_viewport = False
+		objs['<Phaenotyp>quads'].hide_render = False
+	else:
+		objs['<Phaenotyp>quads'].hide_viewport = True
+		objs['<Phaenotyp>quads'].hide_render = True
+		
+	if phaenotyp.viz_show_stresslines == True:
+		objs['<Phaenotyp>stresslines'].hide_viewport = False
+		objs['<Phaenotyp>stresslines'].hide_render = False
+	else:
+		objs['<Phaenotyp>stresslines'].hide_viewport = True
+		objs['<Phaenotyp>stresslines'].hide_render = True
+	
+	
 def rainbow(force, overstress, viz_boundaries, viz_scale):
 	h = force*(-1) / viz_boundaries * viz_scale + 0.333
 	if h > 0.666:

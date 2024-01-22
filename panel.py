@@ -1187,29 +1187,52 @@ def visualization(layout):
 		
 		box_viz = layout.box()
 		box_viz.label(text="Vizualisation:")
+		
+		### supports
+		box_viz.prop(phaenotyp, "viz_show_supports", text="Supports")
+		if phaenotyp.viz_show_supports == True:
+			box_viz.label(text = str(len(data["supports"])) + " supports available.")
+		
+		### loads
+		box_viz.prop(phaenotyp, "viz_show_loads", text="Loads")
+		if phaenotyp.viz_show_loads == True:
+			len_loads = len(data["loads_v"]) + len(data["loads_e"]) + len(data["loads_f"])
+			box_viz.label(text = str(len_loads) + " loads available.")
+		
+		### members and quads
+		if members:
+			box_viz.prop(phaenotyp, "viz_show_members", text="Members")
+				
+		if quads:
+			box_viz.prop(phaenotyp, "viz_show_quads", text="Quads")
+		
 		if phaenotyp.calculation_type == "force_distribution":
-			box_viz.prop(phaenotyp, "forces_fd", text="Members")
+			if phaenotyp.viz_show_members == True:
+				box_viz.prop(phaenotyp, "forces_fd", text="Members")
 		else:
 			if members:
-				box_viz.prop(phaenotyp, "forces_pn", text="Members")
+				if phaenotyp.viz_show_members == True:
+					box_viz.prop(phaenotyp, "forces_pn", text="Members")
+					box_viz.operator("wm.get_boundaries", text="Get boundaries")
+					box_viz.prop(phaenotyp, "viz_boundaries_members", text="Boundaries members")
+					
 			if quads:
-				box_viz.prop(phaenotyp, "forces_quads", text="Quads")
-
-		# sliders to scale forces and deflection
-		box_viz.operator("wm.get_boundaries", text="Get boundaries")
-		if members:
-			box_viz.prop(phaenotyp, "viz_boundaries_members", text="Boundaries members")
-		if quads:
-			box_viz.prop(phaenotyp, "viz_boundaries_quads", text="Boundaries quads")
+				if phaenotyp.viz_show_quads == True:
+					box_viz.prop(phaenotyp, "forces_quads", text="Quads")
+					box_viz.operator("wm.get_boundaries", text="Get boundaries")
+					box_viz.prop(phaenotyp, "viz_boundaries_quads", text="Boundaries quads")
 		
-		box_viz.prop(phaenotyp, "viz_scale", text="Scale force", slider=True)
-		if phaenotyp.calculation_type != "force_distribution":
-			box_viz.prop(phaenotyp, "viz_deflection", text="Deflected / original", slider=True)
+		if phaenotyp.viz_show_members == True or phaenotyp.viz_show_quads == True:
+			box_viz.prop(phaenotyp, "viz_scale", text="Scale force", slider=True)
+			if phaenotyp.calculation_type != "force_distribution":
+				box_viz.prop(phaenotyp, "viz_deflection", text="Deflected / original", slider=True)
 		
 		# stresslines
 		if quads:
-			box_viz.prop(phaenotyp, "viz_stressline_scale", text="Scale of stresslines", slider=True)
-			box_viz.prop(phaenotyp, "viz_stressline_length", text="Scale of stresslines", slider=True)
+			box_viz.prop(phaenotyp, "viz_show_stresslines", text="Stresslines")
+			if phaenotyp.viz_show_stresslines == True:
+				box_viz.prop(phaenotyp, "viz_stressline_scale", text="Scale of stresslines", slider=True)
+				box_viz.prop(phaenotyp, "viz_stressline_length", text="Scale of stresslines", slider=True)
 
 def text(layout):
 	'''
