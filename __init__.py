@@ -14,6 +14,9 @@ from bpy.app.handlers import persistent
 
 from phaenotyp import basics, panel, operators, material, geometry, calculation, ga, report, progress
 
+basics.blender_version = bl_info["blender"]
+basics.phaenotyp_version = bl_info["version"]
+
 '''
 The __init__ file is the main-file to be registert from blender.
 It contains and handles all blender properties as well as the panel.
@@ -1890,7 +1893,7 @@ class OBJECT_PT_Phaenotyp_pre(Panel):
 	bl_idname = "OBJECT_PT_Phaenotyp_pre"
 	bl_space_type = "VIEW_3D"
 	bl_region_type = "UI"
-	bl_category = "Phänotyp 0.3.0"
+	bl_category = basics.phaenotyp_name
 
 	@classmethod
 	def poll(self,context):
@@ -1928,7 +1931,7 @@ class OBJECT_PT_Phaenotyp_setup(Panel):
 	bl_idname = "OBJECT_PT_Phaenotyp_setup"
 	bl_space_type = "VIEW_3D"
 	bl_region_type = "UI"
-	bl_category = "Phänotyp 0.3.0"
+	bl_category = basics.phaenotyp_name
 
 	@classmethod
 	def poll(self,context):
@@ -1973,7 +1976,7 @@ class OBJECT_PT_Phaenotyp_run(Panel):
 	bl_idname = "OBJECT_PT_Phaenotyp_run"
 	bl_space_type = "VIEW_3D"
 	bl_region_type = "UI"
-	bl_category = "Phänotyp 0.3.0"
+	bl_category = basics.phaenotyp_name
 
 	@classmethod
 	def poll(self,context):
@@ -2020,7 +2023,7 @@ class OBJECT_PT_Phaenotyp_post(Panel):
 	bl_idname = "OBJECT_PT_Phaenotyp_post"
 	bl_space_type = "VIEW_3D"
 	bl_region_type = "UI"
-	bl_category = "Phänotyp 0.3.0"
+	bl_category = basics.phaenotyp_name
 
 	@classmethod
 	def poll(self,context):
@@ -2086,7 +2089,7 @@ class OBJECT_PT_Phaenotyp_reset(Panel):
 	bl_idname = "OBJECT_PT_Phaenotyp_reset"
 	bl_space_type = "VIEW_3D"
 	bl_region_type = "UI"
-	bl_category = "Phänotyp 0.3.0"
+	bl_category = basics.phaenotyp_name
 
 	@classmethod
 	def poll(self,context):
