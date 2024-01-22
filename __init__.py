@@ -23,45 +23,6 @@ from phaenotyp import basics, panel, operators, material, geometry, calculation,
 # the phaenotyp_version is stored in saved files
 basics.blender_version = bl_info["blender"]
 basics.phaenotyp_version = bl_info["version"]
-
-def viz_update(self, context):
-	'''
-	Triggers the update of the vizulisation.
-	:param self: Passed from the panel.
-	:param context: Passed from the panel.
-	'''
-	geometry.update_geometry_post()
-
-def hide_reveal(self, context):
-	'''
-	Is updating visibilty from created objects
-	'''
-	geometry.hide_reveal()
-
-def fh_update(self, context):
-	'''
-	Triggers the update from hull.
-	:param self: Passed from the panel.
-	:param context: Passed from the panel.
-	'''
-	scene = context.scene
-	phaenotyp = scene.phaenotyp
-	fh_methode = phaenotyp.fh_methode
-	
-	# check if all objects are available
-	valid_objects = True
-	hull = scene.get("<Phaenotyp>fh_hull")
-	if not hull:
-		valid_objects = False
-		
-	if fh_methode == "path":
-		path = scene.get("<Phaenotyp>fh_path")
-		if not path:
-			valid_objects = False
-	
-	# run update
-	if valid_objects:
-		operators.from_hull()
 	
 class phaenotyp_properties(PropertyGroup):
 	'''
@@ -77,7 +38,7 @@ class phaenotyp_properties(PropertyGroup):
 					("path", "Path", "")
 					],
 			default = "-",
-			update = fh_update
+			update = geometry.fh_update
 			)
 
 		fh_input_type: EnumProperty(
@@ -89,7 +50,7 @@ class phaenotyp_properties(PropertyGroup):
 					("individual", "Individual", "")
 					],
 			default = "-",
-			update = fh_update
+			update = geometry.fh_update
 			)
 		
 		fh_w: FloatProperty(
@@ -98,7 +59,7 @@ class phaenotyp_properties(PropertyGroup):
 			default = 7.0,
 			min = 1.0,
 			max = 100.0,
-			update = fh_update
+			update = geometry.fh_update
 			)
 		
 		fh_d: FloatProperty(
@@ -107,7 +68,7 @@ class phaenotyp_properties(PropertyGroup):
 			default = 7.0,
 			min = 1.0,
 			max = 100.0,
-			update = fh_update
+			update = geometry.fh_update
 			)
 		
 		fh_h: FloatProperty(
@@ -116,7 +77,7 @@ class phaenotyp_properties(PropertyGroup):
 			default = 3.0,
 			min = 1.0,
 			max = 100.0,
-			update = fh_update
+			update = geometry.fh_update
 			)
 		
 		fh_o_x: FloatProperty(
@@ -125,7 +86,7 @@ class phaenotyp_properties(PropertyGroup):
 			default = 0.0,
 			min = -10.0,
 			max = 10.0,
-			update = fh_update
+			update = geometry.fh_update
 			)
 		
 		fh_o_y: FloatProperty(
@@ -134,7 +95,7 @@ class phaenotyp_properties(PropertyGroup):
 			default = 0.0,
 			min = -10.0,
 			max = 10.0,
-			update = fh_update
+			update = geometry.fh_update
 			)
 		
 		fh_o_z: FloatProperty(
@@ -143,7 +104,7 @@ class phaenotyp_properties(PropertyGroup):
 			default = 0.0,
 			min = -10.0,
 			max = 10.0,
-			update = fh_update
+			update = geometry.fh_update
 			)
 
 		fh_rot: FloatProperty(
@@ -152,7 +113,7 @@ class phaenotyp_properties(PropertyGroup):
 			default = 0.0,
 			min = 0.0,
 			max = 360.0,
-			update = fh_update
+			update = geometry.fh_update
 			)
 
 		fh_amount: IntProperty(
@@ -161,7 +122,7 @@ class phaenotyp_properties(PropertyGroup):
 			default = 3,
 			min = 1,
 			max = 12,
-			update = fh_update
+			update = geometry.fh_update
 			)
 
 		fh_o_c: FloatProperty(
@@ -170,7 +131,7 @@ class phaenotyp_properties(PropertyGroup):
 			default = 0.0,
 			min = 0.0,
 			max = 10.0,
-			update = fh_update
+			update = geometry.fh_update
 			)
 		
 	if "setup":
@@ -915,12 +876,12 @@ class phaenotyp_properties(PropertyGroup):
 			max = 250
 			)
 		
-		viz_show_structure: BoolProperty(name = 'viz_show_structure', default = False, update = hide_reveal)
-		viz_show_supports: BoolProperty(name = 'viz_show_supports', default = False, update = hide_reveal)
-		viz_show_loads: BoolProperty(name = 'viz_show_loads', default = False, update = hide_reveal)
-		viz_show_members: BoolProperty(name = 'viz_show_members', default = True, update = hide_reveal)
-		viz_show_quads: BoolProperty(name = 'viz_show_quads', default = True, update = hide_reveal)
-		viz_show_stresslines: BoolProperty(name = 'viz_show_stresslines', default = True, update = hide_reveal)
+		viz_show_structure: BoolProperty(name = 'viz_show_structure', default = False, update = geometry.hide_reveal)
+		viz_show_supports: BoolProperty(name = 'viz_show_supports', default = False, update = geometry.hide_reveal)
+		viz_show_loads: BoolProperty(name = 'viz_show_loads', default = False, update = geometry.hide_reveal)
+		viz_show_members: BoolProperty(name = 'viz_show_members', default = True, update = geometry.hide_reveal)
+		viz_show_quads: BoolProperty(name = 'viz_show_quads', default = True, update = geometry.hide_reveal)
+		viz_show_stresslines: BoolProperty(name = 'viz_show_stresslines', default = True, update = geometry.hide_reveal)
 
 		forces_fd: EnumProperty(
 			name = "forces_fd",
@@ -930,7 +891,7 @@ class phaenotyp_properties(PropertyGroup):
 						("axial", "Axial", ""),
 						("utilization", "Utilization", "")
 					],
-			update = viz_update
+			update = geometry.viz_update
 			)
 
 		forces_pn: EnumProperty(
@@ -951,7 +912,7 @@ class phaenotyp_properties(PropertyGroup):
 						("moment_energy", "Moment energy", ""),
 						("strain_energy", "Strain energy", "")
 					],
-			update = viz_update
+			update = geometry.viz_update
 			)
 				
 		forces_quads: EnumProperty(
@@ -964,28 +925,28 @@ class phaenotyp_properties(PropertyGroup):
 						("s_1", "S 1", ""),
 						("s_2", "S 2", "")
 					],
-			update = viz_update,
+			update = geometry.viz_update,
 			default = "T_xy"
 			)
 
 		viz_boundaries_members: FloatProperty(
 			name = "viz_boundaries_members",
 			description = "Max / min value of selected force in all frames",
-			update = viz_update,
+			update = geometry.viz_update,
 			default = 50
 			)
 
 		viz_boundaries_quads: FloatProperty(
 			name = "viz_boundaries_quads",
 			description = "Max / min value of selected force in all frames",
-			update = viz_update,
+			update = geometry.viz_update,
 			default = 50
 			)
 		
 		viz_scale: FloatProperty(
 			name = "viz_scale",
 			description = "scale",
-			update = viz_update,
+			update = geometry.viz_update,
 			subtype = "PERCENTAGE",
 			default = 50,
 			min = 0.001,
@@ -995,7 +956,7 @@ class phaenotyp_properties(PropertyGroup):
 		viz_deflection: FloatProperty(
 			name = "viz_scale",
 			description = "deflected / original",
-			update = viz_update,
+			update = geometry.viz_update,
 			subtype = "PERCENTAGE",
 			default = 50,
 			min = 0.001,
@@ -1005,7 +966,7 @@ class phaenotyp_properties(PropertyGroup):
 		viz_stressline_scale: FloatProperty(
 			name = "viz_stressline_scale",
 			description = "scale",
-			update = viz_update,
+			update = geometry.viz_update,
 			subtype = "PERCENTAGE",
 			default = 50,
 			min = 0.001,
@@ -1015,7 +976,7 @@ class phaenotyp_properties(PropertyGroup):
 		viz_stressline_length: FloatProperty(
 			name = "viz_stressline_length",
 			description = "length",
-			update = viz_update,
+			update = geometry.viz_update,
 			subtype = "PERCENTAGE",
 			default = 50,
 			min = 0.001,
@@ -1185,8 +1146,8 @@ class phaenotyp_properties(PropertyGroup):
 # https://sinestesia.co/blog/tutorials/using-uilists-in-blender/
 # https://blenderartists.org/t/create-and-handle-multiple-uilists
 class PHAENOTYP_list_item(PropertyGroup):
-	item_name: StringProperty(name="item_name", default="Name", update = fh_update)
-	item_value: FloatProperty(name="item_value", default=3.0, update = fh_update)
+	item_name: StringProperty(name="item_name", default="Name", update = geometry.fh_update)
+	item_value: FloatProperty(name="item_value", default=3.0, update = geometry.fh_update)
 
 class PHAENOTYP_UL_List(UIList):
 	def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):

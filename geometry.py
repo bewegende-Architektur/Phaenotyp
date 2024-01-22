@@ -15,6 +15,39 @@ def print_data(text):
 	"""
 	print("Phaenotyp |", text)
 
+def viz_update(self, context):
+	'''
+	Triggers the update of the vizulisation.
+	:param self: Passed from the panel.
+	:param context: Passed from the panel.
+	'''
+	update_geometry_post()
+	
+def fh_update(self, context):
+	'''
+	Triggers the update from hull.
+	:param self: Passed from the panel.
+	:param context: Passed from the panel.
+	'''
+	scene = context.scene
+	phaenotyp = scene.phaenotyp
+	fh_methode = phaenotyp.fh_methode
+	
+	# check if all objects are available
+	valid_objects = True
+	hull = scene.get("<Phaenotyp>fh_hull")
+	if not hull:
+		valid_objects = False
+		
+	if fh_methode == "path":
+		path = scene.get("<Phaenotyp>fh_path")
+		if not path:
+			valid_objects = False
+	
+	# run update
+	if valid_objects:
+		operators.from_hull()
+		
 def amount_of_loose_parts():
 	'''
 	Is returning the amount of loose parts.
@@ -1000,7 +1033,7 @@ def update_translation():
 		
 	if phaenotyp.crown_update == True:
 		operators.crown_shyness()
-
+	
 def update_geometry_pre():
 	scene = bpy.context.scene
 	phaenotyp = scene.phaenotyp
@@ -1048,7 +1081,7 @@ def update_geometry_pre():
 		
 	update_translation()
 
-def hide_reveal():
+def hide_reveal(self, context):
 	scene = bpy.context.scene
 	phaenotyp = scene.phaenotyp
 	data = scene["<Phaenotyp>"]
