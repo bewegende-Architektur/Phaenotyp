@@ -991,7 +991,17 @@ class phaenotyp_properties(PropertyGroup):
 			subtype = "PERCENTAGE",
 			default = 50,
 			min = 0.001,
-			max = 100
+			max = 200
+			)
+
+		viz_stressline_length: FloatProperty(
+			name = "viz_stressline_length",
+			description = "length",
+			update = viz_update,
+			subtype = "PERCENTAGE",
+			default = 50,
+			min = 0.001,
+			max = 200
 			)
 	
 	if "optimization":

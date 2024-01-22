@@ -1057,6 +1057,22 @@ def rainbow(force, overstress, viz_boundaries, viz_scale):
 	c.hsv = h,s,v
 	return [c.r, c.g, c.b, 1.0]
 	
+def red_blue(force, overstress, viz_boundaries, viz_scale):
+	if force > 0:
+		h = 0
+	else:
+		h = 0.666
+	
+	s = 1
+	
+	if overstress == True:
+		v = 0.25
+	else:
+		v = 1.0
+	
+	c.hsv = h,s,v
+	return [c.r, c.g, c.b, 1.0]
+	
 def update_geometry_post():
 	scene = bpy.context.scene
 	phaenotyp = scene.phaenotyp
@@ -1078,6 +1094,7 @@ def update_geometry_post():
 	viz_scale = phaenotyp.viz_scale / 100 # for percentage
 	
 	viz_stressline_scale = phaenotyp.viz_stressline_scale
+	viz_stressline_length = phaenotyp.viz_stressline_length
 	
 	for id, member in members.items():
 		id = int(id)
@@ -1274,7 +1291,7 @@ def update_geometry_post():
 
 			mid = (e_1 + e_0) / 2
 			t = e_1 - e_0
-			t = t*0.25
+			t = t*viz_stressline_length/200
 			
 			a_1_1 = quad["alpha_1"][str(frame)]
 			a_2_1 = a_1_1 + 90
@@ -1315,7 +1332,7 @@ def update_geometry_post():
 				radius_group.add(ids, r, 'REPLACE')
 				
 				# set color
-				color = rainbow(s[i], overstress, viz_boundaries_quads, viz_scale)
+				color = red_blue(s[i], overstress, viz_boundaries_quads, viz_scale)
 				attribute.data[quad["stresslines_viz"][i_0]].color = color
 				attribute.data[quad["stresslines_viz"][i_1]].color = color
 					
