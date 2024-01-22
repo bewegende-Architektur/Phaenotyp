@@ -1187,6 +1187,11 @@ def visualization(layout):
 		
 		box_viz = layout.box()
 		box_viz.label(text="Vizualisation:")
+
+		### structure
+		box_viz.prop(phaenotyp, "viz_show_structure", text="Structure")
+		if phaenotyp.viz_show_structure == True:
+			box_viz.label(text = "structure available.")
 		
 		### supports
 		box_viz.prop(phaenotyp, "viz_show_supports", text="Supports")
@@ -1216,16 +1221,19 @@ def visualization(layout):
 					box_viz.operator("wm.get_boundaries", text="Get boundaries")
 					box_viz.prop(phaenotyp, "viz_boundaries_members", text="Boundaries members")
 					
+					box_viz.prop(phaenotyp, "viz_scale", text="Scale force", slider=True)
+					if phaenotyp.calculation_type != "force_distribution":
+						box_viz.prop(phaenotyp, "viz_deflection", text="Deflected / original", slider=True)
+				
 			if quads:
 				if phaenotyp.viz_show_quads == True:
 					box_viz.prop(phaenotyp, "forces_quads", text="Quads")
 					box_viz.operator("wm.get_boundaries", text="Get boundaries")
 					box_viz.prop(phaenotyp, "viz_boundaries_quads", text="Boundaries quads")
-		
-		if phaenotyp.viz_show_members == True or phaenotyp.viz_show_quads == True:
-			box_viz.prop(phaenotyp, "viz_scale", text="Scale force", slider=True)
-			if phaenotyp.calculation_type != "force_distribution":
-				box_viz.prop(phaenotyp, "viz_deflection", text="Deflected / original", slider=True)
+					
+					box_viz.prop(phaenotyp, "viz_scale", text="Scale force", slider=True)
+					if phaenotyp.calculation_type != "force_distribution":
+						box_viz.prop(phaenotyp, "viz_deflection", text="Deflected / original", slider=True)
 		
 		# stresslines
 		if quads:

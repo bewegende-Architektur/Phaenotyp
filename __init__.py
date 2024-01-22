@@ -910,8 +910,9 @@ class phaenotyp_properties(PropertyGroup):
 			max = 250
 			)
 		
-		viz_show_supports: BoolProperty(name = 'viz_show_supports', default = True, update = hide_reveal)
-		viz_show_loads: BoolProperty(name = 'viz_show_loads', default = True, update = hide_reveal)
+		viz_show_structure: BoolProperty(name = 'viz_show_structure', default = False, update = hide_reveal)
+		viz_show_supports: BoolProperty(name = 'viz_show_supports', default = False, update = hide_reveal)
+		viz_show_loads: BoolProperty(name = 'viz_show_loads', default = False, update = hide_reveal)
 		viz_show_members: BoolProperty(name = 'viz_show_members', default = True, update = hide_reveal)
 		viz_show_quads: BoolProperty(name = 'viz_show_quads', default = True, update = hide_reveal)
 		viz_show_stresslines: BoolProperty(name = 'viz_show_stresslines', default = True, update = hide_reveal)

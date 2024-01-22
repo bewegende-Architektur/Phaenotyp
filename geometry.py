@@ -8,6 +8,13 @@ c = Color()
 # variable to pass all stuff that needs to be fixed
 to_be_fixed = None
 
+def print_data(text):
+	"""
+	Print data for debugging
+	:param text: Needs a text as string (Do not pass as list)
+	"""
+	print("Phaenotyp |", text)
+
 def amount_of_loose_parts():
 	'''
 	Is returning the amount of loose parts.
@@ -1044,46 +1051,35 @@ def update_geometry_pre():
 def hide_reveal():
 	scene = bpy.context.scene
 	phaenotyp = scene.phaenotyp
+	data = scene["<Phaenotyp>"]
+	structure = data["structure"]
+	
 	objs = bpy.data.objects
 	
-	if phaenotyp.viz_show_supports == True:
-		objs['<Phaenotyp>support'].hide_viewport = False
-		objs['<Phaenotyp>support'].hide_render = False
-	else:
-		objs['<Phaenotyp>support'].hide_viewport = True
-		objs['<Phaenotyp>support'].hide_render = True
+	to_set = [
+		[phaenotyp.viz_show_structure, structure.name_full],
+		[phaenotyp.viz_show_supports, '<Phaenotyp>support'],
+		[phaenotyp.viz_show_loads, '<Phaenotyp>load'],
+		[phaenotyp.viz_show_members, '<Phaenotyp>members'],
+		[phaenotyp.viz_show_quads, '<Phaenotyp>quads'],
+		[phaenotyp.viz_show_stresslines, '<Phaenotyp>stresslines']
+	]
 	
-	if phaenotyp.viz_show_loads == True:
-		for obj in objs:
-			if "<Phaenotyp>load" in obj.name_full:
-				obj.hide_viewport = False
-				obj.hide_render = False
-	else:
-		for obj in objs:
-			if "<Phaenotyp>load" in obj.name_full:
-				obj.hide_viewport = True
-				obj.hide_render = True
+	for viz_show, name in to_set:
+		if viz_show == True:
+			for obj in objs:
+				if name in obj.name_full:
+					obj.hide_set(False)
+					obj.hide_render = False
 		
-	if phaenotyp.viz_show_members == True:
-		objs['<Phaenotyp>members'].hide_viewport = False
-		objs['<Phaenotyp>members'].hide_render = False
-	else:
-		objs['<Phaenotyp>support'].hide_viewport = True
-		objs['<Phaenotyp>support'].hide_render = True
+		if viz_show == False:
+			for obj in objs:
+				if name in obj.name_full:
+					obj.hide_set(True)
+					obj.hide_render = True
 		
-	if phaenotyp.viz_show_quads == True:
-		objs['<Phaenotyp>quads'].hide_viewport = False
-		objs['<Phaenotyp>quads'].hide_render = False
-	else:
-		objs['<Phaenotyp>quads'].hide_viewport = True
-		objs['<Phaenotyp>quads'].hide_render = True
-		
-	if phaenotyp.viz_show_stresslines == True:
-		objs['<Phaenotyp>stresslines'].hide_viewport = False
-		objs['<Phaenotyp>stresslines'].hide_render = False
-	else:
-		objs['<Phaenotyp>stresslines'].hide_viewport = True
-		objs['<Phaenotyp>stresslines'].hide_render = True
+		text = name + " visible " + str(viz_show)
+		print_data(text)
 	
 	
 def rainbow(force, overstress, viz_boundaries, viz_scale):
