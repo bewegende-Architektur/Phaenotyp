@@ -926,7 +926,7 @@ class phaenotyp_properties(PropertyGroup):
 						("s_2", "S 2", "")
 					],
 			update = geometry.viz_update,
-			default = "T_xy"
+			default = "s_1"
 			)
 
 		viz_boundaries_members: FloatProperty(

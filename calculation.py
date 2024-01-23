@@ -309,15 +309,15 @@ def prepare_fea_pn():
 
 				# load projected
 				area_load = load_projected * area_projected
-				z += area_load * (-0.25) # divided by four points of each quad
+				z += area_load * 0.25 # divided by four points of each quad
 				
 				# load z
 				area_load = load_area_z * area
-				z += area_load * (-0.25) # divided by four points of each quad
+				z += area_load * 0.25 # divided by four points of each quad
 				
-				model.add_node_load(vertex_id, 'FX', x*0.01 * psf_loads) # to cm
-				model.add_node_load(vertex_id, 'FY', y*0.01 * psf_loads) # to cm
-				model.add_node_load(vertex_id, 'FZ', z*0.01 * psf_loads) # to cm
+				model.add_node_load(vertex_id, 'FX', x * psf_loads) # to cm
+				model.add_node_load(vertex_id, 'FY', y * psf_loads) # to cm
+				model.add_node_load(vertex_id, 'FZ', z * psf_loads) # to cm
 				
 		# apply force to members
 		else:
