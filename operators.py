@@ -594,8 +594,10 @@ def automerge():
 			snap_elements={'INCREMENT'}, use_snap_project=False,
 			snap_target='CLOSEST', use_snap_self=True,
 			use_snap_edit=True, use_snap_nonedit=True,
-			use_snap_selectable=False, alt_navigation=True
+			use_snap_selectable=False
 			)
+		
+		#  alt_navigation=True excluded to work with blender 3 also
 		
 		# move to original position
 		bpy.ops.mesh.select_all(action='SELECT')
@@ -611,8 +613,10 @@ def automerge():
 			snap_elements={'INCREMENT'}, use_snap_project=False,
 			snap_target='CLOSEST', use_snap_self=True,
 			use_snap_edit=True, use_snap_nonedit=True,
-			use_snap_selectable=False, alt_navigation=True
+			use_snap_selectable=False
 			)
+		
+		#  alt_navigation=True excluded to work with blender 3 also
 		
 		# reset settings
 		tool_settings.use_mesh_automerge = current_automerge
