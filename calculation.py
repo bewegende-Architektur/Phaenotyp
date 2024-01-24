@@ -1104,7 +1104,11 @@ def interweave_results_pn(feas):
 			# midpoint
 			
 			# first side
-			alpha = degrees(0.5 * arctan((2 * T_xy_1) / (s_x_1 - s_y_1)))
+			if s_x_1 - s_y_1 == 0: # avoid div zero
+				alpha = 0
+			else:
+				alpha = degrees(0.5 * arctan((2 * T_xy_1) / (s_x_1 - s_y_1)))
+			
 			s_1 = (s_x_1 + s_y_1)/2 + sqrt(((s_x_1 - s_y_1)/2)**2 + T_xy_1**2)
 			s_2 = (s_x_1 + s_y_1)/2 - sqrt(((s_x_1 - s_y_1)/2)**2 + T_xy_1**2)
 			s_xi = (s_x_1 + s_y_1)/2 + (s_x_1 - s_y_1)/2 * cos(2*radians(alpha)) + T_xy_1 * sin(2*radians(alpha))
@@ -1123,7 +1127,11 @@ def interweave_results_pn(feas):
 				alpha_1 = alpha
 			
 			# second side
-			alpha = degrees(0.5 * arctan((2 * T_xy_2) / (s_x_2 - s_y_2)))
+			if s_x_2 - s_y_2 == 0: # avoid div zero
+				alpha = 0
+			else:
+				alpha = degrees(0.5 * arctan((2 * T_xy_2) / (s_x_2 - s_y_2)))
+			
 			s_1 = (s_x_2 + s_y_2)/2 + sqrt(((s_x_2 - s_y_2)/2)**2 + T_xy_2**2)
 			s_2 = (s_x_2 + s_y_2)/2 - sqrt(((s_x_2 - s_y_2)/2)**2 + T_xy_2**2)
 			s_xi = (s_x_2 + s_y_2)/2 + (s_x_2 - s_y_2)/2 * cos(2*radians(alpha)) + T_xy_2 * sin(2*radians(alpha))
