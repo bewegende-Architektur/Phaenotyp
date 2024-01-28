@@ -3,13 +3,6 @@ import bmesh
 import random
 from phaenotyp import geometry, calculation, progress
 
-def print_data(text):
-	"""
-	Print data for debugging
-	:param text: Needs a text as string (Do not pass as list)
-	"""
-	print("Phaenotyp |", text)
-
 def create_indivdual(chromosome, parent_1, parent_2):
 	"""
 	Creates an individual for bruteforce mode.
@@ -192,9 +185,9 @@ def create_initial_individuals(start, end):
 				if individual["chromosome"].to_list() == chromosome:
 					if i < 100:
 						text = "chromosome" + str(chromosome) + " allready exists. I try again ..."
-						print_data(text)
+						basics.print_data(text)
 					else:
-						print_data("No new chromosome after retrying for 100 times. Maybe you want to run bruteforce?")
+						basics.print_data("No new chromosome after retrying for 100 times. Maybe you want to run bruteforce?")
 						
 					new_chromosome_found = False
 					break
@@ -206,7 +199,7 @@ def create_initial_individuals(start, end):
 			if new_chromosome_found == True:
 				# exit, because a new key was found
 				text = "new individual with chromosome" + str(chromosome)
-				print_data(text)
+				basics.print_data(text)
 				break
 
 		# update scene
@@ -273,7 +266,7 @@ def populate_initial_generation():
 		# print info
 		text = "individual: " + str(individual["name"]) + " "
 		text += str_chromosome + ", fitness: " + str(individual["fitness"]["weighted"])
-		print_data(text)
+		basics.print_data(text)
 
 def do_elitism():
 	'''
@@ -339,7 +332,7 @@ def do_elitism():
 		# print info
 		text = "elitism: " + str(individual["name"]) + " "
 		text += str_chromosome + ", fitness: " + str(individual["fitness"]["weighted"])
-		print_data(text)
+		basics.print_data(text)
 
 def create_new_individuals(start, end):
 	'''
@@ -403,9 +396,9 @@ def create_new_individuals(start, end):
 				if individual["chromosome"].to_list() == chromosome:
 					if i < 100:
 						text = "chromosome" + str(chromosome) + " allready exists. I try again ..."
-						print_data(text)
+						basics.print_data(text)
 					else:
-						print_data("No new chromosome after retrying for 100 times. Maybe you want to run bruteforce?")
+						basics.print_data("No new chromosome after retrying for 100 times. Maybe you want to run bruteforce?")
 						
 					new_chromosome_found = False
 					break
@@ -417,7 +410,7 @@ def create_new_individuals(start, end):
 			if new_chromosome_found == True:
 				# exit, because a new key was found
 				text = "new individual with chromosome" + str(chromosome)
-				print_data(text)
+				basics.print_data(text)
 				break
 		
 		# update scene
@@ -496,4 +489,4 @@ def populate_new_generation(start, end):
 				# print info
 				text = "child: " + str(individual["name"]) + " "
 				text += str_chromosome + ", fitness: " + str(individual["fitness"]["weighted"])
-				print_data(text)
+				basics.print_data(text)

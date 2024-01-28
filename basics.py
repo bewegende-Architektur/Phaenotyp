@@ -14,12 +14,25 @@ phaenotyp_name = (
 	+ str(phaenotyp_version[2])
 	)
 
+jobs = []
+
+terminal = ["", "", "", "", "", "", "", "", ""]
+
 def print_data(text):
 	"""
 	Print data for debugging
 	:param text: Needs a text as string (Do not pass as list)
 	"""
-	print("Phaenotyp |", text)
+	text = "Phaenotyp | " + text
+	
+	if len(jobs) > 0:
+		text += " | " + str(len(jobs)-1) + " jobs left"
+		
+	terminal.append(text)
+	if len(terminal) > 10:
+		terminal.pop(0)
+	
+	print(text)
 
 class timer:
 	"""

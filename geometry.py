@@ -1,19 +1,12 @@
 import bpy
 import bmesh
 from math import sqrt, radians, pi
-from phaenotyp import operators
+from phaenotyp import basics, operators
 from mathutils import Color, Vector, Matrix
 c = Color()
 
 # variable to pass all stuff that needs to be fixed
 to_be_fixed = None
-
-def print_data(text):
-	"""
-	Print data for debugging
-	:param text: Needs a text as string (Do not pass as list)
-	"""
-	print("Phaenotyp |", text)
 
 def viz_update(self, context):
 	'''
@@ -1113,7 +1106,7 @@ def hide_reveal(self, context):
 					obj.hide_render = True
 		
 		text = name + " visible " + str(viz_show)
-		print_data(text)
+		basics.print_data(text)
 	
 	
 def rainbow(force, overstress, viz_boundaries, viz_scale):

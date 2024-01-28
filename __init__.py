@@ -12,7 +12,7 @@ The __init__ file is the main-file to be registert from blender.
 It contains and handles all blender properties as well as the panel.
 '''
 
-import bpy
+import bpy, blf
 from bpy.props import IntProperty, FloatProperty, BoolProperty, StringProperty, EnumProperty, PointerProperty, CollectionProperty
 from bpy.types import Panel, Menu, Operator, PropertyGroup, UIList
 from bpy.app.handlers import persistent
@@ -23,7 +23,62 @@ from phaenotyp import basics, panel, operators, material, geometry, calculation,
 # the phaenotyp_version is stored in saved files
 basics.blender_version = bl_info["blender"]
 basics.phaenotyp_version = bl_info["version"]
-	
+
+# timer to run jobs
+class phaenotyp_jobs(bpy.types.Operator):
+	bl_idname = "wm.phaenotyp_jobs"
+	bl_label = "Timer to run jobs"
+
+	#_timer = None
+
+	def modal(self, context, event):
+		if event.type in {'RIGHTMOUSE', 'ESC'}:
+			self.cancel(context)
+			return {'CANCELLED'}
+		
+		if event.type == 'TIMER':
+			jobs = basics.jobs
+			# if job available
+			if len(jobs) > 0:
+				# get job and arguments
+				entry = jobs[0]
+				
+				# if argument
+				if len(entry) == 2:
+					job = entry[0]
+					arg = entry[1]
+					# run job with argument
+					job(arg)
+				
+				else:
+					# without
+					job = entry[0]
+					job()
+				
+				# delete job when done
+				jobs.pop(0)
+
+		return {'PASS_THROUGH'}
+
+	def execute(self, context):
+		wm = context.window_manager
+		self._timer = wm.event_timer_add(0.1, window=context.window)
+		wm.modal_handler_add(self)
+		return {'RUNNING_MODAL'}
+
+	def cancel(self, context):
+		wm = context.window_manager
+		wm.event_timer_remove(self._timer)
+
+# terminal output on screen
+def phaenotyp_terminal(self, context):
+	for i, text in enumerate(basics.terminal):
+		blf.position(0, 10, 130-i*12, 0)
+		blf.size(0, 10)
+		blf.color(0, 1,1,1,1)
+		blf.draw(0, text)
+		
+# variables
 class phaenotyp_properties(PropertyGroup):
 	'''
 	Is holding all variables for the panel.
@@ -2236,7 +2291,13 @@ def register():
 	bpy.types.Scene.phaenotyp_fh_w_index = IntProperty(name = "Index for phaenotyp_lists", default = 0)
 	bpy.types.Scene.phaenotyp_fh_d_index = IntProperty(name = "Index for phaenotyp_lists", default = 0)
 	bpy.types.Scene.phaenotyp_fh_h_index = IntProperty(name = "Index for phaenotyp_lists", default = 0)
+	
+	# for jobs
+	bpy.utils.register_class(phaenotyp_jobs)
 
+	# terminal
+	bpy.types.SpaceView3D.draw_handler_add(phaenotyp_terminal, (None, None), 'WINDOW', 'POST_PIXEL')
+	
 def unregister():
 	'''
 	Unregister all blender specific stuff.
@@ -2268,6 +2329,9 @@ def unregister():
 	bpy.utils.unregister_class(LIST_OT_new_item)
 	bpy.utils.unregister_class(LIST_OT_delete_item)
 	bpy.utils.unregister_class(LIST_OT_move_item)
+	
+	# for jobs
+	bpy.utils.unregister_class(phaenotyp_jobs)
 	
 if __name__ == "__main__":
 	'''

@@ -1,15 +1,31 @@
 import bpy
-from phaenotyp import operators, geometry, calculation, progress
+from phaenotyp import basics, operators, geometry, calculation, progress
 import numpy as np
 
-def print_data(text):
+def create_indivdual(chromosome, frame):
 	"""
-	Print data for debugging
-	:param text: Needs a text as string (Do not pass as list)
+	Creates an individual for bruteforce mode.
+	:param chromosome: The chromosome is a list of floats from 0 to 1.
 	"""
-	print("Phaenotyp |", text)
+	scene = bpy.context.scene
+	data = scene["<Phaenotyp>"]
+	obj = data["structure"]
+	shape_keys = obj.data.shape_keys.key_blocks
 
-def generate_basis(chromosome):
+	environment = data["environment"]
+	individuals = data["individuals"]
+	
+	# apply shape keys
+	geometry.set_shape_keys(shape_keys, chromosome)
+
+	individual = {}
+	individual["name"] = str(frame) # individuals are identified by frame
+	individual["chromosome"] = chromosome
+	individual["fitness"] = {}
+
+	individuals[str(frame)] = individual
+
+def generate_basis():
 	'''
 	Generate the basis individual to work with.
 	The fitness of all others are weighted with this first individual.
@@ -19,76 +35,63 @@ def generate_basis(chromosome):
 	data = scene["<Phaenotyp>"]
 	obj = data["structure"]
 	shape_keys = obj.data.shape_keys.key_blocks
-	members = data["members"]
 
 	environment = data["environment"]
 	individuals = data["individuals"]
-
-	# for PyNite
-	if phaenotyp.calculation_type != "force_distribution":
-		prepare_fea = calculation.prepare_fea_pn
-		interweave_results = calculation.interweave_results_pn
-
-	# for force distribuion
-	else:
-		prepare_fea = calculation.prepare_fea_fd
-		interweave_results = calculation.interweave_results_fd
-
+	
 	# update scene
 	frame = 0
+
 	bpy.context.scene.frame_start = frame
 	bpy.context.scene.frame_current = frame
 	bpy.context.view_layer.update()
 
-	# apply shape keys
-	geometry.set_shape_keys(shape_keys, chromosome)
-
+	# starting point is the current set of values
+	# in this way users can choose where to start from
+	chromosome = []
+	slope = []
+	for id, key in enumerate(shape_keys):
+		if id > 0:
+			v = key.value
+			chromosome.append(v)
+			slope.append(0)
+	
 	# create indiviual
-	individual = {}
-	individual["name"] = str(frame) # individuals are identified by frame
-	individual["chromosome"] = chromosome
-	individual["fitness"] = {}
+	create_indivdual(chromosome, 0)
 
-	individuals[str(frame)] = individual
-
-	# for PyNite
-	if phaenotyp.calculation_type != "force_distribution":
-		prepare_fea = calculation.prepare_fea_pn
-		interweave_results = calculation.interweave_results_pn
-		
-		optimization_type = phaenotyp.optimization_pn
-
-	# for force distribuion
-	else:
-		prepare_fea = calculation.prepare_fea_fd
-		interweave_results = calculation.interweave_results_fd
-		
-		optimization_type = phaenotyp.optimization_fd
+	rounded_chromosome = [round(num, 3) for num in chromosome]
+	text = "Starting at: " + str(rounded_chromosome) + "\n"
+	basics.print_data(text)
 	
-	# calculate frame
-	geometry.update_geometry_pre()
-	
-	models = {}
-	models[str(frame)] = prepare_fea()
+	# store in basics for later
+	basics.chromosome_current = chromosome
+	basics.slope = slope
 
-	# run singlethread and get results
-	feas = calculation.run_mp(models)
+def calculate_basis():
+	scene = bpy.context.scene
+	phaenotyp = scene.phaenotyp
 	
-	interweave_results(feas)
-	geometry.update_geometry_post()
-
-	# optimization
-	if optimization_type != "none":
-		progress.http.reset_o(phaenotyp.optimization_amount)
+	if phaenotyp.optimization_pn != "none" or phaenotyp.optimization_fd != "none" or phaenotyp.optimization_quads != "none":
+		# calculate frames
+		calculation.calculate_frames(0, 1)
+	
 		for i in range(phaenotyp.optimization_amount):
-			calculation.sectional_optimization(frame, frame+1)
-			progress.http.update_o()
-
-	# get fitness
-	calculation.calculate_fitness(frame, frame+1)
-	individuals["0"]["fitness"]["weighted"] = 1
-
-def make_step_st(chromosome, frame):
+			# optimize each frame
+			basics.jobs.append([calculation.sectional_optimization, 0])
+				
+			# calculate frames again
+			calculation.calculate_frames(0, 1)
+	
+	# without optimization
+	else:
+		# calculate frames
+		calculation.calculate_frames(0, 1)
+	
+	# calculate fitness and set weight for basis
+	basics.jobs.append([calculation.calculate_fitness, 0])
+	basics.jobs.append([calculation.set_basis_fitness])
+	
+def make_step_st(frame):
 	'''
 	Make a step with the adapted chromosome.
 	:paramm chromosome: List of floats from 0 to 1.
@@ -97,16 +100,15 @@ def make_step_st(chromosome, frame):
 	scene = bpy.context.scene
 	data = scene["<Phaenotyp>"]
 	obj = data["structure"]
-	members = data["members"]
 	shape_keys = obj.data.shape_keys.key_blocks
 	phaenotyp = scene.phaenotyp
 
 	environment = data["environment"]
 	individuals = data["individuals"]
-
-	bpy.context.scene.frame_current = frame
-	bpy.context.view_layer.update()
-
+	
+	# get current chromosome
+	chromosome = basics.chromosome_current
+	
 	# update frame
 	bpy.context.scene.frame_current = frame
 	bpy.context.view_layer.update()
@@ -122,99 +124,183 @@ def make_step_st(chromosome, frame):
 
 	individuals[str(frame)] = individual
 
-	# for PyNite
-	if phaenotyp.calculation_type != "force_distribution":
-		prepare_fea = calculation.prepare_fea_pn
-		interweave_results = calculation.interweave_results_pn
-		
-		optimization_type = phaenotyp.optimization_pn
-
-	# for force distribuion
-	else:
-		prepare_fea = calculation.prepare_fea_fd
-		interweave_results = calculation.interweave_results_fd
-		
-		optimization_type = phaenotyp.optimization_fd
+def calculate_step_st(frame):
+	scene = bpy.context.scene
+	phaenotyp = scene.phaenotyp
 	
-	# calculate frame
-	geometry.update_geometry_pre()
+	if phaenotyp.optimization_pn != "none" or phaenotyp.optimization_fd != "none" or phaenotyp.optimization_quads != "none":
+		# calculate frames
+		calculation.calculate_frames(frame, frame+1)
 	
-	# created a model object
-	models = {}
-	models[str(frame)] = prepare_fea()
-
-	# run singlethread and get results
-	feas = calculation.run_mp(models)
-	
-	interweave_results(feas)
-	geometry.update_geometry_post()
-
-	# optimization
-	if optimization_type != "none":
-		progress.http.reset_o(phaenotyp.optimization_amount)
 		for i in range(phaenotyp.optimization_amount):
-			calculation.sectional_optimization(frame, frame+1)
-			progress.http.update_o()
-
+			# optimize each frame
+			basics.jobs.append([calculation.sectional_optimization, frame])
+				
+			# calculate frames again
+			calculation.calculate_frames(frame, frame+1)
+	
+	# without optimization
+	else:
+		# calculate frames
+		calculation.calculate_frames(frame, frame+1)
+	
 	# calculate fitness
-	calculation.calculate_fitness(frame, frame+1)
+	basics.jobs.append([calculation.calculate_fitness, frame])
 
+def get_step_st(frame):
+	scene = bpy.context.scene
+	data = scene["<Phaenotyp>"]
+	obj = data["structure"]
+	shape_keys = obj.data.shape_keys.key_blocks
+	phaenotyp = scene.phaenotyp
+
+	environment = data["environment"]
+	individuals = data["individuals"]
+	
 	# get data from individual
 	gd = individuals[str(frame)]
 	fitness = gd["fitness"]["weighted"]
 
 	text = "Step " + gd["name"] + " with fitness: " + str(round(fitness, 3))
-	print_data(text)
+	basics.print_data(text)
+	
+	basics.gd = gd
+	basics.fitness = fitness
 
-	return gd, fitness
-
-def make_step_mp(chromosome, frame):
-	'''
-	Make a step with the adapted chromosome.
-	:paramm chromosome: List of floats from 0 to 1.
-	:frame: Frame to save this individual to.
-	'''
+def create_variations(frame):
 	scene = bpy.context.scene
 	data = scene["<Phaenotyp>"]
 	obj = data["structure"]
-	members = data["members"]
+	shape_keys = obj.data.shape_keys.key_blocks
+	phaenotyp = scene.phaenotyp
+
+	# copy current chromosome
+	chromosome = basics.chromosome_current.copy()
+	
+	# delta
+	delta = basics.delta
+	
+	# create variations of keys and calculate with mp
+	calculated_frames = [] # to access them later
+	
+	for key_id in range(len(shape_keys)-1):
+		# update frame
+		frame += 1
+
+		# update chromosome
+		chromosome[key_id] += delta
+		
+		# create individual
+		create_indivdual(chromosome, frame)
+
+def make_step_mp(frames):
+	start, end = frames
+	
+	scene = bpy.context.scene
+	phaenotyp = scene.phaenotyp
+	
+	if phaenotyp.optimization_pn != "none" or phaenotyp.optimization_fd != "none" or phaenotyp.optimization_quads != "none":
+		# calculate frames
+		calculation.calculate_frames(start, end)
+		
+		for i in range(phaenotyp.optimization_amount):
+			for frame in range(start, end):
+				# optimize each frame
+				basics.jobs.append([calculation.sectional_optimization, frame])
+					
+			# calculate frames again
+			calculation.calculate_frames(start, end)
+	
+	# without optimization
+	else:
+		# calculate frames
+		calculation.calculate_frames(start, end)
+	
+	# calculate fitness
+	for frame in range(start, end):
+		basics.jobs.append([calculation.calculate_fitness, frame])
+	
+def get_next_step(frames):
+	scene = bpy.context.scene
+	data = scene["<Phaenotyp>"]
+	obj = data["structure"]
 	shape_keys = obj.data.shape_keys.key_blocks
 	phaenotyp = scene.phaenotyp
 
 	environment = data["environment"]
 	individuals = data["individuals"]
-
-	bpy.context.scene.frame_current = frame
-	bpy.context.view_layer.update()
-
-	# update frame
-	bpy.context.scene.frame_current = frame
-	bpy.context.view_layer.update()
 	
-	# apply shape keys
-	geometry.set_shape_keys(shape_keys, chromosome)
+	fitness_old = basics.fitness
+	slope = basics.slope
+	chromosome_current = basics.chromosome_current
 	
-	# create indivual
-	individual = {}
-	individual["name"] = str(frame) # individuals are identified by frame
-	individual["chromosome"] = chromosome
-	individual["fitness"] = {}
-
-	individuals[str(frame)] = individual
-
-	# for PyNite
-	if phaenotyp.calculation_type != "force_distribution":
-		prepare_fea = calculation.prepare_fea_pn
-	# for force distribuion
-	else:
-		prepare_fea = calculation.prepare_fea_fd
+	delta = basics.delta
+	learning_rate = basics.learning_rate
+	iteration = basics.iteration
+	max_iteration = basics.max_iteration
+	abort = basics.abort
 	
-	# calculate frame
-	geometry.update_geometry_pre()
-	model = prepare_fea()
-	
-	return model
+	for key_id, frame in enumerate(frames):
+		# get data from individual
+		gd = individuals[str(frame)]
+		fitness = gd["fitness"]["weighted"]
 
+		text = "Step " + gd["name"] + " with fitness: " + str(round(fitness, 3))
+		basics.print_data(text)
+		
+		# calculate slope
+		# (in new loop with multiprocessing)
+		slope[key_id] = (fitness - fitness_old) / delta
+		text = "Slope of key " + str(key_id) + " = " + str(round(slope[key_id], 3))
+		basics.print_data(text)
+
+		# new direction
+		chromosome_current[key_id] = chromosome_current[key_id] - slope[key_id] * learning_rate
+		if chromosome_current[key_id] < 0:
+			chromosome_current[key_id] = 0
+			slope[key_id] = 0
+
+		if chromosome_current[key_id] > 1:
+			chromosome_current[key_id] = 1
+			slope[key_id] = 0
+	
+	text = "Iteration: " + str(iteration) + "|"+  str(max_iteration)
+	basics.print_data(text)
+	
+	rounded_chromosome = [round(num, 3) for num in chromosome_current]
+	text = "New step: " + str(rounded_chromosome)
+	basics.print_data(text)
+
+	vector = (np.linalg.norm(slope))*learning_rate
+	text = "Vector: " + str(round(vector, 3)) + "\n"
+	basics.print_data(text)
+
+	basics.iteration += 1
+	basics.fitness = fitness
+	basics.slope = slope
+
+	if vector < abort:
+		text = "Goal reached"
+		basics.print_data(text)
+		
+		# delete jobs
+		basics.jobs = []
+		
+		# and append finish
+		basics.jobs.append([finish])
+		
+		bpy.context.scene.frame_end = frame
+
+def finish():
+	# calculate new visualization-mesh
+	basics.jobs.append([geometry.update_geometry_post])
+	
+	# update view
+	basics.jobs.append([basics.view_vertex_colors])
+	
+	# print done
+	basics.jobs.append([basics.print_data, "done"])
+	
 def start():
 	'''
 	Main function to run gradient descent.
@@ -222,7 +308,6 @@ def start():
 	scene = bpy.context.scene
 	data = scene["<Phaenotyp>"]
 	obj = data["structure"]
-	members = data["members"]
 	shape_keys = obj.data.shape_keys.key_blocks
 	phaenotyp = scene.phaenotyp
 
@@ -233,170 +318,62 @@ def start():
 	delta = phaenotyp.gd_delta
 	learning_rate = phaenotyp.gd_learning_rate
 	abort = phaenotyp.gd_abort
-	maxiteration = phaenotyp.gd_max_iteration
+	max_iteration = phaenotyp.gd_max_iteration
 
-	progress.http.reset_pci(maxiteration * (len(shape_keys)-1) + 1 + maxiteration)
-	if phaenotyp.optimization_pn != "none" or phaenotyp.optimization_fd != "none":
-		progress.http.reset_o(phaenotyp.optimization_amount)
+	#progress.http.reset_pci(maxiteration * (len(shape_keys)-1) + 1 + maxiteration)
+	#if phaenotyp.optimization_pn != "none" or phaenotyp.optimization_fd != "none":
+	#	progress.http.reset_o(phaenotyp.optimization_amount)
 	
-	# set frame to 0
+	# set frame and iteration
 	frame = 0
-
-	# starting point the current set of values
-	chromosome_start = []
-	slope = []
-	for id, key in enumerate(shape_keys):
-		if id > 0:
-			v = key.value
-			chromosome_start.append(v)
-			slope.append(0)
-
-	# generate_basis for fitness
-	generate_basis(chromosome_start)
-	
-	rounded_chromosome = [round(num, 3) for num in chromosome_start]
-	text = "Starting at: " + str(rounded_chromosome) + "\n"
-	print_data(text)
-	chromosome_current = chromosome_start
-
 	iteration = 0
 
-	# for PyNite
-	if phaenotyp.calculation_type != "force_distribution":
-		prepare_fea = calculation.prepare_fea_pn
-		interweave_results = calculation.interweave_results_pn
-
-	# for force distribuion
-	else:
-		prepare_fea = calculation.prepare_fea_fd
-		interweave_results = calculation.interweave_results_fd
+	# create temp variables and dictionaries
+	basics.models = {}
+	basics.feas = {}
 	
-	# optimization
-	if phaenotyp.calculation_type == "force_distribution":
-		if phaenotyp.optimization_fd == "approximate":
-			optimization_amount = phaenotyp.optimization_amount
-		else:
-			optimization_amount = 0
+	basics.delta = delta
+	basics.learning_rate = learning_rate
+	basics.iteration = iteration
+	basics.max_iteration = max_iteration
+	basics.abort = abort
+	
+	# generate_basis for fitness
+	generate_basis()
+	calculate_basis()
+	
+	size = len(shape_keys)-1
 
-	else:
-		if phaenotyp.optimization_pn in ["simple", "utilization", "complex"]:
-			optimization_amount = phaenotyp.optimization_amount
-		else:
-			optimization_amount = 0
-
-	# skip optimization if geometrical only
-	if phaenotyp.calculation_type == "geometrical":
-		optimization_amount = 0
-
-	progress.http.reset_o(optimization_amount)
-		
-	while iteration < maxiteration:
+	#progress.http.reset_o(optimization_amount)
+	
+	#while iteration < maxiteration:
+	for i in range(max_iteration):
 		# update frame
 		frame += 1
-
-		# make step and optimize afterwards
-		gd, fitness = make_step_st(chromosome_current, frame)
-
-		# pass old fitness
-		fitness_old = fitness
-
-		# copy current chromosome
-		chromosome = chromosome_current.copy()
-
-		# create list of models
-		models = {}
-
-		# create variations of keys and calculate with mp
-		calculated_frames = [] # to access them later
-
-		for key_id in range(len(shape_keys)-1):
-			# update frame
-			frame += 1
-			
-			# append frame as int
-			calculated_frames.append(frame)
-
-			# update chromosome
-			chromosome[key_id] += delta
-
-			# with  multiprocessing
-			model = make_step_mp(chromosome, frame)
-
-			# update scene
-			bpy.context.scene.frame_current = frame
-			bpy.context.view_layer.update()
-
-			# calculate new properties for each member
-			geometry.update_geometry_pre()
-
-			# created a model object of PyNite and add to dict
-			models[str(frame)] = model
-
-		if phaenotyp.calculation_type != "geometrical":
-			# run mp and get results
-			feas = calculation.run_mp(models)
-
-			# wait for it and interweave results to data
-			interweave_results(feas)
 		
-		# optimization
-		print_data("start optimization:")
-		for i in range(optimization_amount):
-			start_opt = calculated_frames[0]
-			end_opt = calculated_frames[len(calculated_frames)-1]+1
-			calculation.sectional_optimization(start_opt, end_opt)
-			
-			# to avoid wrong counting
-			progress.http.p[0] -= optimization_amount
-			progress.http.c[0] -= optimization_amount
-			progress.http.i[0] -= optimization_amount
-			
-		print_data("optimization done")
+		# be aware of list order from jobs!
+		# if a function is adding jobs,
+		# the jobs are added when the function is called
+		# therefore a function added afterwards, but added
+		# directly, will be executed before the jobs added
+		# from the functions
 		
-		# create variations of keys
-		for key_id, frame in enumerate(calculated_frames):
-			# calculate fitness
-			calculation.calculate_fitness(frame, frame+1)
-
-			# get data from individual
-			gd = individuals[str(frame)]
-			fitness = gd["fitness"]["weighted"]
-
-			text = "Step " + gd["name"] + " with fitness: " + str(round(fitness, 3))
-			print_data(text)
-			
-			# calculate slope
-			# (in new loop with multiprocessing)
-			slope[key_id] = (fitness - fitness_old) / delta
-			text = "Slope of key " + str(key_id) + " = " + str(round(slope[key_id], 3))
-			print_data(text)
-
-			# new direction
-			chromosome_current[key_id] = chromosome_current[key_id] - slope[key_id] * learning_rate
-			if chromosome_current[key_id] < 0:
-				chromosome_current[key_id] = 0
-				slope[key_id] = 0
-
-			if chromosome_current[key_id] > 1:
-				chromosome_current[key_id] = 1
-				slope[key_id] = 0
+		# make step
+		basics.jobs.append([make_step_st, frame])
+		calculate_step_st(frame)
+		basics.jobs.append([get_step_st, frame])
 		
-		text = "Iteration: " + str(iteration) + "|"+  str(maxiteration)
-		print_data(text)
+		# create variations for next step
+		basics.jobs.append([create_variations, frame])
+		make_step_mp([frame+1, frame+size+1])
+		basics.jobs.append([get_next_step, [frame, frame+size]])
 		
-		rounded_chromosome = [round(num, 3) for num in chromosome_current]
-		text = "New step: " + str(rounded_chromosome)
-		print_data(text)
-
-		vector = (np.linalg.norm(slope))*learning_rate
-		text = "Vector: " + str(round(vector, 3)) + "\n"
-		print_data(text)
-		
-		iteration += 1
-
-		if vector < abort:
-			text = "Goal reached"
-			print_data(text)
-			break
-		
+		frame += size
+	
 	bpy.context.scene.frame_end = frame
+	
+	# geometry post and viz
+	basics.jobs.append([finish])
+	
+	# run jobs
+	bpy.ops.wm.phaenotyp_jobs()

@@ -7,14 +7,6 @@ import os
 import webbrowser
 
 from phaenotyp import basics, material, geometry, calculation, bf, ga, gd, panel, report, nn, progress
-import itertools
-
-def print_data(text):
-	"""
-	Print data for debugging
-	:param text: Needs a text as string (Do not pass as list)
-	"""
-	print("Phaenotyp |", text)
 
 def curve_to_mesh_straight():
 	bpy.ops.object.mode_set(mode='OBJECT')
@@ -45,7 +37,7 @@ def curve_to_mesh_straight():
 		bpy.ops.object.mode_set(mode='OBJECT')
 		geometry.to_be_fixed = "curve_to_mesh"
 		fix_structure()
-		print_data("Convert curve to mesh straight")
+		basics.print_data("Convert curve to mesh straight")
 
 def curve_to_mesh_curved():
 	bpy.ops.object.mode_set(mode='OBJECT')
@@ -73,7 +65,7 @@ def curve_to_mesh_curved():
 		bpy.ops.object.mode_set(mode='OBJECT')
 		geometry.to_be_fixed = "curve_to_mesh"
 		fix_structure()
-		print_data("Convert curve to mesh curved")
+		basics.print_data("Convert curve to mesh curved")
 
 def meta_to_mesh():
 	bpy.ops.object.mode_set(mode='OBJECT')
@@ -91,7 +83,7 @@ def meta_to_mesh():
 		basics.popup(lines = text)
 	else:		
 		bpy.ops.object.convert(target='MESH')
-		print_data("Convert metaballs to mesh")
+		basics.print_data("Convert metaballs to mesh")
 		set_structure()
 		
 def mesh_to_quads_simple():
@@ -117,7 +109,7 @@ def mesh_to_quads_simple():
 		bpy.ops.mesh.select_all(action='SELECT')
 		bpy.ops.mesh.tris_convert_to_quads()
 		
-		print_data("Mesh to quads simple")
+		basics.print_data("Mesh to quads simple")
 	
 def mesh_to_quads_complex():
 	bpy.ops.object.mode_set(mode='OBJECT')
@@ -160,7 +152,7 @@ def mesh_to_quads_complex():
 		bpy.ops.object.mode_set(mode = 'EDIT')
 		bpy.ops.transform.edge_crease(value=-1, snap=False)
 		
-		print_data("Mesh to quads complex")
+		basics.print_data("Mesh to quads complex")
 
 def set_hull():
 	context = bpy.context
@@ -188,7 +180,7 @@ def set_hull():
 		obj = selected[0]
 		scene["<Phaenotyp>fh_hull"] = obj
 		text = obj.name_full + " set as hull"
-		print_data(text)
+		basics.print_data(text)
 		
 def set_path():
 	context = bpy.context
@@ -216,7 +208,7 @@ def set_path():
 		obj = selected[0]
 		scene["<Phaenotyp>fh_path"] = obj
 		text = obj.name_full + " set as path"
-		print_data(text)
+		basics.print_data(text)
 		
 def from_hull():
 	context = bpy.context
@@ -545,7 +537,7 @@ def from_hull():
 	scene["<Phaenotyp>fh_area"] = area
 	
 	text = "Structure from hull created with area " + str(round(area,2)) + " m²"
-	print_data(text)
+	basics.print_data(text)
 	
 def automerge():
 	bpy.ops.object.mode_set(mode='OBJECT')
@@ -695,7 +687,7 @@ def set_structure():
 	selected_objects = context.selected_objects
 	obj = context.active_object
 
-	print_data("set structure")
+	basics.print_data("set structure")
 
 	# check for modifiers
 	basics.check_modifiers()
@@ -788,7 +780,7 @@ def set_structure():
 
 def fix_structure():
 	if geometry.to_be_fixed == "seperate_by_loose":
-		print_data("Seperate by loose parts")
+		basics.print_data("Seperate by loose parts")
 		bpy.ops.object.mode_set(mode='EDIT')
 		bpy.ops.mesh.select_all(action='SELECT')
 		bpy.ops.mesh.remove_doubles()
@@ -796,7 +788,7 @@ def fix_structure():
 		bpy.ops.object.mode_set(mode='OBJECT')
 
 	elif geometry.to_be_fixed == "curve_to_mesh":
-		print_data("Try to convert the curves to mesh")
+		basics.print_data("Try to convert the curves to mesh")
 		bpy.ops.object.mode_set(mode="OBJECT")
 		bpy.ops.object.join()
 		res = bpy.context.object.data.resolution_u
@@ -808,12 +800,12 @@ def fix_structure():
 		bpy.ops.object.mode_set(mode='OBJECT')
 
 	elif geometry.to_be_fixed == "meta_to_mesh":
-		print_data("Try to convert meta to mesh")
+		basics.print_data("Try to convert meta to mesh")
 		bpy.ops.object.mode_set(mode="OBJECT")
 		bpy.ops.object.convert(target='MESH')
 
 	elif geometry.to_be_fixed == "delete_loose":
-		print_data("Delete loose parts")
+		basics.print_data("Delete loose parts")
 		bpy.ops.object.mode_set(mode="EDIT")
 		bpy.ops.mesh.delete_loose()
 		bpy.ops.mesh.select_all(action='SELECT')
@@ -821,14 +813,14 @@ def fix_structure():
 		bpy.ops.object.mode_set(mode='OBJECT')
 
 	elif geometry.to_be_fixed == "triangulate":
-		print_data("triangulate")
+		basics.print_data("triangulate")
 		bpy.ops.object.mode_set(mode = 'EDIT')
 		bpy.ops.mesh.select_all(action='SELECT')
 		bpy.ops.mesh.quads_convert_to_tris(quad_method='BEAUTY', ngon_method='BEAUTY')
 		bpy.ops.mesh.select_all(action='DESELECT')
 
 	elif geometry.to_be_fixed == "remove_doubles":
-		print_data("Remove doubles")
+		basics.print_data("Remove doubles")
 		bpy.ops.object.mode_set(mode="EDIT")
 		bpy.ops.mesh.select_all(action='SELECT')
 		bpy.ops.mesh.remove_doubles()
@@ -1959,34 +1951,25 @@ def calculate_single_frame():
 	data = scene["<Phaenotyp>"]
 	members = scene["<Phaenotyp>"]["members"]
 	frame = bpy.context.scene.frame_current
+	
+	# create temp dictionaries
+	basics.models = {}
+	basics.feas = {}
 
-	# for PyNite
-	if phaenotyp.calculation_type != "force_distribution":
-		prepare_fea = calculation.prepare_fea_pn
-		interweave_results = calculation.interweave_results_pn
-
-	# for force distribuion
-	else:
-		prepare_fea = calculation.prepare_fea_fd
-		interweave_results = calculation.interweave_results_fd
-
-	# calculate new properties for each member
-	geometry.update_geometry_pre()
-
-	# created a model object
-	models = {}
-	models[str(frame)] = prepare_fea()
-
-	# run singlethread and get results
-	feas = calculation.run_mp(models)
-
-	# wait for it and interweave results to data
-	interweave_results(feas)
-
+	# calculate frames
+	calculation.calculate_frames(frame, frame+1)
+	
 	# calculate new visualization-mesh
-	geometry.update_geometry_post()
-
-	basics.view_vertex_colors()
+	basics.jobs.append([geometry.update_geometry_post])
+	
+	# update view
+	basics.jobs.append([basics.view_vertex_colors])
+	
+	# print done
+	basics.jobs.append([basics.print_data, "done"])
+	
+	# run jobs
+	bpy.ops.wm.phaenotyp_jobs()
 
 def calculate_animation():
 	scene = bpy.context.scene
@@ -1995,204 +1978,72 @@ def calculate_animation():
 	members = scene["<Phaenotyp>"]["members"]
 	quads = scene["<Phaenotyp>"]["quads"]
 	frame = bpy.context.scene.frame_current
-
-	# for PyNite
-	if phaenotyp.calculation_type != "force_distribution":
-		prepare_fea = calculation.prepare_fea_pn
-		interweave_results = calculation.interweave_results_pn
-
-	# for force distribuion
-	else:
-		prepare_fea = calculation.prepare_fea_fd
-		interweave_results = calculation.interweave_results_fd
-
-	# if optimization
+	
+	# create temp dictionaries
+	basics.models = {}
+	basics.feas = {}
+	
+	# get start and end of frames
+	start = bpy.context.scene.frame_start
+	end = bpy.context.scene.frame_end + 1 # to render also last frame
+	
+	# if optimizaiton
 	if phaenotyp.optimization_pn != "none" or phaenotyp.optimization_fd != "none" or phaenotyp.optimization_quads != "none":
+		# for each
 		if phaenotyp.animation_optimization_type == "each_frame":
-			start = bpy.context.scene.frame_start
-			end = bpy.context.scene.frame_end + 1 # to render also last frame
-
-			amount = end-start
-
-			# start progress
-			progress.run()
-			progress.http.reset_pci(amount)
-
-			# create list of models
-			models = {}
-
-			# run analysis for each frame first
-			for frame in range(start, end):
-				# update scene
-				bpy.context.scene.frame_current = frame
-				bpy.context.view_layer.update()
-
-				# calculate new properties for each member
-				geometry.update_geometry_pre()
-
-				# created a model object of PyNite and add to dict
-				model = prepare_fea()
-				models[frame] = model
-
-			# run mp and get results
-			feas = calculation.run_mp(models)
-
-			# wait for it and interweave results to data
-			interweave_results(feas)
-
-			# calculate new visualization-mesh
-			geometry.update_geometry_post()
-
-			progress.http.reset_o(phaenotyp.optimization_amount)
-			
-			# run optimization and analysis
+			# calculate frames
+			calculation.calculate_frames(start, end)
+		
 			for i in range(phaenotyp.optimization_amount):
-				progress.http.reset_pci(amount)
-				
+				# optimize each frame
 				for frame in range(start, end):
-					# update scene
-					bpy.context.scene.frame_current = frame
-					bpy.context.view_layer.update()
-
-					# run optimization and get new properties
-					if phaenotyp.calculation_type == "force_distribution":
-						if phaenotyp.optimization_fd == "approximate":
-							calculation.approximate_sectional()
-
-					else:
-						if phaenotyp.optimization_pn == "simple":
-							calculation.simple_sectional()
-
-						if phaenotyp.optimization_pn == "utilization":
-							calculation.utilization_sectional()
-
-						if phaenotyp.optimization_pn == "complex":
-							calculation.complex_sectional()
-						
-						if phaenotyp.optimization_quads == "approximate":
-							calculation.quads_approximate_sectional()
-
-						if phaenotyp.optimization_quads == "utilization":
-							calculation.quads_utilization_sectional()
-							
-					# calculate new properties for each member
-					geometry.update_geometry_pre()
-
-					# created a model object of PyNite and add to dict
-					model = prepare_fea()
-					models[frame] = model
-				
-				# run mp and get results
-				feas = calculation.run_mp(models)
-
-				# wait for it and interweave results to data
-				interweave_results(feas)
-
-				# calculate new visualization-mesh
-				geometry.update_geometry_post()
-				
-				progress.http.update_o()
-
-			# update view
-			basics.view_vertex_colors()
-
-		if phaenotyp.animation_optimization_type == "gradient":
-			start = bpy.context.scene.frame_start
-			end = start + phaenotyp.optimization_amount
-			
-			amount = end - start
-
-			# start progress
-			progress.run()
-			progress.http.reset_pci(amount*2)
-
-			# update scene
-			bpy.context.scene.frame_current = start
-			bpy.context.view_layer.update()
-
-			# mp is not working, because the previous frame is needed
-			# run in single frame
-			calculate_single_frame()
-
-			# run analysis first
-			for frame in range(start+1, end):
-				# update scene
-				bpy.context.scene.frame_current = frame
-				bpy.context.view_layer.update()
-
-				# copy previous frame to current
-				for id, member in members.items():
-					member["Do"][str(frame)] = member["Do"][str(frame-1)]
-					member["Di"][str(frame)] = member["Di"][str(frame-1)]
-
-				for id, quad in quads.items():
-					quad["thickness"][str(frame)] = quad["thickness"][str(frame-1)]
+					basics.jobs.append([calculation.sectional_optimization, frame])
 					
-				calculate_single_frame()
-
-				# run optimization and get new properties
-				if phaenotyp.calculation_type == "force_distribution":
-					if phaenotyp.optimization_fd == "approximate":
-						optimize_approximate()
-
-				else:
-					if phaenotyp.optimization_pn == "simple":
-						optimize_simple()
-
-					if phaenotyp.optimization_pn == "utilization":
-						optimize_utilization()
-
-					if phaenotyp.optimization_pn == "complex":
-						optimize_complex()
-
-					if phaenotyp.optimization_quads == "approximate":
-						quads_approximate_sectional()
-
-					if phaenotyp.optimization_quads == "utilization":
-						quads_utilization_sectional()
+				# calculate frames again
+				calculation.calculate_frames(start, end)
+		
+		# gradient
+		if phaenotyp.animation_optimization_type == "gradient":
+			frame = start
+			# calculate first frame
+			calculation.calculate_frames(frame, frame+1)
+				
+			for i in range(phaenotyp.optimization_amount):
+				frame += 1
 								
-			bpy.context.scene.frame_end = frame
-
+				# copy previous settings
+				basics.jobs.append([calculation.copy_d_t_from_prev, frame])
+				
+				# optimize
+				basics.jobs.append([calculation.sectional_optimization, frame])
+					
+				# calculate frame again
+				calculation.calculate_frames(frame, frame+1)
+			
+			bpy.context.scene.frame_start = start
+			bpy.context.scene.frame_end = phaenotyp.optimization_amount+1
+	
+	
 	# without optimization
 	else:
-		start = bpy.context.scene.frame_start
-		end = bpy.context.scene.frame_end + 1 # to render also last frame
-
-		# start progress
-		progress.run()
-		progress.http.reset_pci(end-start)
-
-		# create list of models
-		models = {}
-
-		# run analysis for each frame first
-		for frame in range(start, end):
-			# update scene
-			bpy.context.scene.frame_current = frame
-			bpy.context.view_layer.update()
-
-			# calculate new properties for each member
-			geometry.update_geometry_pre()
-
-			# created a model object of PyNite and add to dict
-			model = prepare_fea()
-			models[frame] = model
-
-		# run mp and get results
-		feas = calculation.run_mp(models)
-
-		# wait for it and interweave results to data
-		interweave_results(feas)
-
-		# calculate new visualization-mesh
-		geometry.update_geometry_post()
-
-		# update view
-		basics.view_vertex_colors()
-
+		# calculate frames
+		calculation.calculate_frames(start, end)
+	
+	# calculate new visualization-mesh
+	basics.jobs.append([geometry.update_geometry_post])
+	
+	# update view
+	basics.jobs.append([basics.view_vertex_colors])
+	
+	# print done
+	basics.jobs.append([basics.print_data, "done"])
+	
+	# run jobs
+	bpy.ops.wm.phaenotyp_jobs()
+	
 	# join progress
-	progress.http.active = False
-	progress.http.Thread_hosting.join()
+	#progress.http.active = False
+	#progress.http.Thread_hosting.join()
 
 def optimize_approximate():
 	scene = bpy.context.scene
@@ -2201,27 +2052,29 @@ def optimize_approximate():
 	members = scene["<Phaenotyp>"]["members"]
 	frame = bpy.context.scene.frame_current
 
-	print_data("approximate sectional performance")
-
-	calculation.approximate_sectional()
-
-	# calculate new properties for each member
-	geometry.update_geometry_pre()
-
-	# created a model object
-	models = {}
-	models[str(frame)] = calculation.prepare_fea_fd()
-
-	# run singlethread and get results
-	feas = calculation.run_mp(models)
-
-	# wait for it and interweave results to data
-	calculation.interweave_results_fd(feas)
-
+	basics.print_data("approximate sectional performance")
+	
+	# create temp dictionaries
+	basics.models = {}
+	basics.feas = {}
+	
+	# calculate new section
+	basics.jobs.append([calculation.approximate_sectional])
+					
+	# calculate frame
+	calculation.calculate_frames(frame, frame+1)
+	
 	# calculate new visualization-mesh
-	geometry.update_geometry_post()
-
-	basics.view_vertex_colors()
+	basics.jobs.append([geometry.update_geometry_post])
+	
+	# update view
+	basics.jobs.append([basics.view_vertex_colors])
+	
+	# print done
+	basics.jobs.append([basics.print_data, "done"])
+	
+	# run jobs
+	bpy.ops.wm.phaenotyp_jobs()
 
 def optimize_simple():
 	scene = bpy.context.scene
@@ -2230,27 +2083,29 @@ def optimize_simple():
 	members = scene["<Phaenotyp>"]["members"]
 	frame = bpy.context.scene.frame_current
 
-	print_data("simple sectional performance")
+	basics.print_data("simple sectional performance")
 	
-	calculation.simple_sectional()
-
-	# calculate new properties for each member
-	geometry.update_geometry_pre()
-
-	# created a model object
-	models = {}
-	models[str(frame)] = calculation.prepare_fea_pn()
-
-	# run singlethread and get results
-	feas = calculation.run_mp(models)
-
-	# wait for it and interweave results to data
-	calculation.interweave_results_pn(feas)
-
+	# create temp dictionaries
+	basics.models = {}
+	basics.feas = {}
+	
+	# calculate new section
+	basics.jobs.append([calculation.simple_sectional])
+					
+	# calculate frame
+	calculation.calculate_frames(frame, frame+1)
+	
 	# calculate new visualization-mesh
-	geometry.update_geometry_post()
-
-	basics.view_vertex_colors()
+	basics.jobs.append([geometry.update_geometry_post])
+	
+	# update view
+	basics.jobs.append([basics.view_vertex_colors])
+	
+	# print done
+	basics.jobs.append([basics.print_data, "done"])
+	
+	# run jobs
+	bpy.ops.wm.phaenotyp_jobs()
 
 def optimize_utilization():
 	scene = bpy.context.scene
@@ -2259,27 +2114,29 @@ def optimize_utilization():
 	members = scene["<Phaenotyp>"]["members"]
 	frame = bpy.context.scene.frame_current
 
-	print_data("utilization sectional performance")
-
-	calculation.utilization_sectional()
-
-	# calculate new properties for each member
-	geometry.update_geometry_pre()
-
-	# created a model object
-	models = {}
-	models[str(frame)] = calculation.prepare_fea_pn()
-
-	# run singlethread and get results
-	feas = calculation.run_mp(models)
-
-	# wait for it and interweave results to data
-	calculation.interweave_results_pn(feas)
-
+	basics.print_data("utilization sectional performance")
+	
+	# create temp dictionaries
+	basics.models = {}
+	basics.feas = {}
+	
+	# calculate new section
+	basics.jobs.append([calculation.utilization_sectional])
+					
+	# calculate frame
+	calculation.calculate_frames(frame, frame+1)
+	
 	# calculate new visualization-mesh
-	geometry.update_geometry_post()
-
-	basics.view_vertex_colors()
+	basics.jobs.append([geometry.update_geometry_post])
+	
+	# update view
+	basics.jobs.append([basics.view_vertex_colors])
+	
+	# print done
+	basics.jobs.append([basics.print_data, "done"])
+	
+	# run jobs
+	bpy.ops.wm.phaenotyp_jobs()
 
 def optimize_complex():
 	scene = bpy.context.scene
@@ -2288,27 +2145,29 @@ def optimize_complex():
 	members = scene["<Phaenotyp>"]["members"]
 	frame = bpy.context.scene.frame_current
 
-	print_data("complex sectional performance")
-
-	calculation.complex_sectional()
-
-	# calculate new properties for each member
-	geometry.update_geometry_pre()
-
-	# created a model object
-	models = {}
-	models[str(frame)] = calculation.prepare_fea_pn()
-
-	# run singlethread and get results
-	feas = calculation.run_mp(models)
-
-	# wait for it and interweave results to data
-	calculation.interweave_results_pn(feas)
-
+	basics.print_data("complex sectional performance")
+	
+	# create temp dictionaries
+	basics.models = {}
+	basics.feas = {}
+	
+	# calculate new section
+	basics.jobs.append([calculation.complex_sectional])
+					
+	# calculate frame
+	calculation.calculate_frames(frame, frame+1)
+	
 	# calculate new visualization-mesh
-	geometry.update_geometry_post()
-
-	basics.view_vertex_colors()
+	basics.jobs.append([geometry.update_geometry_post])
+	
+	# update view
+	basics.jobs.append([basics.view_vertex_colors])
+	
+	# print done
+	basics.jobs.append([basics.print_data, "done"])
+	
+	# run jobs
+	bpy.ops.wm.phaenotyp_jobs()
 
 def quads_approximate_sectional():
 	scene = bpy.context.scene
@@ -2317,27 +2176,29 @@ def quads_approximate_sectional():
 	members = scene["<Phaenotyp>"]["members"]
 	frame = bpy.context.scene.frame_current
 
-	print_data("quads approximate sectional performance")
-
-	calculation.quads_approximate_sectional()
-
-	# calculate new properties for each member
-	geometry.update_geometry_pre()
-
-	# created a model object
-	models = {}
-	models[str(frame)] = calculation.prepare_fea_pn()
-
-	# run singlethread and get results
-	feas = calculation.run_mp(models)
-
-	# wait for it and interweave results to data
-	calculation.interweave_results_pn(feas)
-
+	basics.print_data("quads approximate sectional performance")
+	
+	# create temp dictionaries
+	basics.models = {}
+	basics.feas = {}
+	
+	# calculate new section
+	basics.jobs.append([calculation.quads_approximate_sectional])
+					
+	# calculate frame
+	calculation.calculate_frames(frame, frame+1)
+	
 	# calculate new visualization-mesh
-	geometry.update_geometry_post()
-
-	basics.view_vertex_colors()
+	basics.jobs.append([geometry.update_geometry_post])
+	
+	# update view
+	basics.jobs.append([basics.view_vertex_colors])
+	
+	# print done
+	basics.jobs.append([basics.print_data, "done"])
+	
+	# run jobs
+	bpy.ops.wm.phaenotyp_jobs()
 
 def quads_utilization_sectional():
 	scene = bpy.context.scene
@@ -2345,129 +2206,46 @@ def quads_utilization_sectional():
 	data = scene["<Phaenotyp>"]
 	members = scene["<Phaenotyp>"]["members"]
 	frame = bpy.context.scene.frame_current
-
-	print_data("quads utilization sectional performance")
-
-	calculation.quads_utilization_sectional()
-
-	# calculate new properties for each member
-	geometry.update_geometry_pre()
-
-	# created a model object
-	models = {}
-	models[str(frame)] = calculation.prepare_fea_pn()
-
-	# run singlethread and get results
-	feas = calculation.run_mp(models)
-
-	# wait for it and interweave results to data
-	calculation.interweave_results_pn(feas)
-
+	
+	basics.print_data("quads utilization sectional performance")
+	
+	# create temp dictionaries
+	basics.models = {}
+	basics.feas = {}
+	
+	# calculate new section
+	basics.jobs.append([calculation.quads_utilization_sectional])
+					
+	# calculate frame
+	calculation.calculate_frames(frame, frame+1)
+	
 	# calculate new visualization-mesh
-	geometry.update_geometry_post()
-
-	basics.view_vertex_colors()
+	basics.jobs.append([geometry.update_geometry_post])
+	
+	# update view
+	basics.jobs.append([basics.view_vertex_colors])
+	
+	# print done
+	basics.jobs.append([basics.print_data, "done"])
+	
+	# run jobs
+	bpy.ops.wm.phaenotyp_jobs()
 	
 def topolgy_decimate():
-	print_data("Decimate topological performance")
+	basics.print_data("Decimate topological performance")
 	calculation.decimate_topology()
 
 def bf_start():
-	scene = bpy.context.scene
-	phaenotyp = scene.phaenotyp
-	data = scene["<Phaenotyp>"]
-	obj = data["structure"]
-
-	print_data("Start bruteforce over selected shape keys")
-
-	data["environment"]["genes"] = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
-	data["individuals"] = {}
-	individuals = data["individuals"]
-
-	if phaenotyp.calculation_type == "force_distribution":
-		if phaenotyp.optimization_fd == "approximate":
-			optimization_amount = phaenotyp.optimization_amount
-		else:
-			optimization_amount = 0
-
-	else:
-		if phaenotyp.optimization_pn in ["simple", "utilization", "complex"] or phaenotyp.optimization_quads in ["approximate", "utilization"]:
-			optimization_amount = phaenotyp.optimization_amount
-		else:
-			optimization_amount = 0
-
-	# skip optimization if geometrical only
-	if phaenotyp.calculation_type == "geometrical":
-		optimization_amount = 0
-
-	# start progress
-	progress.run()
-	progress.http.reset_pci(1)
-	progress.http.reset_o(optimization_amount)
-
-	# set frame_start
-	bpy.context.scene.frame_start = 0
-
-	# generate an individual as basis at frame 0
-	# this individual has choromosome with all genes equals 0
-	# the fitness of this chromosome is the basis for all others
-	bf.generate_basis()
-
-	for i in range(optimization_amount):
-		progress.http.reset_pci(1)
-		calculation.sectional_optimization(0, 1)
-		progress.http.update_o()
-
-	progress.http.reset_pci(1)
-	calculation.calculate_fitness(0, 1)
-	individuals["0"]["fitness"]["weighted"] = 1
-
-	data = scene["<Phaenotyp>"]
-	shape_keys = obj.data.shape_keys.key_blocks
-
-	# create matrix of possible combinations
-	matrix = []
-	for key in range(len(shape_keys)-1): # to exclude basis
-		genes = data["environment"]["genes"]
-		matrix.append(genes)
-
-	chromosomes = list(itertools.product(*matrix))
-	chromosomes.pop(0) # delete the basis individual, is allready calculated
-
-	# create start and end of calculation and create individuals
-	start = 1 # basis indiviual is allready created and optimized
-	end = len(chromosomes)+1
-
-	# set frame_end to first size of inital generation
-	bpy.context.scene.frame_end = end-1
-
-	# progress
-	progress.http.reset_pci(end-start)
-	progress.http.reset_o(optimization_amount)
-
-	# pair with bruteforce
-	bf.bruteforce(chromosomes)
-	for i in range(optimization_amount):
-		progress.http.reset_pci(end-start)
-		calculation.sectional_optimization(start, end)
-		progress.http.update_o()
-
-	calculation.calculate_fitness(start, end)
-
-	if phaenotyp.calculation_type != "geometrical":
-		basics.view_vertex_colors()
-
-	# join progress
-	progress.http.active = False
-	progress.http.Thread_hosting.join()
-
+	# run bruteforce
+	bf.start()
+	
 def ga_start():
 	scene = bpy.context.scene
 	phaenotyp = scene.phaenotyp
 	data = scene["<Phaenotyp>"]
 	obj = data["structure"]
 
-	print_data("Start genetic mutation over selected shape keys")
+	basics.print_data("Start genetic mutation over selected shape keys")
 
 	# pass from gui
 	data["environment"]["generation_size"] = phaenotyp.generation_size
@@ -2489,6 +2267,10 @@ def ga_start():
 	generation_id = data["environment"]["generation_id"]
 	individuals = data["individuals"]
 
+	# create temp dictionaries
+	basics.models = {}
+	basics.feas = {}
+	
 	if phaenotyp.calculation_type == "force_distribution":
 		if phaenotyp.optimization_fd == "approximate":
 			optimization_amount = phaenotyp.optimization_amount
@@ -2597,21 +2379,23 @@ def gd_start():
 	phaenotyp = scene.phaenotyp
 	data = scene["<Phaenotyp>"]
 
-	print_data("Start gradient descent over selected shape keys")
+	basics.print_data("Start gradient descent over selected shape keys")
 	
-	progress.run()
-
+	#progress.run()
+	
+	# create temp dictionaries
+	basics.models = {}
+	basics.feas = {}
+	
+	# run gradient descent
 	gd.start()
 
 	# join progress
-	progress.http.active = False
-	progress.http.Thread_hosting.join()
-
-	if phaenotyp.calculation_type != "geometrical":
-		basics.view_vertex_colors()
+	#progress.http.active = False
+	#progress.http.Thread_hosting.join()
 
 def get_boundaries():
-	print_data("get boundaries")
+	basics.print_data("get boundaries")
 	
 	scene = bpy.context.scene
 	data = scene["<Phaenotyp>"]
@@ -2702,7 +2486,7 @@ def ranking():
 	scene = bpy.context.scene
 	data = scene["<Phaenotyp>"]
 
-	print_data("go to selected ranking")
+	basics.print_data("go to selected ranking")
 
 	scene = bpy.context.scene
 	phaenotyp = scene.phaenotyp
@@ -2724,7 +2508,7 @@ def ranking():
 	ranked_indiviual = sorted_list[ranking_pos]
 
 	text = str(ranking_pos) + ". ranked with fitness: " + str(ranked_indiviual[2])
-	print_data(text)
+	basics.print_data(text)
 
 	frame_to_switch_to = int(ranked_indiviual[0])
 
@@ -2737,7 +2521,7 @@ def render_animation():
 	environment = data["environment"]
 	individuals = data["individuals"]
 
-	print_data("render animation")
+	basics.print_data("render animation")
 
 	# change engine, shading
 	bpy.context.scene.render.engine = 'BLENDER_WORKBENCH'
@@ -2796,7 +2580,7 @@ def render_animation():
 
 		image_id += 1
 
-	print_data("render animation - done")
+	basics.print_data("render animation - done")
 
 def text():
 	scene = bpy.context.scene
@@ -2806,7 +2590,7 @@ def text():
 	quads = data["quads"]
 	frame = bpy.context.scene.frame_current
 
-	print_data("Generate output at the selected point")
+	basics.print_data("Generate output at the selected point")
 	data["texts"] = []
 	selected_objects = bpy.context.selected_objects
 
@@ -2994,7 +2778,7 @@ def text():
 						data["texts"] = data_temp
 						
 def selection():
-	print_data("Generate report at frame in html-format")
+	basics.print_data("Generate report at frame in html-format")
 
 	scene = bpy.context.scene
 	phaenotyp = scene.phaenotyp
@@ -3004,7 +2788,7 @@ def selection():
 	quads = data["quads"]
 	frame = bpy.context.scene.frame_current
 
-	print_data("Select edges by given key and value.")
+	basics.print_data("Select edges by given key and value.")
 
 	obj.hide_set(False)
 	bpy.context.view_layer.objects.active = obj
@@ -3158,7 +2942,7 @@ def selection():
 	bpy.context.space_data.shading.type = 'WIREFRAME'
 
 def report_members():
-	print_data("Generate report at frame in html-format")
+	basics.print_data("Generate report at frame in html-format")
 
 	scene = bpy.context.scene
 	phaenotyp = scene.phaenotyp
@@ -3191,7 +2975,7 @@ def report_members():
 	webbrowser.open(file_to_open)
 
 def report_frames():
-	print_data("Generate report overview in html-format")
+	basics.print_data("Generate report overview in html-format")
 
 	scene = bpy.context.scene
 	phaenotyp = scene.phaenotyp
@@ -3224,7 +3008,7 @@ def report_frames():
 	webbrowser.open(file_to_open)
 
 def report_quads():
-	print_data("Generate report overview in html-format")
+	basics.print_data("Generate report overview in html-format")
 
 	scene = bpy.context.scene
 	phaenotyp = scene.phaenotyp
@@ -3257,7 +3041,7 @@ def report_quads():
 	webbrowser.open(file_to_open)
 
 def report_combined():
-	print_data("Generate report overview in html-format")
+	basics.print_data("Generate report overview in html-format")
 
 	scene = bpy.context.scene
 	phaenotyp = scene.phaenotyp
@@ -3290,7 +3074,7 @@ def report_combined():
 	webbrowser.open(file_to_open)
 
 def report_chromosomes():
-	print_data("Generate report at frame in html-format")
+	basics.print_data("Generate report at frame in html-format")
 
 	scene = bpy.context.scene
 	phaenotyp = scene.phaenotyp
@@ -3318,7 +3102,7 @@ def report_chromosomes():
 	webbrowser.open(file_to_open)
 
 def report_tree():
-	print_data("Generate report at frame in html-format")
+	basics.print_data("Generate report at frame in html-format")
 
 	scene = bpy.context.scene
 	phaenotyp = scene.phaenotyp
@@ -3344,7 +3128,7 @@ def report_tree():
 	webbrowser.open(file_to_open)
 
 def precast():
-	print_data("Precast result with recent shape-keys")
+	basics.print_data("Precast result with recent shape-keys")
 
 	scene = bpy.context.scene
 	phaenotyp = scene.phaenotyp
@@ -3355,7 +3139,7 @@ def precast():
 	nn.start()
 	
 def reset():
-	print_data("reset phaenotyp")
+	basics.print_data("reset phaenotyp")
 
 	scene = bpy.context.scene
 	phaenotyp = scene.phaenotyp

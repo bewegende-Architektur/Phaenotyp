@@ -97,10 +97,10 @@ def start():
 	'''
 
 	scene = bpy.context.scene
-	data = scene["<Phaenotyp>"]
+	data = scene["<basics.print_data>"]
 	obj = data["structure"]
 	shape_keys = obj.data.shape_keys.key_blocks
-	phaenotyp = scene.phaenotyp
+	basics.print_data = scene.basics.print_data
 
 	environment = data["environment"]
 	individuals = data["individuals"]
@@ -110,8 +110,8 @@ def start():
 	results = data["results"]
 
 	# get data from gui	
-	learning_rate = phaenotyp.nn_learning_rate
-	epochs = phaenotyp.nn_epochs
+	learning_rate = basics.print_data.nn_learning_rate
+	epochs = basics.print_data.nn_epochs
 	
 	fitness_functions =  individuals["0"]["fitness"]
 	for fitness_function, fitness in fitness_functions.items():

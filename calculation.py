@@ -17,13 +17,6 @@ import pickle
 import gc
 gc.disable()
 
-def print_data(text):
-	"""
-	Print data for debugging
-	:param text: Needs a text as string (Do not pass as list)
-	"""
-	print("Phaenotyp |", text)
-
 def check_scipy():
 	"""
 	Checking if scipy is available and is setting the value to data.
@@ -38,7 +31,7 @@ def check_scipy():
 	except:
 		data["scipy_available"] = False
 
-def prepare_fea_pn():
+def prepare_fea_pn(frame):
 	'''
 	Is preparing the calculaton of the current frame for for PyNite.
 	:return model: FEModel3D function of PyNite
@@ -55,9 +48,13 @@ def prepare_fea_pn():
 	loads_e = data["loads_e"]
 	loads_f = data["loads_f"]
 
-	frame = bpy.context.scene.frame_current
+	bpy.context.scene.frame_current = frame
+	bpy.context.view_layer.update()
+	
+	geometry.update_geometry_pre()
+	
 	model = FEModel3D()
-
+	
 	basics.timer.start()
 
 	psf_members = phaenotyp.psf_members
@@ -398,9 +395,10 @@ def prepare_fea_pn():
 	# get duration
 	text = calculation_type + " preparation for frame " + str(frame) + " done"
 	text +=  basics.timer.stop()
-	print_data(text)
+	basics.print_data(text)	
 
-	return model
+	# created a model object of PyNite and add to dict
+	basics.models[frame] = model
 
 def prepare_fea_fd():
 	'''
@@ -642,7 +640,7 @@ def prepare_fea_fd():
 	# get duration
 	text = calculation_type + " preparation for frame " + str(frame) + " done"
 	text +=  basics.timer.stop()
-	print_data(text)
+	basics.print_data(text)
 
 	model = [points_array, supports_ids, edges_array, forces_array]
 	return model
@@ -695,9 +693,9 @@ def run_mp(models):
 	imported_models = pickle.load(file)
 	file.close()
 
-	return imported_models
+	basics.feas = imported_models
 
-def interweave_results_pn(feas):
+def interweave_results_pn(frame):
 	'''
 	Function to integrate the results of PyNite.
 	:param feas: Feas as dict with frame as key.
@@ -712,598 +710,605 @@ def interweave_results_pn(feas):
 
 	end = bpy.context.scene.frame_end
 
-	for frame, model in feas.items():
-		basics.timer.start()
+	#for frame, model in feas.items():
+	#	basics.timer.start()
+	
+	frame = str(frame)
+	model = basics.feas[frame]
 
-		for id in members:
-			member = members[id]
-			model_member = model.Members[id]
+	for id in members:
+		member = members[id]
+		model_member = model.Members[id]
 
-			L = model_member.L() # Member length
-			T = model_member.T() # Member local transformation matrix
+		L = model_member.L() # Member length
+		T = model_member.T() # Member local transformation matrix
 
-			axial = []
-			moment_y = []
-			moment_z = []
-			shear_y = []
-			shear_z = []
-			torque = []
+		axial = []
+		moment_y = []
+		moment_z = []
+		shear_y = []
+		shear_z = []
+		torque = []
 
-			for i in range(11): # get the forces at 11 positions and
-				x = L/10*i
+		for i in range(11): # get the forces at 11 positions and
+			x = L/10*i
 
-				axial_pos = model_member.axial(x) * (-1) # Druckkraft minus
-				axial.append(axial_pos)
+			axial_pos = model_member.axial(x) * (-1) # Druckkraft minus
+			axial.append(axial_pos)
 
-				moment_y_pos = model_member.moment("My", x)
-				moment_y.append(moment_y_pos)
+			moment_y_pos = model_member.moment("My", x)
+			moment_y.append(moment_y_pos)
 
-				moment_z_pos = model_member.moment("Mz", x)
-				moment_z.append(moment_z_pos)
+			moment_z_pos = model_member.moment("Mz", x)
+			moment_z.append(moment_z_pos)
 
-				shear_y_pos = model_member.shear("Fy", x)
-				shear_y.append(shear_y_pos)
+			shear_y_pos = model_member.shear("Fy", x)
+			shear_y.append(shear_y_pos)
 
-				shear_z_pos = model_member.shear("Fz", x)
-				shear_z.append(shear_z_pos)
+			shear_z_pos = model_member.shear("Fz", x)
+			shear_z.append(shear_z_pos)
 
-				torque_pos = model_member.torque(x)
-				torque.append(torque_pos)
+			torque_pos = model_member.torque(x)
+			torque.append(torque_pos)
 
-			member["axial"][frame] = axial
-			member["moment_y"][frame] = moment_y
-			member["moment_z"][frame] = moment_z
-			member["shear_y"][frame] = shear_y
-			member["shear_z"][frame] = shear_z
-			member["torque"][frame] = torque
+		member["axial"][frame] = axial
+		member["moment_y"][frame] = moment_y
+		member["moment_z"][frame] = moment_z
+		member["shear_y"][frame] = shear_y
+		member["shear_z"][frame] = shear_z
+		member["torque"][frame] = torque
 
-			# shorten and accessing once
-			A = member["A"][frame]
-			J = member["J"][frame]
-			Do = member["Do"][frame]
+		# shorten and accessing once
+		A = member["A"][frame]
+		J = member["J"][frame]
+		Do = member["Do"][frame]
 
-			# buckling
-			member["ir"][frame] = sqrt(J/A) # für runde Querschnitte in  cm
-			
-			# bucklng resolution
-			buckling_resolution = member["buckling_resolution"]
+		# buckling
+		member["ir"][frame] = sqrt(J/A) # für runde Querschnitte in  cm
+		
+		# bucklng resolution
+		buckling_resolution = member["buckling_resolution"]
 
-			# modulus from the moments of area
-			#(Wy and Wz are the same within a pipe)
-			member["Wy"][frame] = member["Iy"][frame]/(Do/2)
+		# modulus from the moments of area
+		#(Wy and Wz are the same within a pipe)
+		member["Wy"][frame] = member["Iy"][frame]/(Do/2)
 
-			# polar modulus of torsion
-			member["WJ"][frame] = J/(Do/2)
+		# polar modulus of torsion
+		member["WJ"][frame] = J/(Do/2)
 
-			# calculation of the longitudinal stresses
-			long_stress = []
-			for i in range(11): # get the stresses at 11 positions and
-				moment_h = sqrt(moment_y[i]**2+moment_z[i]**2)
-				if axial[i] > 0:
-					s = axial[i]/A + moment_h/member["Wy"][frame]
-				else:
-					s = axial[i]/A - moment_h/member["Wy"][frame]
-				long_stress.append(s)
+		# calculation of the longitudinal stresses
+		long_stress = []
+		for i in range(11): # get the stresses at 11 positions and
+			moment_h = sqrt(moment_y[i]**2+moment_z[i]**2)
+			if axial[i] > 0:
+				s = axial[i]/A + moment_h/member["Wy"][frame]
+			else:
+				s = axial[i]/A - moment_h/member["Wy"][frame]
+			long_stress.append(s)
 
-			# get max stress of the beam
-			# (can be positive or negative)
-			member["long_stress"][frame] = long_stress
-			member["max_long_stress"][frame] = basics.return_max_diff_to_zero(long_stress) #  -> is working as fitness
+		# get max stress of the beam
+		# (can be positive or negative)
+		member["long_stress"][frame] = long_stress
+		member["max_long_stress"][frame] = basics.return_max_diff_to_zero(long_stress) #  -> is working as fitness
 
-			# calculation of the shear stresses from shear force
-			# (always positive)
-			tau_shear = []
-			shear_h = []
-			for i in range(11): # get the stresses at 11 positions and
-				# shear_h
-				s_h = sqrt(shear_y[i]**2+shear_z[i]**2)
-				shear_h.append(s_h)
+		# calculation of the shear stresses from shear force
+		# (always positive)
+		tau_shear = []
+		shear_h = []
+		for i in range(11): # get the stresses at 11 positions and
+			# shear_h
+			s_h = sqrt(shear_y[i]**2+shear_z[i]**2)
+			shear_h.append(s_h)
 
-				tau = 1.333 * s_h/A # for pipes
-				tau_shear.append(tau)
+			tau = 1.333 * s_h/A # for pipes
+			tau_shear.append(tau)
 
-			member["shear_h"][frame] = shear_h
+		member["shear_h"][frame] = shear_h
 
-			# get max shear stress of shear force of the beam
-			# shear stress is mostly small compared to longitudinal
-			# in common architectural usage and only importand with short beam lenght
-			member["tau_shear"][frame] = tau_shear
-			member["max_tau_shear"][frame] = max(tau_shear)
+		# get max shear stress of shear force of the beam
+		# shear stress is mostly small compared to longitudinal
+		# in common architectural usage and only importand with short beam lenght
+		member["tau_shear"][frame] = tau_shear
+		member["max_tau_shear"][frame] = max(tau_shear)
 
-			# Calculation of the torsion stresses
-			# (always positiv)
-			tau_torsion = []
-			for i in range(11): # get the stresses at 11 positions and
-				tau = abs(torque[i]/member["WJ"][frame])
-				tau_torsion.append(tau)
+		# Calculation of the torsion stresses
+		# (always positiv)
+		tau_torsion = []
+		for i in range(11): # get the stresses at 11 positions and
+			tau = abs(torque[i]/member["WJ"][frame])
+			tau_torsion.append(tau)
 
-			# get max torsion stress of the beam
-			member["tau_torsion"][frame] = tau_torsion
-			member["max_tau_torsion"][frame] = max(tau_torsion)
+		# get max torsion stress of the beam
+		member["tau_torsion"][frame] = tau_torsion
+		member["max_tau_torsion"][frame] = max(tau_torsion)
 
-			# torsion stress is mostly small compared to longitudinal
-			# in common architectural usage
+		# torsion stress is mostly small compared to longitudinal
+		# in common architectural usage
 
-			# calculation of the shear stresses form shear force and torsion
-			# (always positiv)
-			sum_tau = []
-			for i in range(11): # get the stresses at 11 positions and
-				tau = tau_shear[i] + tau_torsion[i]
-				sum_tau.append(tau)
+		# calculation of the shear stresses form shear force and torsion
+		# (always positiv)
+		sum_tau = []
+		for i in range(11): # get the stresses at 11 positions and
+			tau = tau_shear[i] + tau_torsion[i]
+			sum_tau.append(tau)
 
-			member["sum_tau"][frame] = sum_tau
-			member["max_sum_tau"][frame] = max(sum_tau)
+		member["sum_tau"][frame] = sum_tau
+		member["max_sum_tau"][frame] = max(sum_tau)
 
-			# combine shear and torque
-			sigmav = []
-			for i in range(11): # get the stresses at 11 positions and
-				sv = sqrt(long_stress[i]**2 + 3*sum_tau[i]**2)
-				sigmav.append(sv)
+		# combine shear and torque
+		sigmav = []
+		for i in range(11): # get the stresses at 11 positions and
+			sv = sqrt(long_stress[i]**2 + 3*sum_tau[i]**2)
+			sigmav.append(sv)
 
-			member["sigmav"][frame] = sigmav
-			member["max_sigmav"][frame] = max(sigmav)
-			# check out: http://www.bs-wiki.de/mediawiki/index.php?title=Festigkeitsberechnung
+		member["sigmav"][frame] = sigmav
+		member["max_sigmav"][frame] = max(sigmav)
+		# check out: http://www.bs-wiki.de/mediawiki/index.php?title=Festigkeitsberechnung
 
-			member["sigma"][frame] = member["long_stress"][frame]
-			member["max_sigma"][frame] = member["max_long_stress"][frame]
+		member["sigma"][frame] = member["long_stress"][frame]
+		member["max_sigma"][frame] = member["max_long_stress"][frame]
 
-			# overstress
-			member["overstress"][frame] = False
+		# overstress
+		member["overstress"][frame] = False
 
-			# check overstress and add 1.05 savety factor
-			safety_factor = 1.05
-			if abs(member["max_tau_shear"][frame]) > safety_factor*member["acceptable_shear"]:
-				member["overstress"][frame] = True
+		# check overstress and add 1.05 savety factor
+		safety_factor = 1.05
+		if abs(member["max_tau_shear"][frame]) > safety_factor*member["acceptable_shear"]:
+			member["overstress"][frame] = True
 
-			if abs(member["max_tau_torsion"][frame]) > safety_factor*member["acceptable_torsion"]:
-				member["overstress"][frame] = True
+		if abs(member["max_tau_torsion"][frame]) > safety_factor*member["acceptable_torsion"]:
+			member["overstress"][frame] = True
 
-			if abs(member["max_sigmav"][frame]) > safety_factor*member["acceptable_sigmav"]:
-				member["overstress"][frame] = True
+		if abs(member["max_sigmav"][frame]) > safety_factor*member["acceptable_sigmav"]:
+			member["overstress"][frame] = True
 
-			# buckling
-			if member["axial"][frame][0] < 0: # nur für Druckstäbe, axial kann nicht flippen?
-				member["lamda"][frame] = L*buckling_resolution*0.5/member["ir"][frame] # für eingespannte Stäbe ist die Knicklänge 0.5 der Stablänge L, Stablänge muss in cm sein !
-				if member["lamda"][frame] > 20: # für lamda < 20 (kurze Träger) gelten die default-Werte)
-					kn = member["knick_model"]
-					function_to_run = poly1d(polyfit(material.kn_lamda, kn, 6))
-					member["acceptable_sigma_buckling"][frame] = function_to_run(member["lamda"][frame])
-					if member["lamda"][frame] > 250: # Schlankheit zu schlank
-						member["acceptable_sigma_buckling"][frame] = function_to_run(250)
-						member["overstress"][frame] = True
-					if safety_factor*abs(member["acceptable_sigma_buckling"][frame]) > abs(member["max_sigma"][frame]): # Sigma
-						member["overstress"][frame] = True
+		# buckling
+		if member["axial"][frame][0] < 0: # nur für Druckstäbe, axial kann nicht flippen?
+			member["lamda"][frame] = L*buckling_resolution*0.5/member["ir"][frame] # für eingespannte Stäbe ist die Knicklänge 0.5 der Stablänge L, Stablänge muss in cm sein !
+			if member["lamda"][frame] > 20: # für lamda < 20 (kurze Träger) gelten die default-Werte)
+				kn = member["knick_model"]
+				function_to_run = poly1d(polyfit(material.kn_lamda, kn, 6))
+				member["acceptable_sigma_buckling"][frame] = function_to_run(member["lamda"][frame])
+				if member["lamda"][frame] > 250: # Schlankheit zu schlank
+					member["acceptable_sigma_buckling"][frame] = function_to_run(250)
+					member["overstress"][frame] = True
+				if safety_factor*abs(member["acceptable_sigma_buckling"][frame]) > abs(member["max_sigma"][frame]): # Sigma
+					member["overstress"][frame] = True
 
-				else:
-					member["acceptable_sigma_buckling"][frame] = member["acceptable_sigma"]
-
-			# without buckling
 			else:
 				member["acceptable_sigma_buckling"][frame] = member["acceptable_sigma"]
-				member["lamda"][frame] = None # to avoid missing KeyError
+
+		# without buckling
+		else:
+			member["acceptable_sigma_buckling"][frame] = member["acceptable_sigma"]
+			member["lamda"][frame] = None # to avoid missing KeyError
 
 
-			if abs(member["max_sigma"][frame]) > safety_factor*member["acceptable_sigma"]:
-				member["overstress"][frame] = True
+		if abs(member["max_sigma"][frame]) > safety_factor*member["acceptable_sigma"]:
+			member["overstress"][frame] = True
 
-			# lever_arm
-			lever_arm = []
-			moment_h = []
-			for i in range(11):
-				# moment_h
-				m_h = sqrt(moment_y[i]**2+moment_z[i]**2)
-				moment_h.append(m_h)
+		# lever_arm
+		lever_arm = []
+		moment_h = []
+		for i in range(11):
+			# moment_h
+			m_h = sqrt(moment_y[i]**2+moment_z[i]**2)
+			moment_h.append(m_h)
 
-				# to avoid division by zero
-				if member["axial"][frame][i] < 0.1:
-					lv = m_h / 0.1
-				else:
-					lv = m_h / member["axial"][frame][i]
-
-				lv = abs(lv) # absolute highest value within member
-				lever_arm.append(lv)
-
-			member["moment_h"][frame] = moment_h
-			member["lever_arm"][frame] = lever_arm
-			member["max_lever_arm"][frame] = max(lever_arm)
-
-			# Ausnutzungsgrad
-			member["utilization"][frame] = abs(member["max_long_stress"][frame] / member["acceptable_sigma_buckling"][frame])
-
-			# Einführung in die Technische Mechanik - Festigkeitslehre, H.Balke, Springer 2010
-			normalkraft_energie=[]
-			moment_energie=[]
-			strain_energy = []
-
-			for i in range(10): # get the energie at 10 positions for 10 section
-				# Berechnung der strain_energy für Normalkraft
-				ne = (axial[i]**2)*(L/10)/(2*member["E"]*A)
-				normalkraft_energie.append(ne)
-
-				# Berechnung der strain_energy für Moment
-				moment_hq = moment_y[i]**2+moment_z[i]**2
-				me = (moment_hq * L/10) / (member["E"] * member["Wy"][frame] * Do)
-				moment_energie.append(me)
-
-				# Summe von Normalkraft und Moment-Verzerrunsenergie
-				value = ne + me
-				strain_energy.append(value)
-
-			member["strain_energy"][frame] = strain_energy
-			member["normal_energy"][frame] = normalkraft_energie
-			member["moment_energy"][frame] = moment_energie
-
-			# deflection
-			deflection = []
-
-			# --> taken from pyNite VisDeformedMember: https://github.com/JWock82/PyNite
-			scale_factor = 10.0
-
-			cos_x = array([T[0,0:3]]) # Direction cosines of local x-axis
-			cos_y = array([T[1,0:3]]) # Direction cosines of local y-axis
-			cos_z = array([T[2,0:3]]) # Direction cosines of local z-axis
-
-			DY_plot = empty((0, 3))
-			DZ_plot = empty((0, 3))
-
-			for i in range(11):
-				# Calculate the local y-direction displacement
-				dy_tot = model_member.deflection('dy', L/10*i)
-
-				# Calculate the scaled displacement in global coordinates
-				DY_plot = append(DY_plot, dy_tot*cos_y*scale_factor, axis=0)
-
-				# Calculate the local z-direction displacement
-				dz_tot = model_member.deflection('dz', L/10*i)
-
-				# Calculate the scaled displacement in global coordinates
-				DZ_plot = append(DZ_plot, dz_tot*cos_z*scale_factor, axis=0)
-
-			# Calculate the local x-axis displacements at 20 points along the member's length
-			DX_plot = empty((0, 3))
-
-			Xi = model_member.i_node.X
-			Yi = model_member.i_node.Y
-			Zi = model_member.i_node.Z
-
-			for i in range(11):
-				# Displacements in local coordinates
-				dx_tot = [[Xi, Yi, Zi]] + (L/10*i + model_member.deflection('dx', L/10*i)*scale_factor)*cos_x
-
-				# Magnified displacements in global coordinates
-				DX_plot = append(DX_plot, dx_tot, axis=0)
-
-			# Sum the component displacements to obtain overall displacement
-			D_plot = DY_plot + DZ_plot + DX_plot
-
-			# <-- taken from pyNite VisDeformedMember: https://github.com/JWock82/PyNite
-
-			# add to results
-			for i in range(11):
-				x = D_plot[i, 0] * 0.01
-				y = D_plot[i, 1] * 0.01
-				z = D_plot[i, 2] * 0.01
-
-				deflection.append([x,y,z])
-
-			member["deflection"][frame] = deflection
-
-		nodes = model.Nodes
-
-		for id in quads:
-			quad = quads[id]
-
-			# read results from PyNite
-			result = model.Quads[id]
-
-			# only take highest value to zero
-			shear = result.shear()
-			moment = result.moment()
-			membrane = result.membrane()
-
-			# from PyNite
-			Qx = float(shear[0])
-			Qy = float(shear[1])
-
-			Mx = float(moment[0])
-			My = float(moment[1])
-			Mxy = float(moment[2])
-
-			Sx = float(membrane[0])
-			Sy = float(membrane[1])
-			Txy = float(membrane[2])
-
-			#print("Qx:", Qx, "Qy:", Qy, "Mx:", Mx, "My:", My, "Mxy:", Mxy, "Sx:", Sx, "Sy:", Sy, "Txy:", Txy)
-
-			# get deflection
-			node_ids = quad["vertices_ids_structure"]
-			deflection = []
-			for i in range(4):
-				# deflection only
-				x = nodes[str(node_ids[i])].DX["Combo 1"]*0.1
-				y = nodes[str(node_ids[i])].DY["Combo 1"]*0.1
-				z = nodes[str(node_ids[i])].DZ["Combo 1"]*0.1
-
-				# add deflection to initial position
-				initial = quad["initial_positions"][frame][i]
-				x += initial[0]
-				y += initial[1]
-				z += initial[2]
-
-				deflection.append([x,y,z])
-			
-			# get average lengthes to calculate force by unit
-			initial = quad["initial_positions"][frame]
-			v_0 = array(initial[0])
-			v_1 = array(initial[1])
-			v_2 = array(initial[2])
-			v_3 = array(initial[3])
-
-			x_0 = v_1 - v_0 # first edge x
-			x_1 = v_3 - v_2 # second edge x
-			y_0 = v_2 - v_1 # first edge y
-			y_1 = v_3 - v_0 # second edge y
-
-			# as descripted in quad example
-			length_x = (linalg.norm(x_0) + linalg.norm(x_1)) * 0.5 * 100 # to convert into cm
-			length_y = (linalg.norm(y_0) + linalg.norm(y_1)) * 0.5 * 100 # to convert into cm
-
-			# Schnittkräfte in unit-cm
-
-			shear_x = Qx # Querkraft in kN  # für Darstellung
-			shear_y = Qy # Querkraft in kN  # für Darstellung
-
-			moment_x = Mx  # Moment in kNcm   # für Darstellung
-			moment_y = My  # Moment in kNcm   # für Darstellung
-			moment_xy = Mxy  # Drillmoment in kNcm   # für Darstellung
-			
-			thickness = quad["thickness"][frame]
-
-			membrane_x = Sx * thickness  # Spannung in kN/cm   # für Darstellung
-			membrane_y = Sy * thickness  # Spannung in kN/cm   # für Darstellung
-			membrane_xy = Txy * thickness  #  Schubspannung in kN/cm   # für Darstellung
-
-			# die Querschnittswerte sind jetzt auf 1 cm Schalenbreite bezogen
-			# area of the section, not the face
-			A = thickness * 1 # Dicke in cm² pro cm Schalenbreite
-			
-			# J = 1 * (thickness)**3 / 12
-
-			# für buckling
-			ir = thickness * 0.28867 # in cm  - Breite kürzt sich weg, es bleibt 1/wurzel aus 12
-			# ir = sqrt(J/A) # in cm
-			# modulus from the moments of area
-			Wy = (thickness**2)/6  # auf 1 cm Schalenbreite
-			
-			# Spannungen in x und y Richrtung an den Oberflächen 1 und 2
-			'''
-			s_x_1 = membrane_x + moment_x/Wy  # für Darstellung
-			s_x_2 = membrane_x - moment_x/Wy  # für Darstellung
-			s_y_1 = membrane_y + moment_y/Wy  # für Darstellung
-			s_y_2 = membrane_y - moment_y/Wy  # für Darstellung
-			T_xy_1 = membrane_xy +  moment_xy/Wy # am Plattenrand, für Darstellung
-			T_xy_2 = membrane_xy -  moment_xy/Wy # am Plattenrand, für Darstellung
-			'''
-
-			s_x_1 = membrane_x - moment_x/Wy  # für Darstellung
-			s_x_2 = membrane_x + moment_x/Wy  # für Darstellung
-			s_y_1 = membrane_y - moment_y/Wy  # für Darstellung
-			s_y_2 = membrane_y + moment_y/Wy  # für Darstellung
-			T_xy_1 = membrane_xy -  moment_xy/Wy # am Plattenrand, für Darstellung
-			T_xy_2 = membrane_xy +  moment_xy/Wy # am Plattenrand, für Darstellung
-			
-						
-			# Schubspannungen in x und y Richtung  infolge Querkraft in Plattenmitte
-			T_x = 1.5 * shear_x/A   # in Plattenmitte
-			T_y = 1.5 * shear_y/A   # in Plattenmitte
-
-			# Hauptspannungen 1 und 2 an den Oberflächen 1 und 2
-			# based on:
-			# https://www.umwelt-campus.de/fileadmin/Umwelt-Campus/User/TPreussler/Download/Festigkeitslehre/Foliensaetze/01_Spannungszustand.pdf
-			# https://technikermathe.de/tm2-hauptnormalspannung-berechnen
-			# midpoint
-			
-			# first side
-			if s_x_1 - s_y_1 == 0: # avoid div zero
-				alpha = 0
+			# to avoid division by zero
+			if member["axial"][frame][i] < 0.1:
+				lv = m_h / 0.1
 			else:
-				alpha = degrees(0.5 * arctan((2 * T_xy_1) / (s_x_1 - s_y_1)))
-			
-			s_1 = (s_x_1 + s_y_1)/2 + sqrt(((s_x_1 - s_y_1)/2)**2 + T_xy_1**2)
-			s_2 = (s_x_1 + s_y_1)/2 - sqrt(((s_x_1 - s_y_1)/2)**2 + T_xy_1**2)
-			s_xi = (s_x_1 + s_y_1)/2 + (s_x_1 - s_y_1)/2 * cos(2*radians(alpha)) + T_xy_1 * sin(2*radians(alpha))
-			
-			#if abs(s_1) > abs(s_2):
-			if abs(s_1) > abs(s_2):
-				s_1_1 = s_1
-				s_2_1 = s_2
-			else:
-				s_1_1 = s_2
-				s_2_1 = s_1
-				
-			if abs(round(s_1_1,2)) == abs(round(s_xi,2)):
-				alpha_1 = alpha + 90
-			else:
-				alpha_1 = alpha
-			
-			# second side
-			if s_x_2 - s_y_2 == 0: # avoid div zero
-				alpha = 0
-			else:
-				alpha = degrees(0.5 * arctan((2 * T_xy_2) / (s_x_2 - s_y_2)))
-			
-			s_1 = (s_x_2 + s_y_2)/2 + sqrt(((s_x_2 - s_y_2)/2)**2 + T_xy_2**2)
-			s_2 = (s_x_2 + s_y_2)/2 - sqrt(((s_x_2 - s_y_2)/2)**2 + T_xy_2**2)
-			s_xi = (s_x_2 + s_y_2)/2 + (s_x_2 - s_y_2)/2 * cos(2*radians(alpha)) + T_xy_2 * sin(2*radians(alpha))
+				lv = m_h / member["axial"][frame][i]
 
-			if abs(s_1) > abs(s_2):
-				s_1_2 = s_1
-				s_2_2 = s_2
-			else:
-				s_1_2 = s_2
-				s_2_2 = s_1
-			
-			if abs(round(s_1_2,2)) == abs(round(s_xi,2)):
-				alpha_2 = alpha + 90
-			else:
-				alpha_2 = alpha
-			
-			# long_stress_x = s_x
-			# sigma = s_x
-			# long_stress_y = s_y
-			# sigma_y = s_y
-			# shear_xy = membrane_xy
-			# tau_shear_xy = 1.5 * shear_x/A # for quads
-			# tau_shear_y = 1.5 * shear_y/A # for quads
-			# tau_shear_y = 1.5 * shear_y/A # for quads
-			
-			# Vergleichsspannung an den beiden Oberflächen 1 und 2
-			sigmav1 = sqrt(s_x_1**2 + s_y_1**2 - s_x_1*s_y_1 + 3*T_xy_1**2)
-			sigmav2 = sqrt(s_x_2**2 + s_y_2**2 - s_x_2*s_y_2 + 3*T_xy_2**2)
-			
-			# der größere Wert wird für die weitere Optimierung verwendet
-			if sigmav2 > sigmav1:
-				sigmav = sigmav2
-			else:
-				sigmav = sigmav1
+			lv = abs(lv) # absolute highest value within member
+			lever_arm.append(lv)
 
-			# Vergleichsspannung in Plattenmitte
-			sigmav_m = sqrt(abs((membrane_x/A)**2 + (membrane_y/A)**2 - (membrane_x/A) * (membrane_y/A) + 3 * T_x * T_y))  # falls notwendig
-			
-			overstress = False
-			# check overstress and add 1.05 safety factor
-			safety_factor = 1.05
-			#if abs(tau_shear) > safety_factor*quad["acceptable_shear"]:
-			#	overstress = True
+		member["moment_h"][frame] = moment_h
+		member["lever_arm"][frame] = lever_arm
+		member["max_lever_arm"][frame] = max(lever_arm)
 
-			if sigmav > safety_factor*quad["acceptable_sigmav"]:
-				overstress = True
+		# Ausnutzungsgrad
+		member["utilization"][frame] = abs(member["max_long_stress"][frame] / member["acceptable_sigma_buckling"][frame])
 
-			# buckling in x-Richtung
-			if membrane_x < 0: # nur für Druckstäbe, axial kann nicht flippen?
-				quad["lamda"][frame] = length_x*5/ir # es wird hier von einer Knicklänge von 5 x der Elementlänge vorerst ausgegagen, in cm
-				if quad["lamda"][frame] > 20: # für lamda < 20 (kurze Träger) gelten die default-Werte)
-					kn = quad["knick_model"]
-					function_to_run = poly1d(polyfit(material.kn_lamda, kn, 6))
-					acceptable_sigma_buckling_x = function_to_run(quad["lamda"][frame])
-					if quad["lamda"][frame] > 250: # Schlankheit zu schlank
-						acceptable_sigma_buckling_x = function_to_run(250)
-						overstress = True
-					if safety_factor*abs(acceptable_sigma_buckling_x) > abs(sigmav): # Sigma
-						overstress = True
+		# Einführung in die Technische Mechanik - Festigkeitslehre, H.Balke, Springer 2010
+		normalkraft_energie=[]
+		moment_energie=[]
+		strain_energy = []
 
-				else:
-					acceptable_sigma_buckling_x = quad["acceptable_sigma"]
-			# without buckling		
-			else:
-				acceptable_sigma_buckling_x = quad["acceptable_sigma"]
-				quad["lamda"][frame] = None # to avoid missing KeyError
-
-			
-			# buckling in y-Richtung
-			if membrane_y < 0: # nur für Druckstäbe, axial kann nicht flippen?
-				quad["lamda"][frame] = length_y*5/ir # es wird hier von einer Knicklänge von 5 x der Elementlänge vorerst ausgegagen, in cm
-				if quad["lamda"][frame] > 20: # für lamda < 20 (kurze Träger) gelten die default-Werte)
-					kn = quad["knick_model"]
-					function_to_run = poly1d(polyfit(material.kn_lamda, kn, 6))
-					acceptable_sigma_buckling_y = function_to_run(quad["lamda"][frame])
-					if quad["lamda"][frame] > 250: # Schlankheit zu schlank
-						acceptable_sigma_buckling_y = function_to_run(250)
-						overstress = True
-					if safety_factor*abs(acceptable_sigma_buckling_y) > abs(sigmav): # Sigma
-						overstress = True
-
-				else:
-					acceptable_sigma_buckling_y = quad["acceptable_sigma"]
-
-			# without buckling
-			else:
-				acceptable_sigma_buckling_y = quad["acceptable_sigma"]
-				quad["lamda"][frame] = None # to avoid missing KeyError
-			
-			# das kleinere ist maßgbend
-			if acceptable_sigma_buckling_x < acceptable_sigma_buckling_y:
-				quad["acceptable_sigma_buckling"][frame] = acceptable_sigma_buckling_x
-			else:
-				quad["acceptable_sigma_buckling"][frame] = acceptable_sigma_buckling_y 
-
-			if abs(sigmav) > safety_factor*quad["acceptable_sigma"]:
-				overstress = True
-
-			# Ausnutzungsgrad
-			utilization = abs(sigmav / quad["acceptable_sigma_buckling"][frame])
-			
-			# vorerst noch weglassen
-			# Einführung in die Technische Mechanik - Festigkeitslehre, H.Balke, Springer 2010
+		for i in range(10): # get the energie at 10 positions for 10 section
 			# Berechnung der strain_energy für Normalkraft
-			# normalkraft_energie = (long_stress**2)*(length_x)/(2*quad["E"]*A)
+			ne = (axial[i]**2)*(L/10)/(2*member["E"]*A)
+			normalkraft_energie.append(ne)
 
 			# Berechnung der strain_energy für Moment
-			# moment_hq = moment_x**2+moment_y**2
-			# moment_energie = (moment_hq * length_x) / (quad["E"] * Wy * thickness)
+			moment_hq = moment_y[i]**2+moment_z[i]**2
+			me = (moment_hq * L/10) / (member["E"] * member["Wy"][frame] * Do)
+			moment_energie.append(me)
 
 			# Summe von Normalkraft und Moment-Verzerrunsenergie
-			# strain_energy = normalkraft_energie + moment_energie
+			value = ne + me
+			strain_energy.append(value)
 
-			# save to dict
-			quad["shear_x"][frame] = shear_x
-			quad["shear_y"][frame] = shear_y
+		member["strain_energy"][frame] = strain_energy
+		member["normal_energy"][frame] = normalkraft_energie
+		member["moment_energy"][frame] = moment_energie
 
-			quad["moment_x"][frame] = moment_x
-			quad["moment_y"][frame] = moment_y
-			quad["moment_xy"][frame] = moment_xy
+		# deflection
+		deflection = []
 
-			quad["membrane_x"][frame] = membrane_x
-			quad["membrane_y"][frame] = membrane_y
-			quad["membrane_xy"][frame] = membrane_xy
+		# --> taken from pyNite VisDeformedMember: https://github.com/JWock82/PyNite
+		scale_factor = 10.0
+
+		cos_x = array([T[0,0:3]]) # Direction cosines of local x-axis
+		cos_y = array([T[1,0:3]]) # Direction cosines of local y-axis
+		cos_z = array([T[2,0:3]]) # Direction cosines of local z-axis
+
+		DY_plot = empty((0, 3))
+		DZ_plot = empty((0, 3))
+
+		for i in range(11):
+			# Calculate the local y-direction displacement
+			dy_tot = model_member.deflection('dy', L/10*i)
+
+			# Calculate the scaled displacement in global coordinates
+			DY_plot = append(DY_plot, dy_tot*cos_y*scale_factor, axis=0)
+
+			# Calculate the local z-direction displacement
+			dz_tot = model_member.deflection('dz', L/10*i)
+
+			# Calculate the scaled displacement in global coordinates
+			DZ_plot = append(DZ_plot, dz_tot*cos_z*scale_factor, axis=0)
+
+		# Calculate the local x-axis displacements at 20 points along the member's length
+		DX_plot = empty((0, 3))
+
+		Xi = model_member.i_node.X
+		Yi = model_member.i_node.Y
+		Zi = model_member.i_node.Z
+
+		for i in range(11):
+			# Displacements in local coordinates
+			dx_tot = [[Xi, Yi, Zi]] + (L/10*i + model_member.deflection('dx', L/10*i)*scale_factor)*cos_x
+
+			# Magnified displacements in global coordinates
+			DX_plot = append(DX_plot, dx_tot, axis=0)
+
+		# Sum the component displacements to obtain overall displacement
+		D_plot = DY_plot + DZ_plot + DX_plot
+
+		# <-- taken from pyNite VisDeformedMember: https://github.com/JWock82/PyNite
+
+		# add to results
+		for i in range(11):
+			x = D_plot[i, 0] * 0.01
+			y = D_plot[i, 1] * 0.01
+			z = D_plot[i, 2] * 0.01
+
+			deflection.append([x,y,z])
+
+		member["deflection"][frame] = deflection
+
+	nodes = model.Nodes
+
+	for id in quads:
+		quad = quads[id]
+
+		# read results from PyNite
+		result = model.Quads[id]
+
+		# only take highest value to zero
+		shear = result.shear()
+		moment = result.moment()
+		membrane = result.membrane()
+
+		# from PyNite
+		Qx = float(shear[0])
+		Qy = float(shear[1])
+
+		Mx = float(moment[0])
+		My = float(moment[1])
+		Mxy = float(moment[2])
+
+		Sx = float(membrane[0])
+		Sy = float(membrane[1])
+		Txy = float(membrane[2])
+
+		#print("Qx:", Qx, "Qy:", Qy, "Mx:", Mx, "My:", My, "Mxy:", Mxy, "Sx:", Sx, "Sy:", Sy, "Txy:", Txy)
+
+		# get deflection
+		node_ids = quad["vertices_ids_structure"]
+		deflection = []
+		for i in range(4):
+			# deflection only
+			x = nodes[str(node_ids[i])].DX["Combo 1"]*0.1
+			y = nodes[str(node_ids[i])].DY["Combo 1"]*0.1
+			z = nodes[str(node_ids[i])].DZ["Combo 1"]*0.1
+
+			# add deflection to initial position
+			initial = quad["initial_positions"][frame][i]
+			x += initial[0]
+			y += initial[1]
+			z += initial[2]
+
+			deflection.append([x,y,z])
+		
+		# get average lengthes to calculate force by unit
+		initial = quad["initial_positions"][frame]
+		v_0 = array(initial[0])
+		v_1 = array(initial[1])
+		v_2 = array(initial[2])
+		v_3 = array(initial[3])
+
+		x_0 = v_1 - v_0 # first edge x
+		x_1 = v_3 - v_2 # second edge x
+		y_0 = v_2 - v_1 # first edge y
+		y_1 = v_3 - v_0 # second edge y
+
+		# as descripted in quad example
+		length_x = (linalg.norm(x_0) + linalg.norm(x_1)) * 0.5 * 100 # to convert into cm
+		length_y = (linalg.norm(y_0) + linalg.norm(y_1)) * 0.5 * 100 # to convert into cm
+
+		# Schnittkräfte in unit-cm
+
+		shear_x = Qx # Querkraft in kN  # für Darstellung
+		shear_y = Qy # Querkraft in kN  # für Darstellung
+
+		moment_x = Mx  # Moment in kNcm   # für Darstellung
+		moment_y = My  # Moment in kNcm   # für Darstellung
+		moment_xy = Mxy  # Drillmoment in kNcm   # für Darstellung
+		
+		thickness = quad["thickness"][frame]
+
+		membrane_x = Sx * thickness  # Spannung in kN/cm   # für Darstellung
+		membrane_y = Sy * thickness  # Spannung in kN/cm   # für Darstellung
+		membrane_xy = Txy * thickness  #  Schubspannung in kN/cm   # für Darstellung
+
+		# die Querschnittswerte sind jetzt auf 1 cm Schalenbreite bezogen
+		# area of the section, not the face
+		A = thickness * 1 # Dicke in cm² pro cm Schalenbreite
+		
+		# J = 1 * (thickness)**3 / 12
+
+		# für buckling
+		ir = thickness * 0.28867 # in cm  - Breite kürzt sich weg, es bleibt 1/wurzel aus 12
+		# ir = sqrt(J/A) # in cm
+		# modulus from the moments of area
+		Wy = (thickness**2)/6  # auf 1 cm Schalenbreite
+		
+		# Spannungen in x und y Richrtung an den Oberflächen 1 und 2
+		'''
+		s_x_1 = membrane_x + moment_x/Wy  # für Darstellung
+		s_x_2 = membrane_x - moment_x/Wy  # für Darstellung
+		s_y_1 = membrane_y + moment_y/Wy  # für Darstellung
+		s_y_2 = membrane_y - moment_y/Wy  # für Darstellung
+		T_xy_1 = membrane_xy +  moment_xy/Wy # am Plattenrand, für Darstellung
+		T_xy_2 = membrane_xy -  moment_xy/Wy # am Plattenrand, für Darstellung
+		'''
+
+		s_x_1 = membrane_x - moment_x/Wy  # für Darstellung
+		s_x_2 = membrane_x + moment_x/Wy  # für Darstellung
+		s_y_1 = membrane_y - moment_y/Wy  # für Darstellung
+		s_y_2 = membrane_y + moment_y/Wy  # für Darstellung
+		T_xy_1 = membrane_xy -  moment_xy/Wy # am Plattenrand, für Darstellung
+		T_xy_2 = membrane_xy +  moment_xy/Wy # am Plattenrand, für Darstellung
+		
+					
+		# Schubspannungen in x und y Richtung  infolge Querkraft in Plattenmitte
+		T_x = 1.5 * shear_x/A   # in Plattenmitte
+		T_y = 1.5 * shear_y/A   # in Plattenmitte
+
+		# Hauptspannungen 1 und 2 an den Oberflächen 1 und 2
+		# based on:
+		# https://www.umwelt-campus.de/fileadmin/Umwelt-Campus/User/TPreussler/Download/Festigkeitslehre/Foliensaetze/01_Spannungszustand.pdf
+		# https://technikermathe.de/tm2-hauptnormalspannung-berechnen
+		# midpoint
+		
+		# first side
+		if s_x_1 - s_y_1 == 0: # avoid div zero
+			alpha = 0
+		else:
+			alpha = degrees(0.5 * arctan((2 * T_xy_1) / (s_x_1 - s_y_1)))
+		
+		s_1 = (s_x_1 + s_y_1)/2 + sqrt(((s_x_1 - s_y_1)/2)**2 + T_xy_1**2)
+		s_2 = (s_x_1 + s_y_1)/2 - sqrt(((s_x_1 - s_y_1)/2)**2 + T_xy_1**2)
+		s_xi = (s_x_1 + s_y_1)/2 + (s_x_1 - s_y_1)/2 * cos(2*radians(alpha)) + T_xy_1 * sin(2*radians(alpha))
+		
+		#if abs(s_1) > abs(s_2):
+		if abs(s_1) > abs(s_2):
+			s_1_1 = s_1
+			s_2_1 = s_2
+		else:
+			s_1_1 = s_2
+			s_2_1 = s_1
 			
-			quad["length_x"][frame] = length_x
-			quad["length_y"][frame] = length_y
+		if abs(round(s_1_1,2)) == abs(round(s_xi,2)):
+			alpha_1 = alpha + 90
+		else:
+			alpha_1 = alpha
+		
+		# second side
+		if s_x_2 - s_y_2 == 0: # avoid div zero
+			alpha = 0
+		else:
+			alpha = degrees(0.5 * arctan((2 * T_xy_2) / (s_x_2 - s_y_2)))
+		
+		s_1 = (s_x_2 + s_y_2)/2 + sqrt(((s_x_2 - s_y_2)/2)**2 + T_xy_2**2)
+		s_2 = (s_x_2 + s_y_2)/2 - sqrt(((s_x_2 - s_y_2)/2)**2 + T_xy_2**2)
+		s_xi = (s_x_2 + s_y_2)/2 + (s_x_2 - s_y_2)/2 * cos(2*radians(alpha)) + T_xy_2 * sin(2*radians(alpha))
 
-			quad["deflection"][frame] = deflection
+		if abs(s_1) > abs(s_2):
+			s_1_2 = s_1
+			s_2_2 = s_2
+		else:
+			s_1_2 = s_2
+			s_2_2 = s_1
+		
+		if abs(round(s_1_2,2)) == abs(round(s_xi,2)):
+			alpha_2 = alpha + 90
+		else:
+			alpha_2 = alpha
+		
+		# long_stress_x = s_x
+		# sigma = s_x
+		# long_stress_y = s_y
+		# sigma_y = s_y
+		# shear_xy = membrane_xy
+		# tau_shear_xy = 1.5 * shear_x/A # for quads
+		# tau_shear_y = 1.5 * shear_y/A # for quads
+		# tau_shear_y = 1.5 * shear_y/A # for quads
+		
+		# Vergleichsspannung an den beiden Oberflächen 1 und 2
+		sigmav1 = sqrt(s_x_1**2 + s_y_1**2 - s_x_1*s_y_1 + 3*T_xy_1**2)
+		sigmav2 = sqrt(s_x_2**2 + s_y_2**2 - s_x_2*s_y_2 + 3*T_xy_2**2)
+		
+		# der größere Wert wird für die weitere Optimierung verwendet
+		if sigmav2 > sigmav1:
+			sigmav = sigmav2
+		else:
+			sigmav = sigmav1
 
-			quad["ir"][frame] = ir
-			quad["A"][frame] = A
-			#quad["J"][frame] = J
-			quad["Wy"][frame] = Wy
-			#quad["moment_h"][frame] = moment_h
-			#quad["long_stress"][frame] = long_stress
-			#quad["shear_h"][frame] = shear_h
-			#quad["tau_shear"][frame] = tau_shear
-			quad["sigmav"][frame] = sigmav
-			#quad["sigma"][frame] = quad["long_stress"][frame]
-			
-			quad["s_x_1"][frame] = s_x_1
-			quad["s_x_2"][frame] = s_x_2
-			quad["s_y_1"][frame] = s_y_1
-			quad["s_y_2"][frame] = s_y_2
-			quad["T_xy_1"][frame] = T_xy_1
-			quad["T_xy_2"][frame] = T_xy_2
+		# Vergleichsspannung in Plattenmitte
+		sigmav_m = sqrt(abs((membrane_x/A)**2 + (membrane_y/A)**2 - (membrane_x/A) * (membrane_y/A) + 3 * T_x * T_y))  # falls notwendig
+		
+		overstress = False
+		# check overstress and add 1.05 safety factor
+		safety_factor = 1.05
+		#if abs(tau_shear) > safety_factor*quad["acceptable_shear"]:
+		#	overstress = True
 
-			quad["s_1_1"][frame] = s_1_1
-			quad["s_2_1"][frame] = s_2_1
-			quad["s_1_2"][frame] = s_1_2
-			quad["s_2_2"][frame] = s_2_2
+		if sigmav > safety_factor*quad["acceptable_sigmav"]:
+			overstress = True
 
-			quad["alpha_1"][frame] = alpha_1
-			quad["alpha_2"][frame] = alpha_2
+		# buckling in x-Richtung
+		if membrane_x < 0: # nur für Druckstäbe, axial kann nicht flippen?
+			quad["lamda"][frame] = length_x*5/ir # es wird hier von einer Knicklänge von 5 x der Elementlänge vorerst ausgegagen, in cm
+			if quad["lamda"][frame] > 20: # für lamda < 20 (kurze Träger) gelten die default-Werte)
+				kn = quad["knick_model"]
+				function_to_run = poly1d(polyfit(material.kn_lamda, kn, 6))
+				acceptable_sigma_buckling_x = function_to_run(quad["lamda"][frame])
+				if quad["lamda"][frame] > 250: # Schlankheit zu schlank
+					acceptable_sigma_buckling_x = function_to_run(250)
+					overstress = True
+				if safety_factor*abs(acceptable_sigma_buckling_x) > abs(sigmav): # Sigma
+					overstress = True
 
-			quad["overstress"][frame] = overstress
-			quad["utilization"][frame] = utilization
+			else:
+				acceptable_sigma_buckling_x = quad["acceptable_sigma"]
+		# without buckling		
+		else:
+			acceptable_sigma_buckling_x = quad["acceptable_sigma"]
+			quad["lamda"][frame] = None # to avoid missing KeyError
 
-			#quad["strain_energy"][frame] = strain_energy
-			#quad["normal_energy"][frame] = normalkraft_energie
-			#quad["moment_energy"][frame] = moment_energie
-			
-		# update progress
-		progress.http.update_i()
+		
+		# buckling in y-Richtung
+		if membrane_y < 0: # nur für Druckstäbe, axial kann nicht flippen?
+			quad["lamda"][frame] = length_y*5/ir # es wird hier von einer Knicklänge von 5 x der Elementlänge vorerst ausgegagen, in cm
+			if quad["lamda"][frame] > 20: # für lamda < 20 (kurze Träger) gelten die default-Werte)
+				kn = quad["knick_model"]
+				function_to_run = poly1d(polyfit(material.kn_lamda, kn, 6))
+				acceptable_sigma_buckling_y = function_to_run(quad["lamda"][frame])
+				if quad["lamda"][frame] > 250: # Schlankheit zu schlank
+					acceptable_sigma_buckling_y = function_to_run(250)
+					overstress = True
+				if safety_factor*abs(acceptable_sigma_buckling_y) > abs(sigmav): # Sigma
+					overstress = True
 
-		# get duration
-		text = calculation_type + " involvement for frame " + str(frame) + " done"
-		text +=  basics.timer.stop()
-		print_data(text)
+			else:
+				acceptable_sigma_buckling_y = quad["acceptable_sigma"]
 
-		data["done"][str(frame)] = True
+		# without buckling
+		else:
+			acceptable_sigma_buckling_y = quad["acceptable_sigma"]
+			quad["lamda"][frame] = None # to avoid missing KeyError
+		
+		# das kleinere ist maßgbend
+		if acceptable_sigma_buckling_x < acceptable_sigma_buckling_y:
+			quad["acceptable_sigma_buckling"][frame] = acceptable_sigma_buckling_x
+		else:
+			quad["acceptable_sigma_buckling"][frame] = acceptable_sigma_buckling_y 
+
+		if abs(sigmav) > safety_factor*quad["acceptable_sigma"]:
+			overstress = True
+
+		# Ausnutzungsgrad
+		utilization = abs(sigmav / quad["acceptable_sigma_buckling"][frame])
+		
+		# vorerst noch weglassen
+		# Einführung in die Technische Mechanik - Festigkeitslehre, H.Balke, Springer 2010
+		# Berechnung der strain_energy für Normalkraft
+		# normalkraft_energie = (long_stress**2)*(length_x)/(2*quad["E"]*A)
+
+		# Berechnung der strain_energy für Moment
+		# moment_hq = moment_x**2+moment_y**2
+		# moment_energie = (moment_hq * length_x) / (quad["E"] * Wy * thickness)
+
+		# Summe von Normalkraft und Moment-Verzerrunsenergie
+		# strain_energy = normalkraft_energie + moment_energie
+
+		# save to dict
+		quad["shear_x"][frame] = shear_x
+		quad["shear_y"][frame] = shear_y
+
+		quad["moment_x"][frame] = moment_x
+		quad["moment_y"][frame] = moment_y
+		quad["moment_xy"][frame] = moment_xy
+
+		quad["membrane_x"][frame] = membrane_x
+		quad["membrane_y"][frame] = membrane_y
+		quad["membrane_xy"][frame] = membrane_xy
+		
+		quad["length_x"][frame] = length_x
+		quad["length_y"][frame] = length_y
+
+		quad["deflection"][frame] = deflection
+
+		quad["ir"][frame] = ir
+		quad["A"][frame] = A
+		#quad["J"][frame] = J
+		quad["Wy"][frame] = Wy
+		#quad["moment_h"][frame] = moment_h
+		#quad["long_stress"][frame] = long_stress
+		#quad["shear_h"][frame] = shear_h
+		#quad["tau_shear"][frame] = tau_shear
+		quad["sigmav"][frame] = sigmav
+		#quad["sigma"][frame] = quad["long_stress"][frame]
+		
+		quad["s_x_1"][frame] = s_x_1
+		quad["s_x_2"][frame] = s_x_2
+		quad["s_y_1"][frame] = s_y_1
+		quad["s_y_2"][frame] = s_y_2
+		quad["T_xy_1"][frame] = T_xy_1
+		quad["T_xy_2"][frame] = T_xy_2
+
+		quad["s_1_1"][frame] = s_1_1
+		quad["s_2_1"][frame] = s_2_1
+		quad["s_1_2"][frame] = s_1_2
+		quad["s_2_2"][frame] = s_2_2
+
+		quad["alpha_1"][frame] = alpha_1
+		quad["alpha_2"][frame] = alpha_2
+
+		quad["overstress"][frame] = overstress
+		quad["utilization"][frame] = utilization
+
+		#quad["strain_energy"][frame] = strain_energy
+		#quad["normal_energy"][frame] = normalkraft_energie
+		#quad["moment_energy"][frame] = moment_energie
+		
+	# update progress
+	progress.http.update_i()
+
+	# get duration
+	text = calculation_type + " involvement for frame " + str(frame) + " done"
+	text +=  basics.timer.stop()
+	basics.print_data(text)
+
+	data["done"][str(frame)] = True
+	
+	# set frame for viz
+	bpy.context.scene.frame_current = int(frame)
+	bpy.context.view_layer.update()
 
 def interweave_results_fd(feas):
 	'''
@@ -1381,9 +1386,42 @@ def interweave_results_fd(feas):
 		# get duration
 		text = calculation_type + " involvement for frame " + str(frame) + " done"
 		text +=  basics.timer.stop()
-		print_data(text)
+		basics.print_data(text)
 
 		data["done"][str(frame)] = True
+
+def calculate_frames(start, end):
+	scene = bpy.context.scene
+	phaenotyp = scene.phaenotyp
+	calculation_type = phaenotyp.calculation_type
+	data = scene["<Phaenotyp>"]
+	members = data["members"]
+	quads = data["quads"]
+	
+	# for PyNite
+	if phaenotyp.calculation_type != "force_distribution":
+		prepare_fea = prepare_fea_pn
+		interweave_results = interweave_results_pn
+
+	# for force distribuion
+	else:
+		prepare_fea = prepare_fea_fd
+		interweave_results = interweave_results_fd
+	
+	# start progress
+	#progress.run()
+	#progress.http.reset_pci(end-start)
+	
+	# create list of models in basics.models
+	for frame in range(start, end):
+		basics.jobs.append([prepare_fea, frame])
+	
+	# run mp and get results
+	basics.jobs.append([run_mp, basics.models])
+
+	# wait for it and interweave results to data		
+	for frame in range(start, end):
+		basics.jobs.append([interweave_results, frame])
 
 def approximate_sectional():
 	'''
@@ -1606,7 +1644,27 @@ def decimate_topology():
 	mod.ratio = 0.1
 	mod.vertex_group = "<Phaenotyp>decimate"
 
-def sectional_optimization(start, end):
+def copy_d_t_from_prev(frame):
+	scene = bpy.context.scene
+	data = scene["<Phaenotyp>"]
+	quads = data["quads"]
+	members = data["members"]
+	
+	# copy previous frame to current
+	for id, member in members.items():
+		member["Do"][str(frame)] = member["Do"][str(frame-1)]
+		member["Di"][str(frame)] = member["Di"][str(frame-1)]
+		
+		member["overstress"][str(frame)] = member["overstress"][str(frame-1)]
+		member["utilization"][str(frame)] = member["utilization"][str(frame-1)]
+		member["max_long_stress"][str(frame)] = member["max_long_stress"][str(frame-1)]
+		member["acceptable_sigma_buckling"][str(frame)] = member["acceptable_sigma_buckling"][str(frame-1)]
+
+	for id, quad in quads.items():
+		quad["thickness"][str(frame)] = quad["thickness"][str(frame-1)]
+		quad["overstress"][str(frame)] = quad["overstress"][str(frame-1)]
+		
+def sectional_optimization(frame):
 	'''
 	Is handling the different types of optimization for animation, bf,
 	gd and ga. The function is reading the type of calculation from
@@ -1618,14 +1676,11 @@ def sectional_optimization(start, end):
 	phaenotyp = scene.phaenotyp
 	data = scene["<Phaenotyp>"]
 	obj = data["structure"]
-	shape_keys = obj.data.shape_keys.key_blocks
+	shape_keys = obj.data.get("shape_keys")
 	members = data["members"]
 
 	environment = data["environment"]
 	individuals = data["individuals"]
-
-	# create list of models
-	models = {}
 
 	# for PyNite
 	if phaenotyp.calculation_type != "force_distribution":
@@ -1637,58 +1692,50 @@ def sectional_optimization(start, end):
 		prepare_fea = prepare_fea_fd
 		interweave_results = interweave_results_fd
 
-	# run for all frames
-	for frame in range(start, end):
-		# update scene
-		bpy.context.scene.frame_current = frame
-		bpy.context.view_layer.update()
+	# update scene
+	bpy.context.scene.frame_current = frame
+	bpy.context.view_layer.update()
 
-		if phaenotyp.calculation_type == "force_distribution":
-			if phaenotyp.optimization_fd == "approximate":
-				approximate_sectional()
+	if phaenotyp.calculation_type == "force_distribution":
+		if phaenotyp.optimization_fd == "approximate":
+			approximate_sectional()
 
-		else:
-			if phaenotyp.optimization_pn == "simple":
-				simple_sectional()
+	else:
+		if phaenotyp.optimization_pn == "simple":
+			simple_sectional()
 
-			if phaenotyp.optimization_pn == "utilization":
-				utilization_sectional()
+		if phaenotyp.optimization_pn == "utilization":
+			utilization_sectional()
 
-			if phaenotyp.optimization_pn == "complex":
-				complex_sectional()
+		if phaenotyp.optimization_pn == "complex":
+			complex_sectional()
 
-			if phaenotyp.optimization_quads == "approximate":
-				quads_approximate_sectional()
-								
-			if phaenotyp.optimization_quads == "utilization":
-				quads_utilization_sectional()
+		if phaenotyp.optimization_quads == "approximate":
+			quads_approximate_sectional()
+							
+		if phaenotyp.optimization_quads == "utilization":
+			quads_utilization_sectional()
 
-		# apply shape keys
-		try:
-			shape_keys = data.shape_keys
-			chromosome = data.chromosome[str(frame)]
-			geometry.set_shape_keys(shape_keys, chromosome)
-		except:
-			pass
+	# apply shape keys
+	if shape_keys:
+		#.get(key_blocks)
+		shape_keys = data.shape_keys
+		chromosome = data.chromosome[str(frame)]
+		geometry.set_shape_keys(shape_keys, chromosome)
+	
+	text = "sectional_optimization for " + str(frame) + " done"
+	basics.print_data(text)
 
-		# calculate new properties for each member
-		geometry.update_geometry_pre()
+def set_basis_fitness():
+	scene = bpy.context.scene
+	data = scene["<Phaenotyp>"]
+	individuals = data["individuals"]
+	individuals["0"]["fitness"]["weighted"] = 1
 
-		# created a model object of PyNite and add to dict
-		model = prepare_fea()
-		models[frame] = model
-
-	# run mp and get results
-	feas = run_mp(models)
-
-	# wait for it and interweave results to data
-	interweave_results(feas)
-
-def calculate_fitness(start, end):
+def calculate_fitness(frame):
 	'''
-	Is calculating the fitness fo the given frames.
-	:param start: Start frame to begin at.
-	:param end: End frame to stop with.
+	Is calculating the fitness fo the given frame.
+	:param frame: Frame to work with
 	'''
 	scene = bpy.context.scene
 	phaenotyp = scene.phaenotyp
@@ -1696,246 +1743,250 @@ def calculate_fitness(start, end):
 	obj = data["structure"]
 	members = data["members"]
 	quads = data["quads"]
+	
+	bpy.context.scene.frame_current = frame
 
 	environment = data["environment"]
 	individuals = data["individuals"]
 
 	# calculate fitness
-	for frame in range(start, end):
-		individual = individuals[str(frame)]
+	individual = individuals[str(frame)]
 
-		# volume
-		volume = data["frames"][str(frame)]["volume"]
-		fitness_volume = volume
+	# volume
+	volume = data["frames"][str(frame)]["volume"]
+	fitness_volume = volume
 
-		# area
-		area = data["frames"][str(frame)]["area"]
-		fitness_area = area
+	# area
+	area = data["frames"][str(frame)]["area"]
+	fitness_area = area
 
-		# weight
-		weight = data["frames"][str(frame)]["weight"]
-		fitness_weight = weight
+	# weight
+	weight = data["frames"][str(frame)]["weight"]
+	fitness_weight = weight
 
-		# rise
-		rise = data["frames"][str(frame)]["rise"]
-		fitness_rise = rise
+	# rise
+	rise = data["frames"][str(frame)]["rise"]
+	fitness_rise = rise
 
-		# span
-		span = data["frames"][str(frame)]["span"]
-		fitness_span = span
+	# span
+	span = data["frames"][str(frame)]["span"]
+	fitness_span = span
 
-		# cantilever
-		cantilever = data["frames"][str(frame)]["cantilever"]
-		fitness_cantilever = cantilever
+	# cantilever
+	cantilever = data["frames"][str(frame)]["cantilever"]
+	fitness_cantilever = cantilever
 
-		if phaenotyp.calculation_type != "geometrical":
-			if phaenotyp.calculation_type != "force_distribution":
-				# deflection for members
-				forces = []
-				for id, member in members.items():
-					v_0 = member["initial_positions"][str(frame)]
-					v_1 = member["deflection"][str(frame)]
+	if phaenotyp.calculation_type != "geometrical":
+		if phaenotyp.calculation_type != "force_distribution":
+			# deflection for members
+			forces = []
+			for id, member in members.items():
+				v_0 = member["initial_positions"][str(frame)]
+				v_1 = member["deflection"][str(frame)]
+
+				v_0 = array(v_0)
+				v_1 = array(v_1)
+				
+				# mulitply with 0.5  because two vertices per member
+				dist = (linalg.norm(v_1) + linalg.norm(v_0)) * 0.5
+
+				forces.append(dist)
+
+			sum_forces = 0
+			for force in forces:
+				sum_forces = sum_forces + abs(force)
+
+			fitness_deflection_members = basics.avoid_div_zero(sum_forces, len(forces))
+			
+			# deflection for quads
+			forces = []
+			for id, quad in quads.items():
+				for i in range(4):
+					v_0 = quad["initial_positions"][str(frame)][i]
+					v_1 = quad["deflection"][str(frame)][i]
 
 					v_0 = array(v_0)
 					v_1 = array(v_1)
 					
-					# mulitply with 0.5  because two vertices per member
-					dist = (linalg.norm(v_1) + linalg.norm(v_0)) * 0.5
+					# mulitply with 0.25  because four vertices per quad
+					dist = (linalg.norm(v_1) + linalg.norm(v_0)) * 0.25
 
 					forces.append(dist)
+			
+			sum_forces = 0
+			for force in forces:
+				sum_forces = sum_forces + abs(force)
 
-				sum_forces = 0
-				for force in forces:
-					sum_forces = sum_forces + abs(force)
+			fitness_deflection_quads = basics.avoid_div_zero(sum_forces, len(forces))
 
-				fitness_deflection_members = basics.avoid_div_zero(sum_forces, len(forces))
-				
-				# deflection for quads
-				forces = []
-				for id, quad in quads.items():
-					for i in range(4):
-						v_0 = quad["initial_positions"][str(frame)][i]
-						v_1 = quad["deflection"][str(frame)][i]
+			# average_sigma members
+			forces = []
+			for id, member in members.items():
+				force = member["max_sigma"][str(frame)]
+				forces.append(force)
+			
+			sum_forces = 0
+			for force in forces:
+				sum_forces = sum_forces + abs(force)
 
-						v_0 = array(v_0)
-						v_1 = array(v_1)
-						
-						# mulitply with 0.25  because four vertices per quad
-						dist = (linalg.norm(v_1) + linalg.norm(v_0)) * 0.25
+			fitness_average_sigma_members = basics.avoid_div_zero(sum_forces, len(forces))
 
-						forces.append(dist)
-				
-				sum_forces = 0
-				for force in forces:
-					sum_forces = sum_forces + abs(force)
+			# average_sigmav quads
+			forces = []
+			for id, quad in quads.items():
+				force = quad["sigmav"][str(frame)]
+				forces.append(force)
+			
+			sum_forces = 0
+			for force in forces:
+				sum_forces = sum_forces + abs(force)
 
-				fitness_deflection_quads = basics.avoid_div_zero(sum_forces, len(forces))
+			fitness_average_sigmav_quads = basics.avoid_div_zero(sum_forces, len(forces))
+			
+		else:
+			# average_sigma for force_distribution -> max_sigma = sigma
+			forces = []
+			for id, member in members.items():
+				force = member["sigma"][str(frame)]
+				forces.append(force)
 
-				# average_sigma members
-				forces = []
-				for id, member in members.items():
-					force = member["max_sigma"][str(frame)]
-					forces.append(force)
-				
-				sum_forces = 0
-				for force in forces:
-					sum_forces = sum_forces + abs(force)
+			sum_forces = 0
+			for force in forces:
+				sum_forces = sum_forces + abs(force)
 
-				fitness_average_sigma_members = basics.avoid_div_zero(sum_forces, len(forces))
+			fitness_average_sigma_members = sum_forces / len(forces)
 
-				# average_sigmav quads
-				forces = []
-				for id, quad in quads.items():
-					force = quad["sigmav"][str(frame)]
-					forces.append(force)
-				
-				sum_forces = 0
-				for force in forces:
-					sum_forces = sum_forces + abs(force)
+		if phaenotyp.calculation_type != "force_distribution":
+			# average_strain_energy
+			forces = []
+			for id, member in members.items():
+				values = []
+				for value in member["strain_energy"][str(frame)]:
+					values.append(value)
+				force = basics.return_max_diff_to_zero(values)
+				forces.append(force)
 
-				fitness_average_sigmav_quads = basics.avoid_div_zero(sum_forces, len(forces))
-				
+			sum_forces = 0
+			for force in forces:
+				sum_forces = sum_forces + abs(force)
+			
+			if len(forces) > 0:
+				fitness_average_strain_energy = sum_forces / len(forces)
 			else:
-				# average_sigma for force_distribution -> max_sigma = sigma
-				forces = []
-				for id, member in members.items():
-					force = member["sigma"][str(frame)]
-					forces.append(force)
+				fitness_average_strain_energy = 0
 
-				sum_forces = 0
-				for force in forces:
-					sum_forces = sum_forces + abs(force)
+		'''
+		if environment["fitness_function"] == "lever_arm_model":
+			forces = []
+			for id, member in members.items():
+				force = member["max_lever_arm"][str(frame)]
+				forces.append(force)
 
-				fitness_average_sigma_members = sum_forces / len(forces)
+			sum_forces = 0
+			for force in forces:
+				sum_forces = sum_forces + abs(force)
 
-			if phaenotyp.calculation_type != "force_distribution":
-				# average_strain_energy
-				forces = []
-				for id, member in members.items():
-					values = []
-					for value in member["strain_energy"][str(frame)]:
-						values.append(value)
-					force = basics.return_max_diff_to_zero(values)
-					forces.append(force)
+			fitness = sum_forces *(-1)
 
-				sum_forces = 0
-				for force in forces:
-					sum_forces = sum_forces + abs(force)
-				
-				if len(forces) > 0:
-					fitness_average_strain_energy = sum_forces / len(forces)
-				else:
-					fitness_average_strain_energy = 0
+		if environment["fitness_function"] == "lever_arm_bending":
+			forces = []
+			for id, member in members.items():
+				force = member["max_lever_arm"][str(frame)]
+				forces.append(force)
 
-			'''
-			if environment["fitness_function"] == "lever_arm_model":
-				forces = []
-				for id, member in members.items():
-					force = member["max_lever_arm"][str(frame)]
-					forces.append(force)
+			sum_forces = 0
+			for force in forces:
+				sum_forces = sum_forces + abs(force)
 
-				sum_forces = 0
-				for force in forces:
-					sum_forces = sum_forces + abs(force)
+			fitness = sum_forces
+		'''
 
-				fitness = sum_forces *(-1)
+	# pass to individual
+	individual["fitness"]["volume"] = fitness_volume
+	individual["fitness"]["area"] = fitness_area
+	individual["fitness"]["weight"] = fitness_weight
+	individual["fitness"]["rise"] = fitness_rise
+	individual["fitness"]["span"] = fitness_span
+	individual["fitness"]["cantilever"] = fitness_cantilever
+	if phaenotyp.calculation_type != "geometrical":
+		individual["fitness"]["deflection_members"] = fitness_deflection_members
+		individual["fitness"]["average_sigma_members"] = fitness_average_sigma_members
+		if phaenotyp.calculation_type != "force_distribution":
+			individual["fitness"]["deflection_quads"] = fitness_deflection_quads
+			individual["fitness"]["average_sigmav_quads"] = fitness_average_sigmav_quads
+			individual["fitness"]["average_strain_energy"] = fitness_average_strain_energy
 
-			if environment["fitness_function"] == "lever_arm_bending":
-				forces = []
-				for id, member in members.items():
-					force = member["max_lever_arm"][str(frame)]
-					forces.append(force)
+	if frame != 0:
+		# get from basis
+		basis_fitness = individuals["0"]["fitness"]
 
-				sum_forces = 0
-				for force in forces:
-					sum_forces = sum_forces + abs(force)
+		# flipped values
+		if phaenotyp.fitness_volume_invert:
+			weighted = basics.avoid_div_zero(1, fitness_volume) * basis_fitness["volume"] * phaenotyp.fitness_volume
+		# the values of weighted at basis is 1, all other frames are weighted to this value
+		else:
+			weighted = basics.avoid_div_zero(1, basis_fitness["volume"]) * fitness_volume * phaenotyp.fitness_volume
 
-				fitness = sum_forces
-			'''
+		if phaenotyp.fitness_area_invert:
+			weighted += basics.avoid_div_zero(1, fitness_area) * basis_fitness["area"] * phaenotyp.fitness_area
+		else:
+			weighted += basics.avoid_div_zero(1, basis_fitness["area"]) * fitness_area * phaenotyp.fitness_area
 
-		# pass to individual
-		individual["fitness"]["volume"] = fitness_volume
-		individual["fitness"]["area"] = fitness_area
-		individual["fitness"]["weight"] = fitness_weight
-		individual["fitness"]["rise"] = fitness_rise
-		individual["fitness"]["span"] = fitness_span
-		individual["fitness"]["cantilever"] = fitness_cantilever
+		if phaenotyp.fitness_weight_invert:
+			weighted += basics.avoid_div_zero(1, fitness_weight) * basis_fitness["weight"] * phaenotyp.fitness_weight
+		else:
+			weighted += basics.avoid_div_zero(1, basis_fitness["weight"]) * fitness_weight * phaenotyp.fitness_weight
+
+		if phaenotyp.fitness_rise_invert:
+			weighted += basics.avoid_div_zero(1, fitness_rise) * basis_fitness["rise"] * phaenotyp.fitness_rise
+		else:
+			weighted += basics.avoid_div_zero(1, basis_fitness["rise"]) * fitness_rise * phaenotyp.fitness_rise
+
+		if phaenotyp.fitness_span_invert:
+			weighted += basics.avoid_div_zero(1, fitness_span) * basis_fitness["span"] * phaenotyp.fitness_span
+		else:
+			weighted += basics.avoid_div_zero(1, basis_fitness["span"]) * fitness_span * phaenotyp.fitness_span
+
+		if phaenotyp.fitness_cantilever_invert:
+			weighted += basics.avoid_div_zero(1, fitness_cantilever) * basis_fitness["cantilever"] * phaenotyp.fitness_cantilever
+		else:
+			weighted += basics.avoid_div_zero(1, basis_fitness["cantilever"]) * fitness_cantilever * phaenotyp.fitness_cantilever
+
 		if phaenotyp.calculation_type != "geometrical":
-			individual["fitness"]["deflection_members"] = fitness_deflection_members
-			individual["fitness"]["average_sigma_members"] = fitness_average_sigma_members
+			if phaenotyp.fitness_deflection_members_invert:
+				weighted += basics.avoid_div_zero(1, fitness_deflection_members) * basis_fitness["deflection_members"] * phaenotyp.fitness_deflection_members
+			else:
+				weighted += basics.avoid_div_zero(1, basis_fitness["deflection_members"]) * fitness_deflection_members * phaenotyp.fitness_deflection_members
+
+			weighted += basics.avoid_div_zero(1, basis_fitness["average_sigma_members"]) * fitness_average_sigma_members * phaenotyp.fitness_average_sigma_members
+			
 			if phaenotyp.calculation_type != "force_distribution":
-				individual["fitness"]["deflection_quads"] = fitness_deflection_quads
-				individual["fitness"]["average_sigmav_quads"] = fitness_average_sigmav_quads
-				individual["fitness"]["average_strain_energy"] = fitness_average_strain_energy
-
-		if frame != 0:
-			# get from basis
-			basis_fitness = individuals["0"]["fitness"]
-
-			# flipped values
-			if phaenotyp.fitness_volume_invert:
-				weighted = basics.avoid_div_zero(1, fitness_volume) * basis_fitness["volume"] * phaenotyp.fitness_volume
-			# the values of weighted at basis is 1, all other frames are weighted to this value
-			else:
-				weighted = basics.avoid_div_zero(1, basis_fitness["volume"]) * fitness_volume * phaenotyp.fitness_volume
-
-			if phaenotyp.fitness_area_invert:
-				weighted += basics.avoid_div_zero(1, fitness_area) * basis_fitness["area"] * phaenotyp.fitness_area
-			else:
-				weighted += basics.avoid_div_zero(1, basis_fitness["area"]) * fitness_area * phaenotyp.fitness_area
-
-			if phaenotyp.fitness_weight_invert:
-				weighted += basics.avoid_div_zero(1, fitness_weight) * basis_fitness["weight"] * phaenotyp.fitness_weight
-			else:
-				weighted += basics.avoid_div_zero(1, basis_fitness["weight"]) * fitness_weight * phaenotyp.fitness_weight
-
-			if phaenotyp.fitness_rise_invert:
-				weighted += basics.avoid_div_zero(1, fitness_rise) * basis_fitness["rise"] * phaenotyp.fitness_rise
-			else:
-				weighted += basics.avoid_div_zero(1, basis_fitness["rise"]) * fitness_rise * phaenotyp.fitness_rise
-
-			if phaenotyp.fitness_span_invert:
-				weighted += basics.avoid_div_zero(1, fitness_span) * basis_fitness["span"] * phaenotyp.fitness_span
-			else:
-				weighted += basics.avoid_div_zero(1, basis_fitness["span"]) * fitness_span * phaenotyp.fitness_span
-
-			if phaenotyp.fitness_cantilever_invert:
-				weighted += basics.avoid_div_zero(1, fitness_cantilever) * basis_fitness["cantilever"] * phaenotyp.fitness_cantilever
-			else:
-				weighted += basics.avoid_div_zero(1, basis_fitness["cantilever"]) * fitness_cantilever * phaenotyp.fitness_cantilever
-
-			if phaenotyp.calculation_type != "geometrical":
-				if phaenotyp.fitness_deflection_members_invert:
-					weighted += basics.avoid_div_zero(1, fitness_deflection_members) * basis_fitness["deflection_members"] * phaenotyp.fitness_deflection_members
+				if phaenotyp.fitness_deflection_quads_invert:
+					weighted += basics.avoid_div_zero(1, fitness_deflection_quads) * basis_fitness["deflection_quads"] * phaenotyp.fitness_deflection_quads
 				else:
-					weighted += basics.avoid_div_zero(1, basis_fitness["deflection_members"]) * fitness_deflection_members * phaenotyp.fitness_deflection_members
-
-				weighted += basics.avoid_div_zero(1, basis_fitness["average_sigma_members"]) * fitness_average_sigma_members * phaenotyp.fitness_average_sigma_members
-				
-				if phaenotyp.calculation_type != "force_distribution":
-					if phaenotyp.fitness_deflection_quads_invert:
-						weighted += basics.avoid_div_zero(1, fitness_deflection_quads) * basis_fitness["deflection_quads"] * phaenotyp.fitness_deflection_quads
-					else:
-						weighted += basics.avoid_div_zero(1, basis_fitness["deflection_quads"]) * fitness_deflection_quads * phaenotyp.fitness_deflection_quads
-						
-					weighted += basics.avoid_div_zero(1, basis_fitness["average_sigmav_quads"]) * fitness_average_sigmav_quads * phaenotyp.fitness_average_sigmav_quads
-					weighted += basics.avoid_div_zero(1, basis_fitness["average_strain_energy"]) * fitness_average_strain_energy * phaenotyp.fitness_average_strain_energy
+					weighted += basics.avoid_div_zero(1, basis_fitness["deflection_quads"]) * fitness_deflection_quads * phaenotyp.fitness_deflection_quads
+					
+				weighted += basics.avoid_div_zero(1, basis_fitness["average_sigmav_quads"]) * fitness_average_sigmav_quads * phaenotyp.fitness_average_sigmav_quads
+				weighted += basics.avoid_div_zero(1, basis_fitness["average_strain_energy"]) * fitness_average_strain_energy * phaenotyp.fitness_average_strain_energy
 
 
-			# if all sliders are set to one, the weight is 6 (with 6 fitness sliders)
-			weight = phaenotyp.fitness_volume
-			weight += phaenotyp.fitness_area
-			weight += phaenotyp.fitness_weight
-			weight += phaenotyp.fitness_rise
-			weight += phaenotyp.fitness_span
-			weight += phaenotyp.fitness_cantilever
-			if phaenotyp.calculation_type != "geometrical":
-				weight += phaenotyp.fitness_deflection_members
-				weight += phaenotyp.fitness_deflection_quads
-				weight += phaenotyp.fitness_average_sigma_members
-				if phaenotyp.calculation_type != "force_distribution":
-					weight += phaenotyp.fitness_average_sigmav_quads
-					weight += phaenotyp.fitness_average_strain_energy
+		# if all sliders are set to one, the weight is 6 (with 6 fitness sliders)
+		weight = phaenotyp.fitness_volume
+		weight += phaenotyp.fitness_area
+		weight += phaenotyp.fitness_weight
+		weight += phaenotyp.fitness_rise
+		weight += phaenotyp.fitness_span
+		weight += phaenotyp.fitness_cantilever
+		if phaenotyp.calculation_type != "geometrical":
+			weight += phaenotyp.fitness_deflection_members
+			weight += phaenotyp.fitness_deflection_quads
+			weight += phaenotyp.fitness_average_sigma_members
+			if phaenotyp.calculation_type != "force_distribution":
+				weight += phaenotyp.fitness_average_sigmav_quads
+				weight += phaenotyp.fitness_average_strain_energy
 
-			# the overall weighted-value is always 1 for the basis individual
-			individual["fitness"]["weighted"] = basics.avoid_div_zero(weighted, weight)
+		# the overall weighted-value is always 1 for the basis individual
+		individual["fitness"]["weighted"] = basics.avoid_div_zero(weighted, weight)
+	
+	text = "calculate fitness for frame " + str(frame) + " done"
+	basics.print_data(text)

@@ -1,31 +1,22 @@
 import bpy
 import bmesh
 import random
-from phaenotyp import geometry, calculation, progress
+from phaenotyp import basics, geometry, calculation, progress
+import itertools
 
-def print_data(text):
-	"""
-	Print data for debugging
-	:param text: Needs a text as string (Do not pass as list)
-	"""
-	print("Phaenotyp |", text)
-
-def create_indivdual(chromosome):
+def create_indivdual(chromosome, frame):
 	"""
 	Creates an individual for bruteforce mode.
 	:param chromosome: The chromosome is a list of floats from 0 to 1.
 	"""
 	scene = bpy.context.scene
-	phaenotyp = scene.phaenotyp
 	data = scene["<Phaenotyp>"]
 	obj = data["structure"]
 	shape_keys = obj.data.shape_keys.key_blocks
-	members = data["members"]
-	frame = bpy.context.scene.frame_current
 
 	environment = data["environment"]
 	individuals = data["individuals"]
-
+	
 	# apply shape keys
 	geometry.set_shape_keys(shape_keys, chromosome)
 
@@ -50,20 +41,12 @@ def generate_basis():
 
 	environment = data["environment"]
 	individuals = data["individuals"]
-
-	# for PyNite
-	if phaenotyp.calculation_type != "force_distribution":
-		prepare_fea = calculation.prepare_fea_pn
-		interweave_results = calculation.interweave_results_pn
-
-	# for force distribuion
-	else:
-		prepare_fea = calculation.prepare_fea_fd
-		interweave_results = calculation.interweave_results_fd
-
-	# create list of models
-	models = {}
-
+	
+	# update frame
+	bpy.context.scene.frame_start = 0
+	bpy.context.scene.frame_current = 0
+	bpy.context.view_layer.update()
+	
 	# create chromosome all set to 0
 	chromosome = []
 	for gnome_len in range(len(shape_keys)-1): # -1 to exlude basis
@@ -71,74 +54,157 @@ def generate_basis():
 		chromosome.append(gene)
 
 	# update scene
-	bpy.context.scene.frame_current = 0
-	bpy.context.view_layer.update()
+	create_indivdual(chromosome, 0) # and change frame to shape key
 
-	create_indivdual(chromosome) # and change frame to shape key
+def calculate_basis():
+	scene = bpy.context.scene
+	phaenotyp = scene.phaenotyp
+	
+	if phaenotyp.optimization_pn != "none" or phaenotyp.optimization_fd != "none" or phaenotyp.optimization_quads != "none":
+		# calculate frames
+		calculation.calculate_frames(0, 1)
+	
+		for i in range(phaenotyp.optimization_amount):
+			# optimize each frame
+			basics.jobs.append([calculation.sectional_optimization, 0])
+				
+			# calculate frames again
+			calculation.calculate_frames(0, 1)
+	
+	# without optimization
+	else:
+		# calculate frames
+		calculation.calculate_frames(0, 1)
+	
+	# calculate fitness and set weight for basis
+	basics.jobs.append([calculation.calculate_fitness, 0])
+	basics.jobs.append([calculation.set_basis_fitness])
+	
+	#progress.http.reset_pci(1)
 
-	# calculate new properties for each member
-	geometry.update_geometry_pre()
-
-	# created a model object of PyNite and add to dict
-	model = prepare_fea()
-	models[0] = model
-
-	if phaenotyp.calculation_type != "geometrical":
-		# run mp and get results
-		feas = calculation.run_mp(models)
-
-		# wait for it and interweave results to data
-		interweave_results(feas)
-
-def bruteforce(chromosomes):
-	"""
-	Mainfunction to run brutforce.
-	:param chromosomes: List of chromosomes as lists of floats from 0 to 10.
-	"""
+def generate_others():
 	scene = bpy.context.scene
 	phaenotyp = scene.phaenotyp
 	data = scene["<Phaenotyp>"]
 	obj = data["structure"]
-	shape_keys = obj.data.shape_keys.key_blocks
-	members = data["members"]
 
-	environment = data["environment"]
+	data["environment"]["genes"] = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
 	individuals = data["individuals"]
+	
+	# create others
+	data = scene["<Phaenotyp>"]
+	shape_keys = obj.data.shape_keys.key_blocks
 
-	# create list of models
-	models = {}
+	# create matrix of possible combinations
+	matrix = []
+	for key in range(len(shape_keys)-1): # to exclude basis
+		genes = data["environment"]["genes"]
+		matrix.append(genes)
 
-	# for PyNite
-	if phaenotyp.calculation_type != "force_distribution":
-		prepare_fea = calculation.prepare_fea_pn
-		interweave_results = calculation.interweave_results_pn
+	chromosomes = list(itertools.product(*matrix))
+	chromosomes.pop(0) # delete the basis individual, is allready calculated
 
-	# for force distribuion
-	else:
-		prepare_fea = calculation.prepare_fea_fd
-		interweave_results = calculation.interweave_results_fd
+	# create start and end of calculation and create individuals
+	start = 1 # basis indiviual is allready created and optimized
+	end = len(chromosomes)+1
 
-	# for progress
-	end = bpy.context.scene.frame_end
+	# set frame_end to first size of inital generation
+	bpy.context.scene.frame_end = end-1
+	
+	# progress
+	#progress.http.reset_pci(end-start)
+	#progress.http.reset_o(optimization_amount)
 
+	# pair with bruteforce
+	#bruteforce(chromosomes)
 	for i, chromosome in enumerate(chromosomes):
 		# update scene
 		frame = i+1  # exclude basis indivual
-		bpy.context.scene.frame_current = frame
-		bpy.context.view_layer.update()
+		create_indivdual(chromosome, frame) # and change frame to shape key
+		
+	basics.chromosomes = chromosomes
 
-		create_indivdual(chromosome) # and change frame to shape key
+def calculate_others():
+	scene = bpy.context.scene
+	phaenotyp = scene.phaenotyp
+	data = scene["<Phaenotyp>"]
+	obj = data["structure"]
 
-		# calculate new properties for each member
-		geometry.update_geometry_pre()
+	data["environment"]["genes"] = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
+	individuals = data["individuals"]
+	
+	# create start and end of calculation and create individuals
+	start = 1 # basis indiviual is allready created and optimized
+	end = len(basics.chromosomes)+1
+	
+	# if optimizaiton
+	if phaenotyp.optimization_pn != "none" or phaenotyp.optimization_fd != "none" or phaenotyp.optimization_quads != "none":
+		# calculate frames
+		calculation.calculate_frames(start, end)
+	
+		for i in range(phaenotyp.optimization_amount):
+			# optimize each frame
+			for frame in range(start, end):
+				basics.jobs.append([calculation.sectional_optimization, frame])
+				
+			# calculate frames again
+			calculation.calculate_frames(start, end)
+	
+	# without optimization
+	else:
+		# calculate frames
+		calculation.calculate_frames(start, end)
+	
+	# calculate fitness and set weight for basis
+	for frame in range(start, end):
+		basics.jobs.append([calculation.calculate_fitness, frame])
+	
+	basics.jobs.append([basics.print_data, "others calculated"])
 
-		# created a model object of PyNite and add to dict
-		model = prepare_fea()
-		models[frame] = model
+def finish():
+	# calculate new visualization-mesh
+	basics.jobs.append([geometry.update_geometry_post])
+	
+	# update view
+	basics.jobs.append([basics.view_vertex_colors])
+	
+	# print done
+	basics.jobs.append([basics.print_data, "done"])
 
-	if phaenotyp.calculation_type != "geometrical":
-		# run mp and get results
-		feas = calculation.run_mp(models)
+def start():
+	scene = bpy.context.scene
+	phaenotyp = scene.phaenotyp
+	data = scene["<Phaenotyp>"]
+	obj = data["structure"]
 
-		# wait for it and interweave results to data
-		interweave_results(feas)
+	basics.print_data("Start bruteforce over selected shape keys")
+
+	data["environment"]["genes"] = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
+	data["individuals"] = {}
+	individuals = data["individuals"]
+
+	# create temp dictionaries
+	basics.models = {}
+	basics.feas = {}
+	basics.chromosomes = []
+	
+	# start progress
+	#progress.run()
+	#progress.http.reset_pci(1)
+	#progress.http.reset_o(optimization_amount)
+
+	# generate an individual as basis at frame 0
+	# this individual has choromosome with all genes equals 0
+	# the fitness of this chromosome is the basis for all others
+	generate_basis() # to be calculated later
+	generate_others() # to be calculated later
+	
+	# calculate frames
+	calculate_basis()
+	calculate_others()
+	
+	# finish
+	finish()
+	
+	# run jobs
+	bpy.ops.wm.phaenotyp_jobs()
