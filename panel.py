@@ -1,4 +1,4 @@
-import bpy
+import bpy, time
 from phaenotyp import basics, material
 
 # handle lists in panel
@@ -1058,13 +1058,36 @@ def progress(layout):
 	Panel for progress.
 	:param layout: Passed layout of phaenotyp panel.
 	'''
+	context = bpy.context
+	scene = context.scene
+	phaenotyp = scene.phaenotyp
+	
 	# reset data
 	box_progress = layout.box()
 	
-	# show jobs
-	text = str(len(basics.jobs)-1) + " jobs left"
+	# show jobs and bar
+	jobs_done = basics.jobs_total - len(basics.jobs)
+	text = "Job " + str(jobs_done) + " of " + str(basics.jobs_total) + " done"
 	box_progress.label(text=text)
-		
+	
+	box_progress.prop(phaenotyp, "jobs_percentage", text="")
+	
+	# show time
+	box_progress.alignment = 'RIGHT'
+
+	time_started = time.strftime("%H:%M:%S", time.localtime(basics.time_started))
+	text =  "started: " + str(time_started)
+	box_progress.label(text=text)
+	
+	time_elapsed = time.strftime("%H:%M:%S", time.gmtime(basics.time_elapsed))
+	text = "elapsed: " + str(time_elapsed)
+	box_progress.label(text=text)
+	
+	time_left = time.strftime("%H:%M:%S", time.gmtime(basics.time_left))
+	text = "Left: " + str(time_left)
+	box_progress.label(text=text)
+	
+	# Butteon to cancle
 	box_progress.operator("wm.stop_jobs", icon="X", text="")
 	
 def gradient_descent(layout):

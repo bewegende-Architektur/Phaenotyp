@@ -12,7 +12,7 @@ The __init__ file is the main-file to be registert from blender.
 It contains and handles all blender properties as well as the panel.
 '''
 
-import bpy, blf
+import bpy, blf, time
 from bpy.props import IntProperty, FloatProperty, BoolProperty, StringProperty, EnumProperty, PointerProperty, CollectionProperty
 from bpy.types import Panel, Menu, Operator, PropertyGroup, UIList
 from bpy.app.handlers import persistent
@@ -55,6 +55,17 @@ class phaenotyp_jobs(bpy.types.Operator):
 					job = entry[0]
 					job()
 				
+				# update time
+				now = time.time()				
+				basics.time_elapsed = now - basics.time_started
+				basics.jobs_percentage = 100 - (100 / basics.jobs_total * len(jobs))
+				jobs_done = basics.jobs_total - len(jobs)
+				time_for_job = basics.avoid_div_zero(basics.time_elapsed, jobs_done)
+				jobs_left = basics.jobs_total - jobs_done
+				basics.time_left = time_for_job * jobs_left
+				
+				context.scene.phaenotyp.jobs_percentage = int(basics.jobs_percentage)
+				
 				# delete job when done
 				jobs.pop(0)
 			else:
@@ -65,6 +76,11 @@ class phaenotyp_jobs(bpy.types.Operator):
 	def execute(self, context):
 		wm = context.window_manager
 		self._timer = wm.event_timer_add(0.1, window=context.window)
+		
+		# add infos to basics
+		basics.jobs_total = len(basics.jobs)
+		basics.time_started = time.time()
+		
 		wm.modal_handler_add(self)
 		return {'RUNNING_MODAL'}
 
@@ -718,6 +734,16 @@ class phaenotyp_properties(PropertyGroup):
 						("genetic_algorithm", "Genetic algorithm", "")
 				   ],
 			default = "single_frame"
+			)
+	
+	if "progress":
+		jobs_percentage: IntProperty(
+			name = "jobs_percentage",
+			description = "Jobs done",
+			subtype = "PERCENTAGE",
+			default = 50,
+			min = 0,
+			max = 100
 			)
 	
 	if "ga":

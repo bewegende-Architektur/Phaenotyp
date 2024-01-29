@@ -14,7 +14,12 @@ phaenotyp_name = (
 	+ str(phaenotyp_version[2])
 	)
 
-jobs = []
+jobs = [] # list to store jobs to be calculated
+jobs_total = 0 # amount of jobs in total
+jobs_percentage = 0 # percentage of jobs done
+time_started = 0 # first stop started at
+time_elapsed = 0 # time elapsed since first job
+time_left = 0 # time left based on elapsed time
 
 terminal = ["", "", "", "", "", "", "", "", ""]
 
