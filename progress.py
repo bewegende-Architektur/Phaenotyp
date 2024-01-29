@@ -1,5 +1,7 @@
+# based on:
 # https://medium.com/swlh/build-web-server-from-scratch-with-python-60188f3b162a
 
+import bpy
 import socket
 from threading import Thread
 from time import time, strftime, sleep, localtime, gmtime
@@ -8,7 +10,7 @@ from phaenotyp import basics
 
 class http:
 	active = False
-	Thread_hosting = None
+	server = None
 
 	start = b'''\
 	HTTP/1.1 200 OK
@@ -43,23 +45,18 @@ class http:
 	'''
 
 	@staticmethod
-	def table_text(first, third):
+	def table_text(first, second):
 		text = '<table>'
 		text += '<tr>'
 
 		# first column
-		text += '<td style="width:100px">'
-		text += '<p align="right">' + str(first) + '</p>'
+		text += '<td style="width:150">'
+		text += '<p align="left">' + str(first) + '</p>'
 		text += '</td>'
 
 		# second
-		text += '<td style="width:200px">'
-		text += '<p align="right"></p>'
-		text += '</td>'
-
-		# third
-		text += '<td style="width:200px">'
-		text += '<p align="right">' + str(third) + '</p>'
+		text += '<td style="width:100">'
+		text += '<p align="right">' + str(second) + '</p>'
 		text += '</td>'
 
 		text += '</tr>'
@@ -68,19 +65,24 @@ class http:
 		return text.encode()
 
 	@staticmethod
+	def setup():
+		try:
+			host, port = '', 8888
+			listen_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+			listen_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+			listen_socket.bind((host, port))
+			listen_socket.setblocking(0)
+			listen_socket.listen(1)			
+			http.server = listen_socket
+		except:
+			pass
+	
+	@staticmethod
 	def hosting():
-		http.started = time()
-		http.started_text = strftime("%Y-%m-%d | %H:%M:%S")
-
-		host, port = '', 8888
-
-		listen_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-		listen_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-		listen_socket.bind((host, port))
-		listen_socket.listen(1)
-
-		# show http
-		while http.active:
+		try:
+			listen_socket = http.server
+			
+			# show http
 			client_connection, client_address = listen_socket.accept()
 			request_data = client_connection.recv(1024)
 
@@ -97,7 +99,7 @@ class http:
 			time_started = strftime("%H:%M:%S", localtime(basics.time_started))
 			time_elapsed = strftime("%H:%M:%S", gmtime(basics.time_elapsed))
 			time_left = strftime("%H:%M:%S", gmtime(basics.time_left))
-	
+			
 			client_connection.sendall(http.table_text("jobs_total:", jobs_total))
 			client_connection.sendall(http.table_text("jobs_percentage:", jobs_percentage))
 			client_connection.sendall(http.table_text("time_started:", time_started))
@@ -105,11 +107,9 @@ class http:
 			client_connection.sendall(http.table_text("time_left:", time_left))
 
 			client_connection.close()
-			sleep(0.1)
-
+		except:
+			pass
 def run():
 	http.active = True
-	Thread_hosting = Thread(target=http.hosting)
-	http.Thread_hosting = Thread_hosting
-	Thread_hosting.start()
+	bpy.ops.wm.phaenotyp_webinterface()
 	webbrowser.open("http://127.0.0.1:8888/")

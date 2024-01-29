@@ -94,6 +94,36 @@ class phaenotyp_jobs(bpy.types.Operator):
 		wm = context.window_manager
 		wm.event_timer_remove(self._timer)
 
+# timer to run jobs
+class phaenotyp_webinterface(bpy.types.Operator):
+	bl_idname = "wm.phaenotyp_webinterface"
+	bl_label = "Timer to run webinterface"
+
+	#_timer = None
+
+	def modal(self, context, event):
+		if event.type == 'TIMER':
+			if progress.http.active == True:
+				progress.http.hosting()
+			
+			else:
+				return {'CANCELLED'}
+
+		return {'PASS_THROUGH'}
+
+	def execute(self, context):
+		wm = context.window_manager
+		self._timer = wm.event_timer_add(0.1, window=context.window)
+		
+		progress.http.setup()
+		
+		wm.modal_handler_add(self)
+		return {'RUNNING_MODAL'}
+
+	def cancel(self, context):
+		wm = context.window_manager
+		wm.event_timer_remove(self._timer)
+		
 # terminal output on screen
 def phaenotyp_terminal(self, context):
 	for i, text in enumerate(basics.terminal):
@@ -1794,7 +1824,6 @@ class WM_OT_stop_jobs(Operator):
 		# stop webserver
 		if progress.http.active == True:
 			progress.http.active = False
-			progress.http.Thread_hosting.join()
 		
 		if len(basics.jobs) == 0:
 			basics.is_running_jobs = False
@@ -2398,6 +2427,9 @@ def register():
 	
 	# for jobs
 	bpy.utils.register_class(phaenotyp_jobs)
+	
+	# for webinterface
+	bpy.utils.register_class(phaenotyp_webinterface)
 
 	# terminal
 	bpy.types.SpaceView3D.draw_handler_add(phaenotyp_terminal, (None, None), 'WINDOW', 'POST_PIXEL')
@@ -2436,6 +2468,9 @@ def unregister():
 	
 	# for jobs
 	bpy.utils.unregister_class(phaenotyp_jobs)
+	
+	# for webinterface
+	bpy.utils.unregister_class(phaenotyp_webinterface)
 	
 if __name__ == "__main__":
 	'''
