@@ -6,7 +6,7 @@ from math import radians
 import os
 import webbrowser
 
-from phaenotyp import basics, material, geometry, calculation, bf, ga, gd, panel, report, nn, progress
+from phaenotyp import basics, material, geometry, calculation, bf, ga, gd, panel, report, nn
 
 def curve_to_mesh_straight():
 	bpy.ops.object.mode_set(mode='OBJECT')
@@ -1983,6 +1983,9 @@ def calculate_animation():
 	basics.models = {}
 	basics.feas = {}
 	
+	# show wireframe to see progress
+	basics.view_wireframe()
+	
 	# get start and end of frames
 	start = bpy.context.scene.frame_start
 	end = bpy.context.scene.frame_end + 1 # to render also last frame
@@ -2040,10 +2043,6 @@ def calculate_animation():
 	
 	# run jobs
 	bpy.ops.wm.phaenotyp_jobs()
-	
-	# join progress
-	#progress.http.active = False
-	#progress.http.Thread_hosting.join()
 
 def optimize_approximate():
 	scene = bpy.context.scene
@@ -2252,14 +2251,26 @@ def topolgy_decimate():
 
 def bf_start():
 	basics.print_data("Start bruteforce")
+	
+	# show wireframe to see progress
+	basics.view_wireframe()
+	
 	bf.start()
 	
 def ga_start():
 	basics.print_data("Start genetic mutation over selected shape keys")
+	
+	# show wireframe to see progress
+	basics.view_wireframe()
+	
 	ga.start()
 
 def gd_start():
 	basics.print_data("Start gradient descent over selected shape keys")
+	
+	# show wireframe to see progress
+	basics.view_wireframe()
+	
 	gd.start()
 	
 def get_boundaries():

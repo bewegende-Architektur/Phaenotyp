@@ -1,7 +1,7 @@
 import bpy
 import bmesh
 import random
-from phaenotyp import basics, geometry, calculation, progress
+from phaenotyp import basics, geometry, calculation
 import itertools
 
 def create_indivdual(chromosome, frame):
@@ -79,8 +79,6 @@ def calculate_basis():
 	# calculate fitness and set weight for basis
 	basics.jobs.append([calculation.calculate_fitness, 0])
 	basics.jobs.append([calculation.set_basis_fitness])
-	
-	#progress.http.reset_pci(1)
 
 def generate_others():
 	scene = bpy.context.scene
@@ -110,10 +108,6 @@ def generate_others():
 
 	# set frame_end to first size of inital generation
 	bpy.context.scene.frame_end = end-1
-	
-	# progress
-	#progress.http.reset_pci(end-start)
-	#progress.http.reset_o(optimization_amount)
 
 	# pair with bruteforce
 	#bruteforce(chromosomes)
@@ -187,11 +181,6 @@ def start():
 	basics.models = {}
 	basics.feas = {}
 	basics.chromosomes = []
-	
-	# start progress
-	#progress.run()
-	#progress.http.reset_pci(1)
-	#progress.http.reset_o(optimization_amount)
 
 	# generate an individual as basis at frame 0
 	# this individual has choromosome with all genes equals 0

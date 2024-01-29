@@ -17,7 +17,7 @@ from bpy.props import IntProperty, FloatProperty, BoolProperty, StringProperty, 
 from bpy.types import Panel, Menu, Operator, PropertyGroup, UIList
 from bpy.app.handlers import persistent
 
-from phaenotyp import basics, panel, operators, material, geometry, calculation, ga, report, progress
+from phaenotyp import basics, panel, operators, material, geometry, calculation, ga, report
 
 # pass infos to basics to keep control of used version
 # the phaenotyp_version is stored in saved files

@@ -9,7 +9,7 @@ sys.path.append(path_addons)
 from PyNite import FEModel3D
 
 from numpy import array, empty, append, poly1d, polyfit, linalg, zeros, intersect1d, arctan, sin, cos
-from phaenotyp import basics, material, geometry, progress
+from phaenotyp import basics, material, geometry
 from math import sqrt, tanh, pi, degrees, radians
 
 from subprocess import Popen, PIPE
@@ -390,8 +390,6 @@ def prepare_fea_pn(frame):
 	data["frames"][str(frame)]["span"] = geometry.span(vertices, supports)
 	data["frames"][str(frame)]["cantilever"] = geometry.cantilever(vertices, supports)
 
-	progress.http.update_p()
-
 	# get duration
 	text = calculation_type + " preparation for frame " + str(frame) + " done"
 	text +=  basics.timer.stop()
@@ -635,8 +633,6 @@ def prepare_fea_fd():
 	data["frames"][str(frame)]["span"] = geometry.span(vertices, supports)
 	data["frames"][str(frame)]["cantilever"] = geometry.cantilever(vertices, supports)
 
-	progress.http.update_p()
-
 	# get duration
 	text = calculation_type + " preparation for frame " + str(frame) + " done"
 	text +=  basics.timer.stop()
@@ -685,7 +681,6 @@ def run_mp(models):
 		for line in lines_iterator:
 			nline = line.rstrip()
 			#print(nline.decode("utf8"), end = "\r\n",flush =True) # yield line
-			progress.http.update_c()
 
 	# get models back from mp
 	path_import = directory_blend + "/Phaenotyp-return_mp.p"
@@ -1295,9 +1290,6 @@ def interweave_results_pn(frame):
 		#quad["strain_energy"][frame] = strain_energy
 		#quad["normal_energy"][frame] = normalkraft_energie
 		#quad["moment_energy"][frame] = moment_energie
-		
-	# update progress
-	progress.http.update_i()
 
 	# get duration
 	text = calculation_type + " involvement for frame " + str(frame) + " done"
@@ -1380,9 +1372,6 @@ def interweave_results_fd(feas):
 			member["overstress"][str(frame)] = overstress
 			member["utilization"][str(frame)] = utilization
 
-		# update progress
-		progress.http.update_i()
-
 		# get duration
 		text = calculation_type + " involvement for frame " + str(frame) + " done"
 		text +=  basics.timer.stop()
@@ -1407,10 +1396,6 @@ def calculate_frames(start, end):
 	else:
 		prepare_fea = prepare_fea_fd
 		interweave_results = interweave_results_fd
-	
-	# start progress
-	#progress.run()
-	#progress.http.reset_pci(end-start)
 	
 	# create list of models in basics.models
 	for frame in range(start, end):

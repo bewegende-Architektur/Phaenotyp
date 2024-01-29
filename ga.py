@@ -1,7 +1,7 @@
 import bpy
 import bmesh
 import random
-from phaenotyp import basics, geometry, calculation, progress
+from phaenotyp import basics, geometry, calculation
 
 def create_indivdual(chromosome, parent_1, parent_2):
 	"""

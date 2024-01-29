@@ -1,5 +1,5 @@
 import bpy
-from phaenotyp import basics, operators, geometry, calculation, progress
+from phaenotyp import basics, operators, geometry, calculation
 import numpy as np
 
 def create_indivdual(chromosome, frame):
@@ -320,10 +320,6 @@ def start():
 	abort = phaenotyp.gd_abort
 	max_iteration = phaenotyp.gd_max_iteration
 
-	#progress.http.reset_pci(maxiteration * (len(shape_keys)-1) + 1 + maxiteration)
-	#if phaenotyp.optimization_pn != "none" or phaenotyp.optimization_fd != "none":
-	#	progress.http.reset_o(phaenotyp.optimization_amount)
-	
 	# set frame and iteration
 	frame = 0
 	iteration = 0
@@ -343,8 +339,6 @@ def start():
 	calculate_basis()
 	
 	size = len(shape_keys)-1
-
-	#progress.http.reset_o(optimization_amount)
 	
 	#while iteration < maxiteration:
 	for i in range(max_iteration):

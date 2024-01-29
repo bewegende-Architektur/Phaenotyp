@@ -177,6 +177,12 @@ def delete_obj_if_name_contains(text):
 		if text in obj.name_full:
 			bpy.data.objects.remove(obj, do_unlink=True)
 
+def view_wireframe():
+	'''
+	Change view to show colored material and hide structure.
+	'''
+	bpy.context.space_data.shading.type = 'WIREFRAME'
+
 def view_vertex_colors():
 	'''
 	Change view to show colored material and hide structure.
