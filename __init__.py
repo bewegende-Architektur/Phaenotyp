@@ -32,7 +32,7 @@ class phaenotyp_jobs(bpy.types.Operator):
 	#_timer = None
 
 	def modal(self, context, event):
-		if event.type in {'RIGHTMOUSE', 'ESC'}:
+		if event.type in {'ESC'}:
 			self.cancel(context)
 			return {'CANCELLED'}
 		
@@ -57,6 +57,8 @@ class phaenotyp_jobs(bpy.types.Operator):
 				
 				# delete job when done
 				jobs.pop(0)
+			else:
+				return {'CANCELLED'}
 
 		return {'PASS_THROUGH'}
 
