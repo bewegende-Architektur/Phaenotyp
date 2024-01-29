@@ -1959,14 +1959,14 @@ def calculate_single_frame():
 	# calculate frames
 	calculation.calculate_frames(frame, frame+1)
 	
-	# calculate new visualization-mesh
-	basics.jobs.append([geometry.update_geometry_post])
-	
 	# update view
 	basics.jobs.append([basics.view_vertex_colors])
 	
 	# print done
 	basics.jobs.append([basics.print_data, "done"])
+
+	# calculate new visualization-mesh
+	basics.jobs.append([geometry.update_geometry_post])
 	
 	# run jobs
 	bpy.ops.wm.phaenotyp_jobs()
@@ -2072,6 +2072,9 @@ def optimize_approximate():
 	
 	# print done
 	basics.jobs.append([basics.print_data, "done"])
+
+	# calculate new visualization-mesh
+	basics.jobs.append([geometry.update_geometry_post])
 	
 	# run jobs
 	bpy.ops.wm.phaenotyp_jobs()
@@ -2103,6 +2106,9 @@ def optimize_simple():
 	
 	# print done
 	basics.jobs.append([basics.print_data, "done"])
+
+	# calculate new visualization-mesh
+	basics.jobs.append([geometry.update_geometry_post])
 	
 	# run jobs
 	bpy.ops.wm.phaenotyp_jobs()
@@ -2134,6 +2140,9 @@ def optimize_utilization():
 	
 	# print done
 	basics.jobs.append([basics.print_data, "done"])
+
+	# calculate new visualization-mesh
+	basics.jobs.append([geometry.update_geometry_post])
 	
 	# run jobs
 	bpy.ops.wm.phaenotyp_jobs()
@@ -2196,6 +2205,9 @@ def quads_approximate_sectional():
 	
 	# print done
 	basics.jobs.append([basics.print_data, "done"])
+
+	# calculate new visualization-mesh
+	basics.jobs.append([geometry.update_geometry_post])
 	
 	# run jobs
 	bpy.ops.wm.phaenotyp_jobs()
@@ -2227,6 +2239,9 @@ def quads_utilization_sectional():
 	
 	# print done
 	basics.jobs.append([basics.print_data, "done"])
+
+	# calculate new visualization-mesh
+	basics.jobs.append([geometry.update_geometry_post])
 	
 	# run jobs
 	bpy.ops.wm.phaenotyp_jobs()
@@ -2433,8 +2448,15 @@ def render_animation():
 
 		image_id += 1
 
-	basics.print_data("render animation - done")
+	# update view
+	basics.jobs.append([basics.view_vertex_colors])
+	
+	# print done
+	basics.jobs.append([basics.print_data, "done"])
 
+	# calculate new visualization-mesh
+	basics.jobs.append([geometry.update_geometry_post])
+	
 def text():
 	scene = bpy.context.scene
 	phaenotyp = scene.phaenotyp

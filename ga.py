@@ -468,15 +468,15 @@ def populate_new_generation(frames):
 				basics.print_data(text)
 
 def finish():
-	# calculate new visualization-mesh
-	basics.jobs.append([geometry.update_geometry_post])
-	
 	# update view
 	basics.jobs.append([basics.view_vertex_colors])
 	
 	# print done
 	basics.jobs.append([basics.print_data, "done"])
 
+	# calculate new visualization-mesh
+	basics.jobs.append([geometry.update_geometry_post])
+	
 def start():
 	scene = bpy.context.scene
 	phaenotyp = scene.phaenotyp
@@ -544,44 +544,6 @@ def start():
 		calculate_individuals([start, end])
 		basics.jobs.append([populate_new_generation, [start, end]])
 	
-	'''
-	# create all other generations
-	# 2 indiviuals are taken from previous group (standard value is 10)
-	# 10 indiviuals are paired (standard ist 50 %)
-	for i in range(generation_amount):
-		start = end
-		end = start + new_generation_size
-
-		# expand frame
-		bpy.context.scene.frame_end = end
-
-		# create new generation and copy fittest percent
-		ga.do_elitism()
-		
-		# create 18 new individuals (standard value of 20 - 10 % elitism)
-		progress.http.reset_pci(end-start)
-		progress.http.reset_o(optimization_amount)
-
-		ga.create_new_individuals(start, end)
-
-		for i in range(optimization_amount):
-			progress.http.reset_pci(end-start)
-			calculation.sectional_optimization(start, end)
-			progress.http.update_o()
-
-		calculation.calculate_fitness(start, end)
-		ga.populate_new_generation(start, end)
-
-		# update progress
-		progress.http.update_g()
-
-	if phaenotyp.calculation_type != "geometrical":
-		basics.view_vertex_colors()
-
-	# join progress
-	progress.http.active = False
-	progress.http.Thread_hosting.join()
-	'''
 	# geometry post and viz
 	basics.jobs.append([finish])
 	

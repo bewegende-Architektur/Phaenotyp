@@ -1734,6 +1734,19 @@ class WM_OT_gd_start(Operator):
 		operators.gd_start()
 		return {"FINISHED"}
 
+class WM_OT_stop_jobs(Operator):
+	'''
+	Is calling ga_start from the module called operators.
+	Check out further info in there.
+	'''
+	bl_label = "stop_jobs"
+	bl_idname = "wm.stop_jobs"
+	bl_description = "Is stopping all jobs."
+
+	def execute(self, context):
+		basics.jobs = []
+		return {"FINISHED"}
+		
 class WM_OT_get_boundaries(Operator):
 	'''
 	Is calling get_boundaries from the module called operators.
@@ -1918,7 +1931,9 @@ class OBJECT_PT_Phaenotyp_pre(Panel):
 		'''
 		To hide the panel if no object is available.
 		'''
-		return context.object is not None
+		if context.object is not None:
+			if len(basics.jobs) == 0:
+				return True
 
 	def draw(self, context):
 		'''
@@ -1956,7 +1971,9 @@ class OBJECT_PT_Phaenotyp_setup(Panel):
 		'''
 		To hide the panel if no object is available.
 		'''
-		return context.object is not None
+		if context.object is not None:
+			if len(basics.jobs) == 0:
+				return True
 
 	def draw(self, context):
 		'''
@@ -2006,7 +2023,8 @@ class OBJECT_PT_Phaenotyp_run(Panel):
 		if data:
 			if data["panel_state"]["file"]:
 				if data["panel_state"]["members"] or data["panel_state"]["quads"]:
-					return True
+					if len(basics.jobs) == 0:
+						return True
 
 	def draw(self, context):
 		'''
@@ -2032,6 +2050,32 @@ class OBJECT_PT_Phaenotyp_run(Panel):
 		except Exception as error:
 			# run error panel
 			panel.error(layout, basics.phaenotyp_version)
+
+class OBJECT_PT_Phaenotyp_progress(Panel):
+	'''
+	Panel for Phaenotyp.
+	'''
+	bl_label = "Progress"
+	bl_idname = "OBJECT_PT_Phaenotyp_progress"
+	bl_space_type = "VIEW_3D"
+	bl_region_type = "UI"
+	bl_category = basics.phaenotyp_name
+
+	@classmethod
+	def poll(self,context):
+		'''
+		To hide the panel if no object is available.
+		'''
+		#return context.object is not None
+		if len(basics.jobs) > 0:
+			return True
+
+	def draw(self, context):
+		'''
+		Is running all functions from the module called panel.
+		'''
+		layout = self.layout
+		panel.progress(layout)
 				
 class OBJECT_PT_Phaenotyp_post(Panel):
 	'''
@@ -2056,7 +2100,8 @@ class OBJECT_PT_Phaenotyp_post(Panel):
 		if data:
 			result = data["done"].get(str(frame))
 			if result:
-				return True
+				if len(basics.jobs) == 0:
+					return True
 
 	def draw(self, context):
 		'''
@@ -2115,7 +2160,8 @@ class OBJECT_PT_Phaenotyp_reset(Panel):
 		To hide the panel if no object is available.
 		'''
 		#return context.object is not None
-		return True
+		if len(basics.jobs) == 0:
+			return True
 
 	def draw(self, context):
 		'''
@@ -2171,6 +2217,8 @@ classes = (
 	WM_OT_ga_start,
 	WM_OT_gd_start,
 	
+	WM_OT_stop_jobs,
+	
 	WM_OT_get_boundaries,
 	WM_OT_ranking,
 	WM_OT_render_animation,
@@ -2191,6 +2239,7 @@ classes = (
 	OBJECT_PT_Phaenotyp_pre,
 	OBJECT_PT_Phaenotyp_setup,
 	OBJECT_PT_Phaenotyp_run,
+	OBJECT_PT_Phaenotyp_progress,
 	OBJECT_PT_Phaenotyp_post,
 	OBJECT_PT_Phaenotyp_reset
 )

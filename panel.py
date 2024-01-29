@@ -1,5 +1,5 @@
 import bpy
-from phaenotyp import material
+from phaenotyp import basics, material
 
 # handle lists in panel
 # based on code by sinestesia and support by Gorgious
@@ -1053,6 +1053,20 @@ def genetic_algorithm(layout):
 						box_rendering.label(text="Render sorted indiviuals:")
 						box_rendering.operator("wm.render_animation", text="Generate")
 
+def progress(layout):
+	'''
+	Panel for progress.
+	:param layout: Passed layout of phaenotyp panel.
+	'''
+	# reset data
+	box_progress = layout.box()
+	
+	# show jobs
+	text = str(len(basics.jobs)-1) + " jobs left"
+	box_progress.label(text=text)
+		
+	box_progress.operator("wm.stop_jobs", icon="X", text="")
+	
 def gradient_descent(layout):
 	'''
 	Panel for gradient descent.

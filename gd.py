@@ -292,14 +292,14 @@ def get_next_step(frames):
 		bpy.context.scene.frame_end = frame
 
 def finish():
-	# calculate new visualization-mesh
-	basics.jobs.append([geometry.update_geometry_post])
-	
 	# update view
 	basics.jobs.append([basics.view_vertex_colors])
 	
 	# print done
 	basics.jobs.append([basics.print_data, "done"])
+
+	# calculate new visualization-mesh
+	basics.jobs.append([geometry.update_geometry_post])
 	
 def start():
 	'''

@@ -24,9 +24,6 @@ def print_data(text):
 	:param text: Needs a text as string (Do not pass as list)
 	"""
 	text = "Phaenotyp | " + text
-	
-	if len(jobs) > 0:
-		text += " | " + str(len(jobs)-1) + " jobs left"
 		
 	terminal.append(text)
 	if len(terminal) > 10:
