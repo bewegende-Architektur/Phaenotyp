@@ -1,7 +1,7 @@
 import bpy
 import bmesh
 import random
-from phaenotyp import geometry, calculation, progress
+from phaenotyp import basics, geometry, calculation, progress
 
 def create_indivdual(chromosome, parent_1, parent_2):
 	"""
@@ -49,19 +49,6 @@ def generate_basis():
 	environment = data["environment"]
 	individuals = data["individuals"]
 
-	# for PyNite
-	if phaenotyp.calculation_type != "force_distribution":
-		prepare_fea = calculation.prepare_fea_pn
-		interweave_results = calculation.interweave_results_pn
-
-	# for force distribuion
-	else:
-		prepare_fea = calculation.prepare_fea_fd
-		interweave_results = calculation.interweave_results_fd
-
-	# create list of models
-	models = {}
-
 	# create chromosome all set to 0
 	chromosome = []
 	for gnome_len in range(len(shape_keys)-1): # -1 to exlude basis
@@ -73,20 +60,30 @@ def generate_basis():
 	bpy.context.view_layer.update()
 
 	create_indivdual(chromosome, None, None) # and change frame to shape key
-
-	# calculate new properties for each member
-	geometry.update_geometry_pre()
-
-	# created a model object of PyNite and add to dict
-	model = prepare_fea()
-	models[0] = model
-
-	if phaenotyp.calculation_type != "geometrical":
-		# run mp and get results
-		feas = calculation.run_mp(models)
-
-		# wait for it and interweave results to data
-		interweave_results(feas)
+	
+def calculate_basis():
+	scene = bpy.context.scene
+	phaenotyp = scene.phaenotyp
+	
+	if phaenotyp.optimization_pn != "none" or phaenotyp.optimization_fd != "none" or phaenotyp.optimization_quads != "none":
+		# calculate frames
+		calculation.calculate_frames(0, 1)
+	
+		for i in range(phaenotyp.optimization_amount):
+			# optimize each frame
+			basics.jobs.append([calculation.sectional_optimization, 0])
+				
+			# calculate frames again
+			calculation.calculate_frames(0, 1)
+	
+	# without optimization
+	else:
+		# calculate frames
+		calculation.calculate_frames(0, 1)
+	
+	# calculate fitness and set weight for basis
+	basics.jobs.append([calculation.calculate_fitness, 0])
+	basics.jobs.append([calculation.set_basis_fitness])
 
 def mate_chromosomes(chromosome_1, chromosome_2):
 	'''
@@ -139,7 +136,7 @@ def mate_chromosomes(chromosome_1, chromosome_2):
 
 	return child_chromosome
 
-def create_initial_individuals(start, end):
+def create_initial_individuals(frames):
 	'''
 	Create random individuals of the first generation.
 	Every frame is for one individual only.
@@ -155,20 +152,9 @@ def create_initial_individuals(start, end):
 
 	environment = data["environment"]
 	individuals = data["individuals"]
-
-	# create list of models
-	models = {}
-
-	# for PyNite
-	if phaenotyp.calculation_type != "force_distribution":
-		prepare_fea = calculation.prepare_fea_pn
-		interweave_results = calculation.interweave_results_pn
-
-	# for force distribuion
-	else:
-		prepare_fea = calculation.prepare_fea_fd
-		interweave_results = calculation.interweave_results_fd
-
+	
+	start, end = frames
+	
 	# calculate all frames
 	for frame in range(start, end):
 		# create chromosome with set of shapekeys (random for first generation)
@@ -208,19 +194,32 @@ def create_initial_individuals(start, end):
 
 		create_indivdual(chromosome, None, None) # and change frame to shape key
 
-		# calculate new properties for each member
-		geometry.update_geometry_pre()
-
-		# created a model object of PyNite and add to dict
-		model = prepare_fea()
-		models[frame] = model
-
-	if phaenotyp.calculation_type != "geometrical":
-		# run mp and get results
-		feas = calculation.run_mp(models)
-
-		# wait for it and interweave results to data
-		interweave_results(feas)
+def calculate_individuals(frames):
+	start, end = frames
+	
+	scene = bpy.context.scene
+	phaenotyp = scene.phaenotyp
+	
+	if phaenotyp.optimization_pn != "none" or phaenotyp.optimization_fd != "none" or phaenotyp.optimization_quads != "none":
+		# calculate frames
+		calculation.calculate_frames(start, end)
+		
+		for i in range(phaenotyp.optimization_amount):
+			for frame in range(start, end):
+				# optimize each frame
+				basics.jobs.append([calculation.sectional_optimization, frame])
+					
+			# calculate frames again
+			calculation.calculate_frames(start, end)
+	
+	# without optimization
+	else:
+		# calculate frames
+		calculation.calculate_frames(start, end)
+	
+	# calculate fitness
+	for frame in range(start, end):
+		basics.jobs.append([calculation.calculate_fitness, frame])
 
 def populate_initial_generation():
 	'''
@@ -334,7 +333,7 @@ def do_elitism():
 		text += str_chromosome + ", fitness: " + str(individual["fitness"]["weighted"])
 		basics.print_data(text)
 
-def create_new_individuals(start, end):
+def create_new_individuals(frames):
 	'''
 	Create new individuals for all generations except of generation 1.
 	:param start: Frame to start at.
@@ -346,7 +345,7 @@ def create_new_individuals(start, end):
 	obj = data["structure"]
 	shape_keys = obj.data.shape_keys.key_blocks
 	members = data["members"]
-
+		
 	environment = data["environment"]
 	individuals = data["individuals"]
 
@@ -354,26 +353,15 @@ def create_new_individuals(start, end):
 	generation_id = environment["generation_id"]
 
 	old_generation = environment["generations"][str(generation_id-1)]
-
+	
+	start, end = frames
+	
 	# sort current generation according to fitness
 	list_result = []
 	for name, individual in old_generation.items():
 		list_result.append([name, individual["chromosome"], individual["fitness"]["weighted"]])
 
 	sorted_list = sorted(list_result, key = lambda x: x[2])
-
-	# create list of models
-	models = {}
-
-	# for PyNite
-	if phaenotyp.calculation_type != "force_distribution":
-		prepare_fea = calculation.prepare_fea_pn
-		interweave_results = calculation.interweave_results_pn
-
-	# for force distribuion
-	else:
-		prepare_fea = calculation.prepare_fea_fd
-		interweave_results = calculation.interweave_results_fd
 
 	for frame in range(start, end):
 		# create chromosome from two parents
@@ -420,21 +408,7 @@ def create_new_individuals(start, end):
 		# and change frame to shape key - save name of parents for tree
 		create_indivdual(chromosome, parent_1_name, parent_2_name)
 
-		# calculate new properties for each member
-		geometry.update_geometry_pre()
-
-		# created a model object of PyNite and add to dict
-		model = prepare_fea()
-		models[frame] = model
-
-	if phaenotyp.calculation_type != "geometrical":
-		# run mp and get results
-		feas = calculation.run_mp(models)
-
-		# wait for it and interweave results to data
-		interweave_results(feas)
-
-def populate_new_generation(start, end):
+def populate_new_generation(frames):
 	'''
 	Populate all generations that except of generation 1.
 	'''
@@ -453,7 +427,9 @@ def populate_new_generation(start, end):
 
 	# the current generation, that was created in do_elitism
 	generation = environment["generations"][str(generation_id)]
-
+	
+	start, end = frames
+	
 	# copy to generations
 	for name, individual in individuals.items():
 		for frame in range(start, end):
@@ -490,3 +466,124 @@ def populate_new_generation(start, end):
 				text = "child: " + str(individual["name"]) + " "
 				text += str_chromosome + ", fitness: " + str(individual["fitness"]["weighted"])
 				basics.print_data(text)
+
+def finish():
+	# calculate new visualization-mesh
+	basics.jobs.append([geometry.update_geometry_post])
+	
+	# update view
+	basics.jobs.append([basics.view_vertex_colors])
+	
+	# print done
+	basics.jobs.append([basics.print_data, "done"])
+
+def start():
+	scene = bpy.context.scene
+	phaenotyp = scene.phaenotyp
+	data = scene["<Phaenotyp>"]
+	obj = data["structure"]
+	
+	# pass from gui
+	data["environment"]["generation_size"] = phaenotyp.generation_size
+	data["environment"]["elitism"] = phaenotyp.elitism
+	data["environment"]["generation_amount"] = phaenotyp.generation_amount
+	data["environment"]["new_generation_size"] = phaenotyp.generation_size - phaenotyp.elitism
+
+	# clear to restart
+	data["environment"]["generations"] = {}
+	data["environment"]["generation_id"] = 0
+	data["environment"]["genes"] = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
+	data["individuals"] = {}
+
+	# shorten
+	generation_size = data["environment"]["generation_size"]
+	elitism = data["environment"]["elitism"]
+	generation_amount = data["environment"]["generation_amount"]
+	new_generation_size = data["environment"]["new_generation_size"]
+	generation_id = data["environment"]["generation_id"]
+	individuals = data["individuals"]
+
+	# create temp dictionaries
+	basics.models = {}
+	basics.feas = {}
+
+	# generate an individual as basis at frame 0
+	# this individual has choromosome with all genes equals 0
+	# the fitness of this chromosome is the basis for all others
+	generate_basis()
+	calculate_basis()
+	
+	start = 1
+	end = generation_size
+	
+	# set frame_end to first size of inital generation
+	bpy.context.scene.frame_end = end
+	
+	# create initial generation
+	# the first generation contains 20 individuals (standard value is 20)
+	# the indiviuals are created with random genes
+	# there is no elitism possible, because there is no previous group
+	basics.jobs.append([create_initial_individuals, [start, end]])
+	calculate_individuals([start, end])
+	basics.jobs.append([populate_initial_generation])
+
+	# create all other generations
+	# 2 indiviuals are taken from previous group (standard value is 10)
+	# 10 indiviuals are paired (standard ist 50 %)
+	for i in range(generation_amount):
+		start = end
+		end = start + new_generation_size
+
+		# expand frame
+		bpy.context.scene.frame_end = end
+
+		# create new generation and copy fittest percent
+		basics.jobs.append([do_elitism])
+		
+		basics.jobs.append([create_new_individuals, [start, end]])
+		calculate_individuals([start, end])
+		basics.jobs.append([populate_new_generation, [start, end]])
+	
+	'''
+	# create all other generations
+	# 2 indiviuals are taken from previous group (standard value is 10)
+	# 10 indiviuals are paired (standard ist 50 %)
+	for i in range(generation_amount):
+		start = end
+		end = start + new_generation_size
+
+		# expand frame
+		bpy.context.scene.frame_end = end
+
+		# create new generation and copy fittest percent
+		ga.do_elitism()
+		
+		# create 18 new individuals (standard value of 20 - 10 % elitism)
+		progress.http.reset_pci(end-start)
+		progress.http.reset_o(optimization_amount)
+
+		ga.create_new_individuals(start, end)
+
+		for i in range(optimization_amount):
+			progress.http.reset_pci(end-start)
+			calculation.sectional_optimization(start, end)
+			progress.http.update_o()
+
+		calculation.calculate_fitness(start, end)
+		ga.populate_new_generation(start, end)
+
+		# update progress
+		progress.http.update_g()
+
+	if phaenotyp.calculation_type != "geometrical":
+		basics.view_vertex_colors()
+
+	# join progress
+	progress.http.active = False
+	progress.http.Thread_hosting.join()
+	'''
+	# geometry post and viz
+	basics.jobs.append([finish])
+	
+	# run jobs
+	bpy.ops.wm.phaenotyp_jobs()

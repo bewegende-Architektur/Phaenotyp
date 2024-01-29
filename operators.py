@@ -2236,164 +2236,17 @@ def topolgy_decimate():
 	calculation.decimate_topology()
 
 def bf_start():
-	# run bruteforce
+	basics.print_data("Start bruteforce")
 	bf.start()
 	
 def ga_start():
-	scene = bpy.context.scene
-	phaenotyp = scene.phaenotyp
-	data = scene["<Phaenotyp>"]
-	obj = data["structure"]
-
 	basics.print_data("Start genetic mutation over selected shape keys")
-
-	# pass from gui
-	data["environment"]["generation_size"] = phaenotyp.generation_size
-	data["environment"]["elitism"] = phaenotyp.elitism
-	data["environment"]["generation_amount"] = phaenotyp.generation_amount
-	data["environment"]["new_generation_size"] = phaenotyp.generation_size - phaenotyp.elitism
-
-	# clear to restart
-	data["environment"]["generations"] = {}
-	data["environment"]["generation_id"] = 0
-	data["environment"]["genes"] = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
-	data["individuals"] = {}
-
-	# shorten
-	generation_size = data["environment"]["generation_size"]
-	elitism = data["environment"]["elitism"]
-	generation_amount = data["environment"]["generation_amount"]
-	new_generation_size = data["environment"]["new_generation_size"]
-	generation_id = data["environment"]["generation_id"]
-	individuals = data["individuals"]
-
-	# create temp dictionaries
-	basics.models = {}
-	basics.feas = {}
-	
-	if phaenotyp.calculation_type == "force_distribution":
-		if phaenotyp.optimization_fd == "approximate":
-			optimization_amount = phaenotyp.optimization_amount
-		else:
-			optimization_amount = 0
-
-	else:
-		if phaenotyp.optimization_pn in ["simple", "utilization", "complex"] or phaenotyp.optimization_quads in ["approximate", "utilization"]:
-			optimization_amount = phaenotyp.optimization_amount
-		else:
-			optimization_amount = 0
-
-	# skip optimization if geometrical only
-	if phaenotyp.calculation_type == "geometrical":
-		optimization_amount = 0
-
-	# start progress
-	progress.run()
-	progress.http.reset_pci(1)
-	progress.http.reset_o(optimization_amount)
-
-	# set frame_start
-	bpy.context.scene.frame_start = 0
-
-	# generate an individual as basis at frame 0
-	# this individual has choromosome with all genes equals 0
-	# the fitness of this chromosome is the basis for all others
-	ga.generate_basis()
-
-	for i in range(optimization_amount):
-		progress.http.reset_pci(1)
-		calculation.sectional_optimization(0, 1)
-		progress.http.update_o()
-
-	progress.http.reset_pci(1)
-	calculation.calculate_fitness(0, 1)
-	individuals["0"]["fitness"]["weighted"] = 1
-
-	# create start and end of calculation and create individuals
-	start = 1
-	end = generation_size
-
-	# set frame_end to first size of inital generation
-	bpy.context.scene.frame_end = end
-
-	# progress
-	progress.http.reset_pci(end-start)
-	progress.http.g = [0, generation_amount]
-	progress.http.reset_o(optimization_amount)
-
-	# create initial generation
-	# the first generation contains 20 individuals (standard value is 20)
-	# the indiviuals are created with random genes
-	# there is no elitism possible, because there is no previous group
-	ga.create_initial_individuals(start, end)
-
-	# optimize if sectional performance if activated
-	for i in range(optimization_amount):
-		progress.http.reset_pci(end-start)
-		calculation.sectional_optimization(start, end)
-		progress.http.update_o()
-
-	progress.http.reset_pci(end-start)
-	calculation.calculate_fitness(start, end)
-	ga.populate_initial_generation()
-
-	# create all other generations
-	# 2 indiviuals are taken from previous group (standard value is 10)
-	# 10 indiviuals are paired (standard ist 50 %)
-	for i in range(generation_amount):
-		start = end
-		end = start + new_generation_size
-
-		# expand frame
-		bpy.context.scene.frame_end = end
-
-		# create new generation and copy fittest percent
-		ga.do_elitism()
-
-		# create 18 new individuals (standard value of 20 - 10 % elitism)
-		progress.http.reset_pci(end-start)
-		progress.http.reset_o(optimization_amount)
-
-		ga.create_new_individuals(start, end)
-
-		for i in range(optimization_amount):
-			progress.http.reset_pci(end-start)
-			calculation.sectional_optimization(start, end)
-			progress.http.update_o()
-
-		calculation.calculate_fitness(start, end)
-		ga.populate_new_generation(start, end)
-
-		# update progress
-		progress.http.update_g()
-
-	if phaenotyp.calculation_type != "geometrical":
-		basics.view_vertex_colors()
-
-	# join progress
-	progress.http.active = False
-	progress.http.Thread_hosting.join()
+	ga.start()
 
 def gd_start():
-	scene = bpy.context.scene
-	phaenotyp = scene.phaenotyp
-	data = scene["<Phaenotyp>"]
-
 	basics.print_data("Start gradient descent over selected shape keys")
-	
-	#progress.run()
-	
-	# create temp dictionaries
-	basics.models = {}
-	basics.feas = {}
-	
-	# run gradient descent
 	gd.start()
-
-	# join progress
-	#progress.http.active = False
-	#progress.http.Thread_hosting.join()
-
+	
 def get_boundaries():
 	basics.print_data("get boundaries")
 	

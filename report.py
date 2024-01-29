@@ -1478,7 +1478,7 @@ def report_tree(directory):
 	svg_individuals.fitness_best = sorted_list[0][2]
 	svg_individuals.fitness_weakest = sorted_list[len(sorted_list)-1][2]
 
-	append_head(file, "tree", "", False)
+	append_head(file, "tree", "fitness", False)
 	svg_individuals.setup()
 	svg_individuals.start(file)
 	svg_individuals.initial_generation(file)
