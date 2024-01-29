@@ -21,6 +21,8 @@ time_started = 0 # first stop started at
 time_elapsed = 0 # time elapsed since first job
 time_left = 0 # time left based on elapsed time
 
+is_running_jobs = False
+
 terminal = ["", "", "", "", "", "", "", "", ""]
 
 def print_data(text):

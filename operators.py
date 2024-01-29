@@ -2032,9 +2032,6 @@ def calculate_animation():
 		# calculate frames
 		calculation.calculate_frames(start, end)
 	
-	# calculate new visualization-mesh
-	basics.jobs.append([geometry.update_geometry_post])
-	
 	# update view
 	basics.jobs.append([basics.view_vertex_colors])
 	
@@ -2071,9 +2068,6 @@ def optimize_approximate():
 	
 	# print done
 	basics.jobs.append([basics.print_data, "done"])
-
-	# calculate new visualization-mesh
-	basics.jobs.append([geometry.update_geometry_post])
 	
 	# run jobs
 	bpy.ops.wm.phaenotyp_jobs()
@@ -2105,9 +2099,6 @@ def optimize_simple():
 	
 	# print done
 	basics.jobs.append([basics.print_data, "done"])
-
-	# calculate new visualization-mesh
-	basics.jobs.append([geometry.update_geometry_post])
 	
 	# run jobs
 	bpy.ops.wm.phaenotyp_jobs()
@@ -2139,9 +2130,6 @@ def optimize_utilization():
 	
 	# print done
 	basics.jobs.append([basics.print_data, "done"])
-
-	# calculate new visualization-mesh
-	basics.jobs.append([geometry.update_geometry_post])
 	
 	# run jobs
 	bpy.ops.wm.phaenotyp_jobs()
@@ -2164,9 +2152,6 @@ def optimize_complex():
 					
 	# calculate frame
 	calculation.calculate_frames(frame, frame+1)
-	
-	# calculate new visualization-mesh
-	basics.jobs.append([geometry.update_geometry_post])
 	
 	# update view
 	basics.jobs.append([basics.view_vertex_colors])
@@ -2204,9 +2189,6 @@ def quads_approximate_sectional():
 	
 	# print done
 	basics.jobs.append([basics.print_data, "done"])
-
-	# calculate new visualization-mesh
-	basics.jobs.append([geometry.update_geometry_post])
 	
 	# run jobs
 	bpy.ops.wm.phaenotyp_jobs()
@@ -2238,9 +2220,6 @@ def quads_utilization_sectional():
 	
 	# print done
 	basics.jobs.append([basics.print_data, "done"])
-
-	# calculate new visualization-mesh
-	basics.jobs.append([geometry.update_geometry_post])
 	
 	# run jobs
 	bpy.ops.wm.phaenotyp_jobs()

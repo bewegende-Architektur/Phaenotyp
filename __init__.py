@@ -17,7 +17,7 @@ from bpy.props import IntProperty, FloatProperty, BoolProperty, StringProperty, 
 from bpy.types import Panel, Menu, Operator, PropertyGroup, UIList
 from bpy.app.handlers import persistent
 
-from phaenotyp import basics, panel, operators, material, geometry, calculation, ga, report
+from phaenotyp import basics, panel, operators, material, geometry, calculation, ga, report, progress
 
 # pass infos to basics to keep control of used version
 # the phaenotyp_version is stored in saved files
@@ -32,10 +32,6 @@ class phaenotyp_jobs(bpy.types.Operator):
 	#_timer = None
 
 	def modal(self, context, event):
-		if event.type in {'ESC'}:
-			self.cancel(context)
-			return {'CANCELLED'}
-		
 		if event.type == 'TIMER':
 			jobs = basics.jobs
 			# if job available
@@ -55,6 +51,9 @@ class phaenotyp_jobs(bpy.types.Operator):
 					job = entry[0]
 					job()
 				
+				# delete job when done
+				jobs.pop(0)
+				
 				# update time
 				now = time.time()				
 				basics.time_elapsed = now - basics.time_started
@@ -63,12 +62,16 @@ class phaenotyp_jobs(bpy.types.Operator):
 				time_for_job = basics.avoid_div_zero(basics.time_elapsed, jobs_done)
 				jobs_left = basics.jobs_total - jobs_done
 				basics.time_left = time_for_job * jobs_left
-				
 				context.scene.phaenotyp.jobs_percentage = int(basics.jobs_percentage)
 				
-				# delete job when done
-				jobs.pop(0)
 			else:
+				# if webinterface not running, close window
+				# otherwise is_running_jobs is set by stop_stop
+				if progress.http.active == False:
+					basics.is_running_jobs = False
+				
+				geometry.update_geometry_post()
+				
 				return {'CANCELLED'}
 
 		return {'PASS_THROUGH'}
@@ -76,6 +79,9 @@ class phaenotyp_jobs(bpy.types.Operator):
 	def execute(self, context):
 		wm = context.window_manager
 		self._timer = wm.event_timer_add(0.1, window=context.window)
+		
+		# set variable to hide other panels
+		basics.is_running_jobs = True
 		
 		# add infos to basics
 		basics.jobs_total = len(basics.jobs)
@@ -1762,10 +1768,21 @@ class WM_OT_gd_start(Operator):
 		operators.gd_start()
 		return {"FINISHED"}
 
+class WM_OT_run_web(Operator):
+	'''
+	Is running the webserver.
+	'''
+	bl_label = "run_web"
+	bl_idname = "wm.run_web"
+	bl_description = "Is running the webinterface to show current progres."
+
+	def execute(self, context):
+		progress.run()
+		return {"FINISHED"}
+		
 class WM_OT_stop_jobs(Operator):
 	'''
-	Is calling ga_start from the module called operators.
-	Check out further info in there.
+	Stop all jobs by deleteing the joblist.
 	'''
 	bl_label = "stop_jobs"
 	bl_idname = "wm.stop_jobs"
@@ -1773,6 +1790,15 @@ class WM_OT_stop_jobs(Operator):
 
 	def execute(self, context):
 		basics.jobs = []
+		
+		# stop webserver
+		if progress.http.active == True:
+			progress.http.active = False
+			progress.http.Thread_hosting.join()
+		
+		if len(basics.jobs) == 0:
+			basics.is_running_jobs = False
+			
 		return {"FINISHED"}
 		
 class WM_OT_get_boundaries(Operator):
@@ -1960,7 +1986,7 @@ class OBJECT_PT_Phaenotyp_pre(Panel):
 		To hide the panel if no object is available.
 		'''
 		if context.object is not None:
-			if len(basics.jobs) == 0:
+			if basics.is_running_jobs == False:
 				return True
 
 	def draw(self, context):
@@ -2001,7 +2027,8 @@ class OBJECT_PT_Phaenotyp_setup(Panel):
 		'''
 		if context.object is not None:
 			if len(basics.jobs) == 0:
-				return True
+				if basics.is_running_jobs == False:
+					return True
 
 	def draw(self, context):
 		'''
@@ -2051,7 +2078,7 @@ class OBJECT_PT_Phaenotyp_run(Panel):
 		if data:
 			if data["panel_state"]["file"]:
 				if data["panel_state"]["members"] or data["panel_state"]["quads"]:
-					if len(basics.jobs) == 0:
+					if basics.is_running_jobs == False:
 						return True
 
 	def draw(self, context):
@@ -2094,8 +2121,7 @@ class OBJECT_PT_Phaenotyp_progress(Panel):
 		'''
 		To hide the panel if no object is available.
 		'''
-		#return context.object is not None
-		if len(basics.jobs) > 0:
+		if basics.is_running_jobs == True:
 			return True
 
 	def draw(self, context):
@@ -2103,7 +2129,7 @@ class OBJECT_PT_Phaenotyp_progress(Panel):
 		Is running all functions from the module called panel.
 		'''
 		layout = self.layout
-		panel.progress(layout)
+		panel.show_progress(layout)
 				
 class OBJECT_PT_Phaenotyp_post(Panel):
 	'''
@@ -2128,7 +2154,7 @@ class OBJECT_PT_Phaenotyp_post(Panel):
 		if data:
 			result = data["done"].get(str(frame))
 			if result:
-				if len(basics.jobs) == 0:
+				if basics.is_running_jobs == False:
 					return True
 
 	def draw(self, context):
@@ -2188,7 +2214,7 @@ class OBJECT_PT_Phaenotyp_reset(Panel):
 		To hide the panel if no object is available.
 		'''
 		#return context.object is not None
-		if len(basics.jobs) == 0:
+		if basics.is_running_jobs == False:
 			return True
 
 	def draw(self, context):
@@ -2245,6 +2271,7 @@ classes = (
 	WM_OT_ga_start,
 	WM_OT_gd_start,
 	
+	WM_OT_run_web,
 	WM_OT_stop_jobs,
 	
 	WM_OT_get_boundaries,

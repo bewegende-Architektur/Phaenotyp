@@ -1,5 +1,5 @@
 import bpy, time
-from phaenotyp import basics, material
+from phaenotyp import basics, material, progress
 
 # handle lists in panel
 # based on code by sinestesia and support by Gorgious
@@ -1053,7 +1053,7 @@ def genetic_algorithm(layout):
 						box_rendering.label(text="Render sorted indiviuals:")
 						box_rendering.operator("wm.render_animation", text="Generate")
 
-def progress(layout):
+def show_progress(layout):
 	'''
 	Panel for progress.
 	:param layout: Passed layout of phaenotyp panel.
@@ -1087,8 +1087,21 @@ def progress(layout):
 	text = "Left: " + str(time_left)
 	box_progress.label(text=text)
 	
-	# Butteon to cancle
-	box_progress.operator("wm.stop_jobs", icon="X", text="")
+	# open web
+	if progress.http.active == False:
+		box_progress.operator("wm.run_web", text="Open webinterface")
+	
+	# cancle
+	if basics.is_running_jobs == True:
+		if progress.http.active == False:
+			box_progress.operator("wm.stop_jobs", text="Cancle")
+		else:
+			if len(basics.jobs) > 0:
+				box_progress.operator("wm.stop_jobs", text="Cancle | stop webinterface")
+			else:
+				box_progress.operator("wm.stop_jobs", text="Stop webinterface")
+	
+	# if webinterface is not running, panel will be closed automatically
 	
 def gradient_descent(layout):
 	'''

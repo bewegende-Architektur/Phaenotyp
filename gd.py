@@ -297,9 +297,6 @@ def finish():
 	
 	# print done
 	basics.jobs.append([basics.print_data, "done"])
-
-	# calculate new visualization-mesh
-	basics.jobs.append([geometry.update_geometry_post])
 	
 def start():
 	'''
