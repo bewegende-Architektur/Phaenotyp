@@ -381,3 +381,14 @@ def set_selection_for_load(self, context):
 		bpy.ops.mesh.select_mode(use_extend=False, use_expand=False, type='EDGE')
 	if phaenotyp.load_type == "faces":
 		bpy.ops.mesh.select_mode(use_extend=False, use_expand=False, type='FACE')
+
+def remap(value, left_min, left_max, right_min, right_max):
+	'''
+	Map the input from one domain to another just like remap domain in Rhino or map in Arduino
+	'''
+	# based on answer from Adam Luchjenbroers
+	# https://stackoverflow.com/questions/1969240/mapping-a-range-of-values-to-another
+	left_span = left_max - left_min
+	right_span = right_max - right_min
+	value_scaled = float(value - left_min) / float(left_span)
+	return right_min + (value_scaled * right_span)

@@ -1456,6 +1456,53 @@ def report(layout):
 		if ga_available:
 			box_report.operator("wm.report_tree", text="tree")
 
+def diagram(layout):
+	'''
+	Panel for diagram.
+	:param layout: Passed layout of phaenotyp panel.
+	'''
+	context = bpy.context
+	scene = context.scene
+	phaenotyp = scene.phaenotyp
+	frame = scene.frame_current
+	data = bpy.context.scene.get("<Phaenotyp>")
+	
+	# show box
+	individuals = data.get("individuals")
+	if individuals:
+		chromosome = individuals["0"].get("chromosome")
+		if chromosome:
+			box_diagram = layout.box()
+			box_diagram.label(text="Diagram:")
+			
+			# get fitness
+			box_diagram.prop(phaenotyp, "diagram_fitness", text="Fitness:")
+			fitness = phaenotyp.diagram_fitness
+			fitness_available = individuals["0"]["fitness"].get(fitness)
+			
+			# get keys
+			if not fitness_available:
+				box_diagram.label(text="Fitness not available")
+			else:
+				box_diagram.prop(phaenotyp, "diagram_key_0", text="First shape-key:")
+				box_diagram.prop(phaenotyp, "diagram_key_1", text="Second shape-key")
+				
+				key_0 = phaenotyp.diagram_key_0
+				key_1 = phaenotyp.diagram_key_1
+				
+				ready = True
+				
+				if len(chromosome) < key_1+1:
+					box_diagram.label(text="First shape-key not available:")
+					ready = False
+					
+				if len(chromosome) < key_1+1:
+					box_diagram.label(text="Second shape-key not available:")
+					ready = False
+				
+				if ready:
+					box_diagram.operator("wm.diagram", text="Go to diagram")
+			
 def error(layout, phaenotyp_version):
 	'''
 	Panel for error.

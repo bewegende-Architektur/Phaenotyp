@@ -1526,3 +1526,227 @@ def create_loads(structure_obj, loads_v, loads_e, loads_f):
 
 		# link object to collection
 		bpy.data.collections["<Phaenotyp>"].objects.link(obj)
+
+def create_diagram(self, context):
+	scene = bpy.context.scene
+	phaenotyp = scene.phaenotyp
+	
+	data = bpy.context.scene['<Phaenotyp>']
+	individuals = data["individuals"]
+	
+	fitness = phaenotyp.diagram_fitness
+	key_0 = phaenotyp.diagram_key_0
+	key_1 = phaenotyp.diagram_key_1
+	
+	chromosome = individuals["0"]["chromosome"]
+	
+	fitness_available = individuals["0"]["fitness"].get(fitness)
+	if fitness_available:
+		if len(chromosome) > key_1 and len(chromosome) > key_1:
+			# delete current obj and mesh
+			obj = bpy.data.objects.get("<Phaenotyp>diagram")
+			if obj:
+				bpy.data.objects.remove(obj, do_unlink=True)
+
+			mesh = bpy.data.meshes.get("<Phaenotyp>diagram")
+			if mesh:
+				bpy.data.meshes.remove(mesh, do_unlink=True)
+			
+			# delete labels
+			for obj in bpy.data.objects:
+				if "<Phaenotyp>diagram" in obj.name_full:
+					bpy.data.objects.remove(obj, do_unlink=True)
+			
+			# create mesh and object
+			mesh = bpy.data.meshes.new("<Phaenotyp>diagram")
+			obj = bpy.data.objects.new(mesh.name, mesh)
+			col = bpy.data.collections.get("<Phaenotyp>")
+			col.objects.link(obj)
+			bpy.context.view_layer.objects.active = obj
+			scene = bpy.context.scene
+			phaenotyp = scene.phaenotyp
+			frame = scene.frame_current
+			
+			data = scene["<Phaenotyp>"]
+			individuals = data["individuals"]
+			
+			# list for geometry
+			verts = []
+			edges = []
+			faces = []
+			
+			len_verts = 0
+			
+			values = []
+			
+			for id, individual in individuals.items():
+				x = individual["chromosome"][key_0]
+				y = individual["chromosome"][key_1]
+				z = individual["fitness"][fitness]*0.001
+				values.append(z)
+				
+				verts.append([x,y,0])
+				verts.append([x,y,z])
+				
+				edge = [len_verts, len_verts+1]
+				edges.append(edge)
+				
+				len_verts += 2
+			
+			mesh.from_pydata(verts, edges, faces)
+			
+			# create vertex_color
+			attribute = obj.data.attributes.get("diagram")
+			if attribute:
+				text = "existing attribute:" + str(attribute)
+			else:
+				bpy.ops.geometry.color_attribute_add(name="diagram", domain='POINT', data_type='FLOAT_COLOR', color=(255, 0, 255, 1))
+
+			# create material
+			material_name =  "<Phaenotyp>Diagram"
+			stressline_material = bpy.data.materials.get(material_name)
+			if stressline_material == None:
+				mat = bpy.data.materials.new(material_name)
+				
+				mat.use_nodes = True
+				nodetree = mat.node_tree
+
+				# add color attribute
+				ca = nodetree.nodes.new(type="ShaderNodeVertexColor")
+
+				# set group
+				ca.layer_name = "diagram"
+
+				# connect to color attribute to base color
+				input = mat.node_tree.nodes['Principled BSDF'].inputs['Base Color']
+				output = ca.outputs['Color']
+				nodetree.links.new(input, output)
+
+			obj.data.materials.append(bpy.data.materials.get(material_name))
+			obj.active_material_index = len(obj.data.materials) - 1
+			
+			# create modifiere if not existing
+			modifier = obj.modifiers.get('<Phaenotyp>')
+			if modifier:
+				text = "existing modifier:" + str(modifiers)
+			else:
+				modifier_nodes = obj.modifiers.new(name="<Phaenotyp>", type='NODES')
+				bpy.ops.node.new_geometry_node_group_assign()
+				nodes = obj.modifiers['<Phaenotyp>'].node_group
+
+				# set name to group
+				if nodes.name == "<Phaenotyp>Diagram":
+					node_group = bpy.data.node_groups['<Phaenotyp>Diagram']
+				else:
+					nodes.name = "<Phaenotyp>Diagram"
+					node_group = bpy.data.node_groups['<Phaenotyp>Diagram']
+
+				# mesh to curve
+				mtc = node_group.nodes.new(type="GeometryNodeMeshToCurve")
+				input = mtc.inputs[0] # mesh to curve, mesh
+				output = node_group.nodes[0].outputs[0] # group input, geometry
+				node_group.links.new(input, output)
+
+				# curve to mesh
+				ctm = node_group.nodes.new(type="GeometryNodeCurveToMesh")
+				input = mtc.outputs[0] # mesh to curve, curve
+				output = ctm.inputs[0] # curve to mesh, curve
+				ctm.inputs[2].default_value = True # fill caps
+				node_group.links.new(input, output)
+
+				# profile to curve
+				cc = node_group.nodes.new(type="GeometryNodeCurvePrimitiveCircle")
+				cc.inputs[0].default_value = 8 # set amount of vertices of circle
+				cc.inputs[4].default_value = 0.05 # diameter
+				input = ctm.inputs[1] # curve to mesh, profile curve
+				output = cc.outputs[0] # curve circe, curve
+				node_group.links.new(input, output)
+
+				# set material
+				gnsm = node_group.nodes.new(type="GeometryNodeSetMaterial")
+				gnsm.inputs[2].default_value = bpy.data.materials[ "<Phaenotyp>Diagram"]
+				input = gnsm.inputs[0] # geometry
+				output = ctm.outputs[0] # curve to mesh, mesh
+				node_group.links.new(input, output)
+
+				# link to output
+				output = gnsm.outputs[0] # gnsm, geometry
+				input = node_group.nodes[1].inputs[0] # group output, geometry
+				node_group.links.new(input, output)
+
+			# create vertex_group for radius
+			# radius is automatically choosen by geometry nodes for radius-input
+			bpy.ops.object.mode_set(mode = 'OBJECT')
+			radius_group = obj.vertex_groups.get("radius")
+			if not radius_group:
+				radius_group = obj.vertex_groups.new(name="radius")
+			
+			# set scale to match z size
+			obj.dimensions[2] = 0.5
+			
+			# change radius
+			ids = [i for i in range(len(obj.data.vertices))]
+			radius_group.add(ids, 0.5, 'REPLACE')
+			
+			# change color
+			attribute = obj.data.attributes.get("diagram")
+			
+			min_v = min(values)
+			max_v = max(values)
+			
+			for i, v in enumerate(values):
+				v = basics.remap(v, min_v, max_v, 0, 1)
+				
+				v_0_id = i*2
+				v_1_id = v_0_id + 1
+				
+				attribute.data[v_0_id].color = [1-v, 0, v, 1]
+				attribute.data[v_1_id].color = [1-v, 0, v, 1]
+			
+			scale = 0.05
+			
+			# create text for x
+			for i in range(0, 11):
+				x = round(i*0.1, 1)
+				font_curve = bpy.data.curves.new(type="FONT", name="<Phaenotyp>diagram")
+				font_curve.body = str(x)
+				font_curve.align_x = 'LEFT'
+				font_curve.align_y = 'CENTER'
+				obj = bpy.data.objects.new(name="<Phaenotyp>diagram_label", object_data=font_curve)
+				obj.location = x, -0.1, 0
+				obj.scale = [scale, scale, scale]
+				obj.rotation_euler[2] = -1.5708
+				bpy.data.collections["<Phaenotyp>"].objects.link(obj)
+
+			# create label for x
+			font_curve = bpy.data.curves.new(type="FONT", name="<Phaenotyp>diagram")
+			font_curve.body = "Shape-key = " + str(key_0)
+			font_curve.align_x = 'LEFT'
+			font_curve.align_y = 'CENTER'
+			obj = bpy.data.objects.new(name="<Phaenotyp>diagram_label", object_data=font_curve)
+			obj.location = 0, -0.25, 0
+			obj.scale = [scale, scale, scale]
+			bpy.data.collections["<Phaenotyp>"].objects.link(obj)
+
+			# create text for y
+			for i in range(0, 11):
+				y = round(i*0.1, 1)
+				font_curve = bpy.data.curves.new(type="FONT", name="<Phaenotyp>diagram")
+				font_curve.body = str(y)
+				font_curve.align_x = 'RIGHT'
+				font_curve.align_y = 'CENTER'
+				obj = bpy.data.objects.new(name="<Phaenotyp>diagram_label", object_data=font_curve)
+				obj.location = -0.1, y, 0
+				obj.scale = [scale, scale, scale]
+				bpy.data.collections["<Phaenotyp>"].objects.link(obj)
+
+			# create label for y
+			font_curve = bpy.data.curves.new(type="FONT", name="<Phaenotyp>diagram")
+			font_curve.body = "Shape-key = " + str(key_1)
+			font_curve.align_x = 'LEFT'
+			font_curve.align_y = 'CENTER'
+			obj = bpy.data.objects.new(name="<Phaenotyp>diagram_label", object_data=font_curve)
+			obj.location = -0.25, 1, 0
+			obj.scale = [scale, scale, scale]
+			obj.rotation_euler[2] = -1.5708
+			bpy.data.collections["<Phaenotyp>"].objects.link(obj)

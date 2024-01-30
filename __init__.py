@@ -1258,7 +1258,43 @@ class phaenotyp_properties(PropertyGroup):
 			min = 1000,
 			max = 50000
 			)
+	
+	if "diagrams":
+		diagram_fitness: EnumProperty(
+			name = "diagram_fitness",
+			description = "Fitness to work with",
+			items = [
+					("weighted", "Weighted", ""),
+					("volume", "Volume", ""),
+					("area", "Area", ""),
+					("weight", "Weight", ""),
+					("rise", "Rise", ""),
+					("span", "Span", ""),
+					("cantilever", "Cantilever", ""),
+					("deflection_members", "Deflection Members", ""),
+					("average_sigma_members", "Average sigma members", ""),
+					("deflection_quads", "Deflection quads", ""),
+					("average_sigmav_quads", "Average sigmav quads", ""),
+					("average_strain_energy", "Average strain energy", "")
+					],
+			default = "weighted",
+			update = geometry.create_diagram
+			)
 
+		diagram_key_0: IntProperty(
+			name = "diagram_key_0",
+			description="First key",
+			default = 0,
+			update = geometry.create_diagram
+			)
+
+		diagram_key_1: IntProperty(
+			name = "diagram_key_1",
+			description="Second key",
+			default = 1,
+			update = geometry.create_diagram
+			)
+			
 # handle lists in panel
 # based on code by sinestesia and support by Gorgious
 # check out this pages for explanation:
@@ -1985,7 +2021,24 @@ class WM_OT_precast(Operator):
 	def execute(self, context):
 		operators.precast()
 		return {"FINISHED"}
-		
+
+class WM_OT_diagram(Operator):
+	'''
+	Is centering the view to fit the created diagram.
+	Check out further info in there.
+	'''
+	bl_label = "diagram"
+	bl_idname = "wm.diagram"
+	bl_description = "Center view to fit diagram"
+
+	def execute(self, context):
+		obj = bpy.data.objects["<Phaenotyp>diagram"]
+		obj.select_set(True)
+		bpy.context.view_layer.objects.active = obj
+		bpy.ops.view3d.view_selected()
+		obj.select_set(False)
+		return {"FINISHED"}
+				
 class WM_OT_reset(Operator):
 	'''
 	Is calling reset from the module called operators.
@@ -2222,6 +2275,7 @@ class OBJECT_PT_Phaenotyp_post(Panel):
 					panel.selection(layout)
 					panel.precast(layout)
 					panel.report(layout)
+					panel.diagram(layout)
 					
 		except Exception as error:
 			# run error panel
@@ -2317,7 +2371,9 @@ classes = (
 	WM_OT_report_tree,
 	
 	WM_OT_precast,
-
+	
+	WM_OT_diagram,
+	
 	WM_OT_reset,
 	
 	OBJECT_PT_Phaenotyp_pre,
