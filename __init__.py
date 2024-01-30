@@ -94,7 +94,7 @@ class phaenotyp_jobs(bpy.types.Operator):
 		wm = context.window_manager
 		wm.event_timer_remove(self._timer)
 
-# timer to run jobs
+# timer to run webinterface
 class phaenotyp_webinterface(bpy.types.Operator):
 	bl_idname = "wm.phaenotyp_webinterface"
 	bl_label = "Timer to run webinterface"

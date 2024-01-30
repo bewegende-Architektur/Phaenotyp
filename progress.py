@@ -11,7 +11,8 @@ from phaenotyp import basics
 class http:
 	active = False
 	server = None
-
+	address = None
+	
 	start = b'''\
 	HTTP/1.1 200 OK
 
@@ -43,7 +44,25 @@ class http:
 	Phaenotyp | Progress <br>
 	<br>
 	'''
+	
+	@staticmethod
+	def show_address():
+		text = '<p>You can access this side in your local network via:<br>'
+		text += http.address + '</p>'
+		text += 'Make sure the port is open.</p>'
+		text += '<br>'
+		
+		return text.encode()
 
+	@staticmethod
+	def show_terminal():
+		text = '<p>'
+		for line in basics.terminal:
+			text += str(line) + '<br>'
+		text += '</p>'
+		text += '<br>'
+		return text.encode()
+		
 	@staticmethod
 	def table_text(first, second):
 		text = '<table>'
@@ -68,6 +87,15 @@ class http:
 	def setup():
 		try:
 			host, port = '', 8888
+			
+			# only to get ip
+			import socket
+			listen_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+			listen_socket.connect(("8.8.8.8", 8888))
+			http.address = str(listen_socket.getsockname()[0]) + ":" + str(port)
+			listen_socket.close()
+			
+			# start to access local or in network
 			listen_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 			listen_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 			listen_socket.bind((host, port))
@@ -92,7 +120,10 @@ class http:
 			client_connection.sendall(http.refresh)
 			client_connection.sendall(http.style)
 			client_connection.sendall(http.headline)
-
+			
+			# show ip and port
+			client_connection.sendall(http.show_address())
+			
 			# tables
 			jobs_total = str(basics.jobs_total)
 			jobs_percentage = str(int(basics.jobs_percentage)) + " %"
@@ -105,7 +136,10 @@ class http:
 			client_connection.sendall(http.table_text("time_started:", time_started))
 			client_connection.sendall(http.table_text("time_elapsed:", time_elapsed))
 			client_connection.sendall(http.table_text("time_left:", time_left))
-
+			
+			# show terminal
+			client_connection.sendall(http.show_terminal())
+			
 			client_connection.close()
 		except:
 			pass
