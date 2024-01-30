@@ -1492,7 +1492,7 @@ def diagram(layout):
 				
 				ready = True
 				
-				if len(chromosome) < key_1+1:
+				if len(chromosome) < key_0+1:
 					box_diagram.label(text="First shape-key not available:")
 					ready = False
 					
