@@ -2372,6 +2372,49 @@ def ranking():
 
 	bpy.context.scene.frame_current = frame_to_switch_to
 
+def render_single_frame(id_entry):
+	scene = bpy.context.scene
+	data = scene["<Phaenotyp>"]
+
+	environment = data["environment"]
+	individuals = data["individuals"]
+
+	filepath = bpy.data.filepath
+	directory = os.path.dirname(filepath)
+	
+	image_id, entry = id_entry
+	frame, chromosome, fitness = entry
+	amount_of_digts = len(str(len(individuals))) # write in format 01, 001 or 0001 ...
+	
+	str_image_id = str(image_id).zfill(amount_of_digts)
+	filename = directory + "/Phaenotyp-fitness_animation/image_id_" + str_image_id + "-individual_" + str(frame)
+
+	# get text from chromosome
+	str_chromosome = "["
+	for gene in chromosome:
+		str_chromosome += str(round(gene, 3))
+		str_chromosome += ", "
+	str_chromosome[-1]
+	str_chromosome += "]"
+	
+	# set note
+	text = filename + " -> " + str_chromosome + " fitness " + str(fitness)
+	bpy.context.scene.render.stamp_note_text = text
+	
+	# set path and render
+	bpy.context.scene.render.filepath = filename
+	bpy.context.scene.render.image_settings.file_format='PNG'
+	bpy.context.scene.render.filepath=filename
+	
+	bpy.ops.render.render(write_still=1)
+	
+	# update scene
+	bpy.context.scene.frame_current = int(frame)
+	bpy.context.view_layer.update()
+	
+	text = "image_id " + str(image_id) + " chromosome " + str_chromosome + " done"
+	basics.print_data(text)
+
 def render_animation():
 	scene = bpy.context.scene
 	data = scene["<Phaenotyp>"]
@@ -2396,12 +2439,8 @@ def render_animation():
 	bpy.context.scene.render.stamp_background[3] = 1
 	bpy.context.scene.render.stamp_background = (0, 0, 0, 1)
 
-	filepath = bpy.data.filepath
-	directory = os.path.dirname(filepath)
-
 	# render all indiviuals
 	image_id = 0 # to sort images by fitness in filemanager
-	amount_of_digts = len(str(len(individuals))) # write in format 01, 001 or 0001 ...
 
 	# sort by fitness
 	list_result = []
@@ -2409,43 +2448,16 @@ def render_animation():
 		list_result.append([name, individual["chromosome"], individual["fitness"]["weighted"]])
 
 	sorted_list = sorted(list_result, key = lambda x: x[2])
-
-	for frame, chromosome, fitness in sorted_list:
-		str_image_id = str(image_id).zfill(amount_of_digts)
-		filename = directory + "/Phaenotyp-ga_animation/image_id_" + str_image_id + "-individual_" + str(frame)
-
-		# get text from chromosome
-		str_chromosome = "["
-		for gene in chromosome:
-			str_chromosome += str(round(gene, 3))
-			str_chromosome += ", "
-		str_chromosome[-1]
-		str_chromosome += "]"
-
-		# set note
-		text = filename + " -> " + str_chromosome + " fitness " + str(fitness)
-		bpy.context.scene.render.stamp_note_text = text
-
-		# set path and render
-		bpy.context.scene.render.filepath = filename
-		bpy.context.scene.render.image_settings.file_format='PNG'
-		bpy.context.scene.render.filepath=filename
-		bpy.ops.render.render(write_still=1)
-
-		# update scene
-		bpy.context.scene.frame_current = int(frame)
-		bpy.context.view_layer.update()
-
+	
+	for entry in sorted_list:
+		basics.jobs.append([render_single_frame, [image_id, entry]])
 		image_id += 1
-
-	# update view
-	basics.jobs.append([basics.view_vertex_colors])
 	
 	# print done
 	basics.jobs.append([basics.print_data, "done"])
-
-	# calculate new visualization-mesh
-	basics.jobs.append([geometry.update_geometry_post])
+	
+	# run jobs
+	bpy.ops.wm.phaenotyp_jobs()
 	
 def text():
 	scene = bpy.context.scene

@@ -196,6 +196,7 @@ def view_vertex_colors():
 		data = bpy.context.scene["<Phaenotyp>"]
 		obj = data["structure"]
 		obj.hide_set(True)
+		obj.hide_render = True
 		
 		# go to object-mode to avoid confusion
 		bpy.ops.object.mode_set(mode="OBJECT")
