@@ -1688,6 +1688,9 @@ def create_diagram(self, context):
 			ids = [i for i in range(len(obj.data.vertices))]
 			radius_group.add(ids, 0.5, 'REPLACE')
 			
+			ids = ids[0::2]
+			radius_group.add(ids, 0.1, 'REPLACE')
+			
 			# change color
 			attribute = obj.data.attributes.get("diagram")
 			
