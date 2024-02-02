@@ -475,8 +475,6 @@ def from_hull():
 			d = y_list[len(y_list)-1]
 			grid.location[1] -= amount*d/2
 		
-		grid.location[1] += o_c
-		
 		# apply rotation
 		bpy.ops.object.transform_apply(location=False, rotation=True, scale=True)
 		
