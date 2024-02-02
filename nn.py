@@ -97,10 +97,10 @@ def start():
 	'''
 
 	scene = bpy.context.scene
-	data = scene["<basics.print_data>"]
+	data = scene["<Phaenotyp>"]
 	obj = data["structure"]
 	shape_keys = obj.data.shape_keys.key_blocks
-	basics.print_data = scene.basics.print_data
+	phaenotyp = scene.phaenotyp
 
 	environment = data["environment"]
 	individuals = data["individuals"]
@@ -110,8 +110,15 @@ def start():
 	results = data["results"]
 
 	# get data from gui	
-	learning_rate = basics.print_data.nn_learning_rate
-	epochs = basics.print_data.nn_epochs
+	learning_rate = phaenotyp.nn_learning_rate
+	epochs = phaenotyp.nn_epochs
+	
+	# get input from sliders
+	to_predit = []
+	for id, key in enumerate(shape_keys):
+		if id > 0:
+			v = key.value
+			to_predit.append(v)
 	
 	fitness_functions =  individuals["0"]["fitness"]
 	for fitness_function, fitness in fitness_functions.items():
@@ -134,11 +141,11 @@ def start():
 
 			matrix_size = len(individuals["0"]["chromosome"])
 
-			nn = neural_network(learning_rate, 3)
+			nn = neural_network(learning_rate, len(chromosome))
 			training_error = nn.train(input_vectors, targets, epochs)
 			#print(nn.predict([0.1, 0.7, 0.2])*scale, "should be 32.498")
 			#print(nn.weights)
-			result = nn.predict([0.1, 0.7, 0.2])*scale
+			result = nn.predict(to_predit)*scale
 			results[fitness_function] = result
 		except:
 			pass
