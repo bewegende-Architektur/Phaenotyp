@@ -9,7 +9,7 @@ https://www.blender.org/
 
 It allows to perform genetic mutation of architectural structures. Furthermore it can be used to analyze moving shapes. This is especially useful when working on kinematic architectural projects. The tool is focusing on early stages of the design process and can be used for free without any warranty.
 
-Analysis is done with PyNite from JWock82 (Craig):  
+Analysis is done with PyNite by JWock82 (Craig):  
 https://github.com/JWock82/PyNite
 
 GA based on the approach by Atul Kumar:  
