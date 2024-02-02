@@ -223,9 +223,16 @@ def from_hull():
 	d = phaenotyp.fh_d
 	h = phaenotyp.fh_h
 	
-	o_x = phaenotyp.fh_o_x
-	o_y = phaenotyp.fh_o_y
-	o_z = phaenotyp.fh_o_z
+	if fh_methode == "grid":
+		o_x = phaenotyp.fh_o_x
+		o_y = phaenotyp.fh_o_y
+		o_z = phaenotyp.fh_o_z
+	
+	if fh_methode == "path":
+		o_x = 0
+		o_y = 0
+		o_z = 0
+		
 	rot_z = radians(phaenotyp.fh_rot)
 	
 	amount = phaenotyp.fh_amount
@@ -474,6 +481,8 @@ def from_hull():
 		if fh_input_type == "individual":
 			d = y_list[len(y_list)-1]
 			grid.location[1] -= amount*d/2
+		
+		grid.location[1] += o_c
 		
 		# apply rotation
 		bpy.ops.object.transform_apply(location=False, rotation=True, scale=True)
