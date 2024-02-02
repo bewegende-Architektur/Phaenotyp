@@ -140,8 +140,7 @@ def start():
 			targets = np.array(targets)
 
 			matrix_size = len(individuals["0"]["chromosome"])
-
-			nn = neural_network(learning_rate, len(chromosome))
+			nn = neural_network(learning_rate, matrix_size)
 			training_error = nn.train(input_vectors, targets, epochs)
 			#print(nn.predict([0.1, 0.7, 0.2])*scale, "should be 32.498")
 			#print(nn.weights)
