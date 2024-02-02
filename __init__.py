@@ -1285,14 +1285,16 @@ class phaenotyp_properties(PropertyGroup):
 			name = "diagram_key_0",
 			description="First key",
 			default = 0,
-			update = geometry.create_diagram
+			update = geometry.create_diagram,
+			min = 0
 			)
 
 		diagram_key_1: IntProperty(
 			name = "diagram_key_1",
 			description="Second key",
 			default = 1,
-			update = geometry.create_diagram
+			update = geometry.create_diagram,
+			min = 0
 			)
 			
 # handle lists in panel
