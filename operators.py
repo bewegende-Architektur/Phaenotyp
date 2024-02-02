@@ -452,7 +452,7 @@ def from_hull():
 		# curve modifier
 		curve = grid.modifiers.new(name="<Phaenotyp>_curve", type='CURVE')
 		curve.object = path
-		
+	
 	if fh_methode == "grid":
 		# rotate grid z
 		grid.rotation_euler[2] = rot_z
@@ -463,6 +463,10 @@ def from_hull():
 		path.select_set(True)
 		bpy.context.view_layer.objects.active = path
 		bpy.ops.object.origin_set(type='ORIGIN_CURSOR')
+		
+		# set radius of all points to 1
+		for pt in path.data.splines[0].points:
+			pt.radius = 1
 		
 		# move to match path
 		if fh_input_type == "even":
