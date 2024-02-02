@@ -2034,11 +2034,20 @@ class WM_OT_diagram(Operator):
 	bl_description = "Center view to fit diagram"
 
 	def execute(self, context):
-		obj = bpy.data.objects["<Phaenotyp>diagram"]
-		obj.select_set(True)
-		bpy.context.view_layer.objects.active = obj
-		bpy.ops.view3d.view_selected()
-		obj.select_set(False)
+		obj = bpy.data.objects.get("<Phaenotyp>diagram")
+		if obj:
+			obj.select_set(True)
+			bpy.context.view_layer.objects.active = obj
+			bpy.ops.view3d.view_selected()
+			obj.select_set(False)
+		else:
+			geometry.create_diagram(self, context)
+			obj = bpy.data.objects["<Phaenotyp>diagram"]
+			obj.select_set(True)
+			bpy.context.view_layer.objects.active = obj
+			bpy.ops.view3d.view_selected()
+			obj.select_set(False)
+			
 		return {"FINISHED"}
 				
 class WM_OT_reset(Operator):
