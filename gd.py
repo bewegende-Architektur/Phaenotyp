@@ -62,6 +62,7 @@ def generate_basis():
 	rounded_chromosome = [round(num, 3) for num in chromosome]
 	text = "Starting at: " + str(rounded_chromosome) + "\n"
 	basics.print_data(text)
+	print(chromosome)
 	
 	# store in basics for later
 	basics.chromosome_current = chromosome

@@ -1486,6 +1486,8 @@ def diagram(layout):
 			else:
 				box_diagram.prop(phaenotyp, "diagram_key_0", text="First shape-key:")
 				box_diagram.prop(phaenotyp, "diagram_key_1", text="Second shape-key")
+				box_diagram.prop(phaenotyp, "diagram_scale", text="Scale")
+				box_diagram.operator("wm.get_boundary_diagram", text="Get boundary")
 				
 				key_0 = phaenotyp.diagram_key_0
 				key_1 = phaenotyp.diagram_key_1

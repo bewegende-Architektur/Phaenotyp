@@ -1582,7 +1582,7 @@ def create_diagram(self, context):
 			for id, individual in individuals.items():
 				x = individual["chromosome"][key_0]
 				y = individual["chromosome"][key_1]
-				z = individual["fitness"][fitness]*0.001
+				z = individual["fitness"][fitness]
 				values.append(z)
 				
 				verts.append([x,y,0])
@@ -1682,7 +1682,10 @@ def create_diagram(self, context):
 				radius_group = obj.vertex_groups.new(name="radius")
 			
 			# set scale to match z size
-			obj.dimensions[2] = 0.5
+			#scale = basics.return_max_diff_to_zero([1, obj.dimensions[2]])
+			#obj.dimensions[2] = scale
+			
+			obj.scale[2] = phaenotyp.diagram_scale
 			
 			# change radius
 			ids = [i for i in range(len(obj.data.vertices))]

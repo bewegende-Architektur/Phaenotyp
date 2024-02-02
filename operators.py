@@ -2304,7 +2304,6 @@ def get_boundaries():
 					if results < lowest:
 						lowest = results
 								
-	print("Boundary of members " + force_type + ":", lowest, "|", highest)
 	max_diff = basics.return_max_diff_to_zero([lowest, highest])
 	if abs(max_diff) < 0.001:
 		max_diff = 0.001 # to avoid diff zero
@@ -2334,11 +2333,38 @@ def get_boundaries():
 				if results < lowest:
 					lowest = results
 											
-	print("Boundary of quads " + force_type + ":", lowest, "|", highest)
 	max_diff = basics.return_max_diff_to_zero([lowest, highest])
 	if abs(max_diff) < 0.001:
 		max_diff = 0.001 # to avoid diff zero
 	phaenotyp.viz_boundaries_quads = max_diff
+
+def get_boundary_diagram():
+	basics.print_data("get boundaries")
+	
+	scene = bpy.context.scene
+	data = scene["<Phaenotyp>"]
+	phaenotyp = scene.phaenotyp
+	calculation_type = phaenotyp.calculation_type
+	individuals = data["individuals"]
+	
+	fitness = phaenotyp.diagram_fitness
+	
+	lowest = 0
+	highest = 0
+	
+	# get forces of members
+	if phaenotyp.calculation_type != "force_distribution":
+		for id, individual in individuals.items():
+			results = individual["fitness"][fitness]
+			if results > highest:
+				highest = results
+			if results < lowest:
+				lowest = results
+	
+	max_diff = basics.return_max_diff_to_zero([lowest, highest])
+	if abs(max_diff) < 0.001:
+		max_diff = 0.001 # to avoid diff zero
+	phaenotyp.diagram_scale = 1 / max_diff
 	
 def ranking():
 	scene = bpy.context.scene

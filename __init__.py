@@ -1296,6 +1296,14 @@ class phaenotyp_properties(PropertyGroup):
 			update = geometry.create_diagram,
 			min = 0
 			)
+		
+		diagram_scale: FloatProperty(
+			name = "diagram_scale",
+			description = "Factor to scale diagramm",
+			update = geometry.create_diagram,
+			default = 1,
+			min = 0
+			)
 			
 # handle lists in panel
 # based on code by sinestesia and support by Gorgious
@@ -1880,6 +1888,19 @@ class WM_OT_get_boundaries(Operator):
 	def execute(self, context):
 		operators.get_boundaries()
 		return {"FINISHED"}
+
+class WM_OT_get_boundary_diagram(Operator):
+	'''
+	Is calling get_boundary_diagram from the module called operators.
+	Check out further info in there.
+	'''
+	bl_label = "get_boundary_diagram"
+	bl_idname = "wm.get_boundary_diagram"
+	bl_description = "Get the lowest and highest value of all frames"
+
+	def execute(self, context):
+		operators.get_boundary_diagram()
+		return {"FINISHED"}
 		
 class WM_OT_ranking(Operator):
 	'''
@@ -2376,6 +2397,7 @@ classes = (
 	
 	WM_OT_precast,
 	
+	WM_OT_get_boundary_diagram,
 	WM_OT_diagram,
 	
 	WM_OT_reset,
