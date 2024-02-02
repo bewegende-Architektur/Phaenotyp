@@ -1501,7 +1501,7 @@ def diagram(layout):
 					ready = False
 				
 				if ready:
-					box_diagram.operator("wm.diagram", text="Go to diagram")
+					box_diagram.operator("wm.diagram", text="Recreate | View")
 			
 def error(layout, phaenotyp_version):
 	'''
