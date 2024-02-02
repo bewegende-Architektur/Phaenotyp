@@ -1330,7 +1330,7 @@ class LIST_OT_new_item(Operator):
 		phaenotyp_lists = getattr(context.scene, self.phaenotyp_lists)
 		phaenotyp_lists.add()
 		
-		fh_update(self, context)
+		geometry.fh_update(self, context)
 		return{'FINISHED'}
 
 class LIST_OT_delete_item(Operator):
@@ -1349,7 +1349,7 @@ class LIST_OT_delete_item(Operator):
 		new_index = min(max(0, index - 1), len(phaenotyp_lists) - 1)
 		bpy.context.scene[self.current_index] = new_index
 		
-		fh_update(self, context)
+		geometry.fh_update(self, context)
 		return{'FINISHED'}
 
 class LIST_OT_move_item(Operator):
@@ -1373,7 +1373,7 @@ class LIST_OT_move_item(Operator):
 		phaenotyp_lists.move(neighbor, index)
 		self.move_index(phaenotyp_lists, index)
 		
-		fh_update(self, context)
+		geometry.fh_update(self, context)
 		return{'FINISHED'}
 		
 class WM_OT_set_hull(Operator):
