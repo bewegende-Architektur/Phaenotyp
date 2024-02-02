@@ -1261,7 +1261,10 @@ def visualization(layout):
 		
 		if phaenotyp.calculation_type == "force_distribution":
 			if phaenotyp.viz_show_members == True:
-				box_viz.prop(phaenotyp, "forces_fd", text="Members")
+				box_viz.prop(phaenotyp, "forces_fd", text="")
+				box_viz.operator("wm.get_boundaries", text="Get boundaries")
+				box_viz.prop(phaenotyp, "viz_boundaries_members", text="Boundaries members")				
+				box_viz.prop(phaenotyp, "viz_scale", text="Scale force", slider=True)
 		else:
 			if members:
 				if phaenotyp.viz_show_members == True:

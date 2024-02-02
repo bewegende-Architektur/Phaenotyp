@@ -54,7 +54,6 @@ def prepare_fea_pn(frame):
 	geometry.update_geometry_pre()
 	
 	model = FEModel3D()
-	
 	basics.timer.start()
 
 	psf_members = phaenotyp.psf_members
@@ -398,7 +397,7 @@ def prepare_fea_pn(frame):
 	# created a model object of PyNite and add to dict
 	basics.models[frame] = model
 
-def prepare_fea_fd():
+def prepare_fea_fd(frame):
 	'''
 	Is preparing the calculaton of the current frame for for force disbribution.
 	:return model: List of [points_array, supports_ids, edges_array, forces_array].
@@ -407,8 +406,12 @@ def prepare_fea_fd():
 	phaenotyp = scene.phaenotyp
 	calculation_type = phaenotyp.calculation_type
 	data = scene["<Phaenotyp>"]
-	frame = bpy.context.scene.frame_current
 
+	bpy.context.scene.frame_current = frame
+	bpy.context.view_layer.update()
+	
+	geometry.update_geometry_pre()
+	
 	basics.timer.start()
 	
 	psf_members = phaenotyp.psf_members
@@ -637,9 +640,10 @@ def prepare_fea_fd():
 	text = calculation_type + " preparation for frame " + str(frame) + " done"
 	text +=  basics.timer.stop()
 	basics.print_data(text)
-
+	
+	# created a model object of PyNite and add to dict
 	model = [points_array, supports_ids, edges_array, forces_array]
-	return model
+	basics.models[str(frame)] = model
 
 def run_mp(models):
 	'''
@@ -702,14 +706,10 @@ def interweave_results_pn(frame):
 	calculation_type = phaenotyp.calculation_type
 	members = data["members"]
 	quads = data["quads"]
-
-	end = bpy.context.scene.frame_end
-
-	#for frame, model in feas.items():
-	#	basics.timer.start()
 	
 	frame = str(frame)
 	model = basics.feas[frame]
+	basics.timer.start()
 
 	for id in members:
 		member = members[id]
@@ -1302,7 +1302,7 @@ def interweave_results_pn(frame):
 	bpy.context.scene.frame_current = int(frame)
 	bpy.context.view_layer.update()
 
-def interweave_results_fd(feas):
+def interweave_results_fd(frame):
 	'''
 	Function to integrate the results of force distribution.
 	:param feas: Feas as dict with frame as key.
@@ -1313,71 +1313,70 @@ def interweave_results_fd(feas):
 	members = data["members"]
 	phaenotyp = scene.phaenotyp
 	calculation_type = phaenotyp.calculation_type
+	
+	frame = str(frame)
+	model = basics.feas[frame]
+	basics.timer.start()		
 
-	end = bpy.context.scene.frame_end
+	for id, member in members.items():
+		id = int(id)
+		# shorten
+		I = member["Iy"][str(frame)]
+		A = member["A"][str(frame)]
+		E = member["E"]
+		acceptable_sigma = member["acceptable_sigma"]
+		L = member["length"][str(frame)] * 100
 
-	for frame, model in feas.items():
-		basics.timer.start()
+		force = model[id]
+		sigma = force / A
 
-		for id, member in members.items():
-			id = int(id)
-			# shorten
-			I = member["Iy"][str(frame)]
-			A = member["A"][str(frame)]
-			E = member["E"]
-			acceptable_sigma = member["acceptable_sigma"]
-			L = member["length"][str(frame)] * 100
+		# with 500 cm, Do 60, Di 50, -10 kN
+		'''
+		print("I", I) # 32.9376 cm4
+		print("A", A) # 8,64 cm2
+		print("E", E) # 21000
+		print("acceptable_sigma", acceptable_sigma) # 16.5
+		print("L", L) # 500 cm
+		print("force", force) # 10 kN
+		print("sigma", sigma) # 1,16 kN/cm²
+		'''
 
-			force = model[id]
-			sigma = force / A
+		overstress = False
 
-			# with 500 cm, Do 60, Di 50, -10 kN
+		# if pressure check for buckling
+		if force < 0:
+			# based on:
+			# https://www.johannes-strommer.com/rechner/knicken-von-edges_arrayn-euler/
+			# euler buckling case 2: s = L
+			FK = pi**2 * E * I / L**2
+			S = FK / force
+			if abs(S) < 2.5:
+				overstress = True
+
 			'''
-			print("I", I) # 32.9376 cm4
-			print("A", A) # 8,64 cm2
-			print("E", E) # 21000
-			print("acceptable_sigma", acceptable_sigma) # 16.5
-			print("L", L) # 500 cm
-			print("force", force) # 10 kN
-			print("sigma", sigma) # 1,16 kN/cm²
+			print("FK", FK) # 27,31 kN
+			print("S", S) # 2,73 kN
+			print("")
 			'''
 
-			overstress = False
+		# if tensile force
+		else:
+			if sigma > acceptable_sigma:
+				overstress = True
 
-			# if pressure check for buckling
-			if force < 0:
-				# based on:
-				# https://www.johannes-strommer.com/rechner/knicken-von-edges_arrayn-euler/
-				# euler buckling case 2: s = L
-				FK = pi**2 * E * I / L**2
-				S = FK / force
-				if abs(S) < 2.5:
-					overstress = True
+		utilization = basics.avoid_div_zero(abs(acceptable_sigma), abs(sigma))
 
-				'''
-				print("FK", FK) # 27,31 kN
-				print("S", S) # 2,73 kN
-				print("")
-				'''
+		member["axial"][str(frame)] = force
+		member["sigma"][str(frame)] = sigma
+		member["overstress"][str(frame)] = overstress
+		member["utilization"][str(frame)] = utilization
 
-			# if tensile force
-			else:
-				if sigma > acceptable_sigma:
-					overstress = True
+	# get duration
+	text = calculation_type + " involvement for frame " + str(frame) + " done"
+	text +=  basics.timer.stop()
+	basics.print_data(text)
 
-			utilization = basics.avoid_div_zero(abs(acceptable_sigma), abs(sigma))
-
-			member["axial"][str(frame)] = force
-			member["sigma"][str(frame)] = sigma
-			member["overstress"][str(frame)] = overstress
-			member["utilization"][str(frame)] = utilization
-
-		# get duration
-		text = calculation_type + " involvement for frame " + str(frame) + " done"
-		text +=  basics.timer.stop()
-		basics.print_data(text)
-
-		data["done"][str(frame)] = True
+	data["done"][str(frame)] = True
 
 def calculate_frames(start, end):
 	scene = bpy.context.scene
