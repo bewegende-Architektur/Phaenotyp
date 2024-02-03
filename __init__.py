@@ -2085,6 +2085,7 @@ class OBJECT_PT_Phaenotyp_pre(Panel):
 	bl_idname = "OBJECT_PT_Phaenotyp_pre"
 	bl_space_type = "VIEW_3D"
 	bl_region_type = "UI"
+	bl_options = {"DEFAULT_CLOSED"}
 	bl_category = basics.phaenotyp_name
 
 	@classmethod
@@ -2125,6 +2126,7 @@ class OBJECT_PT_Phaenotyp_setup(Panel):
 	bl_idname = "OBJECT_PT_Phaenotyp_setup"
 	bl_space_type = "VIEW_3D"
 	bl_region_type = "UI"
+	bl_options = {"DEFAULT_CLOSED"}
 	bl_category = basics.phaenotyp_name
 
 	@classmethod
@@ -2222,7 +2224,7 @@ class OBJECT_PT_Phaenotyp_progress(Panel):
 	bl_space_type = "VIEW_3D"
 	bl_region_type = "UI"
 	bl_category = basics.phaenotyp_name
-
+	
 	@classmethod
 	def poll(self,context):
 		'''
@@ -2247,7 +2249,7 @@ class OBJECT_PT_Phaenotyp_post(Panel):
 	bl_space_type = "VIEW_3D"
 	bl_region_type = "UI"
 	bl_category = basics.phaenotyp_name
-
+	
 	@classmethod
 	def poll(self,context):
 		'''
@@ -2314,8 +2316,9 @@ class OBJECT_PT_Phaenotyp_reset(Panel):
 	bl_idname = "OBJECT_PT_Phaenotyp_reset"
 	bl_space_type = "VIEW_3D"
 	bl_region_type = "UI"
+	bl_options = {"DEFAULT_CLOSED"}
 	bl_category = basics.phaenotyp_name
-
+	
 	@classmethod
 	def poll(self,context):
 		'''
