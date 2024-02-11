@@ -837,7 +837,7 @@ class phaenotyp_properties(PropertyGroup):
 			name = "gd_abort",
 			description="Abort criterion",
 			default = 0.01,
-			min = 0.001,
+			min = 0.0,
 			max = 0.1
 			)
 
