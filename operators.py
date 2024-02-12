@@ -2576,14 +2576,16 @@ def text():
 								text = "overstress: " + str(member["overstress"][str(frame)])
 								data_temp.append(text)
 								
-								#text = "deflection x: " + str(round(member["deflection"][str(frame)][position], 3)) + " x"
-								text = "deflection x: " + str(round(member["deflection"][str(frame)][position][0], 3))
+								def_pos = member["initial_positions"][str(frame)][position][0] - member["deflection"][str(frame)][position][0]
+								text = "deflection x: " + str(round(def_pos, 3))
 								data_temp.append(text)
 								
-								text = "deflection y: " + str(round(member["deflection"][str(frame)][position][1], 3))
+								def_pos = member["initial_positions"][str(frame)][position][1] - member["deflection"][str(frame)][position][1]
+								text = "deflection y: " + str(round(def_pos, 3))
 								data_temp.append(text)
 								
-								text = "deflection z: " + str(round(member["deflection"][str(frame)][position][2], 3))
+								def_pos = member["initial_positions"][str(frame)][position][2] - member["deflection"][str(frame)][position][2]
+								text = "deflection z: " + str(round(def_pos, 3))
 								data_temp.append(text)
 
 								data["texts"] = data_temp
