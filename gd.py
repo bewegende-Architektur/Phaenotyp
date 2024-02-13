@@ -62,7 +62,6 @@ def generate_basis():
 	rounded_chromosome = [round(num, 3) for num in chromosome]
 	text = "Starting at: " + str(rounded_chromosome) + "\n"
 	basics.print_data(text)
-	print(chromosome)
 	
 	# store in basics for later
 	basics.chromosome_current = chromosome
@@ -181,9 +180,6 @@ def create_variations(frame):
 	# delta
 	delta = basics.delta
 	
-	# create variations of keys and calculate with mp
-	calculated_frames = [] # to access them later
-	
 	for key_id in range(len(shape_keys)-1):
 		# update frame
 		frame += 1
@@ -241,7 +237,9 @@ def get_next_step(frames):
 	max_iteration = basics.max_iteration
 	abort = basics.abort
 	
-	for key_id, frame in enumerate(frames):
+	start, end = frames
+	
+	for key_id, frame in enumerate(range(start, end)):
 		# get data from individual
 		gd = individuals[str(frame)]
 		fitness = gd["fitness"]["weighted"]
@@ -358,7 +356,7 @@ def start():
 		# create variations for next step
 		basics.jobs.append([create_variations, frame])
 		make_step_mp([frame+1, frame+size+1])
-		basics.jobs.append([get_next_step, [frame, frame+size]])
+		basics.jobs.append([get_next_step, [frame+1, frame+size+1]])
 		
 		frame += size
 	
