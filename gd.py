@@ -359,6 +359,13 @@ def start():
 		basics.jobs.append([get_next_step, [frame+1, frame+size+1]])
 		
 		frame += size
+
+	frame += 1
+	
+	# make last step
+	basics.jobs.append([make_step_st, frame])
+	calculate_step_st(frame)
+	basics.jobs.append([get_step_st, frame])
 	
 	bpy.context.scene.frame_end = frame
 	
