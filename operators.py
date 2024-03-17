@@ -2461,20 +2461,20 @@ def render_animation():
 
 	basics.print_data("render animation")
 
-	# change engine, shading
-	bpy.context.scene.render.engine = 'BLENDER_WORKBENCH'
-	bpy.context.scene.display.shading.light = 'FLAT'
-	bpy.context.scene.display.shading.color_type = 'VERTEX'
+	# # change engine, shading
+	# bpy.context.scene.render.engine = 'BLENDER_WORKBENCH'
+	# bpy.context.scene.display.shading.light = 'FLAT'
+	# bpy.context.scene.display.shading.color_type = 'VERTEX'
 
-	# set background to transparent
-	bpy.context.scene.render.film_transparent = True
+	# # set background to transparent
+	# bpy.context.scene.render.film_transparent = True
 
-	# use stamp
-	bpy.context.scene.render.use_stamp = True
-	bpy.context.scene.render.use_stamp_note = True
-	bpy.context.scene.render.stamp_note_text = ""
-	bpy.context.scene.render.stamp_background[3] = 1
-	bpy.context.scene.render.stamp_background = (0, 0, 0, 1)
+	# # use stamp
+	# bpy.context.scene.render.use_stamp = True
+	# bpy.context.scene.render.use_stamp_note = True
+	# bpy.context.scene.render.stamp_note_text = ""
+	# bpy.context.scene.render.stamp_background[3] = 1
+	# bpy.context.scene.render.stamp_background = (0, 0, 0, 1)
 
 	# render all indiviuals
 	image_id = 0 # to sort images by fitness in filemanager
