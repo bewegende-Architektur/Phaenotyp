@@ -73,7 +73,7 @@ library = [
 	["concrete_reinf_C80/95", "Concrete-reinforced C80/95", 4200, 1750, 2.5, 5.33, 0.311, 0.311, 8.0, knc80_95_rei],
 	["concrete_reinf_C90/105", "Concrete-reinforced C90/105", 4400, 1833, 2.5, 6.00, 0.35, 0.35, 9.0, knc90_105_rei],
 	["concrete_reinf_C100/115", "Concrete-reinforced C100/115", 4500, 1875, 2.5, 6.67, 0.389, 0.389, 10, knc100_115_rei],
-	["UHPC_unreinforced", "UHPC-unreinforced, 5000, 2083", 2.4, 1.50, 0.5, 0.5, 1.5, uhpc_unreinf],
+	["UHPC_unreinforced", "UHPC-unreinforced", 5000, 2083, 2.4, 1.50, 0.5, 0.5, 1.5, uhpc_unreinf],
 	["UHPC_fibre_reinforced", "UHPC-fibre reinforced", 5000, 2083, 2.5, 10, 1.5, 1.5, 10, uhpc_fibre_reinforced],
 
 	["softwood_C16", "Softwood C16", 800, 50, 0.37, 0.86, 0.09, 0.09, 0.86, softwood_c16],
