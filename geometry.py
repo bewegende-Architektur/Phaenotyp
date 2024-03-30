@@ -613,18 +613,17 @@ def create_members(structure_obj, members):
 	# create modifiere if not existing
 	modifier = obj.modifiers.get('<Phaenotyp>')
 	if modifier:
-		text = "existing modifier:" + str(modifiers)
+		text = "existing modifier:" + str(modifier)
 	else:
 		modifier_nodes = obj.modifiers.new(name="<Phaenotyp>", type='NODES')
 		bpy.ops.node.new_geometry_node_group_assign()
-		nodes = obj.modifiers['<Phaenotyp>'].node_group
-
-		# set name to group
-		if nodes.name == "<Phaenotyp>Members":
-			node_group = bpy.data.node_groups['<Phaenotyp>Members']
+		
+		if "<Phaenotyp>Members" in bpy.data.node_groups:
+			node_group = bpy.data.node_groups["<Phaenotyp>Members"]
+			obj.modifiers['<Phaenotyp>'].node_group = node_group
 		else:
-			nodes.name = "<Phaenotyp>Members"
-			node_group = bpy.data.node_groups['<Phaenotyp>Members']
+			node_group = obj.modifiers['<Phaenotyp>'].node_group
+			node_group.name = "<Phaenotyp>Members"
 
 		# mesh to curve
 		mtc = node_group.nodes.new(type="GeometryNodeMeshToCurve")
@@ -818,7 +817,7 @@ def create_quads(structure_obj, quads):
 	# create modifiere if not existing
 	modifier = obj.modifiers.get('<Phaenotyp>')
 	if modifier:
-		text = "existing modifier:" + str(modifiers)
+		text = "existing modifier:" + str(modifier)
 	else:
 		modifier_subsurf = obj.modifiers.new(name="<Phaenotyp>", type='SUBSURF')
 		modifier_subsurf.levels = 2
