@@ -351,9 +351,13 @@ def set_shape_keys(shape_keys, chromosome):
 			key.value = chromosome[id-1]
 			
 def create_supports(structure_obj, supports):
-	mesh = bpy.data.meshes.new("<Phaenotyp>support")
+	scene = bpy.context.scene
+	data = scene["<Phaenotyp>"]
+	scene_id = data["scene_id"]
+	
+	mesh = bpy.data.meshes.new("<Phaenotyp>support_" + str(scene_id))
 	obj = bpy.data.objects.new(mesh.name, mesh)
-	col = bpy.data.collections.get("<Phaenotyp>")
+	col = bpy.data.collections.get("<Phaenotyp>" + str(scene_id))
 	col.objects.link(obj)
 	bpy.context.view_layer.objects.active = obj
 
@@ -501,9 +505,12 @@ def create_supports(structure_obj, supports):
 
 def create_members(structure_obj, members):
 	# create mesh and object
-	mesh = bpy.data.meshes.new("<Phaenotyp>members")
+	scene = bpy.context.scene
+	data = scene["<Phaenotyp>"]
+	scene_id = data["scene_id"]
+	mesh = bpy.data.meshes.new("<Phaenotyp>members_" + str(scene_id))
 	obj = bpy.data.objects.new(mesh.name, mesh)
-	col = bpy.data.collections.get("<Phaenotyp>")
+	col = bpy.data.collections.get("<Phaenotyp>" + str(scene_id))
 	col.objects.link(obj)
 	bpy.context.view_layer.objects.active = obj
 	scene = bpy.context.scene
@@ -588,7 +595,7 @@ def create_members(structure_obj, members):
 		bpy.ops.geometry.color_attribute_add(name="force", domain='POINT', data_type='FLOAT_COLOR', color=(255, 0, 255, 1))
 
 	# create material
-	material_name =  "<Phaenotyp>members"
+	material_name =  "<Phaenotyp>members_" + str(scene_id)
 	member_material = bpy.data.materials.get(material_name)
 	if member_material == None:
 		mat = bpy.data.materials.new(material_name)
@@ -618,12 +625,12 @@ def create_members(structure_obj, members):
 		modifier_nodes = obj.modifiers.new(name="<Phaenotyp>", type='NODES')
 		bpy.ops.node.new_geometry_node_group_assign()
 		
-		if "<Phaenotyp>Members" in bpy.data.node_groups:
-			node_group = bpy.data.node_groups["<Phaenotyp>Members"]
+		if "<Phaenotyp>Members_" + str(scene_id) in bpy.data.node_groups:
+			node_group = bpy.data.node_groups["<Phaenotyp>Members_" + str(scene_id)]
 			obj.modifiers['<Phaenotyp>'].node_group = node_group
 		else:
 			node_group = obj.modifiers['<Phaenotyp>'].node_group
-			node_group.name = "<Phaenotyp>Members"
+			node_group.name = "<Phaenotyp>Members_" + str(scene_id)
 
 		# mesh to curve
 		mtc = node_group.nodes.new(type="GeometryNodeMeshToCurve")
@@ -647,7 +654,7 @@ def create_members(structure_obj, members):
 
 		# set material
 		gnsm = node_group.nodes.new(type="GeometryNodeSetMaterial")
-		gnsm.inputs[2].default_value = bpy.data.materials[ "<Phaenotyp>members"]
+		gnsm.inputs[2].default_value = bpy.data.materials[ "<Phaenotyp>members_" + str(scene_id)]
 		input = gnsm.inputs[0] # geometry
 		output = ctm.outputs[0] # curve to mesh, mesh
 		node_group.links.new(input, output)
@@ -680,10 +687,14 @@ def create_members(structure_obj, members):
 		radius_group.add(vertex_ids, radius, 'REPLACE')
 
 def create_quads(structure_obj, quads):
+	scene = bpy.context.scene
+	data = scene["<Phaenotyp>"]
+	scene_id = data["scene_id"]
+	
 	# create mesh and object
-	mesh = bpy.data.meshes.new("<Phaenotyp>quads")
+	mesh = bpy.data.meshes.new("<Phaenotyp>quads_" + str(scene_id))
 	obj = bpy.data.objects.new(mesh.name, mesh)
-	col = bpy.data.collections.get("<Phaenotyp>")
+	col = bpy.data.collections.get("<Phaenotyp>" + str(scene_id))
 	col.objects.link(obj)
 	bpy.context.view_layer.objects.active = obj
 	scene = bpy.context.scene
@@ -838,10 +849,14 @@ def create_quads(structure_obj, quads):
 		thickness_group.add(vertices_ids, thickness, 'REPLACE')
 
 def create_stresslines(structure_obj, quads):
+	scene = bpy.context.scene
+	data = scene["<Phaenotyp>"]
+	scene_id = data["scene_id"]
+	
 	# create mesh and object
-	mesh = bpy.data.meshes.new("<Phaenotyp>stresslines")
+	mesh = bpy.data.meshes.new("<Phaenotyp>stresslines_" + str(scene_id))
 	obj = bpy.data.objects.new(mesh.name, mesh)
-	col = bpy.data.collections.get("<Phaenotyp>")
+	col = bpy.data.collections.get("<Phaenotyp>" + str(scene_id))
 	col.objects.link(obj)
 	bpy.context.view_layer.objects.active = obj
 	scene = bpy.context.scene
@@ -928,7 +943,7 @@ def create_stresslines(structure_obj, quads):
 		bpy.ops.geometry.color_attribute_add(name="stressline", domain='POINT', data_type='FLOAT_COLOR', color=(255, 0, 255, 1))
 
 	# create material
-	material_name =  "<Phaenotyp>Stresslines"
+	material_name =  "<Phaenotyp>Stresslines_" + str(scene_id)
 	stressline_material = bpy.data.materials.get(material_name)
 	if stressline_material == None:
 		mat = bpy.data.materials.new(material_name)
@@ -960,11 +975,11 @@ def create_stresslines(structure_obj, quads):
 		nodes = obj.modifiers['<Phaenotyp>'].node_group
 
 		# set name to group
-		if nodes.name == "<Phaenotyp>Stresslines":
-			node_group = bpy.data.node_groups['<Phaenotyp>Stresslines']
+		if nodes.name == "<Phaenotyp>Stresslines_" + str(scene_id):
+			node_group = bpy.data.node_groups["<Phaenotyp>Stresslines_" + str(scene_id)]
 		else:
-			nodes.name = "<Phaenotyp>Stresslines"
-			node_group = bpy.data.node_groups['<Phaenotyp>Stresslines']
+			nodes.name = "<Phaenotyp>Stresslines_" + str(scene_id)
+			node_group = bpy.data.node_groups["<Phaenotyp>Stresslines_" + str(scene_id)]
 
 		# mesh to curve
 		mtc = node_group.nodes.new(type="GeometryNodeMeshToCurve")
@@ -988,7 +1003,7 @@ def create_stresslines(structure_obj, quads):
 
 		# set material
 		gnsm = node_group.nodes.new(type="GeometryNodeSetMaterial")
-		gnsm.inputs[2].default_value = bpy.data.materials[ "<Phaenotyp>Stresslines"]
+		gnsm.inputs[2].default_value = bpy.data.materials[ "<Phaenotyp>Stresslines_" + str(scene_id)]
 		input = gnsm.inputs[0] # geometry
 		output = ctm.outputs[0] # curve to mesh, mesh
 		node_group.links.new(input, output)
@@ -1078,17 +1093,18 @@ def hide_reveal(self, context):
 	scene = bpy.context.scene
 	phaenotyp = scene.phaenotyp
 	data = scene["<Phaenotyp>"]
+	scene_id = data["scene_id"]
 	structure = data["structure"]
 	
 	objs = bpy.data.objects
 	
 	to_set = [
 		[phaenotyp.viz_show_structure, structure.name_full],
-		[phaenotyp.viz_show_supports, '<Phaenotyp>support'],
-		[phaenotyp.viz_show_loads, '<Phaenotyp>load'],
-		[phaenotyp.viz_show_members, '<Phaenotyp>members'],
-		[phaenotyp.viz_show_quads, '<Phaenotyp>quads'],
-		[phaenotyp.viz_show_stresslines, '<Phaenotyp>stresslines']
+		[phaenotyp.viz_show_supports, "<Phaenotyp>support_" + str(scene_id)],
+		[phaenotyp.viz_show_loads, "<Phaenotyp>load_" + str(scene_id)],
+		[phaenotyp.viz_show_members, "<Phaenotyp>members_" + str(scene_id)],
+		[phaenotyp.viz_show_quads, "<Phaenotyp>quads_" + str(scene_id)],
+		[phaenotyp.viz_show_stresslines, "<Phaenotyp>stresslines_" + str(scene_id)]
 	]
 	
 	for viz_show, name in to_set:
@@ -1144,10 +1160,11 @@ def update_geometry_post():
 	scene = bpy.context.scene
 	phaenotyp = scene.phaenotyp
 	data = scene["<Phaenotyp>"]
+	scene_id = data["scene_id"]
 	members = data["members"]
 	structure_obj_vertices = data["structure"]
 	frame = bpy.context.scene.frame_current
-	mesh_for_viz = bpy.data.objects[ "<Phaenotyp>members"]
+	mesh_for_viz = bpy.data.objects[ "<Phaenotyp>members_" + str(scene_id)]
 	vertices = mesh_for_viz.data.vertices
 
 	radius_group = mesh_for_viz.vertex_groups.get("radius")
@@ -1228,7 +1245,7 @@ def update_geometry_post():
 	quads = data.get("quads")
 	if quads:
 		structure_obj_vertices = data["structure"]
-		mesh_for_viz = bpy.data.objects["<Phaenotyp>quads"]
+		mesh_for_viz = bpy.data.objects["<Phaenotyp>quads_" + str(scene_id)]
 		vertices = mesh_for_viz.data.vertices
 		faces = mesh_for_viz.data.polygons
 
@@ -1323,11 +1340,11 @@ def update_geometry_post():
 			attribute_2.data[i].color = color
 
 		# change stresslines
-		quads_viz = bpy.data.objects["<Phaenotyp>quads"]
+		quads_viz = bpy.data.objects["<Phaenotyp>quads_" + str(scene_id)]
 		quads_vertices = quads_viz.data.vertices
 		quads_faces = quads_viz.data.polygons
 		
-		stress_viz = bpy.data.objects["<Phaenotyp>stresslines"]
+		stress_viz = bpy.data.objects["<Phaenotyp>stresslines_" + str(scene_id)]
 		stress_vertices = stress_viz.data.vertices
 		
 		attribute = stress_viz.data.attributes.get("stressline")
@@ -1413,6 +1430,9 @@ def create_loads(structure_obj, loads_v, loads_e, loads_f):
 	mat = structure_obj.matrix_world
 	
 	scene = bpy.context.scene
+	data = scene["<Phaenotyp>"]
+	scene_id = data["scene_id"]
+	
 	phaenotyp = scene.phaenotyp
 	calculation_type = phaenotyp.calculation_type
 
@@ -1443,14 +1463,14 @@ def create_loads(structure_obj, loads_v, loads_e, loads_f):
 			text = text + "MZ: " + str(load[5]) + "\n"
 		
 		font_curve.body = text
-		obj = bpy.data.objects.new(name="<Phaenotyp>load", object_data=font_curve)
+		obj = bpy.data.objects.new(name="<Phaenotyp>load_" + str(scene_id), object_data=font_curve)
 
 		# set scale and position
 		obj.location = x, y, z
 		obj.scale = 0.1, 0.1, 0.1
 
 		# link object to collection
-		bpy.data.collections["<Phaenotyp>"].objects.link(obj)
+		bpy.data.collections["<Phaenotyp>" + str(scene_id)].objects.link(obj)
 
 	for id, load in loads_e.items():
 		id = int(id)
@@ -1484,14 +1504,14 @@ def create_loads(structure_obj, loads_v, loads_e, loads_f):
 			text = text + "Fz: " + str(load[5]) + "\n"
 		
 		font_curve.body = text
-		obj = bpy.data.objects.new(name="<Phaenotyp>load", object_data=font_curve)
+		obj = bpy.data.objects.new(name="<Phaenotyp>load_" + str(scene_id), object_data=font_curve)
 
 		# set scale and position
 		obj.location = x, y, z
 		obj.scale = 0.1, 0.1, 0.1
 
 		# link object to collection
-		bpy.data.collections["<Phaenotyp>"].objects.link(obj)
+		bpy.data.collections["<Phaenotyp>" + str(scene_id)].objects.link(obj)
 
 	for id, load in loads_f.items():
 		id = int(id)
@@ -1517,20 +1537,21 @@ def create_loads(structure_obj, loads_v, loads_e, loads_f):
 		text = text + "z: " + str(load[2]) + "\n"
 
 		font_curve.body = text
-		obj = bpy.data.objects.new(name="<Phaenotyp>load", object_data=font_curve)
+		obj = bpy.data.objects.new(name="<Phaenotyp>load_" + str(scene_id), object_data=font_curve)
 
 		# set scale and position
 		obj.location = x, y, z
 		obj.scale = 0.1, 0.1, 0.1
 
 		# link object to collection
-		bpy.data.collections["<Phaenotyp>"].objects.link(obj)
+		bpy.data.collections["<Phaenotyp>" + str(scene_id)].objects.link(obj)
 
 def create_diagram(self, context):
 	scene = bpy.context.scene
 	phaenotyp = scene.phaenotyp
 	
 	data = bpy.context.scene['<Phaenotyp>']
+	scene_id = data["scene_id"]
 	individuals = data["individuals"]
 	
 	fitness = phaenotyp.diagram_fitness
@@ -1543,23 +1564,23 @@ def create_diagram(self, context):
 	if fitness_available:
 		if len(chromosome) > key_1 and len(chromosome) > key_1:
 			# delete current obj and mesh
-			obj = bpy.data.objects.get("<Phaenotyp>diagram")
+			obj = bpy.data.objects.get("<Phaenotyp>diagram_" + str(scene_id))
 			if obj:
 				bpy.data.objects.remove(obj, do_unlink=True)
 
-			mesh = bpy.data.meshes.get("<Phaenotyp>diagram")
+			mesh = bpy.data.meshes.get("<Phaenotyp>diagram_" + str(scene_id))
 			if mesh:
 				bpy.data.meshes.remove(mesh, do_unlink=True)
 			
 			# delete labels
 			for obj in bpy.data.objects:
-				if "<Phaenotyp>diagram" in obj.name_full:
+				if "<Phaenotyp>diagram_" + str(scene_id) in obj.name_full:
 					bpy.data.objects.remove(obj, do_unlink=True)
 			
 			# create mesh and object
-			mesh = bpy.data.meshes.new("<Phaenotyp>diagram")
+			mesh = bpy.data.meshes.new("<Phaenotyp>diagram_" + str(scene_id))
 			obj = bpy.data.objects.new(mesh.name, mesh)
-			col = bpy.data.collections.get("<Phaenotyp>")
+			col = bpy.data.collections.get("<Phaenotyp>" + str(scene_id))
 			col.objects.link(obj)
 			bpy.context.view_layer.objects.active = obj
 			scene = bpy.context.scene
@@ -1602,7 +1623,7 @@ def create_diagram(self, context):
 				bpy.ops.geometry.color_attribute_add(name="diagram", domain='POINT', data_type='FLOAT_COLOR', color=(255, 0, 255, 1))
 
 			# create material
-			material_name =  "<Phaenotyp>Diagram"
+			material_name =  "<Phaenotyp>Diagram_" + str(scene_id)
 			stressline_material = bpy.data.materials.get(material_name)
 			if stressline_material == None:
 				mat = bpy.data.materials.new(material_name)
@@ -1634,11 +1655,11 @@ def create_diagram(self, context):
 				nodes = obj.modifiers['<Phaenotyp>'].node_group
 
 				# set name to group
-				if nodes.name == "<Phaenotyp>Diagram":
-					node_group = bpy.data.node_groups['<Phaenotyp>Diagram']
+				if nodes.name == "<Phaenotyp>Diagram_" + str(scene_id):
+					node_group = bpy.data.node_groups["<Phaenotyp>Diagram_" + str(scene_id)]
 				else:
 					nodes.name = "<Phaenotyp>Diagram"
-					node_group = bpy.data.node_groups['<Phaenotyp>Diagram']
+					node_group = bpy.data.node_groups["<Phaenotyp>Diagram_" + str(scene_id)]
 
 				# mesh to curve
 				mtc = node_group.nodes.new(type="GeometryNodeMeshToCurve")
@@ -1663,7 +1684,7 @@ def create_diagram(self, context):
 
 				# set material
 				gnsm = node_group.nodes.new(type="GeometryNodeSetMaterial")
-				gnsm.inputs[2].default_value = bpy.data.materials[ "<Phaenotyp>Diagram"]
+				gnsm.inputs[2].default_value = bpy.data.materials[ "<Phaenotyp>Diagram_" + str(scene_id)]
 				input = gnsm.inputs[0] # geometry
 				output = ctm.outputs[0] # curve to mesh, mesh
 				node_group.links.new(input, output)
@@ -1713,45 +1734,45 @@ def create_diagram(self, context):
 			# create text for x
 			for i in range(0, 11):
 				x = round(i*0.1, 1)
-				font_curve = bpy.data.curves.new(type="FONT", name="<Phaenotyp>diagram")
+				font_curve = bpy.data.curves.new(type="FONT", name="<Phaenotyp>diagram_" + str(scene_id))
 				font_curve.body = str(x)
 				font_curve.align_x = 'LEFT'
 				font_curve.align_y = 'CENTER'
-				obj = bpy.data.objects.new(name="<Phaenotyp>diagram_label", object_data=font_curve)
+				obj = bpy.data.objects.new(name="<Phaenotyp>diagram_label_" + str(scene_id), object_data=font_curve)
 				obj.location = x, -0.1, 0
 				obj.scale = [scale, scale, scale]
 				obj.rotation_euler[2] = -1.5708
-				bpy.data.collections["<Phaenotyp>"].objects.link(obj)
+				bpy.data.collections["<Phaenotyp>" + str(scene_id)].objects.link(obj)
 
 			# create label for x
-			font_curve = bpy.data.curves.new(type="FONT", name="<Phaenotyp>diagram")
+			font_curve = bpy.data.curves.new(type="FONT", name="<Phaenotyp>diagram_" + str(scene_id))
 			font_curve.body = "Shape-key = " + str(key_0)
 			font_curve.align_x = 'LEFT'
 			font_curve.align_y = 'CENTER'
-			obj = bpy.data.objects.new(name="<Phaenotyp>diagram_label", object_data=font_curve)
+			obj = bpy.data.objects.new(name="<Phaenotyp>diagram_label_" + str(scene_id), object_data=font_curve)
 			obj.location = 0, -0.25, 0
 			obj.scale = [scale, scale, scale]
-			bpy.data.collections["<Phaenotyp>"].objects.link(obj)
+			bpy.data.collections["<Phaenotyp>" + str(scene_id)].objects.link(obj)
 
 			# create text for y
 			for i in range(0, 11):
 				y = round(i*0.1, 1)
-				font_curve = bpy.data.curves.new(type="FONT", name="<Phaenotyp>diagram")
+				font_curve = bpy.data.curves.new(type="FONT", name="<Phaenotyp>diagram_" + str(scene_id))
 				font_curve.body = str(y)
 				font_curve.align_x = 'RIGHT'
 				font_curve.align_y = 'CENTER'
-				obj = bpy.data.objects.new(name="<Phaenotyp>diagram_label", object_data=font_curve)
+				obj = bpy.data.objects.new(name="<Phaenotyp>diagram_label_" + str(scene_id), object_data=font_curve)
 				obj.location = -0.1, y, 0
 				obj.scale = [scale, scale, scale]
-				bpy.data.collections["<Phaenotyp>"].objects.link(obj)
+				bpy.data.collections["<Phaenotyp>" + str(scene_id)].objects.link(obj)
 
 			# create label for y
-			font_curve = bpy.data.curves.new(type="FONT", name="<Phaenotyp>diagram")
+			font_curve = bpy.data.curves.new(type="FONT", name="<Phaenotyp>diagram_" + str(scene_id))
 			font_curve.body = "Shape-key = " + str(key_1)
 			font_curve.align_x = 'LEFT'
 			font_curve.align_y = 'CENTER'
-			obj = bpy.data.objects.new(name="<Phaenotyp>diagram_label", object_data=font_curve)
+			obj = bpy.data.objects.new(name="<Phaenotyp>diagram_label_" + str(scene_id), object_data=font_curve)
 			obj.location = -0.25, 1, 0
 			obj.scale = [scale, scale, scale]
 			obj.rotation_euler[2] = -1.5708
-			bpy.data.collections["<Phaenotyp>"].objects.link(obj)
+			bpy.data.collections["<Phaenotyp>" + str(scene_id)].objects.link(obj)

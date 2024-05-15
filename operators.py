@@ -690,7 +690,7 @@ def simplify_edges():
 
 def set_structure():
 	context = bpy.context
-	scene = context.scene
+	scene = bpy.context.scene
 	phaenotyp = scene.phaenotyp
 	
 	bpy.ops.object.mode_set(mode='OBJECT')
@@ -762,14 +762,17 @@ def set_structure():
 			# everything looks ok
 			else:
 				# crete / recreate collection
-				basics.delete_col_if_existing("<Phaenotyp>")
-				collection = bpy.data.collections.new("<Phaenotyp>")
-				bpy.context.scene.collection.children.link(collection)
+				data = scene.get("<Phaenotyp>")
+				if data:
+					scene_id = data["scene_id"]
+					basics.delete_col_if_existing("<Phaenotyp>" + str(scene_id))
 
 				basics.create_data()
-
-				geometry.to_be_fixed = None
 				data = scene["<Phaenotyp>"]
+				scene_id = data["scene_id"]
+				collection = bpy.data.collections.new("<Phaenotyp>" + str(scene_id))
+				bpy.context.scene.collection.children.link(collection)
+				geometry.to_be_fixed = None
 				data["structure"] = obj
 
 				# check for scipy
@@ -849,6 +852,7 @@ def set_support():
 	phaenotyp = scene.phaenotyp
 	data = scene["<Phaenotyp>"]
 	obj = data["structure"]
+	scene_id = data["scene_id"]
 
 	if context.active_object.mode == "EDIT":
 		# for force disbribution
@@ -892,8 +896,8 @@ def set_support():
 				geometry.delete_selected_faces()
 
 				# delete obj if existing
-				basics.delete_obj_if_existing("<Phaenotyp>support")
-				basics.delete_mesh_if_existing("<Phaenotyp>support")
+				basics.delete_obj_if_existing("<Phaenotyp>support_" + str(scene_id))
+				basics.delete_mesh_if_existing("<Phaenotyp>support_" + str(scene_id))
 
 				# create one mesh for all
 				geometry.create_supports(data["structure"], data["supports"])
@@ -939,8 +943,8 @@ def set_support():
 						data["supports"].pop(str(id))
 
 			# delete obj if existing
-			basics.delete_obj_if_existing("<Phaenotyp>support")
-			basics.delete_mesh_if_existing("<Phaenotyp>support")
+			basics.delete_obj_if_existing("<Phaenotyp>support_" + str(scene_id))
+			basics.delete_mesh_if_existing("<Phaenotyp>support_" + str(scene_id))
 
 			# create one mesh for all
 			geometry.create_supports(data["structure"], data["supports"])
@@ -957,6 +961,7 @@ def set_member():
 	scene = bpy.context.scene
 	phaenotyp = scene.phaenotyp
 	data = scene["<Phaenotyp>"]
+	scene_id = data["scene_id"]
 	obj = data["structure"]
 	nodes = data["nodes"]
 	frame = bpy.context.scene.frame_current
@@ -1136,8 +1141,8 @@ def set_member():
 				data["members"][str(id)] = member
 
 	# delete obj if existing
-	basics.delete_obj_if_existing( "<Phaenotyp>members")
-	basics.delete_mesh_if_existing( "<Phaenotyp>members")
+	basics.delete_obj_if_existing( "<Phaenotyp>members_" + str(scene_id))
+	basics.delete_mesh_if_existing( "<Phaenotyp>members_" + str(scene_id))
 
 	# create one mesh for all
 	geometry.create_members(data["structure"], data["members"])
@@ -1164,6 +1169,7 @@ def set_quad():
 	scene = bpy.context.scene
 	phaenotyp = scene.phaenotyp
 	data = scene["<Phaenotyp>"]
+	scene_id = data["scene_id"]
 	obj = data["structure"]
 	nodes = data["nodes"]
 	frame = bpy.context.scene.frame_current
@@ -1264,11 +1270,11 @@ def set_quad():
 			data["quads"][str(id)] = quad
 
 	# delete obj if existing
-	basics.delete_obj_if_existing("<Phaenotyp>quads")
-	basics.delete_mesh_if_existing("<Phaenotyp>quads")
+	basics.delete_obj_if_existing("<Phaenotyp>quads_" + str(scene_id))
+	basics.delete_mesh_if_existing("<Phaenotyp>quads_" + str(scene_id))
 	
-	basics.delete_obj_if_existing("<Phaenotyp>stresslines")
-	basics.delete_mesh_if_existing("<Phaenotyp>stresslines")
+	basics.delete_obj_if_existing("<Phaenotyp>stresslines_" + str(scene_id))
+	basics.delete_mesh_if_existing("<Phaenotyp>stresslines_" + str(scene_id))
 
 	# create one mesh for all
 	geometry.create_quads(data["structure"], data["quads"])
@@ -1296,6 +1302,7 @@ def set_load():
 	scene = bpy.context.scene
 	phaenotyp = scene.phaenotyp
 	data = scene["<Phaenotyp>"]
+	scene_id = data["scene_id"]
 	nodes = data["nodes"]
 	members = data["members"]
 	quads = data["quads"]
@@ -1484,7 +1491,7 @@ def set_load():
 						data["loads_f"].pop(str(id))
 
 	# delete text of loads
-	basics.delete_obj_if_name_contains("<Phaenotyp>load")
+	basics.delete_obj_if_name_contains("<Phaenotyp>load_" + str(scene_id))
 
 	# run one function for all loads
 	geometry.create_loads(obj, data["loads_v"], data["loads_e"], data["loads_f"])
@@ -2500,6 +2507,7 @@ def text():
 	scene = bpy.context.scene
 	phaenotyp = scene.phaenotyp
 	data = scene["<Phaenotyp>"]
+	
 	members = data["members"]
 	quads = data["quads"]
 	frame = bpy.context.scene.frame_current
@@ -2510,7 +2518,7 @@ def text():
 
 	# get selected vertex
 	bpy.ops.object.mode_set(mode="OBJECT")
-	if selected_objects[0].name_full ==  "<Phaenotyp>members":
+	if selected_objects[0].name_full ==  "<Phaenotyp>members_" + str(scene_id):
 		for vertex in bpy.context.active_object.data.vertices:
 			if vertex.select == True:
 				# continue with this vertex:
@@ -2622,7 +2630,7 @@ def text():
 
 								data["texts"] = data_temp
 
-	if selected_objects[0].name_full ==  "<Phaenotyp>quads":
+	if selected_objects[0].name_full ==  "<Phaenotyp>quads_" + str(scene_id):
 		for face in bpy.context.active_object.data.polygons:
 			if face.select == True:
 				# continue with this face:
@@ -3079,30 +3087,32 @@ def reset():
 	# try only because the object is maybe allready deleted
 	try:
 		data = scene["<Phaenotyp>"]
+		scene_id = data["scene_id"]
 		obj = scene["<Phaenotyp>"]["structure"]
 		obj.hide_set(False)
 		
 		# set active again to avoid missing panel
 		bpy.context.view_layer.objects.active = obj
+	
+		# delete obj and meshes
+		basics.delete_obj_if_existing("<Phaenotyp>support_" + str(scene_id))
+		basics.delete_mesh_if_existing("<Phaenotyp>support_" + str(scene_id))
+
+		basics.delete_obj_if_existing("<Phaenotyp>members_" + str(scene_id))
+		basics.delete_mesh_if_existing("<Phaenotyp>members_" + str(scene_id))
+
+		basics.delete_obj_if_existing("<Phaenotyp>quads_" + str(scene_id))
+		basics.delete_mesh_if_existing("<Phaenotyp>quads_" + str(scene_id))
+		
+		# delete collection
+		basics.delete_col_if_existing("<Phaenotyp>" + str(scene_id))
+
 	except:
 		pass
 	
 	# create / recreate data
 	basics.create_data()
-
-	# delete obj and meshes
-	basics.delete_obj_if_existing("<Phaenotyp>support")
-	basics.delete_mesh_if_existing("<Phaenotyp>support")
-
-	basics.delete_obj_if_existing("<Phaenotyp>members")
-	basics.delete_mesh_if_existing("<Phaenotyp>members")
-
-	basics.delete_obj_if_existing("<Phaenotyp>quads")
-	basics.delete_mesh_if_existing("<Phaenotyp>quads")
 	
-	# delete collection
-	basics.delete_col_if_existing("<Phaenotyp>")
-
 	# change view back to solid ...
 	basics.revert_vertex_colors()
 
