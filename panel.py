@@ -856,7 +856,7 @@ def bruteforce(layout):
 
 					col = box_fitness.column()
 					split = col.split()
-					split.prop(phaenotyp, "fitness_weight", text="weight")
+					split.prop(phaenotyp, "fitness_weight", text="Weight")
 					split.prop(phaenotyp, "fitness_weight_invert", text="Invert")
 
 					col = box_fitness.column()
