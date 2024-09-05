@@ -4,6 +4,7 @@ from phaenotyp import geometry
 from queue import Queue
 from time import time
 from datetime import timedelta
+import uuid
 
 blender_version = (4,0,2)
 phaenotyp_version = (0,3,0)
@@ -68,6 +69,7 @@ def create_data():
 	handeled and stored by the specific function or class.
 	"""
 	data = bpy.context.scene["<Phaenotyp>"] = {
+		"scene_id": str(uuid.uuid4()),
 		"structure": None,
 		"supports": {},
 		"nodes": {},

@@ -2056,7 +2056,9 @@ class WM_OT_diagram(Operator):
 
 	def execute(self, context):
 		geometry.create_diagram(self, context)
-		obj = bpy.data.objects["<Phaenotyp>diagram"]
+		data = bpy.context.scene['<Phaenotyp>']
+		scene_id = data["scene_id"]
+		obj = bpy.data.objects["<Phaenotyp>diagram_" + str(scene_id)]
 		obj.select_set(True)
 		bpy.context.view_layer.objects.active = obj
 		bpy.ops.view3d.view_selected()

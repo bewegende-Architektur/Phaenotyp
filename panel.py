@@ -1326,6 +1326,7 @@ def info(layout):
 	phaenotyp = scene.phaenotyp
 	frame = scene.frame_current
 	data = bpy.context.scene.get("<Phaenotyp>")
+	scene_id = data["scene_id"]
 
 	if phaenotyp.calculation_type != "geometrical":
 		box_info = layout.box()
@@ -1337,13 +1338,13 @@ def info(layout):
 		elif len(selected_objects) == 0:
 			box_info.label(text="Please select a vizualisation object - no object selected")
 
-		elif selected_objects[0].name_full !=  "<Phaenotyp>members" and selected_objects[0].name_full !=  "<Phaenotyp>quads":
+		elif selected_objects[0].name_full !=  "<Phaenotyp>members_" + str(scene_id) and selected_objects[0].name_full !=  "<Phaenotyp>quads_" + str(scene_id):
 			box_info.label(text="Please select a vizualisation object - wrong object selected")
 			
 		else:
 			if context.active_object.mode == 'EDIT':
 				# selection for members
-				if selected_objects[0].name_full ==  "<Phaenotyp>members":
+				if selected_objects[0].name_full ==  "<Phaenotyp>members_" + str(scene_id):
 					vert_sel = bpy.context.active_object.data.total_vert_sel
 					if vert_sel != 1:
 						box_info.label(text="Select one vertex only")
@@ -1355,7 +1356,7 @@ def info(layout):
 								box_info.label(text=text)
 				
 				# seleciton for quads
-				if selected_objects[0].name_full !=  "<Phaenotyp>members":
+				if selected_objects[0].name_full !=  "<Phaenotyp>members_" + str(scene_id):
 					face_sel = bpy.context.active_object.data.total_face_sel
 					if face_sel != 1:
 						box_info.label(text="Select one face only")
@@ -1521,7 +1522,7 @@ def error(layout, phaenotyp_version):
 	data = bpy.context.scene.get("<Phaenotyp>")
 
 	# handle error
-	# all this is running because of an error in on of the  panels
+	# all this is running because of an error in on of the panels
 	# most likly this is because of a file saved in a previous version
 	if data:
 		process = data.get("process")
