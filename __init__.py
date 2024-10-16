@@ -1023,7 +1023,7 @@ class phaenotyp_properties(PropertyGroup):
 						("moment_z", "Moment Z", ""),
 						("moment_h", "Moment H", ""),
 						("shear_y", "Shear Y", ""),
-						("shear_z", "Shear y", ""),
+						("shear_z", "Shear Z", ""),
 						("torque", "Torque", ""),
 						("lever_arm", "Lever arm", ""),
 						("utilization", "Utilization", ""),
