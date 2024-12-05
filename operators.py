@@ -2507,6 +2507,7 @@ def text():
 	scene = bpy.context.scene
 	phaenotyp = scene.phaenotyp
 	data = scene["<Phaenotyp>"]
+	scene_id = data["scene_id"]
 	
 	members = data["members"]
 	quads = data["quads"]
