@@ -632,38 +632,37 @@ def create_members(structure_obj, members):
 			node_group = obj.modifiers['<Phaenotyp>'].node_group
 			node_group.name = "<Phaenotyp>Members_" + str(scene_id)
 
-		# mesh to curve
-		mtc = node_group.nodes.new(type="GeometryNodeMeshToCurve")
-		input = mtc.inputs[0] # mesh to curve, mesh
-		output = node_group.nodes[0].outputs[0] # group input, geometry
-		node_group.links.new(input, output)
+			# mesh to curve
+			mtc = node_group.nodes.new(type="GeometryNodeMeshToCurve")
+			input = mtc.inputs[0] # mesh to curve, mesh
+			output = node_group.nodes[0].outputs[0] # group input, geometry
+			node_group.links.new(input, output)
 
-		# curve to mesh
-		ctm = node_group.nodes.new(type="GeometryNodeCurveToMesh")
-		input = mtc.outputs[0] # mesh to curve, curve
-		output = ctm.inputs[0] # curve to mesh, curve
-		node_group.links.new(input, output)
+			# curve to mesh
+			ctm = node_group.nodes.new(type="GeometryNodeCurveToMesh")
+			input = mtc.outputs[0] # mesh to curve, curve
+			output = ctm.inputs[0] # curve to mesh, curve
+			node_group.links.new(input, output)
 
-		# profile to curve
-		cc = node_group.nodes.new(type="GeometryNodeCurvePrimitiveCircle")
-		cc.inputs[0].default_value = 8 # set amount of vertices of circle
-		cc.inputs[4].default_value = 0.5 # diameter * 0.5
-		input = ctm.inputs[1] # curve to mesh, profile curve
-		output = cc.outputs[0] # curve circe, curve
-		node_group.links.new(input, output)
+			# profile to curve
+			cc = node_group.nodes.new(type="GeometryNodeCurvePrimitiveCircle")
+			cc.inputs[0].default_value = 8 # set amount of vertices of circle
+			cc.inputs[4].default_value = 0.5 # diameter * 0.5
+			input = ctm.inputs[1] # curve to mesh, profile curve
+			output = cc.outputs[0] # curve circe, curve
+			node_group.links.new(input, output)
 
-		# set material
-		gnsm = node_group.nodes.new(type="GeometryNodeSetMaterial")
-		gnsm.inputs[2].default_value = bpy.data.materials[ "<Phaenotyp>members_" + str(scene_id)]
-		input = gnsm.inputs[0] # geometry
-		output = ctm.outputs[0] # curve to mesh, mesh
-		node_group.links.new(input, output)
+			# set material
+			gnsm = node_group.nodes.new(type="GeometryNodeSetMaterial")
+			gnsm.inputs[2].default_value = bpy.data.materials[ "<Phaenotyp>members_" + str(scene_id)]
+			input = gnsm.inputs[0] # geometry
+			output = ctm.outputs[0] # curve to mesh, mesh
+			node_group.links.new(input, output)
 
-		# link to output
-		output = gnsm.outputs[0] # gnsm, geometry
-		input = node_group.nodes[1].inputs[0] # group output, geometry
-		node_group.links.new(input, output)
-
+			# link to output
+			output = gnsm.outputs[0] # gnsm, geometry
+			input = node_group.nodes[1].inputs[0] # group output, geometry
+			node_group.links.new(input, output)
 
 	# create vertex_group for radius
 	# radius is automatically choosen by geometry nodes for radius-input
