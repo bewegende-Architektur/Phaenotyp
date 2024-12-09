@@ -1191,7 +1191,10 @@ def update_geometry_post():
 		# update radius
 		vertex_ids = member["mesh_vertex_ids"]
 		radius = member["Do"][str(frame)]*0.01
-		radius_group.add(vertex_ids, radius, 'REPLACE')
+		
+		# if available trought pipe as profile
+		if radius_group:
+			radius_group.add(vertex_ids, radius, 'REPLACE')
 
 		if phaenotyp.calculation_type != "force_distribution":
 			# get forcetyp and force
@@ -1784,13 +1787,37 @@ def set_profile(self, context):
 	scene = bpy.context.scene
 	data = scene["<Phaenotyp>"]
 	scene_id = data["scene_id"]
-
+	obj = bpy.data.objects["<Phaenotyp>members_" + str(scene_id)]
+		
 	phaenotyp = scene.phaenotyp
 
 	# get data
 	profile_name = phaenotyp.profiles
-	if profile_name != "pipe":
+	if profile_name == "pipe":
+		# change name to use radius as input for geometry nodes
+		vg = obj.vertex_groups.get("na_for_profiles")
+		if vg:
+			vg.name = "radius"
+
+		# get nodes
+		modifier = obj.modifiers.get('<Phaenotyp>')
+		node_group = bpy.data.node_groups["<Phaenotyp>Members_" + str(scene_id)]
 		
+		# existing curve to mesh
+		ctm = node_group.nodes["ctm"]
+		cc = node_group.nodes["cc"]
+		
+		# set pipe again
+		input = ctm.inputs[1] # curve to mesh, profile curve
+		output = cc.outputs[0] # curve circe, curve
+		node_group.links.new(input, output)
+		
+	else:
+		# change name to use given dimension of profiles for geometry nodes
+		vg = obj.vertex_groups.get("radius")
+		if vg:
+			vg.name = "na_for_profiles"
+			
 		# find correct profile
 		for p in material.profiles:
 			if p[0] == profile_name:
@@ -1805,10 +1832,10 @@ def set_profile(self, context):
 		
 		# create object if not available
 		else:
-			h = profile[2]*0.01 # Höhe
-			b = profile[3]*0.01 # Breite
-			s = profile[4]*0.01 # Steg
-			f = profile[5]*0.01 # Flansch
+			h = profile[2]*0.001 # Höhe
+			b = profile[3]*0.001 # Breite
+			s = profile[4]*0.001 # Steg
+			f = profile[5]*0.001 # Flansch
 			
 			p_0 = (b*0.5, h*0.5, 0)
 			p_1 = (b*0.5, h*0.5-f, 0)
@@ -1854,9 +1881,6 @@ def set_profile(self, context):
 			# hide in view and render
 			profile_obj.hide_set(True)
 			profile_obj.hide_render = True
-		
-		# replace in geometry nodes
-		obj = bpy.data.objects["<Phaenotyp>members_" + str(scene_id)]
 		
 		# get nodes
 		modifier = obj.modifiers.get('<Phaenotyp>')
