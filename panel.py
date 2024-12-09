@@ -1295,6 +1295,24 @@ def visualization(layout):
 				box_viz.prop(phaenotyp, "viz_stressline_scale", text="Scale of stresslines", slider=True)
 				box_viz.prop(phaenotyp, "viz_stressline_length", text="Scale of stresslines", slider=True)
 
+def i_profiles(layout):
+	'''
+	Panel to change pipe to profile.
+	:param layout: Passed layout of phaenotyp panel.
+	'''
+	context = bpy.context
+	scene = context.scene
+	phaenotyp = scene.phaenotyp
+	frame = scene.frame_current
+	data = bpy.context.scene.get("<Phaenotyp>")
+
+	if phaenotyp.calculation_type != "geometrical":
+		members = data.get("members")
+		if members:
+			box_profiles = layout.box()
+			box_profiles.label(text="Profiles:")
+			box_profiles.prop(phaenotyp, "profiles", text="")
+		
 def text(layout):
 	'''
 	Panel for text.

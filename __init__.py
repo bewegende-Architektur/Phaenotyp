@@ -1101,6 +1101,15 @@ class phaenotyp_properties(PropertyGroup):
 			min = 0.001,
 			max = 200
 			)
+
+	if "profiles":
+		profiles: EnumProperty(
+			name = "profiles",
+			description = "Profiles",
+			items = material.dropdown_profiles,
+			default = "pipe",
+			update = geometry.set_profile
+			)
 	
 	if "optimization":
 		optimization_fd: EnumProperty(
@@ -2299,6 +2308,7 @@ class OBJECT_PT_Phaenotyp_post(Panel):
 					data["panel_grayed"]["loads"] = True
 
 					panel.visualization(layout)
+					panel.i_profiles(layout)
 					panel.text(layout)
 					panel.info(layout)
 					panel.selection(layout)

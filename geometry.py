@@ -1,7 +1,7 @@
 import bpy
 import bmesh
 from math import sqrt, radians, pi
-from phaenotyp import basics, operators
+from phaenotyp import basics, operators, material
 from mathutils import Color, Vector, Matrix
 c = Color()
 
@@ -634,18 +634,21 @@ def create_members(structure_obj, members):
 
 			# mesh to curve
 			mtc = node_group.nodes.new(type="GeometryNodeMeshToCurve")
+			mtc.name = "mtc"
 			input = mtc.inputs[0] # mesh to curve, mesh
 			output = node_group.nodes[0].outputs[0] # group input, geometry
 			node_group.links.new(input, output)
 
 			# curve to mesh
 			ctm = node_group.nodes.new(type="GeometryNodeCurveToMesh")
+			ctm.name = "ctm"
 			input = mtc.outputs[0] # mesh to curve, curve
 			output = ctm.inputs[0] # curve to mesh, curve
 			node_group.links.new(input, output)
 
 			# profile to curve
 			cc = node_group.nodes.new(type="GeometryNodeCurvePrimitiveCircle")
+			cc.name = "cc"
 			cc.inputs[0].default_value = 8 # set amount of vertices of circle
 			cc.inputs[4].default_value = 0.5 # diameter * 0.5
 			input = ctm.inputs[1] # curve to mesh, profile curve
@@ -654,6 +657,7 @@ def create_members(structure_obj, members):
 
 			# set material
 			gnsm = node_group.nodes.new(type="GeometryNodeSetMaterial")
+			gnsm.name = "gnsm"
 			gnsm.inputs[2].default_value = bpy.data.materials[ "<Phaenotyp>members_" + str(scene_id)]
 			input = gnsm.inputs[0] # geometry
 			output = ctm.outputs[0] # curve to mesh, mesh
@@ -1775,3 +1779,102 @@ def create_diagram(self, context):
 			obj.scale = [scale, scale, scale]
 			obj.rotation_euler[2] = -1.5708
 			bpy.data.collections["<Phaenotyp>" + str(scene_id)].objects.link(obj)
+
+def set_profile(self, context):
+	scene = bpy.context.scene
+	data = scene["<Phaenotyp>"]
+	scene_id = data["scene_id"]
+
+	phaenotyp = scene.phaenotyp
+
+	# get data
+	profile_name = phaenotyp.profiles
+	if profile_name != "pipe":
+		
+		# find correct profile
+		for p in material.profiles:
+			if p[0] == profile_name:
+				profile = p
+				
+		name = "<Phaenotyp>" + str(profile[0])
+		
+		# get object if available
+		profile_obj = bpy.data.objects.get(name)
+		if profile_obj:
+			pass
+		
+		# create object if not available
+		else:
+			h = profile[2]*0.01 # Höhe
+			b = profile[3]*0.01 # Breite
+			s = profile[4]*0.01 # Steg
+			f = profile[5]*0.01 # Flansch
+			
+			p_0 = (b*0.5, h*0.5, 0)
+			p_1 = (b*0.5, h*0.5-f, 0)
+			p_2 = (s*0.5, h*0.5-f, 0)
+			p_3 = (s*0.5, (h*0.5-f)*(-1), 0)
+			p_4 = (b*0.5, (h*0.5-f)*(-1), 0)
+			p_5 = (b*0.5, (h*0.5)*(-1), 0)
+			
+			p_6 = ((b*0.5)*(-1), (h*0.5)*(-1), 0)
+			p_7 = ((b*0.5)*(-1), (h*0.5-f)*(-1), 0)
+			p_8 = ((s*0.5)*(-1), (h*0.5-f)*(-1), 0)
+			p_9 = ((s*0.5)*(-1), h*0.5-f, 0)
+			p_10 = ((b*0.5)*(-1), h*0.5-f, 0)
+			p_11 = ((b*0.5)*(-1), h*0.5, 0)
+			
+			coords = [p_0, p_1, p_2, p_3, p_4, p_5, p_6, p_7, p_8, p_9, p_10, p_11]
+			
+			# create curve
+			curve_data = bpy.data.curves.new(name, type='CURVE')
+			curve_data.dimensions = '3D'
+			curve_data.resolution_u = 2
+
+			# set position
+			polyline = curve_data.splines.new('POLY')
+			polyline.points.add(len(coords)-1)
+			for i, coord in enumerate(coords):
+				x,y,z = coord
+				polyline.points[i].co = (x, y, z, 1)
+			
+			# close curve
+			polyline.use_cyclic_u = True
+
+			# create
+			profile_obj = bpy.data.objects.new(name, curve_data)
+		
+		# link if not in collection
+		linked = bpy.data.collections["<Phaenotyp>" + str(scene_id)].objects.get(name)
+		if linked:
+			pass
+		else:
+			bpy.data.collections["<Phaenotyp>" + str(scene_id)].objects.link(profile_obj)
+			
+			# hide in view and render
+			profile_obj.hide_set(True)
+			profile_obj.hide_render = True
+		
+		# replace in geometry nodes
+		obj = bpy.data.objects["<Phaenotyp>members_" + str(scene_id)]
+		
+		# get nodes
+		modifier = obj.modifiers.get('<Phaenotyp>')
+		node_group = bpy.data.node_groups["<Phaenotyp>Members_" + str(scene_id)]
+		
+		# object info
+		oi = node_group.nodes.get("oi")
+		if oi:
+			pass
+		else:
+			oi = node_group.nodes.new(type="GeometryNodeObjectInfo")
+			oi.name = "oi"
+		
+		# existing curve to mesh
+		ctm = node_group.nodes["ctm"]
+			
+		# set profile
+		oi.inputs[0].default_value = profile_obj
+		input = oi.outputs[4] # profile
+		output = ctm.inputs[1] # curve to mesh, profile
+		node_group.links.new(input, output)
