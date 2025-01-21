@@ -1167,85 +1167,87 @@ def update_geometry_post():
 	members = data["members"]
 	structure_obj_vertices = data["structure"]
 	frame = bpy.context.scene.frame_current
-	mesh_for_viz = bpy.data.objects[ "<Phaenotyp>members_" + str(scene_id)]
-	vertices = mesh_for_viz.data.vertices
+	
+	# if members
+	mesh_for_viz = bpy.data.objects.get("<Phaenotyp>members_" + str(scene_id))
+	if mesh_for_viz:
+		vertices = mesh_for_viz.data.vertices
 
-	radius_group = mesh_for_viz.vertex_groups.get("radius")
-	attribute = mesh_for_viz.data.attributes.get("force")
-	
-	viz_deflection = phaenotyp.viz_deflection * 0.01
-	
-	viz_boundaries_members = abs(phaenotyp.viz_boundaries_members)
-	viz_boundaries_quads = abs(phaenotyp.viz_boundaries_quads)
-	
-	viz_scale = phaenotyp.viz_scale / 100 # for percentage
-	
-	viz_stressline_scale = phaenotyp.viz_stressline_scale
-	viz_stressline_length = phaenotyp.viz_stressline_length
-	
-	for id, member in members.items():
-		id = int(id)
-
-		mesh_vertex_ids = member["mesh_vertex_ids"]
-
-		# update radius
-		vertex_ids = member["mesh_vertex_ids"]
-		radius = member["Do"][str(frame)]*0.01
+		radius_group = mesh_for_viz.vertex_groups.get("radius")
+		attribute = mesh_for_viz.data.attributes.get("force")
 		
-		# if available trought pipe as profile
-		if radius_group:
-			radius_group.add(vertex_ids, radius, 'REPLACE')
+		viz_deflection = phaenotyp.viz_deflection * 0.01
+		
+		viz_boundaries_members = abs(phaenotyp.viz_boundaries_members)
+		viz_boundaries_quads = abs(phaenotyp.viz_boundaries_quads)
+		
+		viz_scale = phaenotyp.viz_scale / 100 # for percentage
+		
+		viz_stressline_scale = phaenotyp.viz_stressline_scale
+		viz_stressline_length = phaenotyp.viz_stressline_length
+		
+		for id, member in members.items():
+			id = int(id)
 
-		if phaenotyp.calculation_type != "force_distribution":
-			# get forcetyp and force
-			result = member[phaenotyp.forces_pn]
+			mesh_vertex_ids = member["mesh_vertex_ids"]
 
-			for i in range(11):
-				position = member["deflection"][str(frame)][i]
-				x = position[0]*(1-viz_deflection) + member["initial_positions"][str(frame)][10-i][0]*viz_deflection
-				y = position[1]*(1-viz_deflection) + member["initial_positions"][str(frame)][10-i][1]*viz_deflection
-				z = position[2]*(1-viz_deflection) + member["initial_positions"][str(frame)][10-i][2]*viz_deflection
-				vertices[mesh_vertex_ids[i]].co = (x,y,z)
-				
-				overstress = member["overstress"][str(frame)]
-				
-				# if utilization in viz
-				if phaenotyp.forces_pn == "utilization":
-					force = result[str(frame)] - 1
-					c = rainbow(force, overstress, viz_boundaries_members, viz_scale)
-
-				# for 11 entries
-				else:
-					# for all forces with 10 entries
-					# 10th value is the same like 11th entrie
-					# it should be ok for the viz only
-					# report is showing all entries
-					if len(result[str(frame)]) < 11 and i == 10:
-						force = result[str(frame)][9]
-					else:
-						force = result[str(frame)][i]
-					
-					color = rainbow(force, overstress, viz_boundaries_members, viz_scale)
-
-				attribute.data[mesh_vertex_ids[i]].color = color
+			# update radius
+			vertex_ids = member["mesh_vertex_ids"]
+			radius = member["Do"][str(frame)]*0.01
 			
-		# for force disbribution
-		else:
-			# get forcetyp and force
-			result = member[phaenotyp.forces_fd]
+			# if available trought pipe as profile
+			if radius_group:
+				radius_group.add(vertex_ids, radius, 'REPLACE')
 
-			for i in range(2):
-				# apply transformation
-				x = member["initial_positions"][str(frame)][i][0]
-				y = member["initial_positions"][str(frame)][i][1]
-				z = member["initial_positions"][str(frame)][i][2]
-				vertices[mesh_vertex_ids[i]].co = (x,y,z)
+			if phaenotyp.calculation_type != "force_distribution":
+				# get forcetyp and force
+				result = member[phaenotyp.forces_pn]
 
-				force = result[str(frame)]
-				overstress = member["overstress"][str(frame)]
-				color = rainbow(force, overstress, viz_boundaries_members, viz_scale)
-				attribute.data[mesh_vertex_ids[i]].color = color
+				for i in range(11):
+					position = member["deflection"][str(frame)][i]
+					x = position[0]*(1-viz_deflection) + member["initial_positions"][str(frame)][10-i][0]*viz_deflection
+					y = position[1]*(1-viz_deflection) + member["initial_positions"][str(frame)][10-i][1]*viz_deflection
+					z = position[2]*(1-viz_deflection) + member["initial_positions"][str(frame)][10-i][2]*viz_deflection
+					vertices[mesh_vertex_ids[i]].co = (x,y,z)
+					
+					overstress = member["overstress"][str(frame)]
+					
+					# if utilization in viz
+					if phaenotyp.forces_pn == "utilization":
+						force = result[str(frame)] - 1
+						c = rainbow(force, overstress, viz_boundaries_members, viz_scale)
 
+					# for 11 entries
+					else:
+						# for all forces with 10 entries
+						# 10th value is the same like 11th entrie
+						# it should be ok for the viz only
+						# report is showing all entries
+						if len(result[str(frame)]) < 11 and i == 10:
+							force = result[str(frame)][9]
+						else:
+							force = result[str(frame)][i]
+						
+						color = rainbow(force, overstress, viz_boundaries_members, viz_scale)
+
+					attribute.data[mesh_vertex_ids[i]].color = color
+				
+			# for force disbribution
+			else:
+				# get forcetyp and force
+				result = member[phaenotyp.forces_fd]
+
+				for i in range(2):
+					# apply transformation
+					x = member["initial_positions"][str(frame)][i][0]
+					y = member["initial_positions"][str(frame)][i][1]
+					z = member["initial_positions"][str(frame)][i][2]
+					vertices[mesh_vertex_ids[i]].co = (x,y,z)
+
+					force = result[str(frame)]
+					overstress = member["overstress"][str(frame)]
+					color = rainbow(force, overstress, viz_boundaries_members, viz_scale)
+					attribute.data[mesh_vertex_ids[i]].color = color
 
 	# update quads
 	quads = data.get("quads")
