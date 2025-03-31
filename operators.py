@@ -2,6 +2,7 @@ import bpy
 import bmesh
 import numpy as np
 from math import radians
+import itertools
 
 import os
 import webbrowser
