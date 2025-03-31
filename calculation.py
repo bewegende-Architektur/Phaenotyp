@@ -31,6 +31,23 @@ def check_scipy():
 	except:
 		data["scipy_available"] = False
 
+def replace_data(entry):
+	'''
+	Will set a new entry in data.
+	This is importand for setting new loads every frame et cetera.
+	'''
+	scene = bpy.context.scene
+	phaenotyp = scene.phaenotyp
+	calculation_type = phaenotyp.calculation_type
+	data = scene["<Phaenotyp>"]
+	
+	# extract key and value
+	key, value = entry
+	
+	# clear and set again
+	data[key] = {}
+	data[key] = value
+		
 def prepare_fea_pn(frame):
 	'''
 	Is preparing the calculaton of the current frame for for PyNite.
