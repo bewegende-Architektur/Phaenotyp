@@ -748,7 +748,11 @@ def single_frame(layout):
 							box_top.operator("wm.topolgy_decimate", text="Decimate")
 							decimate_group = data["structure"].vertex_groups.get("<Phaenotyp>decimate")
 							if decimate_group:
-								box_top.label(text="Ajust the ratio of decimate, apply modifier and reset Phänotyp aferwards to restart")
+								structure = data.get("structure")
+								mod = structure.modifiers["<Phaenotyp>decimate"]
+								box_top.prop(mod, "ratio", text="Ratio")
+								box_top.operator("wm.topolgy_decimate_apply", text="Apply | Restart")
+								
 						else:
 							box_top.label(text="Run single analysis first.")
 					else:

@@ -1803,7 +1803,7 @@ class WM_OT_optimize_quads_utilization(Operator):
 		
 class WM_OT_decimate(Operator):
 	'''
-	Is calling decimate from the module called operators.
+	Is calling topolgy_decimate from the module called operators.
 	Check out further info in there.
 	'''
 	bl_label = "topolgy_decimate"
@@ -1814,6 +1814,19 @@ class WM_OT_decimate(Operator):
 		operators.topolgy_decimate()
 		return {"FINISHED"}
 
+class WM_OT_decimate_apply(Operator):
+	'''
+	Is calling topolgy_decimate_apply from the module called operators.
+	Check out further info in there.
+	'''
+	bl_label = "topolgy_decimate_apply"
+	bl_idname = "wm.topolgy_decimate_apply"
+	bl_description = "Apply topological performance"
+
+	def execute(self, context):
+		operators.topolgy_decimate_apply()
+		return {"FINISHED"}
+		
 class WM_OT_bf_start(Operator):
 	'''
 	Is calling bf_start from the module called operators.
@@ -2389,6 +2402,7 @@ classes = (
 	WM_OT_optimize_quads_approximate,
 	WM_OT_optimize_quads_utilization,
 	WM_OT_decimate,
+	WM_OT_decimate_apply,
 
 	WM_OT_bf_start,
 	WM_OT_ga_start,

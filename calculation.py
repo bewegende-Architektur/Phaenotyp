@@ -1628,11 +1628,9 @@ def decimate_topology():
 
 		sums.append(sum)
 
-
 	for id, sum in enumerate(sums):
 		weight = 1 / highest_sum * sum
 		decimate_group.add([id], weight, 'REPLACE')
-
 
 	# delete modifiere if existing
 	try:
@@ -1642,9 +1640,43 @@ def decimate_topology():
 
 	# create decimate modifiere
 	mod = obj.modifiers.new("<Phaenotyp>decimate", "DECIMATE")
-	mod.ratio = 0.1
+	mod.ratio = 0.4
 	mod.vertex_group = "<Phaenotyp>decimate"
+	
+	# select and switch to wireframe to see the edges
+	bpy.context.view_layer.objects.active = obj
+	basics.view_wireframe()
 
+def decimate_topology_apply():
+	'''
+	Reset the modifiere to avoid that the user
+	is workin gwith the decimated structure.
+	'''
+	scene = bpy.context.scene
+	phaenotyp = scene.phaenotyp
+	data = scene["<Phaenotyp>"]
+	members = data["members"]
+	obj = data["structure"] # applied to structure
+	frame = bpy.context.scene.frame_current
+	
+	obj.hide_set(False)
+	bpy.context.view_layer.objects.active = obj
+	bpy.ops.object.mode_set(mode = 'OBJECT')
+	
+	structure = data.get("structure")
+	mod_name = "<Phaenotyp>decimate"
+	mod = structure.modifiers[mod_name]
+	
+	# set structure to active
+	bpy.context.view_layer.objects.active = structure
+	obj.select_set(True)
+	
+	# go to object-mode
+	bpy.ops.object.mode_set(mode='OBJECT')
+	
+	# apply modifiere
+	bpy.ops.object.modifier_apply(modifier=mod_name)
+		
 def copy_d_t_from_prev(frame):
 	scene = bpy.context.scene
 	data = scene["<Phaenotyp>"]

@@ -185,8 +185,15 @@ def view_wireframe():
 	'''
 	Change view to show colored material and hide structure.
 	'''
-	bpy.context.space_data.shading.type = 'WIREFRAME'
-
+	# search for viewport
+	for area in bpy.context.window.screen.areas:
+		if area.type == 'VIEW_3D':
+			for space in area.spaces:
+				if space.type == 'VIEW_3D':
+					space.shading.type = 'WIREFRAME'
+					break
+			break
+			
 def view_vertex_colors():
 	'''
 	Change view to show colored material and hide structure.

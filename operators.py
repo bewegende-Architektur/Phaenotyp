@@ -2247,6 +2247,11 @@ def topolgy_decimate():
 	basics.print_data("Decimate topological performance")
 	calculation.decimate_topology()
 
+def topolgy_decimate_apply():
+	basics.print_data("Applied topological performance")
+	calculation.decimate_topology_apply()
+	reset()
+	
 def bf_start():
 	basics.print_data("Start bruteforce")
 	
