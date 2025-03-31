@@ -191,7 +191,20 @@ def view_vertex_colors():
 	'''
 	Change view to show colored material and hide structure.
 	'''
-	bpy.context.space_data.shading.type = 'MATERIAL'
+	import bpy
+
+def view_vertex_colors():
+	'''
+	Change view to show colored material and hide structure.
+	'''
+	# search for viewport
+	for area in bpy.context.window.screen.areas:
+		if area.type == 'VIEW_3D':
+			for space in area.spaces:
+				if space.type == 'VIEW_3D':
+					space.shading.type = 'MATERIAL'
+					break
+			break
 
 	# hide structure
 	try:
