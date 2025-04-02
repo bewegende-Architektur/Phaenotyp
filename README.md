@@ -2,7 +2,7 @@
 by bewegende Architektur e.U.  
 with support from Karl Deix  
 
-![](https://phaenotyp.bewegende-architektur.com/lib/exe/fetch.php?w=800&tok=7a903e&media=phaenotyp_2023.png)
+![](https://phaenotyp.bewegende-architektur.com/lib/exe/fetch.php?w=800&tok=d00a53&media=phaenotyp_2024.png)
 
 Phänotyp is an Add-On for Blender 3D  
 https://www.blender.org/
