@@ -6,8 +6,9 @@ from time import time
 from datetime import timedelta
 import uuid
 
-blender_version = (4,0,2)
-phaenotyp_version = (0,3,0)
+phaenotyp_version = (0,3,1)
+blender_version = (4,4,0)
+
 phaenotyp_name = (
 	"Phänotyp " 
 	+ str(phaenotyp_version[0]) + "."
