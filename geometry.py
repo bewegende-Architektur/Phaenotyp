@@ -646,6 +646,15 @@ def create_members(structure_obj, members):
 			output = ctm.inputs[0] # curve to mesh, curve
 			node_group.links.new(input, output)
 
+			# pass radius to scale
+			radii = node_group.nodes.new(type="GeometryNodeInputNamedAttribute")
+			radii.name = "radius"
+			radii.data_type = 'FLOAT'
+			radii.inputs[0].default_value = "radius" # vertex group
+			input = radii.outputs[0] # namend attribute
+			output = ctm.inputs[2] # scale of ctm
+			node_group.links.new(input, output)
+
 			# profile to curve
 			cc = node_group.nodes.new(type="GeometryNodeCurvePrimitiveCircle")
 			cc.name = "cc"
