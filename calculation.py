@@ -6,7 +6,8 @@ import os
 path_addons = os.path.dirname(__file__) # path to the folder of addons
 path_phaenotyp = path_addons + "/phaenotyp"
 sys.path.append(path_addons)
-from PyNite import FEModel3D
+from Pynite import FEModel3D
+from Pynite.Section import Section
 
 from numpy import array, empty, append, poly1d, polyfit, linalg, zeros, intersect1d, arctan, sin, cos
 from phaenotyp import basics, material, geometry
@@ -184,13 +185,24 @@ def prepare_fea_pn(frame):
 		if member["type"] == "comp_only":
 			tension_only = False
 			comp_only = True
+		
+		# create a section for every member
+		# the id is similar to the member id
+		section = Section(
+			model, id,
+			A = member["A"][str(frame)],
+			Iz = member["Iz"][str(frame)],
+			Iy = member["Iy"][str(frame)],
+			J = member["J"][str(frame)])
+		
+		model.sections[id] = section
 
 		model.add_member(
-			id, node_0, node_1, material_name,
-			member["Iy"][str(frame)], member["Iz"][str(frame)],
-			member["J"][str(frame)], member["A"][str(frame)],
-			tension_only=tension_only, comp_only=comp_only,
-			)
+			id,	node_0, node_1,
+			member["material_name"], id,
+			tension_only=tension_only,
+			comp_only=comp_only
+		)
 
 		# release Moments
 		if phaenotyp.type_of_joints == "release_moments":
@@ -730,7 +742,7 @@ def interweave_results_pn(frame):
 
 	for id in members:
 		member = members[id]
-		model_member = model.Members[id]
+		model_member = model.members[id]
 
 		L = model_member.L() # Member length
 		T = model_member.T() # Member local transformation matrix
@@ -1001,13 +1013,13 @@ def interweave_results_pn(frame):
 
 		member["deflection"][frame] = deflection
 
-	nodes = model.Nodes
+	nodes = model.nodes
 
 	for id in quads:
 		quad = quads[id]
 
 		# read results from PyNite
-		result = model.Quads[id]
+		result = model.quads[id]
 
 		# only take highest value to zero
 		shear = result.shear()
