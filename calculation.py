@@ -244,7 +244,7 @@ def prepare_fea_pn(frame):
 			"nu" +  "_" +
 			"rho")
 
-		if material_name not in model.Materials:
+		if material_name not in model.materials:
 			model.add_material(material_name, E, G, nu, rho)
 
 		vertex_ids = quad["vertices_ids_structure"]
