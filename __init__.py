@@ -284,20 +284,48 @@ class phaenotyp_properties(PropertyGroup):
 		rot_z: BoolProperty(name = 'rot_z', default = False)
 
 	if "members":
-		Do: FloatProperty(
-			name = "Do",
-			description = "Diameter of pipe outside in cm",
+		profile_type: EnumProperty(
+			name = "Profile Type",
+			description = "Type of structural profile",
+			items = [
+				("round_hollow", "Round Hollow", "Hollow circular profile, like a tube or pipe"),
+				("round_solid", "Round Solid", "Solid circular profile, like a rod"),
+				("rect_hollow", "Rectangular Hollow", "Hollow rectangular profile, like RHS"),
+				("rect_solid", "Rectangular Solid", "Solid rectangular profile, like a flat bar"),
+				("standard_profile", "Standard Profile", "Custom or imported profile shape"),
+			]
+		)
+		
+		diameter: FloatProperty(
+			name = "diameter",
+			description = "Diameter of pipe in cm",
 			default = 6.0,
 			min = 0.1,
 			max = 100.0
 			)
 
-		Di: FloatProperty(
-			name = "Di",
-			description = "Diameter of pipe inside in cm. Needs to be smaller than Diameter outside",
-			default = 5.0,
+		width: FloatProperty(
+			name = "width",
+			description = "Width of the profile in cm",
+			default = 10.0,
 			min = 0.1,
 			max = 100.0
+			)
+
+		depth: FloatProperty(
+			name = "depth",
+			description = "Depth of profile in cm",
+			default = 6.0,
+			min = 0.1,
+			max = 100.0
+			)
+		
+		wall_thickness: FloatProperty(
+			name = "wall_thickness",
+			description = "Wallthickness of the profile",
+			default = 1.0,
+			min = 0.1,
+			max = 50.0
 			)
 
 		buckling_resolution: IntProperty(
@@ -1107,7 +1135,6 @@ class phaenotyp_properties(PropertyGroup):
 			name = "profiles",
 			description = "Profiles",
 			items = material.dropdown_profiles,
-			default = "pipe",
 			update = geometry.set_profile
 			)
 	

@@ -326,20 +326,45 @@ def members(layout):
 			# define material and geometry
 			box_members = layout.box()
 			box_members.label(text="Members:")
-
-			box_members.prop(phaenotyp, "Do", text="Diameter outside")
-			box_members.prop(phaenotyp, "Di", text="Diameter inside")
-			if calculation_type != "force_distribution":
-				box_members.prop(phaenotyp, "buckling_resolution", text="Buckling resolution")
-
-			# current setting passed from gui
-			# (because a property can not be set in gui)
-			material.current["Do"] = phaenotyp.Do
-			material.current["Di"] = phaenotyp.Di
 			
 			if calculation_type != "force_distribution":
+				# choose type of profile
+				box_members.prop(phaenotyp, "profile_type", text="")
+				profile_type = phaenotyp.profile_type
+				
+				if profile_type == "round_hollow":
+					# current setting passed from gui
+					# (because a property can not be set in gui)
+					box_members.prop(phaenotyp, "diameter", text="Diameter")
+					box_members.prop(phaenotyp, "wall_thickness", text="Wallthickness")
+					material.current["diameter"] = phaenotyp.diameter
+					material.current["wall_thickness"] = phaenotyp.wall_thickness
+					
+				if profile_type == "round_solid":
+					box_members.prop(phaenotyp, "diameter", text="Diameter")
+					material.current["diameter"] = phaenotyp.diameter
+					
+				if profile_type == "rect_hollow":
+					box_members.prop(phaenotyp, "width", text="Width")
+					box_members.prop(phaenotyp, "depth", text="Depth")
+					box_members.prop(phaenotyp, "wall_thickness", text="Wallthickness")
+					material.current["width"] = phaenotyp.width
+					material.current["depth"] = phaenotyp.depth
+					material.current["wall_thickness"] = phaenotyp.wall_thickness
+				
+				if profile_type == "rect_solid":
+					box_members.prop(phaenotyp, "width", text="Width")
+					box_members.prop(phaenotyp, "depth", text="Depth")
+				
+				if profile_type == "standard_profile":
+					box_members.prop(phaenotyp, "profiles", text="")
+					material.current["profiles"] = phaenotyp.profiles
+								
+				# Zug, Druck, Beides, Knicken
 				box_members.prop(phaenotyp, "member_type", text="")
-
+				box_members.prop(phaenotyp, "buckling_resolution", text="Buckling resolution")
+				box_members.separator()
+				
 			box_members.prop(phaenotyp, "material", text="")
 			if phaenotyp.material == "custom":
 				box_members.prop(phaenotyp, "E", text="Modulus of elasticity kN/cm²")

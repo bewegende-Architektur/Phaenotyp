@@ -188,7 +188,6 @@ for material in library_quads:
 current_quads = {}
 
 profiles = [
-	["pipe", "Pipe with given radius"],
 	["HEA_100", "HEA 100", 96, 100, 5, 8, 21.2, 349, 134, 16.5],
 	["HEA_120", "HEA 120", 114, 120, 5, 8, 25.3, 606, 231, 24.0],
 	["HEA_140", "HEA 140", 133, 140, 5.5, 8.5, 31.4, 1030, 389, 32.8],
