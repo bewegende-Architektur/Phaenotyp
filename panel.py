@@ -329,7 +329,7 @@ def members(layout):
 			
 			if calculation_type != "force_distribution":
 				# choose type of profile
-				box_members.prop(phaenotyp, "profile_type", text="")
+				box_members.prop(phaenotyp, "profile_type", text="Shape:")
 				profile_type = phaenotyp.profile_type
 				
 				# pass to current
@@ -362,15 +362,18 @@ def members(layout):
 					material.current["depth"] = phaenotyp.depth
 					
 				if profile_type == "standard_profile":
-					box_members.prop(phaenotyp, "profiles", text="")
+					box_members.prop(phaenotyp, "profiles", text="Profile")
 					material.current["profile"] = phaenotyp.profiles
 								
 				# Zug, Druck, Beides, Knicken
-				box_members.prop(phaenotyp, "member_type", text="")
+				box_members.prop(phaenotyp, "member_type", text="Type")
 				box_members.prop(phaenotyp, "buckling_resolution", text="Buckling resolution")
-				box_members.separator()
 				
-			box_members.prop(phaenotyp, "material", text="")
+				# Ausrichtung und Winkel
+				box_members.prop(phaenotyp, "member_orientation", text="Orientation")
+				box_members.prop(phaenotyp, "member_angle", text="Angle")
+								
+			box_members.prop(phaenotyp, "material", text="Material")
 			if phaenotyp.material == "custom":
 				box_members.prop(phaenotyp, "E", text="Modulus of elasticity kN/cm²")
 				box_members.prop(phaenotyp, "G", text="Shear modulus kN/cm²")

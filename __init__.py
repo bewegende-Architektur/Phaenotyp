@@ -328,6 +328,24 @@ class phaenotyp_properties(PropertyGroup):
 			max = 50.0
 			)
 
+		member_orientation: EnumProperty(
+			name = "member_orientation",
+			description = "Orientation of Member",
+			items = [
+					("z_up", "Z-up", ""),
+					("normal", "Normal", ""),
+					("global", "Global", "")
+				   ]
+			)
+		
+		member_angle: FloatProperty(
+			name = "member_angle",
+			description = "Angle added to oriention",
+			default = 0.0,
+			min = 0.0,
+			max = 360.0
+			)
+		
 		buckling_resolution: IntProperty(
 			name = "buckling_resolution",
 			description = "Amount of connected members that form an entity for buckling (choose 1 if unsure).",

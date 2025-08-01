@@ -677,26 +677,44 @@ def create_members(structure_obj, members):
 			input = node_group.nodes[1].inputs[0] # group output, geometry
 			node_group.links.new(input, output)
 
-	# create vertex_group for radius
-	# radius is automatically choosen by geometry nodes for radius-input
+	# create vertex_groups
 	bpy.ops.object.mode_set(mode = 'OBJECT')
-	radius_group = obj.vertex_groups.get("radius")
-	if not radius_group:
-		radius_group = obj.vertex_groups.new(name="radius")
+	diameter_group = obj.vertex_groups.get("diameter")
+	if not diameter_group:
+		diameter_group = obj.vertex_groups.new(name="diameter")
 
+	depth_group = obj.vertex_groups.get("depth")
+	if not depth_group:
+		depth_group = obj.vertex_groups.new(name="depth")
+
+	width_group = obj.vertex_groups.get("width")
+	if not width_group:
+		width_group = obj.vertex_groups.new(name="width")
+	
 	# assign to group
 	for id, member in members.items():
 		id = str(id)
 		vertex_ids = member["mesh_vertex_ids"]
+		
+		profile_type = material.current["profile_type"]		
+		if profile_type in ["round_hollow", "round_solid"]:
+			if str(frame) not in member["diameter"]:
+				member["diameter"][str(frame)] = member["diameter_first"]
 
-		# copy Do and Di if not set by optimization
-		# or the user changed the frame during optimization
-		if str(frame) not in member["Do"]:
-			member["Do"][str(frame)] = member["Do_first"]
-			member["Di"][str(frame)] = member["Di_first"]
+			diameter = member["diameter"][str(frame)]*0.01
+			diameter_group.add(vertex_ids, diameter, 'REPLACE')
 
-		radius = member["Do"][str(frame)]*0.01
-		radius_group.add(vertex_ids, radius, 'REPLACE')
+		if profile_type in ["rect_hollow", "rect_solid"]:
+			if str(frame) not in member["diameter"]:
+				member["depth"][str(frame)] = member["depth_first"]
+				member["width"][str(frame)] = member["width_first"]
+
+			depth = member["depth"][str(frame)]*0.01
+			depth_group.add(vertex_ids, depth, 'REPLACE')
+
+			width = member["width"][str(frame)]*0.01
+			width_group.add(vertex_ids, width, 'REPLACE')
+			
 
 def create_quads(structure_obj, quads):
 	scene = bpy.context.scene

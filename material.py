@@ -201,10 +201,8 @@ def update():
 		current["Iy"] = current_profile[8]
 		current["Iz"] = current_profile[9]
 		current["J"] = current_profile[10]
-		print("ok")
 		current["A"] = current_profile[6]
-		#current["weight_A"] = current_profile[7] -> Gewicht durch Material?
-		current["weight_A"] = current["A"] * current["rho"] * 0.1
+		current["weight_A"] = current["A"] * current["rho"] * 0.1 # Gewicht vom Material
 		current["ir_y"] = sqrt(current["Iy"] / current["A"])
 		current["ir_z"] = sqrt(current["Iz"] / current["A"])
 		
