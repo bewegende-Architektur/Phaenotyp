@@ -1832,6 +1832,14 @@ def set_profile(self, context):
 		output = cc.outputs[0] # curve circe, curve
 		node_group.links.new(input, output)
 		
+		# pass scale again
+		radii = node_group.nodes.get("radius")
+		radii.data_type = 'FLOAT'
+		radii.inputs[0].default_value = "radius" # vertex group
+		input = radii.outputs[0] # namend attribute
+		output = ctm.inputs[2] # scale of ctm
+		node_group.links.new(input, output)
+		
 	else:
 		# change name to use given dimension of profiles for geometry nodes
 		vg = obj.vertex_groups.get("radius")
@@ -1922,3 +1930,9 @@ def set_profile(self, context):
 		input = oi.outputs[4] # profile
 		output = ctm.inputs[1] # curve to mesh, profile
 		node_group.links.new(input, output)
+		
+		# scale löschen
+		input_socket = ctm.inputs[2]
+		for link in input_socket.links:
+			node_group.links.remove(link)
+	
