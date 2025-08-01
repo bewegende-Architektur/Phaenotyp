@@ -304,9 +304,9 @@ class phaenotyp_properties(PropertyGroup):
 			max = 100.0
 			)
 
-		width: FloatProperty(
-			name = "width",
-			description = "Width of the profile in cm",
+		height: FloatProperty(
+			name = "height",
+			description = "Height of the profile in cm",
 			default = 10.0,
 			min = 0.1,
 			max = 100.0

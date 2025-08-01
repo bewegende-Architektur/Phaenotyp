@@ -332,6 +332,9 @@ def members(layout):
 				box_members.prop(phaenotyp, "profile_type", text="")
 				profile_type = phaenotyp.profile_type
 				
+				# pass to current
+				material.current["profile_type"] = phaenotyp.profile_type
+				
 				if profile_type == "round_hollow":
 					# current setting passed from gui
 					# (because a property can not be set in gui)
@@ -345,20 +348,22 @@ def members(layout):
 					material.current["diameter"] = phaenotyp.diameter
 					
 				if profile_type == "rect_hollow":
-					box_members.prop(phaenotyp, "width", text="Width")
+					box_members.prop(phaenotyp, "height", text="Height")
 					box_members.prop(phaenotyp, "depth", text="Depth")
 					box_members.prop(phaenotyp, "wall_thickness", text="Wallthickness")
-					material.current["width"] = phaenotyp.width
+					material.current["height"] = phaenotyp.height
 					material.current["depth"] = phaenotyp.depth
 					material.current["wall_thickness"] = phaenotyp.wall_thickness
 				
 				if profile_type == "rect_solid":
-					box_members.prop(phaenotyp, "width", text="Width")
+					box_members.prop(phaenotyp, "height", text="Height")
 					box_members.prop(phaenotyp, "depth", text="Depth")
-				
+					material.current["height"] = phaenotyp.height
+					material.current["depth"] = phaenotyp.depth
+					
 				if profile_type == "standard_profile":
 					box_members.prop(phaenotyp, "profiles", text="")
-					material.current["profiles"] = phaenotyp.profiles
+					material.current["profile"] = phaenotyp.profiles
 								
 				# Zug, Druck, Beides, Knicken
 				box_members.prop(phaenotyp, "member_type", text="")
