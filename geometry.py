@@ -699,16 +699,16 @@ def create_members(structure_obj, members):
 			vertex_1 = structure_obj_vertices[member["vertex_1_id"]]
 
 			# Kante
-			v0 = obj.matrix_world @ vertex_0.co
-			v1 = obj.matrix_world @ vertex_1.co
+			v_0 = structure_obj.matrix_world @ vertex_0.co
+			v_1 = structure_obj.matrix_world @ vertex_1.co
 
 			# Normale
-			n0 = obj.matrix_world.to_3x3() @ vertex_0.normal
-			n1 = obj.matrix_world.to_3x3() @ vertex_1.normal
-			avg_normal = (n0 + n1).normalized()
+			n_0 = structure_obj.matrix_world.to_3x3() @ vertex_0.normal
+			n_1 = structure_obj.matrix_world.to_3x3() @ vertex_1.normal
+			avg_normal = (n_0 + n_1).normalized()
 
 			# Tangente entlang der Kante
-			tangent = (v1 - v0).normalized()
+			tangent = (v_1 - v_0).normalized()
 
 			# Fallback-Achse für Aufbau lokalen Systems (globale Z)
 			fallback = Vector((0, 0, 1))
