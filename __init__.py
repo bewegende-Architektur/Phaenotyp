@@ -295,26 +295,18 @@ class phaenotyp_properties(PropertyGroup):
 				("standard_profile", "Standard Profile", "Custom or imported profile shape"),
 			]
 		)
-		
-		diameter: FloatProperty(
-			name = "diameter",
-			description = "Diameter of pipe in cm",
-			default = 6.0,
-			min = 0.1,
-			max = 100.0
-			)
 
 		height: FloatProperty(
 			name = "height",
-			description = "Height of the profile in cm",
+			description = "Height or diameter of the profile in cm",
 			default = 10.0,
 			min = 0.1,
 			max = 100.0
 			)
 
-		depth: FloatProperty(
-			name = "depth",
-			description = "Depth of profile in cm",
+		width: FloatProperty(
+			name = "width",
+			description = "Width of profile in cm",
 			default = 6.0,
 			min = 0.1,
 			max = 100.0
@@ -334,7 +326,7 @@ class phaenotyp_properties(PropertyGroup):
 			items = [
 					("z_up", "Z-up", ""),
 					("normal", "Normal", ""),
-					("global", "Global", "")
+					("optimize", "Optimize", "")
 				   ]
 			)
 		

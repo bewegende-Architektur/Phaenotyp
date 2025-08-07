@@ -338,33 +338,48 @@ def members(layout):
 				if profile_type == "round_hollow":
 					# current setting passed from gui
 					# (because a property can not be set in gui)
-					box_members.prop(phaenotyp, "diameter", text="Diameter")
+					box_members.prop(phaenotyp, "height", text="Diameter")
 					box_members.prop(phaenotyp, "wall_thickness", text="Wallthickness")
-					material.current["diameter"] = phaenotyp.diameter
+					
+					material.current["height"] = phaenotyp.height
+					material.current["width"] = phaenotyp.height # width == height
 					material.current["wall_thickness"] = phaenotyp.wall_thickness
+					material.current["profile"] = None
 					
 				if profile_type == "round_solid":
-					box_members.prop(phaenotyp, "diameter", text="Diameter")
-					material.current["diameter"] = phaenotyp.diameter
+					box_members.prop(phaenotyp, "height", text="Diameter")
+					
+					material.current["height"] = phaenotyp.height
+					material.current["width"] = phaenotyp.height # width == height
+					material.current["wall_thickness"] = None
+					material.current["profile"] = None
 					
 				if profile_type == "rect_hollow":
 					box_members.prop(phaenotyp, "height", text="Height")
-					box_members.prop(phaenotyp, "depth", text="Depth")
+					box_members.prop(phaenotyp, "width", text="Width")
 					box_members.prop(phaenotyp, "wall_thickness", text="Wallthickness")
+					
 					material.current["height"] = phaenotyp.height
-					material.current["depth"] = phaenotyp.depth
+					material.current["width"] = phaenotyp.width
 					material.current["wall_thickness"] = phaenotyp.wall_thickness
+					material.current["profile"] = None
 				
 				if profile_type == "rect_solid":
 					box_members.prop(phaenotyp, "height", text="Height")
-					box_members.prop(phaenotyp, "depth", text="Depth")
+					box_members.prop(phaenotyp, "width", text="Width")
+					
 					material.current["height"] = phaenotyp.height
-					material.current["depth"] = phaenotyp.depth
+					material.current["width"] = phaenotyp.width
+					material.current["wall_thickness"] = None
+					material.current["profile"] = None
 					
 				if profile_type == "standard_profile":
 					box_members.prop(phaenotyp, "profiles", text="Profile")
+					material.current["height"] = phaenotyp.height
+					material.current["width"] = phaenotyp.width
+					material.current["wall_thickness"] = None
 					material.current["profile"] = phaenotyp.profiles
-								
+				
 				# Zug, Druck, Beides, Knicken
 				box_members.prop(phaenotyp, "member_type", text="Type")
 				box_members.prop(phaenotyp, "buckling_resolution", text="Buckling resolution")
@@ -372,6 +387,7 @@ def members(layout):
 				# Ausrichtung und Winkel
 				box_members.prop(phaenotyp, "member_orientation", text="Orientation")
 				box_members.prop(phaenotyp, "member_angle", text="Angle")
+				material.current["angle"] = phaenotyp.member_angle
 								
 			box_members.prop(phaenotyp, "material", text="Material")
 			if phaenotyp.material == "custom":

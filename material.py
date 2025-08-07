@@ -112,7 +112,7 @@ def update():
 	profile_type = current["profile_type"]
 	
 	if profile_type == "round_hollow":
-		diameter = current["diameter"]
+		diameter = current["height"]
 		wall_thickness = current["wall_thickness"]
 		Di = diameter - wall_thickness*2
 		
@@ -133,7 +133,7 @@ def update():
 		current["ir_z"] = sqrt(current["Iz"] / current["A"])
 		
 	if profile_type == "round_solid":
-		diameter = current["diameter"]
+		diameter = current["height"]
 		wall_thickness = current["wall_thickness"]
 		current["Iy"] = pi * (diameter**4)/64
 		current["Iz"] = current["Iy"]
@@ -145,23 +145,23 @@ def update():
 				
 	if profile_type == "rect_hollow":
 		height = current["height"]
-		depth = current["depth"]
+		width = current["width"]
 		t = current["wall_thickness"]
 		
 		# Innenmaße
 		height_i = height - 2 * t
-		depth_i = depth - 2 * t
+		width_i = width - 2 * t
 
 		# Flächenträgheitsmomente
-		current["Iy"] = (height * depth**3 - height_i * depth_i**3) / 12
-		current["Iz"] = (depth * height**3 - depth_i * height_i**3) / 12
+		current["Iy"] = (height * width**3 - height_i * width**3) / 12
+		current["Iz"] = (width * height**3 - width_i * height_i**3) / 12
 
 		# Näherung für Torsionskonstante eines rechteckigen Hohlprofils (nicht exakt!)
 		# Für t << b,h:
-		current["J"] = (2 * t) * (height * depth - height_i * depth_i) / 3
+		current["J"] = (2 * t) * (height * width - height_i * width_i) / 3
 
 		# Querschnittsfläche
-		current["A"] = height * depth - height_i * depth_i
+		current["A"] = height * width - height_i * width_i
 
 		# Gewicht
 		current["weight_A"] = current["A"] * current["rho"] * 0.1
@@ -172,17 +172,17 @@ def update():
 			
 	if profile_type == "rect_solid":
 		height = current["height"]      # Breite (z-Richtung)
-		depth = current["depth"]      # Höhe (y-Richtung)
+		width = current["width"]      # Höhe (y-Richtung)
 		
 		# Flächenträgheitsmomente
-		current["Iy"] = (height * depth**3) / 12  # um y-Achse
-		current["Iz"] = (depth * height**3) / 12  # um z-Achse
+		current["Iy"] = (height * width**3) / 12  # um y-Achse
+		current["Iz"] = (width * height**3) / 12  # um z-Achse
 
 		# Torsionskonstante (Näherung für rechteckigen Querschnitt, Kasten)
-		current["J"] = (height * depth**3) * (1/3) if height <= depth else (depth * height**3) * (1/3)
+		current["J"] = (height * width**3) * (1/3) if height <= width else (width * height**3) * (1/3)
 
 		# Querschnittsfläche
-		current["A"] = height * depth
+		current["A"] = height * width
 
 		# Gewicht
 		current["weight_A"] = current["A"] * current["rho"] * 0.1
@@ -197,7 +197,10 @@ def update():
 		for profile in profiles:
 			if profile[0] == profile_id:
 				current_profile = profile
-		
+
+		current["height"] = current_profile[2] * 0.1 # scale correctly from library
+		current["width"] = current_profile[3] * 0.1 # scale correctly from library
+				
 		current["Iy"] = current_profile[8]
 		current["Iz"] = current_profile[9]
 		current["J"] = current_profile[10]
@@ -270,20 +273,21 @@ for material in library_quads:
 current_quads = {}
 
 profiles = [
-	#  0 = Name
-	#  1 = Höhe
-	#  2 = Breite
-	#  3 = Stegdicke
-	#  4 = Flanschdicke
-	#  5 = Querschnittsfläche
-	#  6 = Masse
-	#  7 = Trägheitsmoment I-y
-	#  8 = Trägheitsmoment I-z
-	#  9 = Trägheitsmoment I-T
-	# 10 = i-y Trägheitsradius
-	# 11 = i-z Trägheitsradius
-	# 12 = I-y/A
-	# 13 = I-z/A
+	#  0 = ID
+	#  1 = Name
+	#  2 = Höhe
+	#  3 = Breite
+	#  4 = Stegdicke
+	#  5 = Flanschdicke
+	#  6 = Querschnittsfläche
+	#  7 = Masse
+	#  8 = Trägheitsmoment I-y
+	#  9 = Trägheitsmoment I-z
+	# 10 = Trägheitsmoment I-T
+	# 11 = i-y Trägheitsradius
+	# 12 = i-z Trägheitsradius
+	# 13 = I-y/A
+	# 14 = I-z/A
 	
 	["IPE_80", "IPE 80", 80, 46, 3.8, 5.2, 7.6, 6, 80.1, 8.49, 0.698, 3.25, 1.06, 10.5, 1.12],
 	["IPE_100", "IPE 100", 100, 55, 4.1, 5.7, 10.3, 8.1, 171, 15.9, 1.2, 4.07, 1.24, 16.6, 1.54],

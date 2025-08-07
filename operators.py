@@ -994,8 +994,7 @@ def set_member():
 				member["profile_type"] = phaenotyp.profile_type
 				member["member_type"] = phaenotyp.member_type
 				member["buckling_resolution"] = phaenotyp.buckling_resolution
-				member["member_orientation"] = phaenotyp.profile_type
-				member["member_angle"] = phaenotyp.profile_type
+				member["orientation"] = phaenotyp.member_orientation
 				
 				member["acceptable_sigma"] = material.current["acceptable_sigma"] # from gui
 				member["acceptable_shear"] = material.current["acceptable_shear"] # from gui
@@ -1008,39 +1007,19 @@ def set_member():
 				member["G"] = material.current["G"] # from gui
 				member["rho"] = material.current["rho"] # from gui
 
-				# this variables can change per frame
-				# the key "first" is used to store the user-input of each member
-				# this is importand, if a user is chaning the frame during the
-				# input for some reason
-				profile_type = material.current["profile_type"]
+				member["height"] = {}
+				member["width"] = {}
+				member["wall_thickness"] = {}
 				
-				if profile_type == "round_hollow":
-					member["diameter"] = {}
-					member["wall_thickness"] = {}
-					member["diameter_first"] = material.current["diameter"] # from gui
-					member["wall_thickness_first"] = material.current["wall_thickness"] # from fui
-					
-				if profile_type == "round_solid":
-					member["diameter"] = {}
-					member["diameter_first"] = material.current["diameter"] # from gui
-									
-				if profile_type == "rect_hollow":
-					member["height"] = {}
-					member["depth"] = {}
-					member["wall_thickness"] = {}
-					member["height_first"] = material.current["height"] # from gui
-					member["depth_first"] = material.current["depth"] # from gui
-					member["wall_thickness_first"] = material.current["wall_thickness"] # from fui
-		
-				if profile_type == "rect_solid":
-					member["height"] = {}
-					member["depth"] = {}
-					member["height_first"] = material.current["height"] # from gui
-					member["depth_first"] = material.current["depth"] # from gui
-					
-				if profile_type == "standard_profile":
-					member["profile"] = {}
-					member["profile_first"] = material.current["profile"] # from gui
+				member["height_first"] = material.current["height"] # from gui
+				member["width_first"] = material.current["width"] # from gui
+				member["wall_thickness_first"] = material.current["wall_thickness"] # from fui
+				
+				member["profile"] = {}
+				member["profile_first"] = material.current["profile"] # from gui
+				
+				member["angle"] = {}
+				member["angle_first"] = material.current["angle"] # from gui
 				
 				member["Iy"] = {}
 				member["Iz"] = {}

@@ -1,8 +1,10 @@
 import bpy
 import bmesh
-from math import sqrt, radians, pi
+from math import sqrt, radians, degrees, pi, atan2
 from phaenotyp import basics, operators, material
 from mathutils import Color, Vector, Matrix
+import os
+
 c = Color()
 
 # variable to pass all stuff that needs to be fixed
@@ -622,99 +624,121 @@ def create_members(structure_obj, members):
 	if modifier:
 		text = "existing modifier:" + str(modifier)
 	else:
-		modifier_nodes = obj.modifiers.new(name="<Phaenotyp>", type='NODES')
-		bpy.ops.node.new_geometry_node_group_assign()
+		# append node group from setup.blend
+		# this is easier as rebuilding by code
+		addon_path = os.path.dirname(__file__)
+		filepath = os.path.join(addon_path, "setup.blend")
+		node_tree_section = os.path.join(filepath, "NodeTree")
+		bpy.ops.wm.append(
+			filepath = os.path.join(node_tree_section, "<Phaenotyp>"),
+			directory = node_tree_section + os.sep,
+			filename = "<Phaenotyp>"
+		)
 		
-		if "<Phaenotyp>Members_" + str(scene_id) in bpy.data.node_groups:
-			node_group = bpy.data.node_groups["<Phaenotyp>Members_" + str(scene_id)]
-			obj.modifiers['<Phaenotyp>'].node_group = node_group
-		else:
-			node_group = obj.modifiers['<Phaenotyp>'].node_group
-			node_group.name = "<Phaenotyp>Members_" + str(scene_id)
+		# add new modifier
+		modifier = obj.modifiers.new(name="Phaenotyp", type='NODES')
 
-			# mesh to curve
-			mtc = node_group.nodes.new(type="GeometryNodeMeshToCurve")
-			mtc.name = "mtc"
-			input = mtc.inputs[0] # mesh to curve, mesh
-			output = node_group.nodes[0].outputs[0] # group input, geometry
-			node_group.links.new(input, output)
-
-			# curve to mesh
-			ctm = node_group.nodes.new(type="GeometryNodeCurveToMesh")
-			ctm.name = "ctm"
-			input = mtc.outputs[0] # mesh to curve, curve
-			output = ctm.inputs[0] # curve to mesh, curve
-			node_group.links.new(input, output)
-
-			# pass radius to scale
-			radii = node_group.nodes.new(type="GeometryNodeInputNamedAttribute")
-			radii.name = "radius"
-			radii.data_type = 'FLOAT'
-			radii.inputs[0].default_value = "radius" # vertex group
-			input = radii.outputs[0] # namend attribute
-			output = ctm.inputs[2] # scale of ctm
-			node_group.links.new(input, output)
-
-			# profile to curve
-			cc = node_group.nodes.new(type="GeometryNodeCurvePrimitiveCircle")
-			cc.name = "cc"
-			cc.inputs[0].default_value = 8 # set amount of vertices of circle
-			cc.inputs[4].default_value = 0.5 # diameter * 0.5
-			input = ctm.inputs[1] # curve to mesh, profile curve
-			output = cc.outputs[0] # curve circe, curve
-			node_group.links.new(input, output)
-
-			# set material
-			gnsm = node_group.nodes.new(type="GeometryNodeSetMaterial")
-			gnsm.name = "gnsm"
-			gnsm.inputs[2].default_value = bpy.data.materials[ "<Phaenotyp>members_" + str(scene_id)]
-			input = gnsm.inputs[0] # geometry
-			output = ctm.outputs[0] # curve to mesh, mesh
-			node_group.links.new(input, output)
-
-			# link to output
-			output = gnsm.outputs[0] # gnsm, geometry
-			input = node_group.nodes[1].inputs[0] # group output, geometry
-			node_group.links.new(input, output)
+		# add node group
+		modifier.node_group = bpy.data.node_groups["<Phaenotyp>"]
 
 	# create vertex_groups
 	bpy.ops.object.mode_set(mode = 'OBJECT')
-	diameter_group = obj.vertex_groups.get("diameter")
-	if not diameter_group:
-		diameter_group = obj.vertex_groups.new(name="diameter")
 
-	depth_group = obj.vertex_groups.get("depth")
-	if not depth_group:
-		depth_group = obj.vertex_groups.new(name="depth")
+	type_group = obj.vertex_groups.get("type")
+	if not type_group:
+		type_group = obj.vertex_groups.new(name="type")
+			
+	height_group = obj.vertex_groups.get("height")
+	if not height_group:
+		height_group = obj.vertex_groups.new(name="height")
 
 	width_group = obj.vertex_groups.get("width")
 	if not width_group:
 		width_group = obj.vertex_groups.new(name="width")
-	
+
+	angle_group = obj.vertex_groups.get("angle")
+	if not angle_group:
+		angle_group = obj.vertex_groups.new(name="angle")
+			
 	# assign to group
 	for id, member in members.items():
 		id = str(id)
 		vertex_ids = member["mesh_vertex_ids"]
 		
-		profile_type = material.current["profile_type"]		
+		# avoid no height at frame without calculation
+		# if no height is available, no info is available
+		if str(frame) not in member["height"]:
+			member["height"][str(frame)] = member["height_first"]
+			member["width"][str(frame)] = member["width_first"]
+			member["wall_thickness"][str(frame)] = member["wall_thickness_first"]
+			member["profile"][str(frame)] = member["profile_first"]
+			member["angle"][str(frame)] = member["angle_first"]
+		
+		profile_type = member["profile_type"]		
 		if profile_type in ["round_hollow", "round_solid"]:
-			if str(frame) not in member["diameter"]:
-				member["diameter"][str(frame)] = member["diameter_first"]
-
-			diameter = member["diameter"][str(frame)]*0.01
-			diameter_group.add(vertex_ids, diameter, 'REPLACE')
+			# set 0.1 to define as pipe in gn
+			type_group.add(vertex_ids, 0.0, 'REPLACE')
 
 		if profile_type in ["rect_hollow", "rect_solid"]:
-			if str(frame) not in member["diameter"]:
-				member["depth"][str(frame)] = member["depth_first"]
-				member["width"][str(frame)] = member["width_first"]
-
-			depth = member["depth"][str(frame)]*0.01
-			depth_group.add(vertex_ids, depth, 'REPLACE')
-
-			width = member["width"][str(frame)]*0.01
-			width_group.add(vertex_ids, width, 'REPLACE')
+			# set 0.2 to define as pipe in gn
+			type_group.add(vertex_ids, 0.1, 'REPLACE')
 			
+		if profile_type == "standard_profile":
+			# set 0.3 to define as standard profile in gn
+			type_group.add(vertex_ids, 0.2, 'REPLACE')
+			
+		# pass height and width
+		height = member["height"][str(frame)]*0.01
+		height_group.add(vertex_ids, height, 'REPLACE')
+		width = member["width"][str(frame)]*0.01
+		width_group.add(vertex_ids, width, 'REPLACE')
+		
+		# claculate angle depending on the normal
+		if member["orientation"] == "normal":
+			vertex_0 = structure_obj_vertices[member["vertex_0_id"]]
+			vertex_1 = structure_obj_vertices[member["vertex_1_id"]]
+
+			# Kante
+			v0 = obj.matrix_world @ vertex_0.co
+			v1 = obj.matrix_world @ vertex_1.co
+
+			# Normale
+			n0 = obj.matrix_world.to_3x3() @ vertex_0.normal
+			n1 = obj.matrix_world.to_3x3() @ vertex_1.normal
+			avg_normal = (n0 + n1).normalized()
+
+			# Tangente entlang der Kante
+			tangent = (v1 - v0).normalized()
+
+			# Fallback-Achse für Aufbau lokalen Systems (globale Z)
+			fallback = Vector((0, 0, 1))
+
+			# Sicherstellen, dass Kreuzprodukt funktioniert (nicht parallel)
+			if abs(tangent.dot(fallback)) > 0.99:
+				fallback = Vector((0, 1, 0))
+
+			# Lokales Koordinatensystem (x, y, z): garantiert rechtshändig
+			z_axis = tangent
+			x_axis = fallback.cross(z_axis).normalized()
+			y_axis = z_axis.cross(x_axis).normalized()
+
+			# Matrix Welt → Lokales Profilkoordinatensystem
+			local_matrix = Matrix((x_axis, y_axis, z_axis)).transposed()
+
+			# Transformiere avg_normal in lokalen Raum
+			local_vec = local_matrix.inverted() @ avg_normal
+
+			# Jetzt kommt's: atan2(y, x) gibt den Winkel **im lokalen Koordinatensystem**
+			angle = degrees(atan2(-local_vec.y, local_vec.x)) % 360
+
+			# Optional angle offset
+			angle = angle + member["angle"][str(frame)]
+			angle = angle * 0.001
+			
+		else:
+			angle = member["angle"][str(frame)] * 0.001
+		
+		angle_group.add(vertex_ids, angle, 'REPLACE')			
 
 def create_quads(structure_obj, quads):
 	scene = bpy.context.scene
