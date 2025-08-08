@@ -153,7 +153,7 @@ def update():
 		width_i = width - 2 * t
 
 		# Flächenträgheitsmomente
-		current["Iy"] = (height * width**3 - height_i * width**3) / 12
+		current["Iy"] = (height * width**3 - height_i * width_i**3) / 12
 		current["Iz"] = (width * height**3 - width_i * height_i**3) / 12
 
 		# Näherung für Torsionskonstante eines rechteckigen Hohlprofils (nicht exakt!)

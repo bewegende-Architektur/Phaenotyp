@@ -1170,7 +1170,7 @@ def update_geometry_pre():
 			width_i = width - 2 * t
 
 			# Flächenträgheitsmomente
-			member["Iy"][str(frame)] = (height * width**3 - height_i * width**3) / 12
+			member["Iy"][str(frame)] = (height * width**3 - height_i * width_i**3) / 12
 			member["Iz"][str(frame)] = (width * height**3 - width_i * height_i**3) / 12
 
 			# Näherung für Torsionskonstante eines rechteckigen Hohlprofils (nicht exakt!)
