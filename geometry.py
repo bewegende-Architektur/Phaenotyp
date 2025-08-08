@@ -597,7 +597,7 @@ def create_members(structure_obj, members):
 		bpy.ops.geometry.color_attribute_add(name="force", domain='POINT', data_type='FLOAT_COLOR', color=(255, 0, 255, 1))
 
 	# create material
-	material_name =  "<Phaenotyp>members_" + str(scene_id)
+	material_name =  "<Phaenotyp>members"
 	member_material = bpy.data.materials.get(material_name)
 	if member_material == None:
 		mat = bpy.data.materials.new(material_name)
@@ -615,7 +615,7 @@ def create_members(structure_obj, members):
 		input = mat.node_tree.nodes['Principled BSDF'].inputs['Base Color']
 		output = ca.outputs['Color']
 		nodetree.links.new(input, output)
-
+	
 	obj.data.materials.append(bpy.data.materials.get(material_name))
 	obj.active_material_index = len(obj.data.materials) - 1
 	
@@ -1119,18 +1119,113 @@ def update_geometry_pre():
 
 		# copy properties if not set by optimization
 		# or the user changed the frame during optimization
-		if str(frame) not in member["Do"]:
-			member["Do"][str(frame)] = member["Do_first"]
-			member["Di"][str(frame)] = member["Di_first"]
+		if str(frame) not in member["height"]:
+			member["height"][str(frame)] = member["height_first"]
+			member["width"][str(frame)] = member["height"][str(frame)]
+			member["wall_thickness"][str(frame)] = member["wall_thickness"][str(frame)]
 
 		# update material (like updated when passed from gui in material.py)
-		member["Iy"][str(frame)] = pi * (member["Do"][str(frame)]**4 - member["Di"][str(frame)]**4)/64
-		member["Iz"][str(frame)] = member["Iy"][str(frame)]
-		member["J"][str(frame)]  = pi * (member["Do"][str(frame)]**4 - member["Di"][str(frame)]**4)/(32)
-		member["A"][str(frame)]  = ((pi * (member["Do"][str(frame)]*0.5)**2) - (pi * (member["Di"][str(frame)]*0.5)**2))
-		member["weight_A"][str(frame)] =  member["A"][str(frame)]*member["rho"] * 0.1
-		member["ir"][str(frame)] = sqrt(member["Iy"][str(frame)]/member["A"][str(frame)])
+		profile_type = member["profile_type"]
+		
+		if profile_type == "round_hollow":
+			diameter = member["height"][str(frame)]
+			wall_thickness = member["wall_thickness"][str(frame)]
+			Di = diameter - wall_thickness*2
+			
+			# moment of inertia, 32.9376 cm⁴
+			member["Iy"][str(frame)] = pi * (diameter**4 - Di**4)/64
+			member["Iz"][str(frame)] = member["Iy"][str(frame)]
+			
+			# torsional constant, 65.875 cm⁴
+			member["J"][str(frame)] = pi * (diameter**4 - Di**4)/32
+			
+			# cross-sectional area, 8,64 cm²
+			member["A"][str(frame)] = ((pi * (diameter*0.5)**2) - (pi * (Di*0.5)**2))
+			
+			# weight of profile, 6.78 kg/m
+			member["weight_A"][str(frame)] =  member["A"][str(frame)] * member["rho"] * 0.1
 
+			member["ir_y"][str(frame)] = sqrt(member["Iy"][str(frame)] / member["A"][str(frame)])
+			member["ir_z"][str(frame)] = sqrt(member["Iz"][str(frame)] / member["A"][str(frame)])
+			
+		if profile_type == "round_solid":
+			diameter = member["height"][str(frame)]
+			wall_thickness = member["wall_thickness"][str(frame)]
+			
+			member["Iy"][str(frame)] = pi * (diameter**4)/64
+			member["Iz"][str(frame)] = member["Iy"][str(frame)]
+			member["J"][str(frame)] = pi * (diameter**4)/32
+			member["A"][str(frame)] = ((pi * (diameter*0.5)**2))
+			member["weight_A"][str(frame)] =  member["A"][str(frame)] * member["rho"] * 0.1
+			member["ir_y"][str(frame)] = sqrt(member["Iy"][str(frame)] / member["A"][str(frame)])
+			member["ir_z"][str(frame)] = sqrt(member["Iz"][str(frame)] / member["A"][str(frame)])
+					
+		if profile_type == "rect_hollow":
+			height = member["height"][str(frame)]
+			width = member["width"][str(frame)]
+			t = member["wall_thickness"][str(frame)]
+			
+			# Innenmaße
+			height_i = height - 2 * t
+			width_i = width - 2 * t
+
+			# Flächenträgheitsmomente
+			member["Iy"][str(frame)] = (height * width**3 - height_i * width**3) / 12
+			member["Iz"][str(frame)] = (width * height**3 - width_i * height_i**3) / 12
+
+			# Näherung für Torsionskonstante eines rechteckigen Hohlprofils (nicht exakt!)
+			# Für t << b,h:
+			member["J"][str(frame)] = (2 * t) * (height * width - height_i * width_i) / 3
+
+			# Querschnittsfläche
+			member["A"][str(frame)] = height * width - height_i * width_i
+
+			# Gewicht
+			member["weight_A"][str(frame)] = member["A"][str(frame)] * member["rho"] * 0.1
+
+			# Radius of gyration
+			member["ir_y"][str(frame)] = sqrt(member["Iy"][str(frame)] / member["A"][str(frame)])
+			member["ir_z"][str(frame)] = sqrt(member["Iz"][str(frame)] / member["A"][str(frame)])
+				
+		if profile_type == "rect_solid":
+			height = member["height"][str(frame)]      # Breite (z-Richtung)
+			width = member["width"][str(frame)]        # Höhe (y-Richtung)
+			
+			# Flächenträgheitsmomente
+			member["Iy"][str(frame)] = (height * width**3) / 12  # um y-Achse
+			member["Iz"][str(frame)] = (width * height**3) / 12  # um z-Achse
+
+			# Torsionskonstante (Näherung für rechteckigen Querschnitt, Kasten)
+			member["J"][str(frame)] = (height * width**3) * (1/3) if height <= width else (width * height**3) * (1/3)
+
+			# Querschnittsfläche
+			member["A"][str(frame)] = height * width
+
+			# Gewicht
+			member["weight_A"][str(frame)] = member["A"][str(frame)] * member["rho"] * 0.1
+
+			# Radius of gyration
+			member["ir_y"][str(frame)] = sqrt(member["Iy"][str(frame)] / member["A"][str(frame)])
+			member["ir_z"][str(frame)] = sqrt(member["Iz"][str(frame)] / member["A"][str(frame)])
+				
+		if profile_type == "standard_profile":
+			profile_id = member["profile"][str(frame)]
+			profile = None
+			for profile in material.profiles:
+				if profile[0] == profile_id:
+					current_profile = profile
+
+			member["height"][str(frame)] = current_profile[2] * 0.1 # scale correctly from library
+			member["width"][str(frame)] = current_profile[3] * 0.1 # scale correctly from library
+					
+			member["Iy"][str(frame)] = current_profile[8]
+			member["Iz"][str(frame)] = current_profile[9]
+			member["J"][str(frame)] = current_profile[10]
+			member["A"][str(frame)] = current_profile[6]
+			member["weight_A"][str(frame)] = member["A"][str(frame)] * member["rho"] * 0.1 # Gewicht vom Material
+			member["ir_y"][str(frame)] = sqrt(member["Iy"][str(frame)] / member["A"][str(frame)])
+			member["ir_z"][str(frame)] = sqrt(member["Iz"][str(frame)] / member["A"][str(frame)])
+			
 	for id, quad in quads.items():
 		id = int(id)
 
@@ -1253,7 +1348,7 @@ def update_geometry_post():
 
 			# update radius
 			vertex_ids = member["mesh_vertex_ids"]
-			radius = member["Do"][str(frame)]*0.01
+			radius = member["height"][str(frame)]*0.01
 			
 			# if available trought pipe as profile
 			if radius_group:

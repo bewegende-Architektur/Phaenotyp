@@ -174,15 +174,15 @@ def prepare_fea_pn(frame):
 		node_1 = str(vertex_1_id)
 		material_name = member["material_name"]
 
-		if member["type"] == "full":
+		if member["member_type"] == "full":
 			tension_only = False
 			comp_only = False
 
-		if member["type"] == "tension_only":
+		if member["member_type"] == "tension_only":
 			tension_only = True
 			comp_only = False
 
-		if member["type"] == "comp_only":
+		if member["member_type"] == "comp_only":
 			tension_only = False
 			comp_only = True
 		
@@ -785,10 +785,10 @@ def interweave_results_pn(frame):
 		# shorten and accessing once
 		A = member["A"][frame]
 		J = member["J"][frame]
-		Do = member["Do"][frame]
+		Do = member["height"][frame]
 
 		# buckling
-		member["ir"][frame] = sqrt(J/A) # für runde Querschnitte in  cm
+		member["ir_y"][frame] = sqrt(J/A) # für runde Querschnitte in  cm
 		
 		# bucklng resolution
 		buckling_resolution = member["buckling_resolution"]
@@ -888,7 +888,7 @@ def interweave_results_pn(frame):
 
 		# buckling
 		if member["axial"][frame][0] < 0: # nur für Druckstäbe, axial kann nicht flippen?
-			member["lamda"][frame] = L*buckling_resolution*0.5/member["ir"][frame] # für eingespannte Stäbe ist die Knicklänge 0.5 der Stablänge L, Stablänge muss in cm sein !
+			member["lamda"][frame] = L*buckling_resolution*0.5/member["ir_y"][frame] # für eingespannte Stäbe ist die Knicklänge 0.5 der Stablänge L, Stablänge muss in cm sein !
 			if member["lamda"][frame] > 20: # für lamda < 20 (kurze Träger) gelten die default-Werte)
 				kn = member["knick_model"]
 				function_to_run = poly1d(polyfit(material.kn_lamda, kn, 6))
