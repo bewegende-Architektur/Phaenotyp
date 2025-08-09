@@ -1192,8 +1192,8 @@ def update_geometry_pre():
 			width = member["width"][str(frame)]        # Höhe (y-Richtung)
 			
 			# Flächenträgheitsmomente
-			member["Iy"][str(frame)] = (height * width**3) / 12  # um y-Achse
-			member["Iz"][str(frame)] = (width * height**3) / 12  # um z-Achse
+			member["Iy"][str(frame)] = (width * height**3) / 12  # um z-Achse
+			member["Iz"][str(frame)] = (height * width**3) / 12  # um y-Achse
 
 			# Torsionskonstante (Näherung für rechteckigen Querschnitt, Kasten)
 			member["J"][str(frame)] = (height * width**3) * (1/3) if height <= width else (width * height**3) * (1/3)
