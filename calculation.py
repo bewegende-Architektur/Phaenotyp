@@ -197,11 +197,19 @@ def prepare_fea_pn(frame):
 		
 		model.sections[id] = section
 
+		#def __init__(self, model: FEModel3D, 
+		#	name: str, i_node: Node3D, j_node: Node3D,
+		#	material_name: str, section_name: str,
+		#	rotation: float = 0.0,
+		#	tension_only: bool = False,
+		#	comp_only: bool = False) -> None:
+			 
 		model.add_member(
 			id,	node_0, node_1,
 			member["material_name"], id,
-			tension_only=tension_only,
-			comp_only=comp_only
+			member["angle"][str(frame)],
+			tension_only = tension_only,
+			comp_only = comp_only
 		)
 
 		# release Moments
