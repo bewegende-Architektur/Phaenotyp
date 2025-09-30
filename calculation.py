@@ -2165,6 +2165,34 @@ def utilization_sectional():
 			member["Di"][str(frame)] = 0.1
 			member["Do"][str(frame)] = member["Di"][str(frame)] * Do_Di_ratio
 
+def utilization_sectional_standardprofil():
+	'''
+	Is adapting the diameters of force distribution step by step.
+	The reduction is based on the utilization of the elements.
+	'''
+	scene = bpy.context.scene
+	phaenotyp = scene.phaenotyp
+	data = scene["<Phaenotyp>"]
+	members = data["members"]
+	frame = bpy.context.scene.frame_current
+
+	for id, member in members.items():
+		ang = member["utilization"][str(frame)]
+		faktor_d= (abs(ang))**(1/2)
+		# neue Trägerhöhe:
+		member["height"][str(frame)] = member["height"][str(frame)] * faktor_d
+		# neue Trägerbreite:
+		#iyr=0.0014*height**2+0.2791*height-35.215 # Zusammenhang Iy/A in Abhängigkeit der Trägerhöhe laut Profiltabellen
+		if height < 30 # cm
+				member["width"][str(frame)] = member["height"][str(frame)] # Breite bei HEB wie Höhe, bei IPE schmäler
+		else
+				member["width"][str(frame)] = 30 # Breite in cm
+
+		# set miminum size of I-Träger: 100 mm
+		if member["height"][str(frame)] < 10: # 10 cm
+			member["height"][str(frame)] = 10
+			member["width"][str(frame)] = 10
+			
 def complex_sectional():
 	'''
 	Is adapting the diameters of force distribution step by step.
