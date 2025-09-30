@@ -1049,16 +1049,19 @@ def set_member():
 				member["sigma"] = {}
 
 				member["Wy"] = {}
+				member["Wz"] = {}
 				member["WJ"] = {}
 
 				member["long_stress"] = {}
-				member["tau_shear"] = {}
+				member["tau_shear_y"] = {}
+				member["tau_shear_z"] = {}
 				member["tau_torsion"] = {}
 				member["sum_tau"] = {}
 				member["sigmav"] = {}
 				member["sigma"] = {}
 				member["max_long_stress"] = {}
-				member["max_tau_shear"] = {}
+				member["max_tau_shear_y"] = {}
+				member["max_tau_shear_z"] = {}
 				member["max_tau_torsion"] = {}
 				member["max_sum_tau"] = {}
 				member["max_sigmav"] = {}

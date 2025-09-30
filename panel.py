@@ -375,8 +375,8 @@ def members(layout):
 					
 				if profile_type == "standard_profile":
 					box_members.prop(phaenotyp, "profiles", text="Profile")
-					material.current["height"] = phaenotyp.height
-					material.current["width"] = phaenotyp.width
+					#material.current["height"] = phaenotyp.height
+					#material.current["width"] = phaenotyp.width
 					material.current["wall_thickness"] = None
 					material.current["profile"] = phaenotyp.profiles
 				

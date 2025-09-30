@@ -1947,7 +1947,7 @@ def set_profile(self, context):
 	obj = bpy.data.objects["<Phaenotyp>members_" + str(scene_id)]
 		
 	phaenotyp = scene.phaenotyp
-
+	'''
 	# get data
 	profile_name = phaenotyp.profiles
 	if profile_name == "pipe":
@@ -2049,7 +2049,8 @@ def set_profile(self, context):
 		
 		# get nodes
 		modifier = obj.modifiers.get('<Phaenotyp>')
-		node_group = bpy.data.node_groups["<Phaenotyp>Members_" + str(scene_id)]
+		#node_group = bpy.data.node_groups["<Phaenotyp>Members_" + str(scene_id)]
+		node_group = bpy.data.node_groups["<Phaenotyp>"]
 		
 		# object info
 		oi = node_group.nodes.get("oi")
@@ -2072,4 +2073,4 @@ def set_profile(self, context):
 		input_socket = ctm.inputs[2]
 		for link in input_socket.links:
 			node_group.links.remove(link)
-	
+		'''
