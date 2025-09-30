@@ -1129,16 +1129,14 @@ def set_member():
 				member["J"] = {}
 				member["A"] = {}
 				member["weight_A"] = {}
-				member["ir_y"] = {}
-				member["ir_z"] = {}
+				member["ir"] = {}
 
 				member["Iy_first"] = material.current["Iy"] # from gui
 				member["Iz_first"] = material.current["Iz"] # from gui
 				member["J_first"] = material.current["J"] # from gui
 				member["A_first"] = material.current["A"] # from gui
 				member["weight_first"] = material.current["weight_A"] # from gui
-				member["ir_y_first"] = material.current["ir_y"] # from gui
-				member["ir_z_first"] = material.current["ir_z"] # from gui
+				member["ir_first"] = material.current["ir_y"] # from gui -> only ir_y for fd
 
 				# results
 				member["axial"] = {}
@@ -2564,11 +2562,14 @@ def text():
 								frame = bpy.context.scene.frame_current
 
 								# get Do and Di
-								text = "Do: " + str(round(member["Do"][str(frame)], 3)) + " cm"
+								text = "height: " + str(round(member["height"][str(frame)], 3)) + " cm"
 								data_temp.append(text)
-								text = "Di: " + str(round(member["Di"][str(frame)], 3)) + " cm"
+								text = "widht: " + str(round(member["width"][str(frame)], 3)) + " cm"
 								data_temp.append(text)
-
+								if member["wall_thickness"][str(frame)]:
+									text = "wall_thickness: " + str(round(member["wall_thickness"][str(frame)], 3)) + " cm"
+									data_temp.append(text)
+								
 								# results
 								text = "axial: " + str(round(member["axial"][str(frame)][position], 3)) + " kN"
 								data_temp.append(text)
@@ -2582,19 +2583,27 @@ def text():
 								data_temp.append(text)
 								text = "shear_z: " + str(round(member["shear_z"][str(frame)][position], 3)) + " kN"
 								data_temp.append(text)
-								text = "shear_h: " + str(round(member["shear_h"][str(frame)][position], 3)) + " kN"
-								data_temp.append(text)
+								try:
+									text = "shear_h: " + str(round(member["shear_h"][str(frame)][position], 3)) + " kN"
+									data_temp.append(text)
+								except:
+									pass
 								text = "torque: " + str(round(member["torque"][str(frame)][position], 3)) + " kNcm"
 								data_temp.append(text)
 
-								text = "tau_shear: " + str(round(member["tau_shear"][str(frame)][position], 3)) + " kN/cm²"
+								text = "tau_shear_y: " + str(round(member["tau_shear_y"][str(frame)][position], 3)) + " kN/cm²"
+								data_temp.append(text)
+								text = "tau_shear_z: " + str(round(member["tau_shear_z"][str(frame)][position], 3)) + " kN/cm²"
 								data_temp.append(text)
 								text = "tau_torsion: " + str(round(member["tau_torsion"][str(frame)][position], 3)) + " kN/cm²"
 								data_temp.append(text)
 								text = "sum_tau: " + str(round(member["sum_tau"][str(frame)][position], 3)) + " kN/cm²"
 								data_temp.append(text)
-								text = "sigmav: " + str(round(member["sigmav"][str(frame)][position], 3)) + " kN/cm²"
-								data_temp.append(text)
+								try:
+									text = "sigmav: " + str(round(member["sigmav"][str(frame)][position], 3)) + " kN/cm²"
+									data_temp.append(text)
+								except:
+									pass
 								text = "sigma: " + str(round(member["sigma"][str(frame)][position], 3)) + " kN/cm²"
 								data_temp.append(text)
 

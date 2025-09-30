@@ -2357,7 +2357,7 @@ class OBJECT_PT_Phaenotyp_post(Panel):
 				data["panel_grayed"]["loads"] = True
 
 				panel.visualization(layout)
-				panel.i_profiles(layout)
+				#panel.i_profiles(layout) -> Altes Modul
 				panel.text(layout)
 				panel.info(layout)
 				panel.selection(layout)

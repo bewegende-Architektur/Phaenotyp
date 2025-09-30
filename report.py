@@ -1224,13 +1224,15 @@ def report_frames(directory, start, end):
 	force_types = {}
 
 	force_types["max_sigma"] = [1, "kN/cm²"]
-	force_types["max_tau_shear"] = [1, "kN/cm²"]
+	force_types["max_tau_shear_y"] = [1, "kN/cm²"]
+	force_types["max_tau_shear_z"] = [1, "kN/cm²"]
 	force_types["max_tau_torsion"] = [1, "kN/cm²"]
 	force_types["max_sum_tau"] = [1, "kN/cm²"]
 	force_types["max_sigmav"] = [1, "kN/cm²"]
 
-	force_types["Do"] = [1, "cm"]
-	force_types["Di"] = [1, "cm"]
+	force_types["height"] = [1, "cm"]
+	force_types["width"] = [1, "cm"]
+	force_types["wall_thickness"] = [1, "cm"]
 	force_types["utilization"] = [1, ""]
 	force_types["acceptable_sigma_buckling"] = [1, "kN/cm²"]
 
