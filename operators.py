@@ -1129,14 +1129,16 @@ def set_member():
 				member["J"] = {}
 				member["A"] = {}
 				member["weight_A"] = {}
-				member["ir"] = {}
+				member["ir_y"] = {}
+				member["ir_z"] = {}
 
 				member["Iy_first"] = material.current["Iy"] # from gui
 				member["Iz_first"] = material.current["Iz"] # from gui
 				member["J_first"] = material.current["J"] # from gui
 				member["A_first"] = material.current["A"] # from gui
 				member["weight_first"] = material.current["weight_A"] # from gui
-				member["ir_first"] = material.current["ir"] # from gui
+				member["ir_y_first"] = material.current["ir_y"] # from gui
+				member["ir_z_first"] = material.current["ir_z"] # from gui
 
 				# results
 				member["axial"] = {}

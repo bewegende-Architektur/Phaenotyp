@@ -1144,8 +1144,7 @@ class phaenotyp_properties(PropertyGroup):
 		profiles: EnumProperty(
 			name = "profiles",
 			description = "Profiles",
-			items = material.dropdown_profiles,
-			update = geometry.set_profile
+			items = material.dropdown_profiles
 			)
 	
 	if "optimization":

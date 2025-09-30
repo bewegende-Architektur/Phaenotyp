@@ -2183,10 +2183,10 @@ def utilization_sectional_standardprofil():
 		member["height"][str(frame)] = member["height"][str(frame)] * faktor_d
 		# neue Trägerbreite:
 		#iyr=0.0014*height**2+0.2791*height-35.215 # Zusammenhang Iy/A in Abhängigkeit der Trägerhöhe laut Profiltabellen
-		if height < 30 # cm
-				member["width"][str(frame)] = member["height"][str(frame)] # Breite bei HEB wie Höhe, bei IPE schmäler
-		else
-				member["width"][str(frame)] = 30 # Breite in cm
+		if height < 30: # cm
+			member["width"][str(frame)] = member["height"][str(frame)] # Breite bei HEB wie Höhe, bei IPE schmäler
+		else:
+			member["width"][str(frame)] = 30 # Breite in cm
 
 		# set miminum size of I-Träger: 100 mm
 		if member["height"][str(frame)] < 10: # 10 cm
