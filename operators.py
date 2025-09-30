@@ -1050,6 +1050,7 @@ def set_member():
 
 				member["Wy"] = {}
 				member["Wz"] = {}
+				member["Wt"] = {}
 				member["WJ"] = {}
 
 				member["long_stress"] = {}

@@ -784,7 +784,7 @@ def interweave_results_pn(frame):
 		
 		profile_type = member["profile_type"]
 			
-		if profile_type == "round_hollow":
+		if profile_type in ["round_hollow", "round_solid"]:
 			A = member["A"][frame]
 			J = member["J"][frame]
 			Do = member["height"][frame]
@@ -834,13 +834,16 @@ def interweave_results_pn(frame):
 			# get max shear stress of shear force of the beam
 			# shear stress is mostly small compared to longitudinal
 			# in common architectural usage and only importand with short beam length
-			member["tau_shear"][frame] = tau_shear  # Schubspannung
-			member["max_tau_shear"][frame] = max(tau_shear)  # max Schubspannung
+			member["tau_shear_y"][frame] = tau_shear  # Schubspannung
+			member["tau_shear_z"][frame] = tau_shear
+			member["max_tau_shear_y"][frame] = max(tau_shear)  # max Schubspannung
+			member["max_tau_shear_z"][frame] = max(tau_shear)  # max Schubspannung
 
 			# Calculation of the torsion stresses
 			# (always positiv)
 			Do = member["height"][frame]
-			Di = Do - member["wall_thickness"][frame]
+			if member["wall_thickness"][frame] == None:	Di = 0
+			else: Di = Do - member["wall_thickness"][frame]
 			s = Do-Di   # WAndstärke
 			Dm = (Do-Di)/2  # mittlere Dicke
 			Wjd = 0.5*pi*Dm*s  # Formel für dünnwandige Rohrquerschnitte nach Preussler
@@ -888,7 +891,8 @@ def interweave_results_pn(frame):
 
 			# check overstress and add 1.05 savety factor
 			safety_factor = 1.05
-			if abs(member["max_tau_shear"][frame]) > safety_factor*member["acceptable_shear"]:
+			# prüft nur y, da gleich wie z
+			if abs(member["max_tau_shear_y"][frame]) > safety_factor*member["acceptable_shear"]:
 				member["overstress"][frame] = True
 
 			if abs(member["max_tau_torsion"][frame]) > safety_factor*member["acceptable_torsion"]:
@@ -1003,7 +1007,6 @@ def interweave_results_pn(frame):
 			member["max_long_stress"][frame] = basics.return_max_diff_to_zero(long_stress) #  -> is working as fitness
 
 			# calculation of the shear stresses from shear force
-
 			tau_shear_y = [] # nun zwei Scherspannungen
 			tau_shear_z = []
 			#shear_h = []
@@ -1011,28 +1014,32 @@ def interweave_results_pn(frame):
 			for i in range(11): # get the stresses at 11 positions and
 				# in y Richrtung
 				# s_y = sqrt(shear_y[i]**2+shear_z[i]**2)
+				s_y = member["shear_y"][frame][i]
+				s_z = member["shear_z"][frame][i]
 				shear_y.append(s_y) # jetzt in y und z richtung
 				shear_z.append(s_z)
 
-				tau_y = abs(1.0 * shear_y/A) # for hollow rectangle, maximale tritt in Mitte auf,
+				tau_y = abs(1.0 * s_y/A) # for hollow rectangle, maximale tritt in Mitte auf,
 				tau_shear_y.append(tau_y)
-				tau_z = abs( 1.0 * shear_z/A) # for hollow rectangle, maximale tritt in Mitte auf wird maßgebend sein, ev die größere für Schubbemessun nehmen
+				tau_z = abs( 1.0 * s_z/A) # for hollow rectangle, maximale tritt in Mitte auf wird maßgebend sein, ev die größere für Schubbemessun nehmen
 				tau_shear_z.append(tau_z)
-			member["shear_y"][frame] = shear_y  # Querkraft y
-			member["shear_z"][frame] = shear_z  # Querkraft x
 
 			# get max shear stress of shear force of the beam
 			# shear stress is mostly small compared to longitudinal, in common architectural usage and only importand with short beam lenght
 			member["tau_shear_y"][frame] = tau_shear_y  # jetzt x und z
 			member["tau_shear_z"][frame] = tau_shear_z # wird maßgebend sein
-			member["max_tau_shear_y"][frame] = max(tau_sheary)
-			member["max_tau_shear_z"][frame] = max(tau_sheary) # wird maßgebend sein, ev nur das größere ausweisen
+			member["max_tau_shear_y"][frame] = max(tau_shear_y)
+			member["max_tau_shear_z"][frame] = max(tau_shear_z) # wird maßgebend sein, ev nur das größere ausweisen
 
 			# Calculation of the torsion stresses
 
 			tau_torsion = []
+			height = member["height"][frame]
+			width = member["width"][frame]
+			t = member["wall_thickness"][frame]
+			
 			for i in range(11): # get the stresses at 11 positions and
-				tau = abs(torque[i]/(2 * (height[frame])-t)*(width[frame]-t))*t  #### Formel nach Wandinger-Torsion, Trägheitsmoment nicht erforderlich, sondern direkt mit Am =mittlere Fläche und Wanddicke errechnet
+				tau = abs(torque[i]/(2 * height-t)*(width-t))*t  #### Formel nach Wandinger-Torsion, Trägheitsmoment nicht erforderlich, sondern direkt mit Am =mittlere Fläche und Wanddicke errechnet
 				# Torsionsspannung in senkrechten und horizontalen Steg gleich, daher nur tau und nicht tau_z und tau_y
 				# muss height und width und t noch übernommen werden?
 				tau_torsion.append(tau)
@@ -1082,19 +1089,26 @@ def interweave_results_pn(frame):
 
 			# check overstress and add 1.05 savety factor
 			safety_factor = 1.05
-			if abs(member["max_tau_shear"][frame]) > safety_factor*member["acceptable_shear"]:
+			if abs(member["max_tau_shear_y"][frame]) > safety_factor*member["acceptable_shear"]:
 				member["overstress"][frame] = True
 
+			if abs(member["max_tau_shear_z"][frame]) > safety_factor*member["acceptable_shear"]:
+				member["overstress"][frame] = True
+				
 			if abs(member["max_tau_torsion"][frame]) > safety_factor*member["acceptable_torsion"]:
 				member["overstress"][frame] = True
-
-			if abs(member["max_sigmav"][frame]) > safety_factor*member["acceptable_sigmav"]:
+			
+			# Ist das korrekt?
+			if abs(member["max_sigma"][frame]) > safety_factor*member["acceptable_sigmav"]:
 				member["overstress"][frame] = True
 
 			# buckling
 			if member["axial"][frame][0] < 0: # nur für Druckstäbe, axial kann nicht flippen?
 				# hier als ir das kleinere von ir_z und ir_y nehmen
-				member["lamda"][frame] = L*buckling_resolution*0.5/member["ir"][frame] # für eingespannte Stäbe ist die Knicklänge 0.5 der Stablänge L, Stablänge muss in cm sein !
+				if member["ir_y"][frame] < member["ir_z"][frame]: ir = member["ir_y"][frame]
+				else: ir = member["ir_z"][frame]
+				
+				member["lamda"][frame] = L*buckling_resolution*0.5/ir # für eingespannte Stäbe ist die Knicklänge 0.5 der Stablänge L, Stablänge muss in cm sein !
 				if member["lamda"][frame] > 20: # für lamda < 20 (kurze Träger) gelten die default-Werte)
 					kn = member["knick_model"]
 					function_to_run = poly1d(polyfit(material.kn_lamda, kn, 6))
@@ -1153,6 +1167,8 @@ def interweave_results_pn(frame):
 
 				# Berechnung der strain_energy für Moment
 				# moment_hq = moment_y[i]**2+moment_z[i]**2
+				moment_y = member["moment_y"][frame][i]
+				moment_z = member["moment_z"][frame][i]
 				me = (moment_y**2 * L/10) / (2 * member["E"] * member["Iy"][frame]) + (moment_z**2 * L/10) / (2 * member["E"] * member["Iz"][frame]) # KD 2025-09_26
 				#  nach https://roymech.org/Useful_Tables/Beams/Strain_Energy.html
 				moment_energy.append(me)
@@ -1163,14 +1179,14 @@ def interweave_results_pn(frame):
 
 			member["strain_energy"][frame] = strain_energy
 			member["normal_energy"][frame] = normalkraft_energy
-			member["moment_energy"][frame] = moment_energie
+			member["moment_energy"][frame] = moment_energy
 
 		if profile_type == "rect_solid":
 			# Schub- und Torsionsspannungen sind anders als bei "rect_solid"
 			# shorten and accessing once
 			A = member["A"][frame]
 			Iy = member["Iy"][frame] # passt das?
-			Iz = member["Iz"][frame]  # passt das
+			Iz = member["Iz"][frame]  # passt das?
 			# buckling
 			member["ir_y"][frame] = sqrt(Iy/A)
 			member["ir_z"][frame] = sqrt(Iz/A)
@@ -1180,6 +1196,21 @@ def interweave_results_pn(frame):
 			# modulus from the moments of area
 			member["Wy"][frame] = member["Iy"][frame]/(height/2)
 			member["Wz"][frame] = member["Iz"][frame]/(width/2)
+			
+			###### Stimmt das?
+			height = float(member["height"][frame])  # kürzere Seite = t
+			width  = float(member["width"][frame])   # längere Seite = b
+
+			# b = längere Seite, t = kürzere Seite
+			b = max(width, height)
+			t = min(width, height)
+
+			# Effektives Wt so, dass tau_max = T / Wt_eff gilt
+			Wt = (b * t**2) / (3.0 + 1.8 * (t/b))
+
+			member["Wt"][frame] = Wt
+			######
+
 			member["Wt"][frame] = member["Wt"][frame]   # neu
 			# calculation of the longitudinal stresses
 			long_stress = []
@@ -1202,17 +1233,14 @@ def interweave_results_pn(frame):
 			tau_shear_z = []
 			for i in range(11): # get the stresses at 11 positions and
 				# in y Richrtung
-				# s_y = sqrt(shear_y[i]**2+shear_z[i]**2)
-				shear_y.append(s_y) # jetzt in y und z richtung
-				shear_z.append(s_z)
+				s_y = member["shear_y"][frame][i]
+				s_z = member["shear_z"][frame][i]
 
-				tau_y = abs(1.5 * shear_y/A) # for solid rectangle, maximale tritt in Mitte auf
+				tau_y = abs(1.5 * s_y/A) # for solid rectangle, maximale tritt in Mitte auf
 				tau_shear_y.append(tau_y)
-				tau_z = abs(1.5 * shear_z/A) # for solid rectangle, maximale tritt in Mitte auf
+				tau_z = abs(1.5 * s_z/A) # for solid rectangle, maximale tritt in Mitte auf
 				tau_shear_z.append(tau_z)
 			
-			member["shear_y"][frame] = shear_y  # Querkraft y
-			member["shear_z"][frame] = shear_z  # Querkraft x
 			# get max shear stress of shear force of the beam
 			# shear stress is mostly small compared to longitudinal, in common architectural usage and only importand with short beam lenght
 			member["tau_shear_y"][frame] = tau_shear_y  # jetzt y und z
@@ -1272,13 +1300,17 @@ def interweave_results_pn(frame):
 
 			# check overstress and add 1.05 savety factor
 			safety_factor = 1.05
-			if abs(member["max_tau_shear"][frame]) > safety_factor*member["acceptable_shear"]:
+			if abs(member["max_tau_shear_y"][frame]) > safety_factor*member["acceptable_shear"]:
 				member["overstress"][frame] = True
 
+			if abs(member["max_tau_shear_z"][frame]) > safety_factor*member["acceptable_shear"]:
+				member["overstress"][frame] = True
+				
 			if abs(member["max_tau_torsion"][frame]) > safety_factor*member["acceptable_torsion"]:
 				member["overstress"][frame] = True
-
-			if abs(member["max_sigmav"][frame]) > safety_factor*member["acceptable_sigmav"]:
+			
+			# stimmt hier simga?
+			if abs(member["max_sigma"][frame]) > safety_factor*member["acceptable_sigmav"]:
 				member["overstress"][frame] = True
 
 			# buckling
@@ -1343,6 +1375,9 @@ def interweave_results_pn(frame):
 
 				# Berechnung der strain_energy für Moment
 				# moment_hq = moment_y[i]**2+moment_z[i]**2
+				moment_y = member["moment_y"][frame][i]
+				moment_z = member["moment_z"][frame][i]
+				
 				me = (moment_y**2 * L/10) / (2 * member["E"] * member["Iy"][frame]) + (moment_z**2 * L/10) / (2 * member["E"] * member["Iz"][frame]) # KD 2025-09_26
 				#  nach https://roymech.org/Useful_Tables/Beams/Strain_Energy.html
 				moment_energy.append(me)
@@ -1392,10 +1427,6 @@ def interweave_results_pn(frame):
 			# (can be positive or negative)
 			member["long_stress"][frame] = long_stress
 			member["max_long_stress"][frame] = basics.return_max_diff_to_zero(long_stress) #  -> is working as fitness
-
-			# calculation of the shear stresses from shear force
-			shear_y = []
-			shear_z = []
 			
 			tau_shear_y = []
 			tau_shear_z = []
@@ -1404,20 +1435,11 @@ def interweave_results_pn(frame):
 			for i in range(11): # get the stresses at 11 positions and
 				s_y = member["shear_y"][frame][i]
 				s_z = member["shear_z"][frame][i]
-				
-				# in y Richrtung
-				# s_y = sqrt(shear_y[i]**2+shear_z[i]**2)
-				shear_y.append(s_y) # jetzt in y und z richtung
-				shear_z.append(s_z)
 
 				tau_y = abs(1.0 * s_y/A) # for I-Traeger maximale tritt in Steg auf, wegen Horizontallwirkung kaum massgebend
 				tau_shear_y.append(tau_y)
 				tau_z = abs(1.0 * s_z/A) # ev noch korrigieren,
 				tau_shear_z.append(tau_z)
-			
-			member["shear_y"][frame] = shear_y  # Querkraft y
-			member["shear_z"][frame] = shear_z  # Querkraft x
-
 
 			# get max shear stress of shear force of the beam
 			# shear stress is mostly small compared to longitudinal, in common architectural usage and only importand with short beam lenght
@@ -1497,14 +1519,17 @@ def interweave_results_pn(frame):
 				
 			if abs(member["max_tau_torsion"][frame]) > safety_factor*member["acceptable_torsion"]:
 				member["overstress"][frame] = True
-
-			if abs(member["max_sigmav"][frame]) > safety_factor*member["acceptable_sigmav"]:
+			
+			# ist sigma hier richtig?
+			if abs(member["max_sigma"][frame]) > safety_factor*member["acceptable_sigmav"]:
 				member["overstress"][frame] = True
-
+				
 			# buckling
 			if member["axial"][frame][0] < 0: # nur für Druckstäbe, axial kann nicht flippen?
 				# hier als ir das kleinere von ir_z und ir_y nehmen
-				member["lamda"][frame] = L*buckling_resolution*0.5/member["ir"][frame] # für eingespannte Stäbe ist die Knicklänge 0.5 der Stablänge L, Stablänge muss in cm sein !
+				if member["ir_y"][frame] < member["ir_z"][frame]: ir = member["ir_y"][frame]
+				else: ir = member["ir_z"][frame]
+				member["lamda"][frame] = L*buckling_resolution*0.5/ir # für eingespannte Stäbe ist die Knicklänge 0.5 der Stablänge L, Stablänge muss in cm sein !
 				if member["lamda"][frame] > 20: # für lamda < 20 (kurze Träger) gelten die default-Werte)
 					kn = member["knick_model"]
 					function_to_run = poly1d(polyfit(material.kn_lamda, kn, 6))
@@ -1563,7 +1588,10 @@ def interweave_results_pn(frame):
 
 				# Berechnung der strain_energy für Moment
 				# moment_hq = moment_y[i]**2+moment_z[i]**2
+				moment_y = member["moment_y"][frame][i]
+				moment_z = member["moment_z"][frame][i]
 				me = (moment_y**2 * L/10) / (2 * member["E"] * member["Iy"][frame]) + (moment_z**2 * L/10) / (2 * member["E"] * member["Iz"][frame]) # KD 2025-09_26
+				
 				#  nach https://roymech.org/Useful_Tables/Beams/Strain_Energy.html
 				moment_energy.append(me)
 
@@ -1631,10 +1659,6 @@ def interweave_results_pn(frame):
 		member["deflection"][frame] = deflection
 
 	nodes = model.nodes
-
-
-########################################################################################################
-
 
 	for id in quads:
 		quad = quads[id]
