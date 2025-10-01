@@ -1370,7 +1370,7 @@ def update_geometry_post():
 					# if utilization in viz
 					if phaenotyp.forces_pn == "utilization":
 						force = result[str(frame)] - 1
-						c = rainbow(force, overstress, viz_boundaries_members, viz_scale)
+						color = rainbow(force, overstress, viz_boundaries_members, viz_scale)
 
 					# for 11 entries
 					else:

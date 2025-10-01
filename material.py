@@ -157,11 +157,6 @@ def update():
 		current["Iy"] = (width * height**3 - width_i * height_i**3) / 12
 		current["Iz"] = (height * width**3 - height_i * width_i**3) / 12
 
-		# Näherung für Torsionsträgheitsmoment eines rechteckigen Hohlprofils
-		# Für t << b,h:
-		# current["J"] = (2 * t) * (height* depth - height_i * depth_i) / 3
-		# current["J"] = (2 * t * (height - t)**2 * (width - t)**2) / ((width - t) + (height - t))  # laut https://wandinger.userweb.mwn.de/TM2/v5_2.pdf
-		# wird aber nicht gebraucht
 		# Querschnittsfläche
 		current["A"] = height * width - height_i * width_i
 
@@ -179,14 +174,6 @@ def update():
 		# Flächenträgheitsmomente korrigiert 2025-09-26
 		current["Iy"] = (width * height**3) / 12  # um y-Achse
 		current["Iz"] = (height * width**3) / 12  # um z-Achse
-
-		# Torsionswiderstandsmoment (Näherung für rechteckigen Querschnitt)
-		'''
-		c1 = (1 - 0.63/(height/width) + 0.052/(height/width)**5)/3   # nach Torsion nicht kreisförmiger Querschnitte/Springer Vergleichsspannung
-		c2 = 1-0.65/(1+(height/width)**3)
-		current["Wt"] = c1*height*width**2/c2 # hier nur Torsionswiderstandsmoment und nicht Torsionsträgheitsmoment
-		'''
-		#current["J"] = beta * height * depth**3 # korrigiert KD 2025-08-03
 
 		# Querschnittsfläche
 		current["A"] = height * width
@@ -216,11 +203,6 @@ def update():
 		# von Profil übertragen
 		current["height"] = current_profile[2]*0.1   # Breite (z-Richtung) mm zu cm
 		current["width"] = current_profile[3]*0.1    # Höhe (y-Richtung) mm zu cm
-
-# for quads, wie bei Stäbe
-# knconcrete = [16.5,15.8,15.3,14.8,14.2,13.5,12.7,11.8,10.7,9.5,8.2,6.9,5.9,5.1,4.4,3.9,3.4,3.1,2.7,2.5,2.2,2,1.9,1.7,1.6]
-# knmasonry = [16.5,15.8,15.3,14.8,14.2,13.5,12.7,11.8,10.7,9.5,8.2,6.9,5.9,5.1,4.4,3.9,3.4,3.1,2.7,2.5,2.2,2,1.9,1.7,1.6]
-# kncustom = [16.5,15.8,15.3,14.8,14.2,13.5,12.7,11.8,10.7,9.5,8.2,6.9,5.9,5.1,4.4,3.9,3.4,3.1,2.7,2.5,2.2,2,1.9,1.7,1.6]
 
 library_quads = [
 	# name, name in dropdown, E, G, nu, rho, acceptable_sigma, acceptable_shear, acceptable_sigmav, knick_model

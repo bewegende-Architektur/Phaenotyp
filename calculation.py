@@ -781,14 +781,19 @@ def interweave_results_pn(frame):
 		member["shear_y"][frame] = shear_y
 		member["shear_z"][frame] = shear_z
 		member["torque"][frame] = torque
-
+		
+		# access variables once
 		profile_type = member["profile_type"]
-
+		height = member["height"][frame]
+		width = member["width"][frame]
+		wall_thickness = member["wall_thickness"][frame]
+		A = member["A"][frame]
+		J = member["J"][frame]
+		Do = member["height"][frame]
+		Iy = member["Iy"][frame]
+		Iz = member["Iz"][frame]
+		
 		if profile_type in ["round_hollow", "round_solid"]:
-			A = member["A"][frame]
-			J = member["J"][frame]
-			Do = member["height"][frame]
-
 			# buckling
 			member["ir_y"][frame] = sqrt(J/A) # für runde Querschnitte, in  cm
 			member["ir_z"][frame] = sqrt(J/A) # für runde Querschnitte, in  cm
@@ -801,7 +806,7 @@ def interweave_results_pn(frame):
 			member["Wy"][frame] = member["Iy"][frame]/(Do/2)
 
 			# polar modulus of torsion
-			member["WJ"][frame] = J/(Do/2)
+			WJ = J/(Do/2)
 
 			# calculation of the longitudinal stresses
 			long_stress = []
@@ -821,15 +826,11 @@ def interweave_results_pn(frame):
 			# calculation of the shear stresses from shear force
 			# (always positive)
 			tau_shear = []
-			#shear_h = []    # Querkraft in Hauptrichung
+
 			for i in range(11): # get the stresses at 11 positions and
 				s_h = sqrt(shear_y[i]**2+shear_z[i]**2)
-				#shear_h.append(s_h)
-
 				tau = 1.333 * s_h/A # for pipes
 				tau_shear.append(tau) # Schubspannung
-
-			#member["shear_h"][frame] = shear_h  # Querkraft
 
 			# get max shear stress of shear force of the beam
 			# shear stress is mostly small compared to longitudinal
@@ -841,18 +842,20 @@ def interweave_results_pn(frame):
 
 			# Calculation of the torsion stresses
 			# (always positiv)
-			Do = member["height"][frame]
-			if member["wall_thickness"][frame] == None:	Di = 0
-			else: Di = Do - member["wall_thickness"][frame]
-			s = Do-Di   # WAndstärke
-			Dm = (Do-Di)/2  # mittlere Dicke
-			Wjd = 0.5*pi*Dm*s  # Formel für dünnwandige Rohrquerschnitte nach Preussler
-			# kann man aber auch schon in Materil.py geben
+			Do = height
+			if wall_thickness == None:	Di = 0
+			else: Di = Do - wall_thickness
+			
+			s = Do - Di # Wandstärke
+			Dm = (Do - Di) / 2  # mittlere Dicke
+			Wjd = 0.5 * pi * Dm * s  # Formel für dünnwandige Rohrquerschnitte nach Preussler
+
 			tau_torsion = []
 			if Di/Do < 0.85:  # für Vollquerschnitte wie gehabt, gilt auch für dickwandige Rohrquerschnitte
 				for i in range(11): # get the stresses at 11 positions and
-					tau = abs(torque[i]/member["WJ"][frame])
+					tau = abs(torque[i]/WJ)
 					tau_torsion.append(tau)
+			
 			else: # für dünnwandige Hohlquerschnitte neue Formel
 				for i in range(11): # get the stresses at 11 positions and
 					tau = abs(torque[i]/Wjd)
@@ -863,7 +866,7 @@ def interweave_results_pn(frame):
 			member["max_tau_torsion"][frame] = max(tau_torsion)  # max Torsionsspannungen
 
 			# torsion stress is mostly small compared to longitudinal
-					# combine shear and torque
+			# combine shear and torque
 			# (always positiv)
 			sum_tau = []  # Schub und Torsion überlagerbar
 			for i in range(11): # get the stresses at 11 positions and
@@ -873,16 +876,6 @@ def interweave_results_pn(frame):
 			member["sum_tau"][frame] = sum_tau
 			member["max_sum_tau"][frame] = max(sum_tau)
 
-			# Vergleichsspannung nach Mises, nicht mehr, da an verschiedenen Stellen
-			#sigmav = []
-			#for i in range(11): # get the stresses at 11 positions and
-				#sv = sqrt(long_stress[i]**2 + 3*sum_tau[i]**2)
-				#sigmav.append(sv)
-
-			#member["sigmav"][frame] = sigmav
-			#member["max_sigmav"][frame] = max(sigmav)
-			# check out: http://www.bs-wiki.de/mediawiki/index.php?title=Festigkeitsberechnung
-
 			member["sigma"][frame] = member["long_stress"][frame]
 			member["max_sigma"][frame] = member["max_long_stress"][frame]
 
@@ -891,6 +884,7 @@ def interweave_results_pn(frame):
 
 			# check overstress and add 1.05 savety factor
 			safety_factor = 1.05
+			
 			# prüft nur y, da gleich wie z
 			if abs(member["max_tau_shear_y"][frame]) > safety_factor*member["acceptable_shear"]:
 				member["overstress"][frame] = True
@@ -974,15 +968,11 @@ def interweave_results_pn(frame):
 			member["normal_energy"][frame] = normalkraft_energy
 			member["moment_energy"][frame] = moment_energy
 
-		if profile_type == "rect_hollow":
-			# Nur die Schub- und Torsionsspannungen sind anders als bei "rect_solid"
-			# shorten and accessing once
-			A = member["A"][frame]
-			Iy = member["Iy"][frame] # passt das?
-			Iz = member["Iz"][frame] # passt das
+		if profile_type == "rect_hollow":			
 			# buckling
 			member["ir_y"][frame] = sqrt(Iy/A)
 			member["ir_z"][frame] = sqrt(Iz/A)
+			
 			# bucklng resolution
 			buckling_resolution = member["buckling_resolution"]
 
@@ -1009,16 +999,12 @@ def interweave_results_pn(frame):
 			# calculation of the shear stresses from shear force
 			tau_shear_y = [] # nun zwei Scherspannungen
 			tau_shear_z = []
-			#shear_h = []
 
 			for i in range(11): # get the stresses at 11 positions and
 				# in y Richrtung
-				# s_y = sqrt(shear_y[i]**2+shear_z[i]**2)
 				s_y = member["shear_y"][frame][i]
 				s_z = member["shear_z"][frame][i]
-				shear_y.append(s_y) # jetzt in y und z richtung
-				shear_z.append(s_z)
-
+				
 				tau_y = abs(1.0 * s_y/A) # for hollow rectangle, maximale tritt in Mitte auf,
 				tau_shear_y.append(tau_y)
 				tau_z = abs( 1.0 * s_z/A) # for hollow rectangle, maximale tritt in Mitte auf wird maßgebend sein, ev die größere für Schubbemessun nehmen
@@ -1032,14 +1018,10 @@ def interweave_results_pn(frame):
 			member["max_tau_shear_z"][frame] = max(tau_shear_z) # wird maßgebend sein, ev nur das größere ausweisen
 
 			# Calculation of the torsion stresses
-
 			tau_torsion = []
-			height = member["height"][frame]
-			width = member["width"][frame]
-			t = member["wall_thickness"][frame]
 
 			for i in range(11): # get the stresses at 11 positions and
-				tau = abs(torque[i]/(2 * height-t)*(width-t))*t  #### Formel nach Wandinger-Torsion, Trägheitsmoment nicht erforderlich, sondern direkt mit Am =mittlere Fläche und Wanddicke errechnet
+				tau = abs(torque[i]/(2 * height-wall_thickness)*(width-t))*wall_thickness  #### Formel nach Wandinger-Torsion, Trägheitsmoment nicht erforderlich, sondern direkt mit Am =mittlere Fläche und Wanddicke errechnet
 				# Torsionsspannung in senkrechten und horizontalen Steg gleich, daher nur tau und nicht tau_z und tau_y
 				# muss height und width und t noch übernommen werden?
 				tau_torsion.append(tau)
@@ -1050,7 +1032,6 @@ def interweave_results_pn(frame):
 
 			# calculation of the shear stresses from shear force and torsion
 			# (always positiv)
-
 			sum_tau = []  # Schub und Torsion überlagerbar
 			for i in range(11): # get the stresses at 11 positions and
 				tau = tau_shear_z[i] + tau_torsion[i] # nur Schub aus Qz und Torsionsspannung an der Längsseite überlagert, da maßgebden
@@ -1058,28 +1039,7 @@ def interweave_results_pn(frame):
 
 			member["sum_tau"][frame] = sum_tau
 			member["max_sum_tau"][frame] = max(sum_tau)
-			#sum_tau_y = []
-			#sum_tau_z = []
-			#for i in range(11): # get the stresses at 11 positions and
-				#tau_y = tau_shear_y[i] + tau_torsion[i]
-				#sum_tau_y.append(tau)
-				#tau_z = tau_shear_z[i] + tau_torsion[i] # meist größer wegen senkrechter Last
-				#sum_tau_z.append(tau)
-
-			#member["sum_tau_y"][frame] = sum_tau_y
-			#member["sum_tau_z"][frame] = sum_tau_z  #
-			#member["max_sum_tau_y"][frame] = max(sum_tau_y)
-			#member["max_sum_tau_z"][frame] = max(sum_tau_z) # meist größer wegen senkrechter Last
-
-			# vergleichsspannung nach von misess, nicht, da an verschiedenen Stellen
-
-			#sigmav = []
-			#for i in range(11): # get the stresses at 11 positions and
-				#sv = sqrt(long_stress[i]**2 + 3*sum_tau_z[i]**2)  # vorläufig hier nur die durch z-Querkräfte verurachte Scherspannung genommen
-				#sigmav.append(sv)
-
-			#member["sigmav"][frame] = sigmav
-			#member["max_sigmav"][frame] = max(sigmav)
+			
 			# check out: http://www.bs-wiki.de/mediawiki/index.php?title=Festigkeitsberechnung
 			member["sigma"][frame] = member["long_stress"][frame]
 			member["max_sigma"][frame] = member["max_long_stress"][frame]
@@ -1126,7 +1086,6 @@ def interweave_results_pn(frame):
 			else:
 				member["acceptable_sigma_buckling"][frame] = member["acceptable_sigma"]
 				member["lamda"][frame] = None # to avoid missing KeyError
-
 
 			if abs(member["max_sigma"][frame]) > safety_factor*member["acceptable_sigma"]:
 				member["overstress"][frame] = True
@@ -1182,11 +1141,6 @@ def interweave_results_pn(frame):
 			member["moment_energy"][frame] = moment_energy
 
 		if profile_type == "rect_solid":
-			# Schub- und Torsionsspannungen sind anders als bei "rect_solid"
-			# shorten and accessing once
-			A = member["A"][frame]
-			Iy = member["Iy"][frame] # passt das?
-			Iz = member["Iz"][frame]  # passt das?
 			# buckling
 			member["ir_y"][frame] = sqrt(Iy/A)
 			member["ir_z"][frame] = sqrt(Iz/A)
@@ -1197,10 +1151,6 @@ def interweave_results_pn(frame):
 			member["Wy"][frame] = member["Iy"][frame]/(height/2)
 			member["Wz"][frame] = member["Iz"][frame]/(width/2)
 
-			###### Stimmt das?
-			height = member["height"][frame]  # kürzere Seite = t
-			width  = member["width"][frame]   # längere Seite = b
-
 			# b = längere Seite, t = kürzere Seite
 			b = max(width, height)
 			t = min(width, height)
@@ -1208,11 +1158,7 @@ def interweave_results_pn(frame):
 			c1 = (1 - 0.63/(height/width) + 0.052/(height/width)**5)/3   # nach Torsion nicht kreisförmiger Querschnitte/Springer Vergleichsspannung
 			c2 = 1-0.65/(1+(height/width)**3)
 			Wt = c1*height*width**2/c2
-
-			#member["Wt"][frame] = Wt
-			######
-
-			#member["Wt"][frame] = member["Wt"][frame]   # neu
+			
 			# calculation of the longitudinal stresses
 			long_stress = []
 			for i in range(11): # get the stresses at 11 positions and
@@ -1250,7 +1196,6 @@ def interweave_results_pn(frame):
 			member["max_tau_shear_z"][frame] = max(tau_shear_z) # jetzt y und z, ev nur das größere ausweisen
 
 			# Calculation of the torsion stresses
-
 			tau_torsion = []
 			for i in range(11): # get the stresses at 11 positions and
 				tau = abs(torque[i]/Wt) # die größte Torsionsspannung ist am Rand der längeren Seite, nur diese wird berechnet
@@ -1259,21 +1204,7 @@ def interweave_results_pn(frame):
 			# get max torsion stress of the beam
 			member["tau_torsion"][frame] = tau_torsion
 			member["max_tau_torsion"][frame] = max(tau_torsion)
-
-			# calculation of the shear stresses from shear force and torsion
-			# (always positiv)
-			#sum_tau_y = []
-			#sum_tau_z = []
-			#for i in range(11): # get the stresses at 11 positions and
-				#tau_y = tau_shear_y[i] + tau_torsion[i]
-				#sum_tau_y.append(tau)
-				#tau_z = tau_shear_z[i] + tau_torsion[i] # meist größer wegen senkrechter Last und stehenden Quuerschnitt
-				#sum_tau_z.append(tau)
-			#member["sum_tau_y"][frame] = sum_tau_y
-			#member["sum_tau_z"][frame] = sum_tau_z # meist größer wegen senkrechter Last
-			#member["max_sum_tau_y"][frame] = max(sum_tau_y)
-			#member["max_sum_tau_z"][frame] = max(sum_tau_z) # meist größer wegen senkrechter Last
-
+			
 			sum_tau = []  # Schub und Torsion überlagerbar
 			for i in range(11): # get the stresses at 11 positions and
 				tau = tau_shear_z[i] + tau_torsion[i] # nur Schub aus Qz und Torsionsspannung an der Längsseite überlagert, da maßgebden
@@ -1281,18 +1212,7 @@ def interweave_results_pn(frame):
 
 			member["sum_tau"][frame] = sum_tau
 			member["max_sum_tau"][frame] = max(sum_tau)
-
-
-			# vergleichsspannung nach von misess, weggelassen, da nicht an gleicher STelle
-			#sigmav = []
-			#for i in range(11): # get the stresses at 11 positions and
-				#sv = sqrt(long_stress[i]**2 + 3*sum_tau_z[i]**2)  # hier nur die durch z-Querkräfte verurachte Scherspannung genommen
-				#sigmav.append(sv)
-
-			#member["sigmav"][frame] = sigmav
-			#member["max_sigmav"][frame] = max(sigmav)
-			# check out: http://www.bs-wiki.de/mediawiki/index.php?title=Festigkeitsberechnung
-
+			
 			member["sigma"][frame] = member["long_stress"][frame]
 			member["max_sigma"][frame] = member["max_long_stress"][frame]
 
@@ -1309,8 +1229,7 @@ def interweave_results_pn(frame):
 
 			if abs(member["max_tau_torsion"][frame]) > safety_factor*member["acceptable_torsion"]:
 				member["overstress"][frame] = True
-
-			# stimmt hier simga?
+				
 			if abs(member["max_sigma"][frame]) > safety_factor*member["acceptable_sigma"]:
 				member["overstress"][frame] = True
 
@@ -1338,8 +1257,7 @@ def interweave_results_pn(frame):
 			else:
 				member["acceptable_sigma_buckling"][frame] = member["acceptable_sigma"]
 				member["lamda"][frame] = None # to avoid missing KeyError
-
-
+				
 			if abs(member["max_sigma"][frame]) > safety_factor*member["acceptable_sigma"]:
 				member["overstress"][frame] = True
 
@@ -1395,27 +1313,18 @@ def interweave_results_pn(frame):
 			member["moment_energy"][frame] = moment_energy
 
 		if profile_type == "standard_profile":
-			# Schub- und Torsionsspannungen sind anders als bei "rect_solid"
-			# shorten and accessing once
-			A = member["A"][frame] # passt das
-			Iy = member["Iy"][frame] # passt das?
-			Iz = member["Iz"][frame]  # passt das
 			# noch Höhe, Breite und Flanschdicke notwendig
 			# Torsionsträgheitsmoment nicht notwendig, da direkt mit Formel berechnet
 			# buckling
 			member["ir_y"][frame] = sqrt(Iy/A)
 			member["ir_z"][frame] = sqrt(Iz/A)
+			
 			# bucklng resolution
 			buckling_resolution = member["buckling_resolution"]
 
 			# modulus from the moments of area
-
-			height = member["height"][frame]
-			width = member["width"][frame]
-
 			member["Wy"][frame] = member["Iy"][frame]/(height/2)
 			member["Wz"][frame] = member["Iz"][frame]/(width/2)
-			# gebraucht wird Höhe, Breite  und Stegdicke
 
 			# calculation of the longitudinal stresses
 			long_stress = []
@@ -1434,7 +1343,6 @@ def interweave_results_pn(frame):
 
 			tau_shear_y = []
 			tau_shear_z = []
-			#shear_h = []
 
 			for i in range(11): # get the stresses at 11 positions and
 				s_y = member["shear_y"][frame][i]
@@ -1453,7 +1361,6 @@ def interweave_results_pn(frame):
 			member["max_tau_shear_z"][frame] = max(tau_shear_z) # ev nur dieses ausweisen
 
 			# Calculation of the torsion stresses
-
 			tau_torsion = []
 
 			current_profile = None
@@ -1483,28 +1390,6 @@ def interweave_results_pn(frame):
 
 			member["sum_tau"][frame] = sum_tau
 			member["max_sum_tau"][frame] = max(sum_tau)
-
-			#sum_tau_y = []
-			#sum_tau_z = []
-			#for i in range(11): # get the stresses at 11 positions and
-				#tau_y = tau_shear_y[i] #+ tau_torsion[i] keine Überlagerung da andere Stelle
-				#sum_tau_y.append(tau)
-				#tau_z = tau_shear_z[i] #+ tau_torsion[i]
-				#sum_tau_z.append(tau)
-			#member["sum_tau_y"][frame] = sum_tau_y
-			#member["sum_tau_z"][frame] = sum_tau_z # meist größer wegen senkrechter Last
-			#member["max_sum_tau_y"][frame] = max(sum_tau_y)
-			#member["max_sum_tau_z"][frame] = max(sum_tau_z) # meist größer wegen senkrechter Last
-
-			# vergleichsspannung nach von misess, weggelassen, da nicht an gleicher Stelle
-			#sigmav = []
-			#for i in range(11): # get the stresses at 11 positions and
-				#sv = sqrt(long_stress[i]**2 + 3*sum_tau_z[i]**2)  # vorläufig hier nur die durch z-Querkräfte verurachte Scherspannung genommen
-				#sigmav.append(sv)
-
-			#member["sigmav"][frame] = sigmav
-			#member["max_sigmav"][frame] = max(sigmav)
-			# check out: http://www.bs-wiki.de/mediawiki/index.php?title=Festigkeitsberechnung
 
 			member["sigma"][frame] = member["long_stress"][frame]
 			member["max_sigma"][frame] = member["max_long_stress"][frame]
@@ -2201,7 +2086,7 @@ def utilization_sectional_standardprofil():
 					new_profile = p_t
 					break
 
-		if new_profile == None:
+		#if new_profile == None:
 			# wenn zu groß:
 			# wählt nächsten Typ
 			# wählt größtes Profil der Kategorie IPE, HEA ...

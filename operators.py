@@ -1043,28 +1043,23 @@ def set_member():
 				member["moment_h"] = {}
 				member["shear_y"] = {}
 				member["shear_z"] = {}
-				#member["shear_h"] = {}
 				member["torque"] = {}
 				member["sigma"] = {}
 
 				member["Wy"] = {}
 				member["Wz"] = {}
-				#member["Wt"] = {}
-				#member["WJ"] = {}
 
 				member["long_stress"] = {}
 				member["tau_shear_y"] = {}
 				member["tau_shear_z"] = {}
 				member["tau_torsion"] = {}
 				member["sum_tau"] = {}
-				#member["sigmav"] = {}
 				member["sigma"] = {}
 				member["max_long_stress"] = {}
 				member["max_tau_shear_y"] = {}
 				member["max_tau_shear_z"] = {}
 				member["max_tau_torsion"] = {}
 				member["max_sum_tau"] = {}
-				#member["max_sigmav"] = {}
 				member["max_sigma"] = {}
 				member["acceptable_sigma_buckling"] = {}
 				member["lamda"] = {}
