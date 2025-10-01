@@ -181,10 +181,11 @@ def update():
 		current["Iz"] = (height * width**3) / 12  # um z-Achse
 
 		# Torsionswiderstandsmoment (Näherung für rechteckigen Querschnitt)
-
+		'''
 		c1 = (1 - 0.63/(height/width) + 0.052/(height/width)**5)/3   # nach Torsion nicht kreisförmiger Querschnitte/Springer Vergleichsspannung
 		c2 = 1-0.65/(1+(height/width)**3)
 		current["Wt"] = c1*height*width**2/c2 # hier nur Torsionswiderstandsmoment und nicht Torsionsträgheitsmoment
+		'''
 		#current["J"] = beta * height * depth**3 # korrigiert KD 2025-08-03
 
 		# Querschnittsfläche
@@ -211,7 +212,7 @@ def update():
 		current["weight_A"] = current["A"] * current["rho"] * 0.1 # Gewicht vom Material
 		current["ir_y"] = sqrt(current["Iy"] / current["A"])
 		current["ir_z"] = sqrt(current["Iz"] / current["A"])
-		
+
 		# von Profil übertragen
 		current["height"] = current_profile[2]*0.1   # Breite (z-Richtung) mm zu cm
 		current["width"] = current_profile[3]*0.1    # Höhe (y-Richtung) mm zu cm
