@@ -1226,20 +1226,20 @@ class phaenotyp_properties(PropertyGroup):
 			description = "Key for selection",
 			items = [
 						("id", "Id", ""),
-						("Do", "Do", ""),
-						("Di", "Di", ""),
-						("weight", "weight", ""),
+						("height", "Height", ""),
+						("width", "Width", ""),
+						("weight", "Weight", ""),
 						("length", "Length", ""),
 						("max_long_stress", "Max long stress", ""),
-						("max_tau_shear", "Max tau shear", ""),
+						("max_tau_shear_y", "Max tau shear y", ""),
+						("max_tau_shear_z", "Max tau shear z", ""),
 						("max_tau_torsion", "Max tau torsion", ""),
 						("max_sum_tau", "Max sum tau", ""),
-						("max_sigmav", "Max sigmav", ""),
 						("max_sigma", "Max sigma", ""),
 						("max_lever_arm", "Max lever arm", ""),
 						("utilization", "Utilization", "")
 					],
-			default = "Do"
+			default = "height"
 			)
 
 		selection_key_quads: EnumProperty(
