@@ -541,7 +541,6 @@ def append_head(file, report_type, name, unit):
 		file.write("<a href='moment_h.html'>moment_h</a> |\n")
 		file.write("<a href='shear_y.html'>shear_y</a> |\n")
 		file.write("<a href='shear_z.html'>shear_z</a> |\n")
-		file.write("<a href='shear_h.html'>shear_h</a> |\n")
 		file.write("<a href='torque.html'>torque</a> |\n")
 		file.write("<a href='sigma.html'>sigma</a>\n")
 		file.write("<br>\n")
@@ -605,18 +604,18 @@ def append_head(file, report_type, name, unit):
 
 	elif report_type == "frames":
 		file.write("<a href='max_sigma.html'>max_sigma</a> |\n")
-		file.write("<a href='max_tau_shear.html'>max_tau_shear</a> |\n")
+		file.write("<a href='max_tau_shear_y.html'>max_tau_shear_y</a> |\n")
+		file.write("<a href='max_tau_shear_z.html'>max_tau_shear_z</a> |\n")
 		file.write("<a href='max_tau_torsion.html'>max_tau_torsion</a> |\n")
-		file.write("<a href='max_sum_tau.html'>max_sum_tau</a> |\n")
-		file.write("<a href='max_sigmav.html'>max_sigmav</a>\n")
+		file.write("<a href='max_sum_tau.html'>max_sum_tau</a>\n")
 		file.write("<br>\n")
 
 		file.write("<a href='utilization.html'>utilization</a> |\n")
 		file.write("<a href='acceptable_sigma_buckling.html'>acceptable_sigma_buckling</a>\n")
 		file.write("<br>\n")
 		
-		file.write("<a href='Do.html'>Do</a> |\n")
-		file.write("<a href='Di.html'>Di</a> |\n")		
+		file.write("<a href='height.html'>height</a> |\n")
+		file.write("<a href='width.html'>width</a> |\n")		
 		file.write("<a href='weight.html'>weight</a> |\n")
 		file.write("<a href='length.html'>length</a>\n")
 
@@ -1175,7 +1174,6 @@ def report_members(directory, frame):
 	force_types["moment_h"] = [11, "kNcm"]
 	force_types["shear_y"] = [11, "kN"]
 	force_types["shear_z"] = [11, "kN"]
-	force_types["shear_h"] = [11, "kN"]
 	force_types["torque"] = [11, "kNcm"]
 	force_types["sigma"] = [11, "kN/cm²"]
 
@@ -1228,11 +1226,9 @@ def report_frames(directory, start, end):
 	force_types["max_tau_shear_z"] = [1, "kN/cm²"]
 	force_types["max_tau_torsion"] = [1, "kN/cm²"]
 	force_types["max_sum_tau"] = [1, "kN/cm²"]
-	force_types["max_sigmav"] = [1, "kN/cm²"]
 
 	force_types["height"] = [1, "cm"]
 	force_types["width"] = [1, "cm"]
-	force_types["wall_thickness"] = [1, "cm"]
 	force_types["utilization"] = [1, ""]
 	force_types["acceptable_sigma_buckling"] = [1, "kN/cm²"]
 
