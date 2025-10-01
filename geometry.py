@@ -1121,9 +1121,11 @@ def update_geometry_pre():
 		# or the user changed the frame during optimization
 		if str(frame) not in member["height"]:
 			member["height"][str(frame)] = member["height_first"]
-			member["width"][str(frame)] = member["height"][str(frame)]
-			member["wall_thickness"][str(frame)] = member["wall_thickness"][str(frame)]
-
+			member["width"][str(frame)] = member["width_first"]
+			member["wall_thickness"][str(frame)] = member["wall_thickness_first"]
+			member["profile"][str(frame)] = member["profile_first"]
+			member["angle"][str(frame)] = member["angle_first"]
+				
 		# update material (like updated when passed from gui in material.py)
 		profile_type = member["profile_type"]
 		
