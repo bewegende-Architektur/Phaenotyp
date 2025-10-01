@@ -1035,7 +1035,7 @@ def interweave_results_pn(frame):
 			sum_tau = []  # Schub und Torsion überlagerbar
 			for i in range(11): # get the stresses at 11 positions and
 				tau = tau_shear_z[i] + tau_torsion[i] # nur Schub aus Qz und Torsionsspannung an der Längsseite überlagert, da maßgebden
-			sum_tau.append(tau)
+				sum_tau.append(tau)
 
 			member["sum_tau"][frame] = sum_tau
 			member["max_sum_tau"][frame] = max(sum_tau)

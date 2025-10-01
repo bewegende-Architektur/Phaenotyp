@@ -2555,10 +2555,20 @@ def text():
 								# get frame
 								frame = bpy.context.scene.frame_current
 
-								# get Do and Di
+								# get geometry
+								text = "member_type: " + member["member_type"]
+								data_temp.append(text)
+
+								text = "profile_type: " + member["profile_type"]
+								data_temp.append(text)
+								
+								if member["profile"][str(frame)]:
+									text = "profile: " + member["profile"][str(frame)]
+									data_temp.append(text)
+																								
 								text = "height: " + str(round(member["height"][str(frame)], 3)) + " cm"
 								data_temp.append(text)
-								text = "widht: " + str(round(member["width"][str(frame)], 3)) + " cm"
+								text = "width: " + str(round(member["width"][str(frame)], 3)) + " cm"
 								data_temp.append(text)
 								if member["wall_thickness"][str(frame)]:
 									text = "wall_thickness: " + str(round(member["wall_thickness"][str(frame)], 3)) + " cm"
@@ -2577,11 +2587,6 @@ def text():
 								data_temp.append(text)
 								text = "shear_z: " + str(round(member["shear_z"][str(frame)][position], 3)) + " kN"
 								data_temp.append(text)
-								try:
-									text = "shear_h: " + str(round(member["shear_h"][str(frame)][position], 3)) + " kN"
-									data_temp.append(text)
-								except:
-									pass
 								text = "torque: " + str(round(member["torque"][str(frame)][position], 3)) + " kNcm"
 								data_temp.append(text)
 
@@ -2593,11 +2598,7 @@ def text():
 								data_temp.append(text)
 								text = "sum_tau: " + str(round(member["sum_tau"][str(frame)][position], 3)) + " kN/cm²"
 								data_temp.append(text)
-								try:
-									text = "sigmav: " + str(round(member["sigmav"][str(frame)][position], 3)) + " kN/cm²"
-									data_temp.append(text)
-								except:
-									pass
+								
 								text = "sigma: " + str(round(member["sigma"][str(frame)][position], 3)) + " kN/cm²"
 								data_temp.append(text)
 
