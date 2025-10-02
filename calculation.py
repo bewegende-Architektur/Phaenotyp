@@ -1021,7 +1021,7 @@ def interweave_results_pn(frame):
 			tau_torsion = []
 
 			for i in range(11): # get the stresses at 11 positions and
-				tau = abs(torque[i]/(2 * height-wall_thickness)*(width-t))*wall_thickness  #### Formel nach Wandinger-Torsion, Trägheitsmoment nicht erforderlich, sondern direkt mit Am =mittlere Fläche und Wanddicke errechnet
+				tau = abs(torque[i]/(2 * height-wall_thickness)*(width-wall_thickness))*wall_thickness  #### Formel nach Wandinger-Torsion, Trägheitsmoment nicht erforderlich, sondern direkt mit Am =mittlere Fläche und Wanddicke errechnet
 				# Torsionsspannung in senkrechten und horizontalen Steg gleich, daher nur tau und nicht tau_z und tau_y
 				# muss height und width und t noch übernommen werden?
 				tau_torsion.append(tau)
@@ -1368,9 +1368,9 @@ def interweave_results_pn(frame):
 				if i[0] == member["profile"][frame]:
 					current_profile = i
 
-			h = current_profile[2] # Höhe
-			b = current_profile[3] # Breite
-			d = current_profile[5] # Flanschdicke
+			h = current_profile[2]*0.1  # Höhe
+			b = current_profile[3]*0.1  # Breite
+			d = current_profile[5]*0.1  # Flanschdicke
 
 			for i in range(11): # get the stresses at 11 positions and
 				tau = abs(torque[i]*1.5/((h-d) * b * d)) # Sttps://www.tugraz.at/institute/isb/lehre/e-learning/spannungen-aus-torsion-311-antwort
