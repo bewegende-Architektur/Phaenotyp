@@ -128,10 +128,11 @@ def prepare_fea_pn(frame):
 
 		# apply to all vertices to work for edges and faces also
 		vertex.co = v
-
+		
+		# flip z und y
 		x = v[0] * 100 # convert to cm for calculation
-		y = v[1] * 100 # convert to cm for calculation
-		z = v[2] * 100 # convert to cm for calculation
+		y = v[2] * 100 # convert to cm for calculation
+		z = v[1] * 100 # convert to cm for calculation
 
 		# only create Node if needed for the model
 		create = False
@@ -150,7 +151,8 @@ def prepare_fea_pn(frame):
 
 	# define support
 	for id, support in supports.items():
-		model.def_support(id, support[0], support[1], support[2], support[3], support[4], support[5])
+		# flip z und y
+		model.def_support(id, support[0], support[2], support[1], support[3], support[5], support[4])
 
 	# create members
 	for id, member in members.items():
@@ -196,15 +198,6 @@ def prepare_fea_pn(frame):
 			J = member["J"][str(frame)])
 
 		model.sections[id] = section
-
-		''' in Pynite:
-		def __init__(
-			self, model: FEModel3D, name: str, i_node: Node3D, j_node: Node3D,
-			material_name: str, section_name: str,
-			rotation: float = 0.0,
-			tension_only: bool = False,
-			comp_only: bool = False) -> None:
-		'''
 		
 		angle = member["angle"][str(frame)]
 				 
@@ -227,7 +220,8 @@ def prepare_fea_pn(frame):
 		kN = weight_A * -0.0000981
 
 		# add self weight as distributed load
-		model.add_member_dist_load(id, "FZ", kN*psf_members, kN*psf_members)
+		# flip z und y
+		model.add_member_dist_load(id, "FY", kN*psf_members, kN*psf_members)
 
 		# calculate lenght of parts (maybe usefull later ...)
 		length = (v_0 - v_1).length
@@ -289,7 +283,8 @@ def prepare_fea_pn(frame):
 			vertex_id = str(vertex_id)
 			# area * thickness * density * 0.25 (to distribute to all four faces) - for gravity
 			z = weight * (-0.25)
-			model.add_node_load(vertex_id, 'FZ', z * 0.00000981 * psf_quads) # to cm and force
+			# flip z und y
+			model.add_node_load(vertex_id, 'FY', z * 0.00000981 * psf_quads) # to cm and force
 
 		quad["area"][str(frame)] = area # in m²
 		quad["weight_A"][str(frame)] = t * weight_A
@@ -299,22 +294,26 @@ def prepare_fea_pn(frame):
 
 	# add loads
 	for id, load in loads_v.items():
+		# flip z und y
 		model.add_node_load(id, 'FX', load[0] * psf_loads)
-		model.add_node_load(id, 'FY', load[1] * psf_loads)
-		model.add_node_load(id, 'FZ', load[2] * psf_loads)
-
+		model.add_node_load(id, 'FY', load[2] * psf_loads)
+		model.add_node_load(id, 'FZ', load[1] * psf_loads)
+		
+		# flip z und y
 		model.add_node_load(id, 'MX', load[3] * psf_loads)
-		model.add_node_load(id, 'MY', load[4] * psf_loads)
-		model.add_node_load(id, 'MZ', load[5] * psf_loads)
+		model.add_node_load(id, 'MY', load[5] * psf_loads)
+		model.add_node_load(id, 'MZ', load[4] * psf_loads)
 
 	for id, load in loads_e.items():
+		# flip z und y
 		model.add_member_dist_load(id, 'FX', load[0]*0.01 * psf_loads, load[0]*0.01 * psf_loads) # m to cm
-		model.add_member_dist_load(id, 'FY', load[1]*0.01 * psf_loads, load[1]*0.01 * psf_loads) # m to cm
-		model.add_member_dist_load(id, 'FZ', load[2]*0.01 * psf_loads, load[2]*0.01 * psf_loads) # m to cm
-
+		model.add_member_dist_load(id, 'FY', load[2]*0.01 * psf_loads, load[1]*0.01 * psf_loads) # m to cm
+		model.add_member_dist_load(id, 'FZ', load[1]*0.01 * psf_loads, load[2]*0.01 * psf_loads) # m to cm
+		
+		# flip z und y
 		model.add_member_dist_load(id, 'Fx', load[3]*0.01 * psf_loads, load[3]*0.01 * psf_loads) # m to cm
-		model.add_member_dist_load(id, 'Fy', load[4]*0.01 * psf_loads, load[4]*0.01 * psf_loads) # m to cm
-		model.add_member_dist_load(id, 'Fz', load[5]*0.01 * psf_loads, load[5]*0.01 * psf_loads) # m to cm
+		model.add_member_dist_load(id, 'Fy', load[5]*0.01 * psf_loads, load[4]*0.01 * psf_loads) # m to cm
+		model.add_member_dist_load(id, 'Fz', load[4]*0.01 * psf_loads, load[5]*0.01 * psf_loads) # m to cm
 
 	for id, load in loads_f.items():
 		# apply force to quad if a quad is available
@@ -351,10 +350,11 @@ def prepare_fea_pn(frame):
 				# load z
 				area_load = load_area_z * area
 				z += area_load * 0.25 # divided by four points of each quad
-
+				
+				# flip z und y
 				model.add_node_load(vertex_id, 'FX', x * psf_loads) # to cm
-				model.add_node_load(vertex_id, 'FY', y * psf_loads) # to cm
-				model.add_node_load(vertex_id, 'FZ', z * psf_loads) # to cm
+				model.add_node_load(vertex_id, 'FY', z * psf_loads) # to cm
+				model.add_node_load(vertex_id, 'FZ', y * psf_loads) # to cm
 
 		# apply force to members
 		else:
@@ -408,18 +408,21 @@ def prepare_fea_pn(frame):
 				x = edge_load_normal[i] * normal[0]
 				y = edge_load_normal[i] * normal[1]
 				z = edge_load_normal[i] * normal[2]
-
+				
+				# flip z und y
 				model.add_member_dist_load(name, 'FX', x, x)
-				model.add_member_dist_load(name, 'FY', y, y)
-				model.add_member_dist_load(name, 'FZ', z, z)
+				model.add_member_dist_load(name, 'FY', z, z)
+				model.add_member_dist_load(name, 'FZ', y, y)
 
 				# edge_load_projected
 				z = edge_load_projected[i]
-				model.add_member_dist_load(name, 'FZ', z, z)
+				# flip z und y
+				model.add_member_dist_load(name, 'FY', z, z)
 
 				# edge_load_area_z
 				z = edge_load_area_z[i]
-				model.add_member_dist_load(name, 'FZ', z, z)
+				# flip z und y
+				model.add_member_dist_load(name, 'FY', z, z)
 
 	# store frame based data
 	data["frames"][str(frame)]["volume"] = geometry.volume(mesh)
@@ -771,17 +774,21 @@ def interweave_results_pn(frame):
 
 			axial_pos = model_member.axial(x) * (-1) # Druckkraft minus
 			axial.append(axial_pos)
-
-			moment_y_pos = model_member.moment("My", x)
+			
+			# flip z und y
+			moment_y_pos = model_member.moment("Mz", x)
 			moment_y.append(moment_y_pos)
-
-			moment_z_pos = model_member.moment("Mz", x)
+			
+			# flip z und y
+			moment_z_pos = model_member.moment("My", x)
 			moment_z.append(moment_z_pos)
-
-			shear_y_pos = model_member.shear("Fy", x)
+			
+			# flip z und y
+			shear_y_pos = model_member.shear("Fz", x)
 			shear_y.append(shear_y_pos)
-
-			shear_z_pos = model_member.shear("Fz", x)
+			
+			# flip z und y
+			shear_z_pos = model_member.shear("Fy", x)
 			shear_z.append(shear_z_pos)
 
 			torque_pos = model_member.torque(x)
@@ -1551,9 +1558,10 @@ def interweave_results_pn(frame):
 
 		# add to results
 		for i in range(11):
+			# flip y und z
 			x = D_plot[i, 0] * 0.01
-			y = D_plot[i, 1] * 0.01
-			z = D_plot[i, 2] * 0.01
+			y = D_plot[i, 2] * 0.01
+			z = D_plot[i, 1] * 0.01
 
 			deflection.append([x,y,z])
 
@@ -1592,8 +1600,8 @@ def interweave_results_pn(frame):
 		for i in range(4):
 			# deflection only
 			x = nodes[str(node_ids[i])].DX["Combo 1"]*0.1
-			y = nodes[str(node_ids[i])].DY["Combo 1"]*0.1
-			z = nodes[str(node_ids[i])].DZ["Combo 1"]*0.1
+			y = nodes[str(node_ids[i])].DZ["Combo 1"]*0.1
+			z = nodes[str(node_ids[i])].DY["Combo 1"]*0.1
 
 			# add deflection to initial position
 			initial = quad["initial_positions"][frame][i]
