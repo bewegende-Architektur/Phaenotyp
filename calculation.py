@@ -197,9 +197,21 @@ def prepare_fea_pn(frame):
 
 		model.sections[id] = section
 
+		''' in Pynite:
+		def __init__(
+			self, model: FEModel3D, name: str, i_node: Node3D, j_node: Node3D,
+			material_name: str, section_name: str,
+			rotation: float = 0.0,
+			tension_only: bool = False,
+			comp_only: bool = False) -> None:
+		'''
+		
+		angle = member["angle"][str(frame)]
+				 
 		model.add_member(
 			id,	node_0, node_1,
 			member["material_name"], id,
+			angle,
 			tension_only=tension_only,
 			comp_only=comp_only
 		)
