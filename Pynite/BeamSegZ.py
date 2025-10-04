@@ -120,7 +120,7 @@ class BeamSegZ():
         M = M1 - V1*x - w1*x**2/2 - x**3*(-w1 + w2)/(6*L)
 
         # # Include the P-Delta moment if a P-Delta analysis was run
-        if P_delta is True:
+        if P_delta == True:
             delta_1 = self.delta1
             delta_x = self.deflection(x)
             M += P1*(delta_x - delta_1)
@@ -172,7 +172,7 @@ class BeamSegZ():
         L = self.Length()
         EI = self.EI
 
-        if P_delta is True:
+        if P_delta == True:
             delta_1 = self.delta1
             delta_x = self.deflection(x, P_delta)
             theta_x = theta_1 - (-V1*x**2/2 - w1*x**3/6 + x*(M1 - P1*delta_1 + P1*delta_x) + x**4*(w1 - w2)/(24*L))/EI
@@ -192,43 +192,21 @@ class BeamSegZ():
         w2 = self.w2
         theta_1 = self.theta1
         delta_1 = self.delta1
-        d_delta = 1
         L = self.Length()
         EI = self.EI
 
-        # Iteration is required to calculate P-little-delta effects
-        if P_delta is True:
+        # Check if a P-delta solution is requested
+        if P_delta == True:
 
-            # Initialize the deflection at `x` to match the deflection at the start of the segment
-            delta_x = delta_1
+            # Return the calculated deflection, amplified for P-delta effects
+            return (delta_1 + theta_1*x + V1*x**3/(6*EI) + w1*x**4/(24*EI) + x**2*(-M1 + P1*delta_1)/(2*EI) + x**5*(-w1 + w2)/(120*EI*L))/(1 + P1*x**2/(2*EI))
 
-            # Iterate until we reach a deflection convergence of 1%
-            while d_delta > 0.01:
-
-                # Save the deflection value from the last iteration
-                delta_last = delta_x
-
-                # Compute the deflection
-                delta_x = delta_1 + theta_1*x + V1*x**3/(6*EI) + w1*x**4/(24*EI) + x**2*(-M1 + P1*delta_1 - P1*delta_x)/(2*EI) + x**5*(-w1 + w2)/(120*EI*L)
-
-                # Check the change in deflection between iterations
-                if delta_last != 0:
-                    d_delta = abs(delta_x/delta_last - 1)
-                else:
-                    # Members with no relative deflection after at least one iteration need no further iterations
-                    if delta_1 - delta_x == 0:
-                        break
-
-            # Return the calculated deflection
-            return delta_x
-
-        # Non-P-delta solutions are not iterative
         else:
 
             # Return the calcuated deflection
             return delta_1 + theta_1*x + V1*x**3/(6*EI) + w1*x**4/(24*EI) + x**2*(-M1)/(2*EI) + x**5*(-w1 + w2)/(120*EI*L)
 
-    def AxialDeflection(self, x: float) -> float:
+    def axial_deflection(self, x: float) -> float:
 
         delta_x1 = self.delta_x1
         P1 = self.P1
