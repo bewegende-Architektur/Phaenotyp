@@ -193,8 +193,8 @@ def prepare_fea_pn(frame):
 		section = Section(
 			model, id,
 			A = member["A"][str(frame)],
-			Iz = member["Iz"][str(frame)],
-			Iy = member["Iy"][str(frame)],
+			Iz = member["Iy"][str(frame)], # flip x und y
+			Iy = member["Iz"][str(frame)], # flip x und y
 			J = member["J"][str(frame)])
 
 		model.sections[id] = section
