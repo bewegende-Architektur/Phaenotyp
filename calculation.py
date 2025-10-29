@@ -11,7 +11,7 @@ from Pynite.Section import Section
 
 from numpy import array, empty, append, poly1d, polyfit, linalg, zeros, intersect1d, arctan, sin, cos
 from phaenotyp import basics, material, geometry
-from math import sqrt, tanh, pi, degrees, radians
+from math import sqrt, tanh, pi, degrees, radians, atan2
 
 from subprocess import Popen, PIPE
 import pickle
@@ -1993,60 +1993,6 @@ def calculate_frames(start, end):
 def approximate_sectional():
 	'''
 	Is adapting the diameters of force distribution step by step.
-	Overstressed elements are sized by a factor of 1.05 and
-	non overstressed are sized by 0.95.
-	'''
-	scene = bpy.context.scene
-	phaenotyp = scene.phaenotyp
-	data = scene["<Phaenotyp>"]
-	members = data["members"]
-	frame = bpy.context.scene.frame_current
-
-	for id, member in members.items():
-		if member["overstress"][str(frame)] == True:
-			member["Do"][str(frame)] = member["Do"][str(frame)] * 1.05
-			member["Di"][str(frame)] = member["Di"][str(frame)] * 1.05
-
-		else:
-			member["Do"][str(frame)] = member["Do"][str(frame)] * 0.95
-			member["Di"][str(frame)] = member["Di"][str(frame)] * 0.95
-
-		# set miminum size of Do and Di to avoid division by zero
-		Do_Di_ratio = member["Do"][str(frame)]/member["Di"][str(frame)]
-		if member["Di"][str(frame)] < 0.1:
-			member["Di"][str(frame)] = 0.1
-			member["Do"][str(frame)] = member["Di"][str(frame)] * Do_Di_ratio
-
-def simple_sectional():
-	'''
-	Is adapting the diameters of PyNite step by step.
-	Overloaded Elements are sized by a factor of 1.2 and
-	non overstressed are sized by 0.8.
-	'''
-	scene = bpy.context.scene
-	phaenotyp = scene.phaenotyp
-	data = scene["<Phaenotyp>"]
-	members = data["members"]
-	frame = bpy.context.scene.frame_current
-
-	for id, member in members.items():
-		if abs(member["max_long_stress"][str(frame)]/member["acceptable_sigma_buckling"][str(frame)]) > 1:
-			member["Do"][str(frame)] = member["Do"][str(frame)] * 1.2
-			member["Di"][str(frame)] = member["Di"][str(frame)] * 1.2
-
-		else:
-			member["Do"][str(frame)] = member["Do"][str(frame)] * 0.8
-			member["Di"][str(frame)] = member["Di"][str(frame)] * 0.8
-
-		# set miminum size of Do and Di to avoid division by zero
-		Do_Di_ratio = member["Do"][str(frame)]/member["Di"][str(frame)]
-		if member["Di"][str(frame)] < 0.1:
-			member["Di"][str(frame)] = 0.1
-			member["Do"][str(frame)] = member["Di"][str(frame)] * Do_Di_ratio
-
-def utilization_sectional():
-	'''
-	Is adapting the diameters of force distribution step by step.
 	The reduction is based on the utilization of the elements.
 	'''
 	scene = bpy.context.scene
@@ -2062,7 +2008,7 @@ def utilization_sectional():
 		#faktor_d = sqrt(abs(ang))
 
 		# bei Biegestäben
-		faktor_d= (abs(ang))**(1/3)
+		faktor_d = (abs(ang))**(1/3)
 
 		Do_Di_ratio = member["Do"][str(frame)]/member["Di"][str(frame)]
 		member["Do"][str(frame)] = member["Do"][str(frame)] * faktor_d
@@ -2073,10 +2019,65 @@ def utilization_sectional():
 		if member["Di"][str(frame)] < 0.1:
 			member["Di"][str(frame)] = 0.1
 			member["Do"][str(frame)] = member["Di"][str(frame)] * Do_Di_ratio
-
-def utilization_sectional_standardprofil():
+	
+def optimize_members_rotation():
 	'''
 	Is adapting the diameters of force distribution step by step.
+	The reduction is based on the utilization of the elements.
+	'''
+	scene = bpy.context.scene
+	phaenotyp = scene.phaenotyp
+	data = scene["<Phaenotyp>"]
+	members = data["members"]
+	frame = bpy.context.scene.frame_current
+	frame = str(frame)
+	
+	for id, member in members.items():
+		if member["orientation"] == "optimize":
+			m_y = max(member["moment_y"][frame])
+			m_z = max(member["moment_z"][frame])
+			angle_degrees = -atan2(m_y, m_z)
+			angle = (angle_degrees + 360) % 180
+			member["angle"][frame] = angle
+
+def utilization_members_pipes():
+	'''
+	Is adapting the diameters of members step by step.
+	The reduction is based on the utilization of the elements.
+	'''
+	scene = bpy.context.scene
+	phaenotyp = scene.phaenotyp
+	data = scene["<Phaenotyp>"]
+	members = data["members"]
+	frame = bpy.context.scene.frame_current
+
+	for id, member in members.items():
+		profile_type = member["profile_type"]
+		if profile_type in ["round_hollow", "round_solid"]:
+			frame = str(frame)
+			util = member["utilization"][frame]
+			height = member["height"][frame]
+			width = member["width"][frame]
+			wall_thickness = member["wall_thickness"][frame]
+
+			# Skalierungsfaktor für Biegestäbe
+			scale_factor = util ** (1/3)
+
+			# proportionale Skalierung in alle Richtungen
+			member["height"][frame] = height * scale_factor
+			member["width"][frame] = width * scale_factor
+			
+			# minimale Größe setzen
+			if member["height"][str(frame)] < 0.001:
+				member["height"][str(frame)] = 0.001
+				member["width"][str(frame)] = 0.001
+
+def utilization_members_rect():
+	pass
+	
+def utilization_sectional_profiles():
+	'''
+	Is adapting the diameters of members step by step.
 	The reduction is based on the utilization of the elements.
 	'''
 	scene = bpy.context.scene
@@ -2132,42 +2133,9 @@ def utilization_sectional_standardprofil():
 			member["width"][str(frame)] = 10
 		'''
 
-def complex_sectional():
-	'''
-	Is adapting the diameters of force distribution step by step.
-	The reduction is based on the max_long_stress of the elements.
-	'''
-	scene = bpy.context.scene
-	phaenotyp = scene.phaenotyp
-	data = scene["<Phaenotyp>"]
-	members = data["members"]
-	frame = bpy.context.scene.frame_current
-
-	for id, member in members.items():
-		#treshhold bei Prüfung!
-		# without buckling (Zugstab)
-
-		if abs(member["max_long_stress"][str(frame)]/member["acceptable_sigma_buckling"][str(frame)]) > 1:
-			faktor_a = 1+(abs(member["max_long_stress"][str(frame)])/member["acceptable_sigma_buckling"][str(frame)]-1)*0.36
-
-		else:
-			faktor_a = 0.5 + 0.6*(tanh((abs(member["max_long_stress"][str(frame)])/member["acceptable_sigma_buckling"][str(frame)] -0.5)*2.4))
-
-		# bei Fachwerkstäben
-		#faktor_d = sqrt(abs(faktor_a))
-
-		# bei Biegestäben
-		faktor_d = (abs(faktor_a))**(1/3)
-
-		member["Do"][str(frame)] = member["Do"][str(frame)]*faktor_d
-		member["Di"][str(frame)] = member["Di"][str(frame)]*faktor_d
-
-		# set miminum size of Do and Di to avoid division by zero
-		Do_Di_ratio = member["Do"][str(frame)]/member["Di"][str(frame)]
-		if member["Di"][str(frame)] < 0.1:
-			member["Di"][str(frame)] = 0.1
-			member["Do"][str(frame)] = member["Di"][str(frame)] * Do_Di_ratio
-
+def utilization_members_auto():
+	pass
+	
 def quads_approximate_sectional():
 	'''
 	Is adapting the thickness of quads step by step.
@@ -2358,15 +2326,13 @@ def sectional_optimization(frame):
 			approximate_sectional()
 
 	else:
-		if phaenotyp.optimization_pn == "simple":
-			simple_sectional()
-
-		if phaenotyp.optimization_pn == "utilization":
-			utilization_sectional()
-
-		if phaenotyp.optimization_pn == "complex":
-			complex_sectional()
-
+		# calculate new section
+		opt_type = phaenotyp.optimization_pn
+		if opt_type == "pipes": calculation.utilization_members_pipes()
+		if opt_type == "rect": calculation.utilization_members_rect()
+		if opt_type == "profiles": calculation.utilization_members_profiles()
+		if opt_type == "auto": calculation.utilization_members_auto()
+		
 		if phaenotyp.optimization_quads == "approximate":
 			quads_approximate_sectional()
 

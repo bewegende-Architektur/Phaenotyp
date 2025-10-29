@@ -1161,10 +1161,11 @@ class phaenotyp_properties(PropertyGroup):
 			name = "optimization",
 			description = "Enables sectional optimization after each frame",
 			items = [
-						("none", "Members none", ""),
-						("simple", "Members simple", ""),
-						("utilization", "Members utilization", ""),
-						("complex", "Members complex", "")
+						("none", "Members none (rotation only)", ""),
+						("pipes", "Members utilization pipes", ""),
+						("rect", "Members utilization rect", ""),
+						("profiles", "Members utilization profiles", ""),
+						("auto", "Members utilization automatic", "")
 					]
 			)
 
@@ -1759,56 +1760,17 @@ class WM_OT_calculate_animation(Operator):
 		operators.calculate_animation()
 		return {"FINISHED"}
 
-class WM_OT_optimize_approximate(Operator):
+class WM_OT_optimize_members(Operator):
 	'''
-	Is calling optimize_approximate from the module called operators.
+	Is calling the selected optimization from the module called operators.
 	Check out further info in there.
 	'''
-	bl_label = "optimize_approximate"
-	bl_idname = "wm.optimize_approximate"
-	bl_description = "Approximate sectional performance"
+	bl_label = "optimize_members"
+	bl_idname = "wm.optimize_members"
+	bl_description = "Sectional performance of members"
 
 	def execute(self, context):
-		operators.optimize_approximate()
-		return {"FINISHED"}
-
-class WM_OT_optimize_simple(Operator):
-	'''
-	Is calling optimize_simple from the module called operators.
-	Check out further info in there.
-	'''
-	bl_label = "optimize_simple"
-	bl_idname = "wm.optimize_simple"
-	bl_description = "Simple sectional performance"
-
-	def execute(self, context):
-		operators.optimize_simple()
-		return {"FINISHED"}
-
-class WM_OT_optimize_utilization(Operator):
-	'''
-	Is calling optimize_utilization from the module called operators.
-	Check out further info in there.
-	'''
-	bl_label = "optimize_utilization"
-	bl_idname = "wm.optimize_utilization"
-	bl_description = "utilization sectional performance"
-
-	def execute(self, context):
-		operators.optimize_utilization()
-		return {"FINISHED"}
-
-class WM_OT_optimize_complex(Operator):
-	'''
-	Is calling optimize_complex from the module called operators.
-	Check out further info in there.
-	'''
-	bl_label = "optimize_complex"
-	bl_idname = "wm.optimize_complex"
-	bl_description = "Complex sectional performance"
-
-	def execute(self, context):
-		operators.optimize_complex()
+		operators.optimize_members()
 		return {"FINISHED"}
 
 class WM_OT_optimize_quads_approximate(Operator):
@@ -2431,10 +2393,7 @@ classes = (
 	WM_OT_calculate_single_frame,
 	WM_OT_calculate_animation,
 
-	WM_OT_optimize_approximate,
-	WM_OT_optimize_simple,
-	WM_OT_optimize_utilization,
-	WM_OT_optimize_complex,
+	WM_OT_optimize_members,
 	WM_OT_optimize_quads_approximate,
 	WM_OT_optimize_quads_utilization,
 	WM_OT_decimate,

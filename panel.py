@@ -778,9 +778,8 @@ def single_frame(layout):
 							box_opt.operator("wm.optimize_approximate", text="Members approximate")
 						else:
 							if members:
-								box_opt.operator("wm.optimize_simple", text="Members simple")
-								box_opt.operator("wm.optimize_utilization", text="Members utilization")
-								box_opt.operator("wm.optimize_complex", text="Members complex")
+								box_opt.prop(phaenotyp, "optimization_pn", text="")
+								box_opt.operator("wm.optimize_members", text="Optimize Members")
 							if quads:
 								box_opt.operator("wm.optimize_quads_approximate", text="Quads approximate")
 								box_opt.operator("wm.optimize_quads_utilization", text="Quads utilization")

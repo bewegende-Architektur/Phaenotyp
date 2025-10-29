@@ -1330,7 +1330,13 @@ def update_geometry_post():
 	if mesh_for_viz:
 		vertices = mesh_for_viz.data.vertices
 
-		radius_group = mesh_for_viz.vertex_groups.get("radius")
+		#radius_group = mesh_for_viz.vertex_groups.get("radius")
+		height_group = mesh_for_viz.vertex_groups.get("height")
+		width_group = mesh_for_viz.vertex_groups.get("width")
+		wall_thickness_group = mesh_for_viz.vertex_groups.get("wall_thickness")
+		profile_group = mesh_for_viz.vertex_groups.get("profile")
+		angle_group = mesh_for_viz.vertex_groups.get("angle")
+			
 		attribute = mesh_for_viz.data.attributes.get("force")
 		
 		viz_deflection = phaenotyp.viz_deflection * 0.01
@@ -1348,13 +1354,16 @@ def update_geometry_post():
 
 			mesh_vertex_ids = member["mesh_vertex_ids"]
 
-			# update radius
+			# update radius and others
 			vertex_ids = member["mesh_vertex_ids"]
-			radius = member["height"][str(frame)]*0.01
+			height = member["height"][str(frame)]*0.01
+			width = member["width"][str(frame)]*0.01
+			angle = member["angle"][str(frame)]*0.01
 			
-			# if available trought pipe as profile
-			if radius_group:
-				radius_group.add(vertex_ids, radius, 'REPLACE')
+			# pass parameters to vertex groups
+			if height_group: height_group.add(vertex_ids, height, 'REPLACE')
+			if width_group: width_group.add(vertex_ids, width, 'REPLACE')
+			if angle_group: angle_group.add(vertex_ids, angle, 'REPLACE')
 
 			if phaenotyp.calculation_type != "force_distribution":
 				# get forcetyp and force

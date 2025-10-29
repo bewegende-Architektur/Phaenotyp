@@ -2065,117 +2065,36 @@ def calculate_animation():
 	# run jobs
 	bpy.ops.wm.phaenotyp_jobs()
 
-def optimize_approximate():
+def optimize_members():
+	scene = bpy.context.scene
+	phaenotyp = scene.phaenotyp
+	opt_type = phaenotyp.optimization_pn
+	
 	scene = bpy.context.scene
 	phaenotyp = scene.phaenotyp
 	data = scene["<Phaenotyp>"]
 	members = scene["<Phaenotyp>"]["members"]
 	frame = bpy.context.scene.frame_current
-
-	basics.print_data("approximate sectional performance")
+	
+	text = "sectional performance " + str(opt_type)
+	basics.print_data(text)
 
 	# create temp dictionaries
 	basics.models = {}
 	basics.feas = {}
 
 	# calculate new section
-	basics.jobs.append([calculation.approximate_sectional])
+	if opt_type == "none": basics.jobs.append([calculation.optimize_members_rotation])
+	if opt_type == "pipes": basics.jobs.append([calculation.utilization_members_pipes])
+	if opt_type == "rect": basics.jobs.append([calculation.utilization_members_rect])
+	if opt_type == "profiles": basics.jobs.append([calculation.utilization_members_profiles])
+	if opt_type == "auto": basics.jobs.append([calculation.utilization_members_auto])
 
 	# calculate frame
 	calculation.calculate_frames(frame, frame+1)
 
 	# calculate new visualization-mesh
 	basics.jobs.append([geometry.update_geometry_post])
-
-	# update view
-	basics.jobs.append([basics.view_vertex_colors])
-
-	# print done
-	basics.jobs.append([basics.print_data, "done"])
-
-	# run jobs
-	bpy.ops.wm.phaenotyp_jobs()
-
-def optimize_simple():
-	scene = bpy.context.scene
-	phaenotyp = scene.phaenotyp
-	data = scene["<Phaenotyp>"]
-	members = scene["<Phaenotyp>"]["members"]
-	frame = bpy.context.scene.frame_current
-
-	basics.print_data("simple sectional performance")
-
-	# create temp dictionaries
-	basics.models = {}
-	basics.feas = {}
-
-	# calculate new section
-	basics.jobs.append([calculation.simple_sectional])
-
-	# calculate frame
-	calculation.calculate_frames(frame, frame+1)
-
-	# calculate new visualization-mesh
-	basics.jobs.append([geometry.update_geometry_post])
-
-	# update view
-	basics.jobs.append([basics.view_vertex_colors])
-
-	# print done
-	basics.jobs.append([basics.print_data, "done"])
-
-	# run jobs
-	bpy.ops.wm.phaenotyp_jobs()
-
-def optimize_utilization():
-	scene = bpy.context.scene
-	phaenotyp = scene.phaenotyp
-	data = scene["<Phaenotyp>"]
-	members = scene["<Phaenotyp>"]["members"]
-	frame = bpy.context.scene.frame_current
-
-	basics.print_data("utilization sectional performance")
-
-	# create temp dictionaries
-	basics.models = {}
-	basics.feas = {}
-
-	# calculate new section
-	basics.jobs.append([calculation.utilization_sectional])
-
-	# calculate frame
-	calculation.calculate_frames(frame, frame+1)
-
-	# calculate new visualization-mesh
-	basics.jobs.append([geometry.update_geometry_post])
-
-	# update view
-	basics.jobs.append([basics.view_vertex_colors])
-
-	# print done
-	basics.jobs.append([basics.print_data, "done"])
-
-	# run jobs
-	bpy.ops.wm.phaenotyp_jobs()
-
-def optimize_complex():
-	scene = bpy.context.scene
-	phaenotyp = scene.phaenotyp
-	data = scene["<Phaenotyp>"]
-	members = scene["<Phaenotyp>"]["members"]
-	frame = bpy.context.scene.frame_current
-
-	basics.print_data("complex sectional performance")
-
-	# create temp dictionaries
-	basics.models = {}
-	basics.feas = {}
-
-	# calculate new section
-	basics.jobs.append([calculation.complex_sectional])
-
-	# calculate frame
-	calculation.calculate_frames(frame, frame+1)
 
 	# update view
 	basics.jobs.append([basics.view_vertex_colors])
