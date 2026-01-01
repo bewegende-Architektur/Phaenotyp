@@ -1733,26 +1733,28 @@ def create_diagram(self, context):
 	key_1 = phaenotyp.diagram_key_1
 	
 	chromosome = individuals["0"]["chromosome"]
+
+	diagram_name = "<Phaenotyp>diagram_" + str(scene_id)
 	
 	fitness_available = individuals["0"]["fitness"].get(fitness)
 	if fitness_available:
-		if len(chromosome) > key_1 and len(chromosome) > key_1:
+		if len(chromosome) > key_0 and len(chromosome) > key_1:
 			# delete current obj and mesh
-			obj = bpy.data.objects.get("<Phaenotyp>diagram_" + str(scene_id))
+			obj = bpy.data.objects.get(diagram_name)
 			if obj:
 				bpy.data.objects.remove(obj, do_unlink=True)
 
-			mesh = bpy.data.meshes.get("<Phaenotyp>diagram_" + str(scene_id))
+			mesh = bpy.data.meshes.get(diagram_name)
 			if mesh:
 				bpy.data.meshes.remove(mesh, do_unlink=True)
 			
 			# delete labels
 			for obj in bpy.data.objects:
-				if "<Phaenotyp>diagram_" + str(scene_id) in obj.name_full:
+				if "<Phaenotyp>diagram_label_" + str(scene_id) in obj.name_full:
 					bpy.data.objects.remove(obj, do_unlink=True)
 			
 			# create mesh and object
-			mesh = bpy.data.meshes.new("<Phaenotyp>diagram_" + str(scene_id))
+			mesh = bpy.data.meshes.new(diagram_name)
 			obj = bpy.data.objects.new(mesh.name, mesh)
 			col = bpy.data.collections.get("<Phaenotyp>" + str(scene_id))
 			col.objects.link(obj)
@@ -1797,7 +1799,7 @@ def create_diagram(self, context):
 				bpy.ops.geometry.color_attribute_add(name="diagram", domain='POINT', data_type='FLOAT_COLOR', color=(255, 0, 255, 1))
 
 			# create material
-			material_name =  "<Phaenotyp>Diagram_" + str(scene_id)
+			material_name =  "<Phaenotyp>diagram_" + str(scene_id)
 			stressline_material = bpy.data.materials.get(material_name)
 			if stressline_material == None:
 				mat = bpy.data.materials.new(material_name)
@@ -1820,53 +1822,59 @@ def create_diagram(self, context):
 			obj.active_material_index = len(obj.data.materials) - 1
 			
 			# create modifiere if not existing
-			modifier = obj.modifiers.get('<Phaenotyp>')
-			if modifier:
-				text = "existing modifier:" + str(modifiers)
-			else:
-				modifier_nodes = obj.modifiers.new(name="<Phaenotyp>", type='NODES')
-				bpy.ops.node.new_geometry_node_group_assign()
-				nodes = obj.modifiers['<Phaenotyp>'].node_group
+			modifier = obj.modifiers.get(diagram_name)
+			if modifier is None:
+				modifier = obj.modifiers.new(name=diagram_name, type='NODES')
 
-				# set name to group
-				if nodes.name == "<Phaenotyp>Diagram_" + str(scene_id):
-					node_group = bpy.data.node_groups["<Phaenotyp>Diagram_" + str(scene_id)]
-				else:
-					nodes.name = "<Phaenotyp>Diagram"
-					node_group = bpy.data.node_groups["<Phaenotyp>Diagram_" + str(scene_id)]
+			node_group = bpy.data.node_groups.get(diagram_name)
+			if node_group is None:
+				node_group = bpy.data.node_groups.new(diagram_name, "GeometryNodeTree")
+
+				# alte Default-Nodes löschen, falls Blender welche anlegt
+				for n in list(node_group.nodes):
+					node_group.nodes.remove(n)
+
+				# group input und output
+				group_in = node_group.nodes.new("NodeGroupInput")
+				group_in.location = (-600, 0)
+
+				group_out = node_group.nodes.new("NodeGroupOutput")
+				group_out.location = (600, 0)
+
+				# sicherstellen, dass es einen Geometry Ein und Ausgang gibt
+				if "Geometry" not in node_group.interface.items_tree:
+					node_group.interface.new_socket(name="Geometry", in_out='INPUT', socket_type='NodeSocketGeometry')
+					node_group.interface.new_socket(name="Geometry", in_out='OUTPUT', socket_type='NodeSocketGeometry')
 
 				# mesh to curve
 				mtc = node_group.nodes.new(type="GeometryNodeMeshToCurve")
-				input = mtc.inputs[0] # mesh to curve, mesh
-				output = node_group.nodes[0].outputs[0] # group input, geometry
-				node_group.links.new(input, output)
+				mtc.location = (-350, 0)
+
+				# curve circle
+				cc = node_group.nodes.new(type="GeometryNodeCurvePrimitiveCircle")
+				cc.location = (-350, -220)
+				cc.inputs[0].default_value = 8
+				cc.inputs[4].default_value = 0.05
 
 				# curve to mesh
 				ctm = node_group.nodes.new(type="GeometryNodeCurveToMesh")
-				input = mtc.outputs[0] # mesh to curve, curve
-				output = ctm.inputs[0] # curve to mesh, curve
-				ctm.inputs[2].default_value = True # fill caps
-				node_group.links.new(input, output)
-
-				# profile to curve
-				cc = node_group.nodes.new(type="GeometryNodeCurvePrimitiveCircle")
-				cc.inputs[0].default_value = 8 # set amount of vertices of circle
-				cc.inputs[4].default_value = 0.05 # diameter
-				input = ctm.inputs[1] # curve to mesh, profile curve
-				output = cc.outputs[0] # curve circe, curve
-				node_group.links.new(input, output)
+				ctm.location = (-80, 0)
+				ctm.inputs[3].default_value = True
 
 				# set material
 				gnsm = node_group.nodes.new(type="GeometryNodeSetMaterial")
-				gnsm.inputs[2].default_value = bpy.data.materials[ "<Phaenotyp>Diagram_" + str(scene_id)]
-				input = gnsm.inputs[0] # geometry
-				output = ctm.outputs[0] # curve to mesh, mesh
-				node_group.links.new(input, output)
+				gnsm.location = (250, 0)
+				gnsm.inputs[2].default_value = bpy.data.materials["<Phaenotyp>Diagram_" + str(scene_id)]
 
-				# link to output
-				output = gnsm.outputs[0] # gnsm, geometry
-				input = node_group.nodes[1].inputs[0] # group output, geometry
-				node_group.links.new(input, output)
+				# links
+				node_group.links.new(mtc.inputs[0], group_in.outputs["Geometry"])
+				node_group.links.new(ctm.inputs[0], mtc.outputs[0])
+				node_group.links.new(ctm.inputs[1], cc.outputs[0])
+				node_group.links.new(gnsm.inputs[0], ctm.outputs[0])
+				node_group.links.new(group_out.inputs["Geometry"], gnsm.outputs[0])
+
+			modifier.node_group = node_group
+
 
 			# create vertex_group for radius
 			# radius is automatically choosen by geometry nodes for radius-input
