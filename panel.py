@@ -872,9 +872,9 @@ def bruteforce(layout):
 			if data["panel_state"]["members"] or data["panel_state"]["quads"]:
 				shape_key = data["structure"].data.shape_keys
 				if not shape_key:
-					box_ga = layout.box()
-					box_ga.label(text="Bruteforce:")
-					box_ga.label(text="Please set shape keys first.")
+					box_bf = layout.box()
+					box_bf.label(text="Bruteforce:")
+					box_bf.label(text="Please set shape keys first.")
 				else:
 					if calculation_type != "geometrical":
 						box_optimization = layout.box()
@@ -1089,6 +1089,137 @@ def genetic_algorithm(layout):
 						box_start.operator("wm.ga_start", text="Start")
 					else:
 						box_start.label(text="Elitism should be smaller than 50% of generation size.")
+
+					if len(data["individuals"]) > 0 and not bpy.context.screen.is_animation_playing:
+						box_select = layout.box()
+						box_select.label(text="Select individual by fitness:")
+						box_select.prop(phaenotyp, "ranking", text="Result sorted by fitness.")
+						if phaenotyp.ranking >= len(data["individuals"]):
+							text = "Only " + str(len(data["individuals"])) + " available."
+							box_select.label(text=text)
+						else:
+							# show
+							box_select.operator("wm.ranking", text="Generate")
+
+						box_rendering = layout.box()
+						box_rendering.label(text="Render sorted indiviuals:")
+						box_rendering.operator("wm.render_animation", text="Generate")
+
+def bayesian_modeling(layout):
+	'''
+	Panel for bayesian modeling.
+	:param layout: Passed layout of phaenotyp panel.
+	'''
+	context = bpy.context
+	scene = context.scene
+	phaenotyp = scene.phaenotyp
+	frame = scene.frame_current
+	data = bpy.context.scene.get("<Phaenotyp>")
+	calculation_type = phaenotyp.calculation_type
+	
+	members = data.get("members")
+	quads = data.get("quads")
+	
+	if data:
+		if data["panel_state"]["file"]:
+			if data["panel_state"]["members"] or data["panel_state"]["quads"]:
+				shape_key = data["structure"].data.shape_keys
+				if not shape_key:
+					box_bm = layout.box()
+					box_bm.label(text="Bayesian modeling:")
+					box_bm.label(text="Please set shape keys first.")
+				else:
+					# Bayesian modelling:
+					box_bm = layout.box()
+					box_bm.label(text="Setup: Parameter von Karl einfügen")
+					'''
+					box_bm.prop(phaenotyp, "mate_type", text="Type of mating")
+					box_bm.prop(phaenotyp, "generation_size", text="Size of generation for GA")
+					box_bm.prop(phaenotyp, "elitism", text="Size of elitism for GA")
+					box_bm.prop(phaenotyp, "generation_amount", text="Amount of generations")
+					'''
+
+					if calculation_type != "geometrical":
+						box_optimization = layout.box()
+						box_optimization.label(text="Optimization:")
+						if phaenotyp.calculation_type != "geometrical":
+							if calculation_type == "force_distribution":
+								box_optimization.prop(phaenotyp, "optimization_fd", text="")
+							else:
+								if members:
+									box_optimization.prop(phaenotyp, "optimization_pn", text="")
+								if quads:
+									box_optimization.prop(phaenotyp, "optimization_quads", text="")
+							if phaenotyp.optimization_pn != "none" or phaenotyp.optimization_fd != "none" or phaenotyp.optimization_quads != "none":
+								#box_optimization.prop(phaenotyp, "animation_optimization_type", text="")
+								box_optimization.prop(phaenotyp, "optimization_amount", text="Amount of sectional optimization")
+
+					# fitness headline
+					box_fitness = layout.box()
+					box_fitness.label(text="Fitness function:")
+
+					# architectural fitness
+					col = box_fitness.column()
+					split = col.split()
+					split.prop(phaenotyp, "fitness_volume", text="Volume")
+					split.prop(phaenotyp, "fitness_volume_invert", text="Invert")
+
+					col = box_fitness.column()
+					split = col.split()
+					split.prop(phaenotyp, "fitness_area", text="Area")
+					split.prop(phaenotyp, "fitness_area_invert", text="Invert")
+
+					col = box_fitness.column()
+					split = col.split()
+					split.prop(phaenotyp, "fitness_weight", text="weight")
+					split.prop(phaenotyp, "fitness_weight_invert", text="Invert")
+
+					col = box_fitness.column()
+					split = col.split()
+					split.prop(phaenotyp, "fitness_rise", text="Rise")
+					split.prop(phaenotyp, "fitness_rise_invert", text="Invert")
+
+					col = box_fitness.column()
+					split = col.split()
+					split.prop(phaenotyp, "fitness_span", text="Span")
+					split.prop(phaenotyp, "fitness_span_invert", text="Invert")
+
+					col = box_fitness.column()
+					split = col.split()
+					split.prop(phaenotyp, "fitness_cantilever", text="Cantilever")
+					split.prop(phaenotyp, "fitness_cantilever_invert", text="Invert")
+
+					# structural fitness
+					if phaenotyp.calculation_type != "geometrical":
+						col = box_fitness.column()
+						split = col.split()
+						split.prop(phaenotyp, "fitness_deflection_members", text="Deflection members")
+						split.prop(phaenotyp, "fitness_deflection_members_invert", text="Invert")
+						
+						if phaenotyp.calculation_type != "force_distribution":
+							col = box_fitness.column()
+							split = col.split()
+							split.prop(phaenotyp, "fitness_deflection_quads", text="Deflection quads")
+							split.prop(phaenotyp, "fitness_deflection_quads_invert", text="Invert")
+												
+						box_fitness.prop(phaenotyp, "fitness_average_sigma_members", text="Sigma members")
+						
+						if phaenotyp.calculation_type != "force_distribution":
+							box_fitness.prop(phaenotyp, "fitness_average_sigmav_quads", text="Sigmav quads")
+						
+						if phaenotyp.calculation_type != "force_distribution":
+							box_fitness.prop(phaenotyp, "fitness_average_strain_energy", text="Strain energy (members only)")
+
+					box_shape_keys = layout.box()
+					box_shape_keys.label(text="Shape keys:")
+					for keyblock in shape_key.key_blocks:
+						name = keyblock.name
+						box_shape_keys.label(text=name)
+
+					# check generation_size and elitism
+					box_start = layout.box()
+					box_start.label(text="Bayesian modelling:")
+					box_start.operator("wm.bm_start", text="Start")
 
 					if len(data["individuals"]) > 0 and not bpy.context.screen.is_animation_playing:
 						box_select = layout.box()

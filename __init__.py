@@ -805,7 +805,8 @@ class phaenotyp_properties(PropertyGroup):
 						("animation", "Animation", ""),
 						("bruteforce", "Bruteforce", ""),
 						("gradient_descent", "Gradient descent", ""),
-						("genetic_algorithm", "Genetic algorithm", "")
+						("genetic_algorithm", "Genetic algorithm", ""),
+						("bayesian_modeling", "Bayesian modeling", "")
 				   ],
 			default = "single_frame"
 			)
@@ -1864,6 +1865,19 @@ class WM_OT_gd_start(Operator):
 		operators.gd_start()
 		return {"FINISHED"}
 
+class WM_OT_bm_start(Operator):
+	'''
+	Is calling bm_start from the module called operators.
+	Check out further info in there.
+	'''
+	bl_label = "bm_start"
+	bl_idname = "wm.bm_start"
+	bl_description = "Start bayesian modelling over selected shape keys."
+
+	def execute(self, context):
+		operators.bm_start()
+		return {"FINISHED"}
+		
 class WM_OT_run_web(Operator):
 	'''
 	Is running the webserver.
@@ -2301,35 +2315,35 @@ class OBJECT_PT_Phaenotyp_post(Panel):
 		# this will make the restart-button also available
 		# if there is an error during the other panels
 		# for example: the file has been created with an older version
-		#try:
-		# get data and result
-		data = scene.get("<Phaenotyp>")
-		if data:
-			result = data["done"].get(str(frame))
-			if result:
-				# hide previous boxes
-				# (to avoid confusion, if user is changing the setup
-				# the setup and the result would not match
-				# new setup needs new calculation by pressing reset
-				# or by changing frame)
-				data["panel_grayed"]["scipy"] = True
-				data["panel_grayed"]["supports"] = True
-				data["panel_grayed"]["members"] = True
-				data["panel_grayed"]["quads"] = True
-				data["panel_grayed"]["loads"] = True
+		try:
+			# get data and result
+			data = scene.get("<Phaenotyp>")
+			if data:
+				result = data["done"].get(str(frame))
+				if result:
+					# hide previous boxes
+					# (to avoid confusion, if user is changing the setup
+					# the setup and the result would not match
+					# new setup needs new calculation by pressing reset
+					# or by changing frame)
+					data["panel_grayed"]["scipy"] = True
+					data["panel_grayed"]["supports"] = True
+					data["panel_grayed"]["members"] = True
+					data["panel_grayed"]["quads"] = True
+					data["panel_grayed"]["loads"] = True
 
-				panel.visualization(layout)
-				#panel.i_profiles(layout) -> Altes Modul
-				panel.text(layout)
-				panel.info(layout)
-				panel.selection(layout)
-				panel.precast(layout)
-				panel.report(layout)
-				panel.diagram(layout)
+					panel.visualization(layout)
+					#panel.i_profiles(layout) -> Altes Modul
+					panel.text(layout)
+					panel.info(layout)
+					panel.selection(layout)
+					panel.precast(layout)
+					panel.report(layout)
+					panel.diagram(layout)
 					
-		#except Exception as error:
-		#	# run error panel
-		#	panel.error(layout, basics.phaenotyp_version)
+		except Exception as error:
+			# run error panel
+			panel.error(layout, basics.phaenotyp_version)
 
 class OBJECT_PT_Phaenotyp_reset(Panel):
 	'''
@@ -2402,6 +2416,7 @@ classes = (
 	WM_OT_bf_start,
 	WM_OT_ga_start,
 	WM_OT_gd_start,
+	WM_OT_bm_start,
 	
 	WM_OT_run_web,
 	WM_OT_stop_jobs,

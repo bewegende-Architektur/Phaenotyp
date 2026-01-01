@@ -7,7 +7,7 @@ import itertools
 import os
 import webbrowser
 
-from phaenotyp import basics, material, geometry, calculation, bf, ga, gd, panel, report, nn
+from phaenotyp import basics, material, geometry, calculation, bf, ga, gd, bm, panel, report, nn
 
 def curve_to_mesh_straight():
 	bpy.ops.object.mode_set(mode='OBJECT')
@@ -2200,6 +2200,14 @@ def gd_start():
 
 	gd.start()
 
+def bm_start():
+	basics.print_data("Start mayesian modeling over selected shape keys")
+
+	# show wireframe to see progress
+	basics.view_wireframe()
+
+	bm.start()
+	
 def get_boundaries():
 	basics.print_data("get boundaries")
 
