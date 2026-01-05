@@ -12,6 +12,7 @@ def add_sitepackages():
 	
 	try:
 		from bayes_opt import BayesianOptimization
+		import matplotlib.pyplot as plt
 		basics.external_libs_loaded = True
 		
 	except:
@@ -36,6 +37,7 @@ def install_bayes():
 
 	# install required packages
 	subprocess.call([python_exe, "-m", "pip", "install", "bayesian-optimization"])
+	subprocess.call([python_exe, "-m", "pip", "install", "matplot"])
 	
 	add_sitepackages()
 
@@ -237,9 +239,12 @@ def register_target(optimizer):
 
 def draw_png(optimizer):
 	import matplotlib.pyplot as plt
+	import os
 
 	frame = bpy.context.scene.frame_current
-	out_path = f"/home/mc/Schreibtisch/bo_field{frame}.png"
+	frame_str = f"{frame:03d}"
+	base_dir = bpy.path.abspath("//")
+	out_path = os.path.join(base_dir, f"bo_field_{frame_str}.png")
 	n_px = 400
 	dim_x = 0
 	dim_y = 1
@@ -292,7 +297,10 @@ def draw_png(optimizer):
 	)
 
 	# alle vorhandenen Punkte einzeichnen (2D-Projektion)
-	ax.scatter(X[:, dim_x], X[:, dim_y], s=30, linewidths=0.8)
+	ax.scatter(X[:, dim_x], X[:, dim_y], s=30, 	c="black", edgecolors="black", linewidths=0.8)
+	
+	# aktueller (letzter) Punkt
+	ax.scatter(X[-1, dim_x], X[-1, dim_y], s=120, c="white", edgecolors="black", linewidths=2.0, zorder=10)
 
 	ax.set_xlim(0.0, 1.0)
 	ax.set_ylim(0.0, 1.0)
@@ -409,7 +417,8 @@ def start():
 		basics.jobs.append([get_target_st, frame])
 		basics.jobs.append([register_target, optimizer])
 		
-		basics.jobs.append([draw_png, optimizer])
+		if len(shape_keys):
+			basics.jobs.append([draw_png, optimizer])
 
 	basics.jobs.append([print_result, optimizer])
 	
