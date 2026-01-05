@@ -1865,6 +1865,19 @@ class WM_OT_gd_start(Operator):
 		operators.gd_start()
 		return {"FINISHED"}
 
+class WM_OT_bm_install(Operator):
+	'''
+	Is calling bm_install from the module called operators.
+	Check out further info in there.
+	'''
+	bl_label = "bm_install"
+	bl_idname = "wm.bm_install"
+	bl_description = "Install external libs (can take a few minutes)"
+
+	def execute(self, context):
+		operators.bm_install()
+		return {"FINISHED"}
+		
 class WM_OT_bm_start(Operator):
 	'''
 	Is calling bm_start from the module called operators.
@@ -2416,6 +2429,7 @@ classes = (
 	WM_OT_bf_start,
 	WM_OT_ga_start,
 	WM_OT_gd_start,
+	WM_OT_bm_install,
 	WM_OT_bm_start,
 	
 	WM_OT_run_web,

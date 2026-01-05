@@ -2200,8 +2200,16 @@ def gd_start():
 
 	gd.start()
 
+def bm_install():
+	basics.print_data("Install libraries for baysian modelling")
+
+	# show wireframe to see progress
+	basics.view_wireframe()
+
+	bm.install_bayes()
+	
 def bm_start():
-	basics.print_data("Start mayesian modeling over selected shape keys")
+	basics.print_data("Start bayesian modeling over selected shape keys")
 
 	# show wireframe to see progress
 	basics.view_wireframe()

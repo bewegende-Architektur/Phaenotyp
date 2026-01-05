@@ -1219,7 +1219,10 @@ def bayesian_modeling(layout):
 					# check generation_size and elitism
 					box_start = layout.box()
 					box_start.label(text="Bayesian modelling:")
-					box_start.operator("wm.bm_start", text="Start")
+					if basics.external_libs_loaded:
+						box_start.operator("wm.bm_start", text="Start")
+					else:
+						box_start.operator("wm.bm_install", text="Install")
 
 					if len(data["individuals"]) > 0 and not bpy.context.screen.is_animation_playing:
 						box_select = layout.box()
