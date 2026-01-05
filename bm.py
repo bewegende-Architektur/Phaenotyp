@@ -271,8 +271,8 @@ def start():
 
 	# todo
 	"""
-	Variablen einfügen
-	Installer für pip bauen -> Variablen
+	Variablen einfügen, ok
+	Installer für pip bauen -> Variablen, ok
 	abc -> automatisch
 	Frames anpassen nach Ende
 	Diagramm lösen -> D klein d bei Materialname
@@ -287,13 +287,26 @@ def start():
 	from bayes_opt import acquisition
 	from bayes_opt import BayesianOptimization
 	
-	acq = acquisition.UpperConfidenceBound(kappa=2.5)
-	acq = acquisition.ProbabilityOfImprovement(xi=0.01)
-	acq = acquisition.ExpectedImprovement(xi=0.01)
-	acq = acquisition.ConstantLiar(
-		base_acquisition=acquisition.ExpectedImprovement(xi=0.01),
-		strategy="mean"
-	)
+	factor = phaenotyp.bm_factor	
+	kappa = 0.5 + 9.5 * (factor / 100.0) ** 2
+	xi = xi = 0.01 * (factor / 100.0) ** 2
+	
+	acq_type = phaenotyp.bm_acq
+	
+	if acq_type == "UpperConfidenceBound":
+		acq = acquisition.UpperConfidenceBound(kappa=kappa)
+	
+	if acq_type == "ProbabilityOfImprovement":
+		acq = acquisition.ProbabilityOfImprovement(xi=xi)
+	
+	if acq_type == "ExpectedImprovement":
+		acq = acquisition.ExpectedImprovement(xi=xi)
+	
+	if acq_type == "ConstantLiar":
+		acq = acquisition.ConstantLiar(
+			base_acquisition=acquisition.ExpectedImprovement(xi=xi),
+			strategy="mean"
+		)
 
 	# Bounds sind immer von 0 bis 1
 	# verbose und random_state als Paramter in Phäntyp

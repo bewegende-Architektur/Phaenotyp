@@ -1134,6 +1134,7 @@ def bayesian_modeling(layout):
 					box_bm.label(text="Setup:")
 					box_bm.prop(phaenotyp, "bm_iterations", text="Iterations")
 					box_bm.prop(phaenotyp, "bm_acq", text="")
+					box_bm.prop(phaenotyp, "bm_factor", text="")
 
 					if calculation_type != "geometrical":
 						box_optimization = layout.box()

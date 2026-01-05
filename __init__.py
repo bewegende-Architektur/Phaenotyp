@@ -896,7 +896,7 @@ class phaenotyp_properties(PropertyGroup):
 			min = 1,
 			max = 50
 			)
-			
+						
 		bm_acq: EnumProperty(
 			name = "acq",
 			description = "Acquisition",
@@ -906,6 +906,15 @@ class phaenotyp_properties(PropertyGroup):
 					("ExpectedImprovement", "Expected Improvement", ""),
 					("ConstantLiar", "Constant Liar", "")
 				   ]
+			)
+
+		bm_factor: IntProperty(
+			name = "factor",
+			description="Factor for kappa and xi",
+			subtype = "PERCENTAGE",
+			default = 50,
+			min = 0,
+			max = 100
 			)
 			
 	if "fitness":
