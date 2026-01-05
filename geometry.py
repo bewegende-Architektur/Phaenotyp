@@ -679,7 +679,7 @@ def create_members(structure_obj, members):
 			# set 0.1 to define as pipe in gn
 			type_group.add(vertex_ids, 0.0, 'REPLACE')
 
-		if profile_type in ["rect_hollow", "rect_solid"]:
+		if profile_type in ["rect_hollow", "rect_solid", "large_steel_hollow"]:
 			# set 0.2 to define as pipe in gn
 			type_group.add(vertex_ids, 0.1, 'REPLACE')
 			

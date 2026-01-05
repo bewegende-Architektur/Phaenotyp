@@ -2385,7 +2385,7 @@ def utilization_members_profiles():
 			print(f"member {id}", new_profile, current_type, current_profile, target_height, member["height"][str(frame)])
 	
 	if len(critical_members) > 0:
-		text = [f"Critical members are:{critical_members}. Run again to optimize again / consider to change the profile type."]
+		text = [f"Critical members are:{critical_members}. Run again to optimize again / consider to adapt the shape or change the profile type."]
 		basics.popup(lines = text)
 
 def utilization_members_auto():
