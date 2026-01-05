@@ -887,7 +887,27 @@ class phaenotyp_properties(PropertyGroup):
 			min = 10,
 			max = 1000
 			)
-	
+
+	if "bm":
+		bm_iterations: IntProperty(
+			name = "iterations",
+			description="Iterations of baysian modelling",
+			default = 5,
+			min = 1,
+			max = 50
+			)
+			
+		bm_acq: EnumProperty(
+			name = "acq",
+			description = "Acquisition",
+			items = [
+					("UpperConfidenceBound", "Upper Confidence Bound", ""),
+					("ProbabilityOfImprovement", "Probability Of Improvement", ""),
+					("ExpectedImprovement", "Expected Improvement", ""),
+					("ConstantLiar", "Constant Liar", "")
+				   ]
+			)
+			
 	if "fitness":
 		fitness_volume: FloatProperty(
 			name = "volume",

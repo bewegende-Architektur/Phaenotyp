@@ -288,7 +288,12 @@ def start():
 	from bayes_opt import BayesianOptimization
 	
 	acq = acquisition.UpperConfidenceBound(kappa=2.5)
-	#acq = acquisition.ProbabilityOfImprovement(xi=0.5)
+	acq = acquisition.ProbabilityOfImprovement(xi=0.01)
+	acq = acquisition.ExpectedImprovement(xi=0.01)
+	acq = acquisition.ConstantLiar(
+		base_acquisition=acquisition.ExpectedImprovement(xi=0.01),
+		strategy="mean"
+	)
 
 	# Bounds sind immer von 0 bis 1
 	# verbose und random_state als Paramter in Phäntyp

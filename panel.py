@@ -1131,13 +1131,9 @@ def bayesian_modeling(layout):
 				else:
 					# Bayesian modelling:
 					box_bm = layout.box()
-					box_bm.label(text="Setup: Parameter von Karl einfügen")
-					'''
-					box_bm.prop(phaenotyp, "mate_type", text="Type of mating")
-					box_bm.prop(phaenotyp, "generation_size", text="Size of generation for GA")
-					box_bm.prop(phaenotyp, "elitism", text="Size of elitism for GA")
-					box_bm.prop(phaenotyp, "generation_amount", text="Amount of generations")
-					'''
+					box_bm.label(text="Setup:")
+					box_bm.prop(phaenotyp, "bm_iterations", text="Iterations")
+					box_bm.prop(phaenotyp, "bm_acq", text="")
 
 					if calculation_type != "geometrical":
 						box_optimization = layout.box()
