@@ -292,7 +292,8 @@ class phaenotyp_properties(PropertyGroup):
 				("round_solid", "Round Solid", "Solid circular profile, like a rod"),
 				("rect_hollow", "Rectangular Hollow", "Hollow rectangular profile, like RHS"),
 				("rect_solid", "Rectangular Solid", "Solid rectangular profile, like a flat bar"),
-				("standard_profile", "Standard Profile", "Custom or imported profile shape"),
+				("standard_profile", "Standard Profile", "Standard profile like IPE"),
+				("large_steel_hollow", "Large Steel Hollow", "Large Steel Hollow if standard profile is not available")
 			]
 		)
 
@@ -1195,7 +1196,7 @@ class phaenotyp_properties(PropertyGroup):
 						("pipes", "Members utilization pipes", ""),
 						("rect", "Members utilization rect", ""),
 						("profiles", "Members utilization profiles", ""),
-						("auto", "Members utilization automatic", "")
+						("lsh", "Members utilization large steel hollow", "")
 					]
 			)
 

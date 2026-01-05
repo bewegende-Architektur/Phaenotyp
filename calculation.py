@@ -1511,6 +1511,178 @@ def interweave_results_pn(frame):
 			member["normal_energy"][frame] = normalkraft_energy
 			member["moment_energy"][frame] = moment_energy
 
+		if profile_type == "large_steel_hollow":			
+			# buckling
+			member["ir_y"][frame] = sqrt(Iy/A)
+			member["ir_z"][frame] = sqrt(Iz/A)
+			
+			# bucklng resolution
+			buckling_resolution = member["buckling_resolution"]
+
+			# modulus from the moments of area
+
+			member["Wy"][frame] = member["Iy"][frame]/(height/2)
+			member["Wz"][frame] = member["Iz"][frame]/(width/2)
+
+			# calculation of the longitudinal stresses
+			long_stress = []
+			for i in range(11): # get the stresses at 11 positions and
+				# moment_h = sqrt(moment_y[i]**2+moment_z[i]**2)
+				if axial[i] > 0:
+					s = axial[i]/A + abs(moment_y[i]/member["Wy"][frame]) + abs(moment_z[i]/member["Wz"][frame])
+				else:
+					s = axial[i]/A - abs(moment_y[i]/member["Wy"][frame]) - abs(moment_z[i]/member["Wz"][frame])
+				long_stress.append(s)
+
+			# get max stress of the beam
+			# (can be positive or negative)
+			member["long_stress"][frame] = long_stress
+			member["max_long_stress"][frame] = basics.return_max_diff_to_zero(long_stress) #  -> is working as fitness
+
+			# calculation of the shear stresses from shear force
+			tau_shear_y = [] # nun zwei Scherspannungen
+			tau_shear_z = []
+
+			for i in range(11): # get the stresses at 11 positions and
+				# in y Richrtung
+				s_y = member["shear_y"][frame][i]
+				s_z = member["shear_z"][frame][i]
+				
+				tau_y = abs(1.0 * s_y/A) # for hollow rectangle, maximale tritt in Mitte auf,
+				tau_shear_y.append(tau_y)
+				tau_z = abs( 1.0 * s_z/A) # for hollow rectangle, maximale tritt in Mitte auf wird maßgebend sein, ev die größere für Schubbemessun nehmen
+				tau_shear_z.append(tau_z)
+
+			# get max shear stress of shear force of the beam
+			# shear stress is mostly small compared to longitudinal, in common architectural usage and only importand with short beam lenght
+			member["tau_shear_y"][frame] = tau_shear_y  # jetzt x und z
+			member["tau_shear_z"][frame] = tau_shear_z # wird maßgebend sein
+			member["max_tau_shear_y"][frame] = max(tau_shear_y)
+			member["max_tau_shear_z"][frame] = max(tau_shear_z) # wird maßgebend sein, ev nur das größere ausweisen
+
+			# Calculation of the torsion stresses
+			tau_torsion = []
+
+			for i in range(11): # get the stresses at 11 positions and
+				tau = abs(torque[i]/(2 * height-wall_thickness)*(width-wall_thickness))*wall_thickness  #### Formel nach Wandinger-Torsion, Trägheitsmoment nicht erforderlich, sondern direkt mit Am =mittlere Fläche und Wanddicke errechnet
+				# Torsionsspannung in senkrechten und horizontalen Steg gleich, daher nur tau und nicht tau_z und tau_y
+				# muss height und width und t noch übernommen werden?
+				tau_torsion.append(tau)
+
+			# get max torsion stress of the beam
+			member["tau_torsion"][frame] = tau_torsion
+			member["max_tau_torsion"][frame] = max(tau_torsion)
+
+			# calculation of the shear stresses from shear force and torsion
+			# (always positiv)
+			sum_tau = []  # Schub und Torsion überlagerbar
+			for i in range(11): # get the stresses at 11 positions and
+				tau = tau_shear_z[i] + tau_torsion[i] # nur Schub aus Qz und Torsionsspannung an der Längsseite überlagert, da maßgebden
+				sum_tau.append(tau)
+
+			member["sum_tau"][frame] = sum_tau
+			member["max_sum_tau"][frame] = max(sum_tau)
+			
+			# check out: http://www.bs-wiki.de/mediawiki/index.php?title=Festigkeitsberechnung
+			member["sigma"][frame] = member["long_stress"][frame]
+			member["max_sigma"][frame] = member["max_long_stress"][frame]
+
+			# overstress
+			member["overstress"][frame] = False
+
+			# check overstress and add 1.05 savety factor
+			safety_factor = 1.05
+			if abs(member["max_tau_shear_y"][frame]) > safety_factor*member["acceptable_shear"]:
+				member["overstress"][frame] = True
+
+			if abs(member["max_tau_shear_z"][frame]) > safety_factor*member["acceptable_shear"]:
+				member["overstress"][frame] = True
+
+			if abs(member["max_tau_torsion"][frame]) > safety_factor*member["acceptable_torsion"]:
+				member["overstress"][frame] = True
+
+			# Ist das korrekt?
+			if abs(member["max_sigma"][frame]) > safety_factor*member["acceptable_sigma"]:
+				member["overstress"][frame] = True
+
+			# buckling
+			if member["axial"][frame][0] < 0: # nur für Druckstäbe, axial kann nicht flippen?
+				# hier als ir das kleinere von ir_z und ir_y nehmen
+				if member["ir_y"][frame] < member["ir_z"][frame]: ir = member["ir_y"][frame]
+				else: ir = member["ir_z"][frame]
+
+				member["lamda"][frame] = L*buckling_resolution*0.5/ir # für eingespannte Stäbe ist die Knicklänge 0.5 der Stablänge L, Stablänge muss in cm sein !
+				if member["lamda"][frame] > 20: # für lamda < 20 (kurze Träger) gelten die default-Werte)
+					kn = member["knick_model"]
+					function_to_run = poly1d(polyfit(material.kn_lamda, kn, 6))
+					member["acceptable_sigma_buckling"][frame] = function_to_run(member["lamda"][frame])
+					if member["lamda"][frame] > 250: # zu schlank
+						member["acceptable_sigma_buckling"][frame] = function_to_run(250)
+						member["overstress"][frame] = True
+					if safety_factor*abs(member["acceptable_sigma_buckling"][frame]) > abs(member["max_sigma"][frame]): # Sigma
+						member["overstress"][frame] = True
+
+				else:
+					member["acceptable_sigma_buckling"][frame] = member["acceptable_sigma"]
+
+			# without buckling
+			else:
+				member["acceptable_sigma_buckling"][frame] = member["acceptable_sigma"]
+				member["lamda"][frame] = None # to avoid missing KeyError
+
+			if abs(member["max_sigma"][frame]) > safety_factor*member["acceptable_sigma"]:
+				member["overstress"][frame] = True
+
+			# lever_arm
+			lever_arm = []  # noch nicht überarbeitet
+			moment_h = []  # noch nicht überarbeitet
+			for i in range(11):
+				# moment_h
+				m_h = sqrt(moment_y[i]**2+moment_z[i]**2)
+				moment_h.append(m_h)
+
+				# to avoid division by zero
+				if member["axial"][frame][i] < 0.1:
+					lv = m_h / 0.1
+				else:
+					lv = m_h / member["axial"][frame][i]
+
+				lv = abs(lv) # absolute highest value within member
+				lever_arm.append(lv)
+
+			member["moment_h"][frame] = moment_h
+			member["lever_arm"][frame] = lever_arm
+			member["max_lever_arm"][frame] = max(lever_arm)
+
+			# Ausnutzungsgrad
+			member["utilization"][frame] = abs(member["max_long_stress"][frame] / member["acceptable_sigma_buckling"][frame])
+
+			# Einführung in die Technische Mechanik - Festigkeitslehre, H.Balke, Springer 2010
+			normalkraft_energy = []
+			moment_energy = []
+			strain_energy = []
+
+			for i in range(10): # get the energie at 10 positions for 10 section
+				# Berechnung der strain_energy für Normalkraft
+				ne = (axial[i]**2)*(L/10)/(2*member["E"]*A)
+				normalkraft_energy.append(ne)
+
+				# Berechnung der strain_energy für Moment
+				# moment_hq = moment_y[i]**2+moment_z[i]**2
+				moment_y = member["moment_y"][frame][i]
+				moment_z = member["moment_z"][frame][i]
+				me = (moment_y**2 * L/10) / (2 * member["E"] * member["Iy"][frame]) + (moment_z**2 * L/10) / (2 * member["E"] * member["Iz"][frame]) # KD 2025-09_26
+				#  nach https://roymech.org/Useful_Tables/Beams/Strain_Energy.html
+				moment_energy.append(me)
+
+				# Summe von Normalkraft und Moment-Verzerrunsenergie
+				value = ne + me
+				strain_energy.append(value)
+
+			member["strain_energy"][frame] = strain_energy
+			member["normal_energy"][frame] = normalkraft_energy
+			member["moment_energy"][frame] = moment_energy
+
 		# deflection
 		deflection = []
 
@@ -2073,9 +2245,100 @@ def utilization_members_pipes():
 				member["width"][str(frame)] = 0.001
 
 def utilization_members_rect():
-	pass
+	'''
+	Is adapting the height an width members step by step.
+	The change is based on the utilization of the elements.
+	'''
+	scene = bpy.context.scene
+	phaenotyp = scene.phaenotyp
+	data = scene["<Phaenotyp>"]
+	members = data["members"]
+	frame = bpy.context.scene.frame_current
+
+	for id, member in members.items():
+		profile_type = member["profile_type"]
+		if profile_type in ["rect_solid"]:
+			frame = str(frame)
+			util = member["utilization"][frame]
+			height = member["height"][frame]
+			width = member["width"][frame]
+			# wall_thickness = member["wall_thickness"][frame]
+
+			# Skalierungsfaktor für Biegestäbe
+			scale_factor = util ** (1/3)
+
+			# proportionale Skalierung in alle Richtungen
+			member["height"][frame] = height * scale_factor
+			member["width"][frame] = width * scale_factor
+
+			# minimale Größe setzen
+			if member["height"][str(frame)] < 0.005:
+				member["height"][str(frame)] = 0.005
+			if member["width"][str(frame)] < 0.002:
+				member["width"][str(frame)] = 0.002
+
+		if profile_type in ["rect_hollow"]:
+			frame = str(frame)
+			util = member["utilization"][frame]
+			height = member["height"][frame]
+			width = member["width"][frame]
+			wall_thickness = member["wall_thickness"][frame]
+
+			# Skalierungsfaktor für Biegestäbe
+			scale_factor = util ** (1/3)
+
+			# proportionale Skalierung in alle Richtungen
+			member["height"][frame] = height * scale_factor
+			member["width"][frame] = width * scale_factor
+			member["wall_thickness"][frame]= wall_thickness * scale_factor
+
+			# minimale Größe setzen, Einheiten in Meter?
+			if member["height"][str(frame)] < 0.005:
+				member["height"][str(frame)] = 0.005
+			if member["width"][str(frame)] < 0.0025:
+				member["width"][str(frame)] = 0.0025
+			if member["wall_thickness"][str(frame)] < 0.0005:
+				member["wall_thickness"][str(frame)] = 0.0005
+
+def utilization_members_large_steel_hollow():
+	'''
+	Is adapting the height an width members step by step.
+	The change is based on the utilization of the elements.
+	'''
+	scene = bpy.context.scene
+	phaenotyp = scene.phaenotyp
+	data = scene["<Phaenotyp>"]
+	members = data["members"]
+	frame = bpy.context.scene.frame_current
+
+	for id, member in members.items():
+		profile_type = member["profile_type"]
+		if profile_type in ["large_steel_hollow"]:
+			frame = str(frame)
+			util = member["utilization"][frame]
+			height = member["height"][frame]
+			width = member["width"][frame]
+			flange_thickness = member["flange_thickness"][frame]
+
+			# Skalierungsfaktor für Biegestäbe
+			scale_factor = util ** (1/3)
+
+			# proportionale Skalierung in alle Richtungen
+			member["height"][frame] = height * scale_factor
+			member["width"][frame] = width * scale_factor
+			member["flange_thickness"][frame]= wall_thickness * scale_factor
+			member["web_thickness"][frame]=member["flange_thickness"][frame] * 0.66
+
+			# minimale Größe setzen, Einheiten in Meter? Diese sind um die Hälfte kleiner als sie einn Träger HL 920 x 1377 entspricht, um beim
+			# Optimieren nicht auf andere Profile springt- Ewtas größere (zb 75 % ) als  Minmialwerte bei der Eingabe seetzen
+			if member["height"][str(frame)] < 500:
+				member["height"][str(frame)] = 500
+			if member["width"][str(frame)] < 236:
+				member["width"][str(frame)] = 236
+			if member["flange_thickness"][str(frame)] < 57:
+				member["flange_thickness"][str(frame)] = 57
 	
-def utilization_sectional_profiles():
+def utilization_members_profiles():
 	'''
 	Is adapting the diameters of members step by step.
 	The reduction is based on the utilization of the elements.
@@ -2085,53 +2348,45 @@ def utilization_sectional_profiles():
 	data = scene["<Phaenotyp>"]
 	members = data["members"]
 	frame = bpy.context.scene.frame_current
-
+	
+	critical_members = []
+	
 	for id, member in members.items():
-		ang = member["utilization"][str(frame)]
-		faktor_d= (abs(ang))**(1/2)
-		# neue Trägerhöhe:
-		#member["height"][str(frame)] = member["height"][str(frame)] * faktor_d
-		target_height = member["height"][str(frame)] * faktor_d
-		# neue Trägerbreite:
-		#iyr=0.0014*height**2+0.2791*height-35.215 # Zusammenhang Iy/A in Abhängigkeit der Trägerhöhe laut Profiltabellen
+		profile_type = member["profile_type"]
+		if profile_type in ["standard_profile"]:
+			ang = member["utilization"][str(frame)]
+			faktor_d = (abs(ang))**(1/2)
+			# neue Trägerhöhe:
+			#member["height"][str(frame)] = member["height"][str(frame)] * faktor_d
+			target_height = member["height"][str(frame)] * faktor_d
+			# neue Trägerbreite:
+			#iyr=0.0014*height**2+0.2791*height-35.215 # Zusammenhang Iy/A in Abhängigkeit der Trägerhöhe laut Profiltabellen
 
-		# fragt nach IPE, HEA, ...
-		profile_type = member["profile_type"][frame]
-		current_type = split(profile_type, "_")[0]
+			# fragt nach IPE, HEA, ...
+			current_profile = member["profile"][str(frame)]
+			current_type = current_profile.split("_")[0]
 
-		# größer
-		new_profile = None
-		for p_t in material.profiles:
-			if current_type in p_t[0]:
-				if p_t[2] > target_height:
-					new_profile = p_t
-					break
-
-		#if new_profile == None:
-			# wenn zu groß:
-			# wählt nächsten Typ
-			# wählt größtes Profil der Kategorie IPE, HEA ...
-			# Popup mit Fehlermeldung: Es gibt kein Profil in dieser Größe
-			# Hinweis, dass das größte Profil IPE 600 mm Höhe hat und HEA 1000 ...
-			# Gibt es eine globale Fehlermeldung, wenn mehr als 1000, auch bei Rohren und Rechteckprofilen?
-			# Mindestgrößen angeben ...
-
-			# wenn zu klein ebenfalls:
-			# ...
-
-		# Abfrage ist in Operator
-
-		'''
-		if height < 30: # cm
-			member["width"][str(frame)] = member["height"][str(frame)] # Breite bei HEB wie Höhe, bei IPE schmäler
-		else:
-			member["width"][str(frame)] = 30 # Breite in cm
-
-		# set miminum size of I-Träger: 100 mm
-		if member["height"][str(frame)] < 10: # 10 cm
-			member["height"][str(frame)] = 10
-			member["width"][str(frame)] = 10
-		'''
+			# größer
+			new_profile = None
+			for p_t in material.profiles:
+				if current_type in p_t[0]:
+					if p_t[2]*0.1 > target_height:
+						new_profile = p_t[0]
+						break
+			
+			# inform user if not available
+			if new_profile == None:
+				critical_members.append(id)
+			
+			# set new profile
+			else:
+				member["profile"][str(frame)] = new_profile
+			
+			print(f"member {id}", new_profile, current_type, current_profile, target_height, member["height"][str(frame)])
+	
+	if len(critical_members) > 0:
+		text = [f"Critical members are:{critical_members}. Run again to optimize again / consider to change the profile type."]
+		basics.popup(lines = text)
 
 def utilization_members_auto():
 	pass
@@ -2277,8 +2532,10 @@ def copy_d_t_from_prev(frame):
 
 	# copy previous frame to current
 	for id, member in members.items():
-		member["Do"][str(frame)] = member["Do"][str(frame-1)]
-		member["Di"][str(frame)] = member["Di"][str(frame-1)]
+		member["height"][str(frame)] = member["height"][str(frame-1)]
+		member["width"][str(frame)] = member["width"][str(frame-1)]
+		member["wall_thickness"][str(frame)] = member["wall_thickness"][str(frame-1)]
+		member["profile"][str(frame)] = member["profile"][str(frame-1)]
 
 		member["overstress"][str(frame)] = member["overstress"][str(frame-1)]
 		member["utilization"][str(frame)] = member["utilization"][str(frame-1)]
@@ -2328,10 +2585,10 @@ def sectional_optimization(frame):
 	else:
 		# calculate new section
 		opt_type = phaenotyp.optimization_pn
-		if opt_type == "pipes": calculation.utilization_members_pipes()
-		if opt_type == "rect": calculation.utilization_members_rect()
-		if opt_type == "profiles": calculation.utilization_members_profiles()
-		if opt_type == "auto": calculation.utilization_members_auto()
+		if opt_type == "pipes": utilization_members_pipes()
+		if opt_type == "rect": utilization_members_rect()
+		if opt_type == "profiles": utilization_members_profiles()
+		if opt_type == "lsh": utilization_members_large_steel_hollow()
 		
 		if phaenotyp.optimization_quads == "approximate":
 			quads_approximate_sectional()

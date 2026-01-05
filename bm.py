@@ -262,24 +262,6 @@ def start():
 
 	environment = data["environment"]
 	individuals = data["individuals"]
-
-	# Variablen erstellen
-	"""
-	amount = Anzahl der Iterationen
-	function = Vorbereitete Funktionen
-	"""
-
-	# todo
-	"""
-	Variablen einfügen, ok
-	Installer für pip bauen -> Variablen, ok
-	abc -> automatisch, ok
-	Frames anpassen nach Ende, ok
-	Diagramm lösen -> D klein d bei Materialname
-	Version 4 -> Weil zu viel neue Variablen
-	mathplot installieren -> Bilder erzeugen
-	was war Konflikt mit numpy?
-	"""
 	
 	add_sitepackages()
 

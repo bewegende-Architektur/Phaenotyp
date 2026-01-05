@@ -379,7 +379,17 @@ def members(layout):
 					#material.current["width"] = phaenotyp.width
 					material.current["wall_thickness"] = None
 					material.current["profile"] = phaenotyp.profiles
-				
+
+				if profile_type == "large_steel_hollow":
+					box_members.prop(phaenotyp, "height", text="Height")
+					box_members.prop(phaenotyp, "width", text="Width")
+					box_members.prop(phaenotyp, "wall_thickness", text="Wallthickness")
+					
+					material.current["height"] = phaenotyp.height
+					material.current["width"] = phaenotyp.width
+					material.current["wall_thickness"] = phaenotyp.wall_thickness
+					material.current["profile"] = None
+					
 				# Zug, Druck, Beides, Knicken
 				box_members.prop(phaenotyp, "member_type", text="Type")
 				box_members.prop(phaenotyp, "buckling_resolution", text="Buckling resolution")

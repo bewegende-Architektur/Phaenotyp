@@ -185,6 +185,32 @@ def update():
 		current["ir_y"] = sqrt(current["Iy"] / current["A"])
 		current["ir_z"] = sqrt(current["Iz"] / current["A"])
 
+	if profile_type == "large_steel_hollow":
+		height = current["height"]		# Höhe (z-Richtung)
+		width = current["width"]		# Breite (y-Richtung)
+		f = current["wall_thickness"]	# Flanschdicke, die Stegbreite (beide zusammen) beträgt autom. 0.66 davon
+		ss = f*0.33	# Stegdicke, fix
+
+		# Flächenträgheitsmomente
+		# Iy um horizontale y-Achse
+
+		current["Iy"] = 2 * (width * f**3) / 12 + (f * width) * 2 * ((height - f) / 2) ** 2 + (height - 2 * f) ** 3 * (2 * ss) / 12
+		# 1 Teil eigenträgheit des flansches, 2.Teil Steineranteil Flansch, 3.Teil. Eigen der beiden Stege
+		# Iz um vertikale z-Achse
+		current["Iz"] = 2 * ss**3 * (height - 2 * f) / 12 + 2 * ss * (height - 2 * f) * ((width - ss) / 2) ** 2 + 2 * width**3 * f * 2 / 12
+		# 1 Teil eigenträgheit des Steges, 2.Teil Steineranteil Steg, 3.Teil. Eigen der beiden Flansche
+		# Querschnittsfläche
+		current["A"] = 2 * width*f + 2*(height-2*f)*ss  #
+		# Näherung für Torsionskonstante eines rechteckigen Hohlprofils (nicht exakt!)
+		# Für t << b,h, mittlere Dicke, Dicke x A/3
+		current["J"] = (2 * f * 0.66) * (2 * width * f + 2 * (height - 2 * f) * ss) / 3
+		# Gewicht
+		current["weight_A"] = current["A"] * current["rho"] * 0.1
+
+		# Radius of gyration
+		current["ir_y"] = sqrt(current["Iy"] / current["A"])
+		current["ir_z"] = sqrt(current["Iz"] / current["A"])
+
 	if profile_type == "standard_profile":
 		profile_id = current["profile"]
 		profile = None

@@ -1227,6 +1227,33 @@ def update_geometry_pre():
 			member["weight_A"][str(frame)] = member["A"][str(frame)] * member["rho"] * 0.1 # Gewicht vom Material
 			member["ir_y"][str(frame)] = sqrt(member["Iy"][str(frame)] / member["A"][str(frame)])
 			member["ir_z"][str(frame)] = sqrt(member["Iz"][str(frame)] / member["A"][str(frame)])
+
+		if profile_type == "large_steel_hollow":
+			height = member["height"][str(frame)]      # Höhe (z-Richtung)
+			width = member["width"][str(frame)]        # Breite (y-Richtung)
+			f = member["wall_thickness"][str(frame)]	# Flanschdicke,
+			ss = f*0.33	# Stegdicke, fix
+
+			# Flächenträgheitsmomente
+			# Iy um horizontale y-Achse
+
+			member["Iy"][str(frame)] = (2 * (width * f**3) / 12	+ (f * width) * 2 * ((height - f) / 2) ** 2	+ (height - 2 * f) ** 3 * (2 * ss) / 12)
+
+			# 1 Teil eigenträgheit des flansches, 2.Teil Steineranteil Flansch, 3.Teil. Eigen der beiden Stege
+			#Iz um vertikale z-Achse
+			member["Iz"][str(frame)] = 2 * ss**3 * (height - 2 * f) / 12 + 2 * ss * (height - 2 * f) * ((width - ss) / 2) ** 2 + 2 * width**3 * f * 2 / 12
+			# 1 Teil eigenträgheit des Steges, 2.Teil Steineranteil Steg, 3.Teil. Eigen der beiden Flansche
+			# Querschnittsfläche
+			member["A"][str(frame)] = 2 * width*f + 2*(height-2*f)*ss  #
+			# Näherung für Torsionskonstante eines rechteckigen Hohlprofils (nicht exakt!)
+			# Für t << b,h, mittlere Dicke, Dicke x A/3
+			member["J"][str(frame)] = (2 * f * 0.66) * (2 * width * f + 2 * (height - 2 * f) * ss) / 3
+			# Gewicht
+			member["weight_A"][str(frame)] = member["A"][str(frame)] * member["rho"] * 0.1
+
+			# Radius of gyration
+			member["ir_y"][str(frame)] = sqrt(member["Iy"][str(frame)] / member["A"][str(frame)])
+			member["ir_z"][str(frame)] = sqrt(member["Iz"][str(frame)] / member["A"][str(frame)])
 			
 	for id, quad in quads.items():
 		id = int(id)
