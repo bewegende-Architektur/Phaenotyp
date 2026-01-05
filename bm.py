@@ -212,13 +212,13 @@ def suggest_next(optimizer):
 	# Sollte das später calculate_basis sein?
 	next_point_to_probe = optimizer.suggest()
 	print("Next point to probe is:", next_point_to_probe)
+	
+	chromosome = []
+	for i in range(len(basics.chromosome_current)):
+		v = next_point_to_probe[str(i)]
+		chromosome.append(v)
 
-	#target = black_box_function(**next_point_to_probe)
-	a = next_point_to_probe["a"]
-	b = next_point_to_probe["b"]
-	c = next_point_to_probe["c"]
-
-	basics.chromosome_current = [a,b,c]
+	basics.chromosome_current = chromosome
 	basics.next_point_to_probe = next_point_to_probe
 
 	chromosome = basics.chromosome_current
@@ -273,8 +273,8 @@ def start():
 	"""
 	Variablen einfügen, ok
 	Installer für pip bauen -> Variablen, ok
-	abc -> automatisch
-	Frames anpassen nach Ende
+	abc -> automatisch, ok
+	Frames anpassen nach Ende, ok
 	Diagramm lösen -> D klein d bei Materialname
 	Version 4 -> Weil zu viel neue Variablen
 	mathplot installieren -> Bilder erzeugen
@@ -307,13 +307,20 @@ def start():
 			base_acquisition=acquisition.ExpectedImprovement(xi=xi),
 			strategy="mean"
 		)
-
+	
+	# pbouds erstellen
+	pbounds = {}
+	chromosome = []
+	for i in range(len(shape_keys)):
+		pbounds[str(i)] = (0,1)
+		chromosome.append(0)
+		
 	# Bounds sind immer von 0 bis 1
-	# verbose und random_state als Paramter in Phäntyp
+	# verbose und random_state als Paramter in Phäntoyp
 	optimizer = BayesianOptimization(
 	    f=None,
 	    acquisition_function=acq,
-		pbounds={'a': (0, 1), 'b': (0, 1), 'c': (0, 1)},
+		pbounds=pbounds,
 	    verbose=2,
 	    random_state=1,
 	)
@@ -324,7 +331,7 @@ def start():
 	basics.feas = {}
 	basics.target = None
 	basics.fitness = None
-	basics.chromosome_current = [0,0,0]
+	basics.chromosome_current = chromosome
 	basics.next_point_to_probe = None
 
 	# generate_basis for fitness
@@ -342,7 +349,7 @@ def start():
 	basics.jobs.append([register_target, optimizer])
 
 	# ist loop von jobs
-	for _ in range(5):
+	for i in range(5):
 		# nächsten Frames
 		frame = frame + 1
 
@@ -354,7 +361,9 @@ def start():
 		basics.jobs.append([register_target, optimizer])
 
 	basics.jobs.append([print_result, optimizer])
-
+	
+	bpy.context.scene.frame_end = frame
+	
 	# geometry post and viz
 	basics.jobs.append([finish])
 

@@ -1864,7 +1864,7 @@ def create_diagram(self, context):
 				# set material
 				gnsm = node_group.nodes.new(type="GeometryNodeSetMaterial")
 				gnsm.location = (250, 0)
-				gnsm.inputs[2].default_value = bpy.data.materials["<Phaenotyp>Diagram_" + str(scene_id)]
+				gnsm.inputs[2].default_value = bpy.data.materials["<Phaenotyp>diagram_" + str(scene_id)]
 
 				# links
 				node_group.links.new(mtc.inputs[0], group_in.outputs["Geometry"])
@@ -1874,7 +1874,6 @@ def create_diagram(self, context):
 				node_group.links.new(group_out.inputs["Geometry"], gnsm.outputs[0])
 
 			modifier.node_group = node_group
-
 
 			# create vertex_group for radius
 			# radius is automatically choosen by geometry nodes for radius-input
