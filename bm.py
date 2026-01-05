@@ -235,6 +235,72 @@ def register_target(optimizer):
 		target=fitness,
 	)
 
+def draw_png(optimizer):
+	import matplotlib.pyplot as plt
+
+	frame = bpy.context.scene.frame_current
+	out_path = f"/home/mc/Schreibtisch/bo_field{frame}.png"
+	n_px = 400
+	dim_x = 0
+	dim_y = 1
+	fixed_value = 0.5
+
+	# params als Array holen
+	params = optimizer.space.params
+	first = params[0]
+
+	if isinstance(first, dict):
+		# falls dict: feste Reihenfolge über optimizer.space.keys (wenn vorhanden)
+		keys = list(getattr(optimizer.space, "keys", [])) or list(first.keys())
+		X = np.array([[p[k] for k in keys] for p in params], dtype=float)
+	else:
+		X = np.array(params, dtype=float)
+
+	y = np.array(optimizer.space.target, dtype=float)
+
+	# GP fitten
+	optimizer._gp.fit(X, y)
+
+	# Dimensionen wie vom GP erwartet
+	n_dims = optimizer._gp.n_features_in_
+
+	# Grid aufbauen
+	x_lin = np.linspace(0.0, 1.0, n_px)
+	y_lin = np.linspace(0.0, 1.0, n_px)
+	Xg, Yg = np.meshgrid(x_lin, y_lin, indexing="xy")
+
+	# Query-Matrix in richtiger Dimensionalität
+	Xq = np.full((n_px * n_px, n_dims), float(fixed_value), dtype=float)
+	Xq[:, dim_x] = Xg.ravel()
+	Xq[:, dim_y] = Yg.ravel()
+
+	# Predict: nur Erwartungswert
+	mu = optimizer._gp.predict(Xq, return_std=False)
+	mu = mu.reshape(n_px, n_px)
+
+	# Render exakt n_px x n_px
+	dpi = 100
+	fig = plt.figure(figsize=(n_px / dpi, n_px / dpi), dpi=dpi)
+	ax = fig.add_axes([0, 0, 1, 1])
+
+	ax.imshow(
+		mu,
+		origin="lower",
+		extent=(0.0, 1.0, 0.0, 1.0),
+		cmap="coolwarm",
+		interpolation="nearest"
+	)
+
+	# alle vorhandenen Punkte einzeichnen (2D-Projektion)
+	ax.scatter(X[:, dim_x], X[:, dim_y], s=30, linewidths=0.8)
+
+	ax.set_xlim(0.0, 1.0)
+	ax.set_ylim(0.0, 1.0)
+	ax.set_axis_off()
+
+	fig.savefig(out_path, dpi=dpi)
+	plt.close(fig)
+
 def print_result(optimizer):
 	print("result:")
 	for i, res in enumerate(optimizer.res):
@@ -269,7 +335,8 @@ def start():
 	from bayes_opt import acquisition
 	from bayes_opt import BayesianOptimization
 	
-	factor = phaenotyp.bm_factor	
+	iterations = phaenotyp.bm_iterations
+	factor = phaenotyp.bm_factor
 	kappa = 0.5 + 9.5 * (factor / 100.0) ** 2
 	xi = xi = 0.01 * (factor / 100.0) ** 2
 	
@@ -331,7 +398,7 @@ def start():
 	basics.jobs.append([register_target, optimizer])
 
 	# ist loop von jobs
-	for i in range(5):
+	for i in range(iterations):
 		# nächsten Frames
 		frame = frame + 1
 
@@ -341,6 +408,8 @@ def start():
 		calculate_step_st(frame)
 		basics.jobs.append([get_target_st, frame])
 		basics.jobs.append([register_target, optimizer])
+		
+		basics.jobs.append([draw_png, optimizer])
 
 	basics.jobs.append([print_result, optimizer])
 	
