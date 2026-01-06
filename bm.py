@@ -244,7 +244,9 @@ def draw_png(optimizer):
 	frame = bpy.context.scene.frame_current
 	frame_str = f"{frame:03d}"
 	base_dir = bpy.path.abspath("//")
-	out_path = os.path.join(base_dir, f"bo_field_{frame_str}.png")
+	frames_dir = os.path.join(base_dir, "bm_frames")
+	os.makedirs(frames_dir, exist_ok=True)
+	out_path = os.path.join(frames_dir, f"field_{frame_str}.png")
 	n_px = 400
 	dim_x = 0
 	dim_y = 1
@@ -286,7 +288,8 @@ def draw_png(optimizer):
 	# Render exakt n_px x n_px
 	dpi = 100
 	fig = plt.figure(figsize=(n_px / dpi, n_px / dpi), dpi=dpi)
-	ax = fig.add_axes([0, 0, 1, 1])
+	#ax = fig.add_axes([0, 0, 1, 1])
+	ax = fig.add_axes([0.15, 0.15, 0.80, 0.80])
 
 	ax.imshow(
 		mu,
@@ -304,8 +307,13 @@ def draw_png(optimizer):
 
 	ax.set_xlim(0.0, 1.0)
 	ax.set_ylim(0.0, 1.0)
-	ax.set_axis_off()
-
+	
+	ax.set_axis_on()
+	ax.set_xlabel("shapekey 1")
+	ax.set_ylabel("shapekey 2")
+	ax.tick_params(axis="both", labelsize=6)
+	ax.grid(True, linewidth=0.3, alpha=0.7)
+	
 	fig.savefig(out_path, dpi=dpi)
 	plt.close(fig)
 
