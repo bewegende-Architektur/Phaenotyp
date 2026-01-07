@@ -307,13 +307,13 @@ def prepare_fea_pn(frame):
 	for id, load in loads_e.items():
 		# flip z und y
 		model.add_member_dist_load(id, 'FX', load[0]*0.01 * psf_loads, load[0]*0.01 * psf_loads) # m to cm
-		model.add_member_dist_load(id, 'FY', load[2]*0.01 * psf_loads, load[1]*0.01 * psf_loads) # m to cm
-		model.add_member_dist_load(id, 'FZ', load[1]*0.01 * psf_loads, load[2]*0.01 * psf_loads) # m to cm
+		model.add_member_dist_load(id, 'FY', load[2]*0.01 * psf_loads, load[2]*0.01 * psf_loads) # m to cm
+		model.add_member_dist_load(id, 'FZ', load[1]*0.01 * psf_loads, load[1]*0.01 * psf_loads) # m to cm
 		
 		# flip z und y
 		model.add_member_dist_load(id, 'Fx', load[3]*0.01 * psf_loads, load[3]*0.01 * psf_loads) # m to cm
-		model.add_member_dist_load(id, 'Fy', load[5]*0.01 * psf_loads, load[4]*0.01 * psf_loads) # m to cm
-		model.add_member_dist_load(id, 'Fz', load[4]*0.01 * psf_loads, load[5]*0.01 * psf_loads) # m to cm
+		model.add_member_dist_load(id, 'Fy', load[5]*0.01 * psf_loads, load[5]*0.01 * psf_loads) # m to cm
+		model.add_member_dist_load(id, 'Fz', load[4]*0.01 * psf_loads, load[4]*0.01 * psf_loads) # m to cm
 
 	for id, load in loads_f.items():
 		# apply force to quad if a quad is available

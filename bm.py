@@ -237,7 +237,110 @@ def register_target(optimizer):
 		target=fitness,
 	)
 
-def draw_png(optimizer):
+def draw_line_png(optimizer):
+	import matplotlib.pyplot as plt
+	import os
+	import numpy as np
+	import bpy
+
+	frame = bpy.context.scene.frame_current
+	frame_str = f"{frame:03d}"
+	base_dir = bpy.path.abspath("//")
+	frames_dir = os.path.join(base_dir, "bm_frames")
+	os.makedirs(frames_dir, exist_ok=True)
+	out_path = os.path.join(frames_dir, f"line_{frame_str}.png")
+
+	n_px = 400
+	dim_x = 0
+	fixed_value = 0.5
+
+	# Unsicherheitsband, ca. 95% bei Normalverteilung
+	sigma_factor = 1.96
+
+	# params als Array holen
+	params = optimizer.space.params
+	first = params[0]
+
+	if isinstance(first, dict):
+		keys = list(getattr(optimizer.space, "keys", [])) or list(first.keys())
+		X = np.array([[p[k] for k in keys] for p in params], dtype=float)
+	else:
+		X = np.array(params, dtype=float)
+
+	y = np.array(optimizer.space.target, dtype=float)
+
+	# GP fitten
+	optimizer._gp.fit(X, y)
+	n_dims = optimizer._gp.n_features_in_
+
+	# 1D Grid aufbauen
+	x_lin = np.linspace(0.0, 1.0, n_px)
+
+	# Query-Matrix in richtiger Dimensionalität
+	Xq = np.full((n_px, n_dims), float(fixed_value), dtype=float)
+	Xq[:, dim_x] = x_lin
+
+	# Predict: mean + std
+	mu, sigma = optimizer._gp.predict(Xq, return_std=True)
+
+	# Plot
+	dpi = 100
+	fig = plt.figure(figsize=(n_px / dpi, n_px / dpi), dpi=dpi)
+	ax = fig.add_axes([0.15, 0.15, 0.80, 0.80])
+
+	# Unsicherheitsband
+	ax.fill_between(
+		x_lin,
+		mu - sigma_factor * sigma,
+		mu + sigma_factor * sigma,
+		alpha=0.25,
+		label=f"mu ± {sigma_factor:.2f}·sigma"
+	)
+
+	# Mean-Linie
+	ax.plot(
+		x_lin,
+		mu,
+		linewidth=2.0,
+		label="mu"
+	)
+
+	# Samples als Punkte (projiziert auf dim_x)
+	ax.scatter(
+		X[:, dim_x],
+		y,
+		s=30,
+		c="black",
+		edgecolors="black",
+		linewidths=0.8,
+		label="Samples"
+	)
+
+	# aktueller (letzter) Punkt
+	ax.scatter(
+		X[-1, dim_x],
+		y[-1],
+		s=120,
+		c="white",
+		edgecolors="black",
+		linewidths=2.0,
+		zorder=10,
+		label="aktueller Punkt"
+	)
+
+	ax.set_xlim(0.0, 1.0)
+
+	ax.set_axis_on()
+	ax.set_xlabel("shapekey 1")
+	ax.set_ylabel("fitness")
+	ax.tick_params(axis="both", labelsize=6)
+	ax.grid(True, linewidth=0.3, alpha=0.7)
+	ax.legend(loc="best", fontsize=6, framealpha=0.9)
+
+	fig.savefig(out_path, dpi=dpi)
+	plt.close(fig)
+
+def draw_field_png(optimizer):
 	import matplotlib.pyplot as plt
 	import os
 
@@ -354,7 +457,7 @@ def start():
 	iterations = phaenotyp.bm_iterations
 	factor = phaenotyp.bm_factor
 	kappa = 0.5 + 9.5 * (factor / 100.0) ** 2
-	xi = xi = 0.01 * (factor / 100.0) ** 2
+	xi = 0.1 * 2 * (factor/100)**2   
 	
 	acq_type = phaenotyp.bm_acq
 	
@@ -425,8 +528,13 @@ def start():
 		basics.jobs.append([get_target_st, frame])
 		basics.jobs.append([register_target, optimizer])
 		
-		if len(shape_keys):
-			basics.jobs.append([draw_png, optimizer])
+		# Zeichnet Liniendiagramm, für einen Shapekey + Basis
+		if len(shape_keys) == 2:
+			basics.jobs.append([draw_line_png, optimizer])
+			
+		# Zeichnet Feld, bei zwei Shapekeys + Basis
+		if len(shape_keys) == 3:
+			basics.jobs.append([draw_field_png, optimizer])
 
 	basics.jobs.append([print_result, optimizer])
 	
