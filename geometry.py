@@ -1028,7 +1028,7 @@ def create_stresslines(structure_obj, quads):
 	# create modifiere if not existing
 	modifier = obj.modifiers.get('<Phaenotyp>')
 	if modifier:
-		text = "existing modifier:" + str(modifiers)
+		text = "existing modifier:" + str(modifier)
 	else:
 		modifier_nodes = obj.modifiers.new(name="<Phaenotyp>", type='NODES')
 		bpy.ops.node.new_geometry_node_group_assign()

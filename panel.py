@@ -539,10 +539,10 @@ def quads(layout):
 					material.current_quads["nu"] = phaenotyp.nu_quads
 					material.current_quads["rho"] = phaenotyp.rho_quads
 					
-					quad["acceptable_sigma"] = phaenotyp.acceptable_sigma_quads
-					quad["acceptable_shear"] = phaenotyp.acceptable_shear_quads
-					quad["acceptable_sigmav"] = phaenotyp.acceptable_sigmav_quads
-					quad["knick_model"] = phaenotyp.knick_model_quads
+					material.current_quads["acceptable_sigma"] = phaenotyp.acceptable_sigma_quads
+					material.current_quads["acceptable_shear"] = phaenotyp.acceptable_shear_quads
+					material.current_quads["acceptable_sigmav"] = phaenotyp.acceptable_sigmav_quads
+					material.current_quads["knick_model"] = phaenotyp.knick_model_quads
 					
 					box_quads.label(text="Weight = " + str(round(phaenotyp.rho_quads*phaenotyp.thickness*10, 4)) + " kg/m²")
 
@@ -1430,11 +1430,6 @@ def visualization(layout):
 	phaenotyp = scene.phaenotyp
 	frame = scene.frame_current
 	data = bpy.context.scene.get("<Phaenotyp>")
-
-	try:
-		box_scipy.enabled = False
-	except:
-		pass
 
 	if phaenotyp.calculation_type != "geometrical":
 		members = data.get("members")

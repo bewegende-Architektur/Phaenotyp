@@ -194,13 +194,7 @@ def view_wireframe():
 					space.shading.type = 'WIREFRAME'
 					break
 			break
-			
-def view_vertex_colors():
-	'''
-	Change view to show colored material and hide structure.
-	'''
-	import bpy
-
+	# hide structure
 def view_vertex_colors():
 	'''
 	Change view to show colored material and hide structure.

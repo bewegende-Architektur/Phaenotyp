@@ -2327,7 +2327,7 @@ def utilization_members_large_steel_hollow():
 			# proportionale Skalierung in alle Richtungen
 			member["height"][frame] = height * scale_factor
 			member["width"][frame] = width * scale_factor
-			member["flange_thickness"][frame]= wall_thickness * scale_factor
+			member["flange_thickness"][frame]= flange_thickness * scale_factor
 			member["web_thickness"][frame]=member["flange_thickness"][frame] * 0.66
 
 			# minimale Größe setzen, Einheiten in Meter? Diese sind um die Hälfte kleiner als sie einn Träger HL 920 x 1377 entspricht, um beim
