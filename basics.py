@@ -242,7 +242,8 @@ def revert_vertex_colors():
 	# try, if the user has deleted the object
 	try:
 		# go to object-mode to avoid confusion
-		bpy.ops.object.mode_set(mode="OBJECT")
+		if bpy.context.active_object and bpy.ops.object.mode_set.poll():
+			bpy.ops.object.mode_set(mode="OBJECT")
 	except Exception:
 		log_exception("revert_vertex_colors failed")
 	

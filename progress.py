@@ -102,8 +102,8 @@ class http:
 			listen_socket.setblocking(0)
 			listen_socket.listen(1)			
 			http.server = listen_socket
-			except Exception:
-				basics.log_exception("webinterface setup failed")
+		except Exception:
+			basics.log_exception("webinterface setup failed")
 	
 	@staticmethod
 	def hosting():
