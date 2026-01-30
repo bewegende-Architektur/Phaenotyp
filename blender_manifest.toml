@@ -1,0 +1,11 @@
+schema_version = "1.0.0"
+
+id = "phaenotyp"
+name = "Phänotyp"
+version = "0.4.0"
+tagline = "Genetic algorithm for architectural structures"
+type = "add-on"
+maintainer = "bewegende Architektur e.U. and Karl Deix"
+license = ["GPL-3.0-or-later"]
+website = "https://phaenotyp.bewegende-architektur.com/"
+blender_version_min = "5.0.0"

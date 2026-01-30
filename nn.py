@@ -1,6 +1,7 @@
 import bpy
 
 import numpy as np
+from phaenotyp import basics
 
 def highest_fitness(individuals, name):
 	highest = 0
@@ -146,5 +147,5 @@ def start():
 			#print(nn.weights)
 			result = nn.predict(to_predit)*scale
 			results[fitness_function] = result
-		except:
-			pass
+		except Exception:
+			basics.log_exception("neural network training failed")

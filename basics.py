@@ -4,6 +4,7 @@ from phaenotyp import geometry
 from queue import Queue
 from time import time
 from datetime import timedelta
+import traceback
 import uuid
 
 phaenotyp_version = (0,4,0)
@@ -43,6 +44,11 @@ def print_data(text):
 		terminal.pop(0)
 	
 	print(text)
+
+def log_exception(context=""):
+	if context:
+		print_data(context)
+	traceback.print_exc()
 
 class timer:
 	"""
@@ -221,8 +227,8 @@ def view_vertex_colors():
 		
 		# go to object-mode to avoid confusion
 		bpy.ops.object.mode_set(mode="OBJECT")
-	except:
-		pass
+	except Exception:
+		log_exception("view_vertex_colors failed")
 
 def revert_vertex_colors():
 	'''
@@ -237,8 +243,8 @@ def revert_vertex_colors():
 	try:
 		# go to object-mode to avoid confusion
 		bpy.ops.object.mode_set(mode="OBJECT")
-	except:
-		pass
+	except Exception:
+		log_exception("revert_vertex_colors failed")
 	
 def popup(title = "Phaenotyp", lines=""):
 	'''

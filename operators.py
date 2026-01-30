@@ -2881,10 +2881,7 @@ def report_members():
 	filepath = bpy.data.filepath
 	directory = os.path.dirname(filepath)
 
-	try:
-		os.mkdir(os.path.join(directory, "Phaenotyp-members"))
-	except:
-		pass
+	os.makedirs(os.path.join(directory, "Phaenotyp-members"), exist_ok=True)
 
 	directory += "/Phaenotyp-members/"
 
@@ -2914,10 +2911,7 @@ def report_frames():
 	filepath = bpy.data.filepath
 	directory = os.path.dirname(filepath)
 
-	try:
-		os.mkdir(os.path.join(directory, "Phaenotyp-frames"))
-	except:
-		pass
+	os.makedirs(os.path.join(directory, "Phaenotyp-frames"), exist_ok=True)
 
 	directory += "/Phaenotyp-frames/"
 
@@ -2947,10 +2941,7 @@ def report_quads():
 	filepath = bpy.data.filepath
 	directory = os.path.dirname(filepath)
 
-	try:
-		os.mkdir(os.path.join(directory, "Phaenotyp-quads"))
-	except:
-		pass
+	os.makedirs(os.path.join(directory, "Phaenotyp-quads"), exist_ok=True)
 
 	directory += "/Phaenotyp-quads/"
 
@@ -2980,10 +2971,7 @@ def report_combined():
 	filepath = bpy.data.filepath
 	directory = os.path.dirname(filepath)
 
-	try:
-		os.mkdir(os.path.join(directory, "Phaenotyp-combined"))
-	except:
-		pass
+	os.makedirs(os.path.join(directory, "Phaenotyp-combined"), exist_ok=True)
 
 	directory += "/Phaenotyp-combined/"
 
@@ -3013,10 +3001,7 @@ def report_chromosomes():
 	filepath = bpy.data.filepath
 	directory = os.path.dirname(filepath)
 
-	try:
-		os.mkdir(os.path.join(directory, "Phaenotyp-chromosomes"))
-	except:
-		pass
+	os.makedirs(os.path.join(directory, "Phaenotyp-chromosomes"), exist_ok=True)
 
 	directory += "/Phaenotyp-chromosomes/"
 
@@ -3040,10 +3025,7 @@ def report_tree():
 	filepath = bpy.data.filepath
 	directory = os.path.dirname(filepath)
 
-	try:
-		os.mkdir(os.path.join(directory, "Phaenotyp-tree"))
-	except:
-		pass
+	os.makedirs(os.path.join(directory, "Phaenotyp-tree"), exist_ok=True)
 
 	directory += "/Phaenotyp-tree/"
 

@@ -29,8 +29,9 @@ def check_scipy():
 		import scipy
 		data["scipy_available"] = True
 
-	except:
+	except Exception:
 		data["scipy_available"] = False
+		basics.log_exception("scipy import failed")
 
 def replace_data(entry):
 	'''
@@ -2483,8 +2484,8 @@ def decimate_topology():
 	# delete modifiere if existing
 	try:
 		bpy.ops.object.modifier_remove(modifier="<Phaenotyp>decimate")
-	except:
-		pass
+	except Exception:
+		basics.log_exception("decimate modifier remove failed")
 
 	# create decimate modifiere
 	mod = obj.modifiers.new("<Phaenotyp>decimate", "DECIMATE")

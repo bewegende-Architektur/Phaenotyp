@@ -20,8 +20,9 @@ def add_sitepackages():
 		import matplotlib.pyplot as plt
 		basics.external_libs_loaded = True
 		
-	except:
+	except Exception:
 		basics.external_libs_loaded = False
+		basics.log_exception("bayesian libs import failed")
 	
 add_sitepackages()
 

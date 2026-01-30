@@ -102,8 +102,8 @@ class http:
 			listen_socket.setblocking(0)
 			listen_socket.listen(1)			
 			http.server = listen_socket
-		except:
-			pass
+			except Exception:
+				basics.log_exception("webinterface setup failed")
 	
 	@staticmethod
 	def hosting():
@@ -141,8 +141,8 @@ class http:
 			client_connection.sendall(http.show_terminal())
 			
 			client_connection.close()
-		except:
-			pass
+		except Exception:
+			basics.log_exception("webinterface hosting failed")
 def run():
 	http.active = True
 	bpy.ops.wm.phaenotyp_webinterface()
