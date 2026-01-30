@@ -819,7 +819,7 @@ def single_frame(layout):
 
 				else:
 					box_analysis = layout.box()
-					box_analysis.label(text="Only genetic algorithm is available for geometrical mode.")
+					box_analysis.label(text="Single Frame is not available for geometrical mode.")
 
 def animation(layout):
 	'''
