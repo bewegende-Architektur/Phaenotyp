@@ -13,6 +13,7 @@ It contains and handles all blender properties as well as the panel.
 '''
 
 import bpy, blf, time
+import traceback
 from bpy.props import IntProperty, FloatProperty, BoolProperty, StringProperty, EnumProperty, PointerProperty, CollectionProperty
 from bpy.types import Panel, Menu, Operator, PropertyGroup, UIList
 from bpy.app.handlers import persistent
@@ -2195,6 +2196,8 @@ class OBJECT_PT_Phaenotyp_pre(Panel):
 					
 		except Exception as error:
 			# run error panel
+			print(error)
+			traceback.print_exc()
 			panel.error(layout, basics.phaenotyp_version)
 
 class OBJECT_PT_Phaenotyp_setup(Panel):
@@ -2244,6 +2247,8 @@ class OBJECT_PT_Phaenotyp_setup(Panel):
 				
 		except Exception as error:
 			# run error panel
+			print(error)
+			traceback.print_exc()
 			panel.error(layout, basics.phaenotyp_version)
 
 class OBJECT_PT_Phaenotyp_run(Panel):
@@ -2292,6 +2297,8 @@ class OBJECT_PT_Phaenotyp_run(Panel):
 					
 		except Exception as error:
 			# run error panel
+			print(error)
+			traceback.print_exc()
 			panel.error(layout, basics.phaenotyp_version)
 
 class OBJECT_PT_Phaenotyp_progress(Panel):
@@ -2386,6 +2393,8 @@ class OBJECT_PT_Phaenotyp_post(Panel):
 					
 		except Exception as error:
 			# run error panel
+			print(error)
+			traceback.print_exc()
 			panel.error(layout, basics.phaenotyp_version)
 
 class OBJECT_PT_Phaenotyp_reset(Panel):
