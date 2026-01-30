@@ -784,8 +784,8 @@ def append_head(file, report_type, name, unit):
 	elif report_type == "combined":
 		file.write("<a href='axial.html'>axial</a> |\n")
 		file.write("<a href='sigma.html'>sigma</a> |\n")
-		file.write("<a href='Do.html'>Do</a> |\n")
-		file.write("<a href='Di.html'>Di</a> |\n")
+		file.write("<a href='height.html'>height</a> |\n")
+		file.write("<a href='wall_thickness.html'>wall_thickness</a> |\n")
 		file.write("<a href='utilization.html'>utilization</a> |\n")
 		file.write("<a href='weight.html'>weight</a> |\n")
 		file.write("<a href='length.html'>length</a>\n")
@@ -1350,15 +1350,15 @@ def report_combined(directory, start, end):
 
 	force_types = {}
 
-	force_types["axial"] = 1 # kN
-	force_types["sigma"] = 1 # kN/cm²
+	force_types["axial"] = [1, "kN"]
+	force_types["sigma"] = [1, "kN/cm²"]
 
-	force_types["Do"] = 1 # cm
-	force_types["Di"] = 1 # cm
-	force_types["utilization"] = 1
+	force_types["height"] = [1, "cm"]
+	force_types["wall_thickness"] = [1, "cm"]
+	force_types["utilization"] = [1, ""]
 
-	force_types["weight"] = 1 # kg
-	force_types["length"] = 1 # cm
+	force_types["weight"] = [1, "kg"]
+	force_types["length"] = [1, "cm"]
 
 	for force_type, entries in force_types.items():
 		length = entries[0]
@@ -1377,7 +1377,7 @@ def report_combined(directory, start, end):
 		result_matrix, highest, lowest = fill_matrix_frames(result_matrix, force_type, length)
 
 		# append start
-		append_head(file, "combined", force_type)
+		append_head(file, "combined", force_type, unit)
 
 		names = list(range(start, end+1))
 		append_headlines(file, names, 3)

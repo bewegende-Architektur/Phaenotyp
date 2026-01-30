@@ -398,6 +398,17 @@ def members(layout):
 				box_members.prop(phaenotyp, "member_orientation", text="Orientation")
 				box_members.prop(phaenotyp, "member_angle", text="Angle")
 				material.current["angle"] = phaenotyp.member_angle
+			else:
+				# pipe input for force distribution
+				box_members.prop(phaenotyp, "height", text="Diameter")
+				box_members.prop(phaenotyp, "wall_thickness", text="Wallthickness")
+
+				# force distribution uses pipe geometry (height + wall_thickness)
+				material.current["profile_type"] = "round_hollow"
+				material.current["height"] = phaenotyp.height
+				material.current["width"] = phaenotyp.height
+				material.current["wall_thickness"] = phaenotyp.wall_thickness
+				material.current["profile"] = None
 								
 			box_members.prop(phaenotyp, "material", text="Material")
 			if phaenotyp.material == "custom":

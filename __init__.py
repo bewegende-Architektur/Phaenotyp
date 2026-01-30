@@ -1243,15 +1243,15 @@ class phaenotyp_properties(PropertyGroup):
 			description = "Key for selection",
 			items = [
 						("id", "id", ""),
-						("Do", "Do", ""),
-						("Di", "Di", ""),
+						("height", "Height", ""),
+						("wall_thickness", "Wall thickness", ""),
 						("weight", "weight", ""),
 						("length", "length", ""),
 						("sigma", "Sigma", ""),
 						("axial", "Axial", ""),
 						("utilization", "Utilization", "")
 					],
-			default = "Do"
+			default = "height"
 			)
 
 		selection_key_pn: EnumProperty(
@@ -1803,6 +1803,18 @@ class WM_OT_optimize_members(Operator):
 
 	def execute(self, context):
 		operators.optimize_members()
+		return {"FINISHED"}
+
+class WM_OT_optimize_approximate(Operator):
+	'''
+	Is calling optimize_approximate from the module called operators.
+	'''
+	bl_label = "optimize_approximate"
+	bl_idname = "wm.optimize_approximate"
+	bl_description = "Approximate sectional performance (force distribution)"
+	
+	def execute(self, context):
+		operators.optimize_approximate()
 		return {"FINISHED"}
 
 class WM_OT_optimize_quads_approximate(Operator):
@@ -2460,6 +2472,7 @@ classes = (
 	WM_OT_calculate_animation,
 
 	WM_OT_optimize_members,
+	WM_OT_optimize_approximate,
 	WM_OT_optimize_quads_approximate,
 	WM_OT_optimize_quads_utilization,
 	WM_OT_decimate,

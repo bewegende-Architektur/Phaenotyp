@@ -665,80 +665,86 @@ def create_members(structure_obj, members):
 		id = str(id)
 		vertex_ids = member["mesh_vertex_ids"]
 		
-		# avoid no height at frame without calculation
-		# if no height is available, no info is available
-		if str(frame) not in member["height"]:
-			member["height"][str(frame)] = member["height_first"]
-			member["width"][str(frame)] = member["width_first"]
-			member["wall_thickness"][str(frame)] = member["wall_thickness_first"]
-			member["profile"][str(frame)] = member["profile_first"]
-			member["angle"][str(frame)] = member["angle_first"]
+		height_dict = member.get("height", {})
+		width_dict = member.get("width", {})
+		wall_dict = member.get("wall_thickness", {})
+		angle_dict = member.get("angle", {})
+
+		height = height_dict.get(str(frame), member.get("height_first", 0.0))
+		width = width_dict.get(str(frame), member.get("width_first", height))
+		wall_thickness = wall_dict.get(str(frame), member.get("wall_thickness_first", 0.0))
+		angle_value = angle_dict.get(str(frame), member.get("angle_first", 0.0))
 		
-		profile_type = member["profile_type"]		
-		if profile_type in ["round_hollow", "round_solid"]:
-			# set 0.1 to define as pipe in gn
+		if phaenotyp.calculation_type == "force_distribution":
+			# FD uses pipes only; no profile/orientation/angle data needed
 			type_group.add(vertex_ids, 0.0, 'REPLACE')
-
-		if profile_type in ["rect_hollow", "rect_solid", "large_steel_hollow"]:
-			# set 0.2 to define as pipe in gn
-			type_group.add(vertex_ids, 0.1, 'REPLACE')
-			
-		if profile_type == "standard_profile":
-			# set 0.3 to define as standard profile in gn
-			type_group.add(vertex_ids, 0.2, 'REPLACE')
-			
-		# pass height and width
-		height = member["height"][str(frame)]*0.01
-		height_group.add(vertex_ids, height, 'REPLACE')
-		width = member["width"][str(frame)]*0.01
-		width_group.add(vertex_ids, width, 'REPLACE')
-		
-		# claculate angle depending on the normal
-		if member["orientation"] == "normal":
-			vertex_0 = structure_obj_vertices[member["vertex_0_id"]]
-			vertex_1 = structure_obj_vertices[member["vertex_1_id"]]
-
-			# Kante
-			v_0 = structure_obj.matrix_world @ vertex_0.co
-			v_1 = structure_obj.matrix_world @ vertex_1.co
-
-			# Normale
-			n_0 = structure_obj.matrix_world.to_3x3() @ vertex_0.normal
-			n_1 = structure_obj.matrix_world.to_3x3() @ vertex_1.normal
-			avg_normal = (n_0 + n_1).normalized()
-
-			# Tangente entlang der Kante
-			tangent = (v_1 - v_0).normalized()
-
-			# Fallback-Achse für Aufbau lokalen Systems (globale Z)
-			fallback = Vector((0, 0, 1))
-
-			# Sicherstellen, dass Kreuzprodukt funktioniert (nicht parallel)
-			if abs(tangent.dot(fallback)) > 0.99:
-				fallback = Vector((0, 1, 0))
-
-			# Lokales Koordinatensystem (x, y, z): garantiert rechtshändig
-			z_axis = tangent
-			x_axis = fallback.cross(z_axis).normalized()
-			y_axis = z_axis.cross(x_axis).normalized()
-
-			# Matrix Welt → Lokales Profilkoordinatensystem
-			local_matrix = Matrix((x_axis, y_axis, z_axis)).transposed()
-
-			# Transformiere avg_normal in lokalen Raum
-			local_vec = local_matrix.inverted() @ avg_normal
-
-			# Jetzt kommt's: atan2(y, x) gibt den Winkel **im lokalen Koordinatensystem**
-			angle = degrees(atan2(-local_vec.y, local_vec.x)) % 360
-
-			# Optional angle offset
-			angle = angle + member["angle"][str(frame)]
-			angle = angle * 0.001
-			
+			height_group.add(vertex_ids, height * 0.01, 'REPLACE')
+			width_group.add(vertex_ids, height * 0.01, 'REPLACE')
+			angle_group.add(vertex_ids, 0.0, 'REPLACE')
 		else:
-			angle = member["angle"][str(frame)] * 0.001
-		
-		angle_group.add(vertex_ids, angle, 'REPLACE')			
+			profile_type = member["profile_type"]		
+			if profile_type in ["round_hollow", "round_solid"]:
+				# set 0.1 to define as pipe in gn
+				type_group.add(vertex_ids, 0.0, 'REPLACE')
+
+			if profile_type in ["rect_hollow", "rect_solid", "large_steel_hollow"]:
+				# set 0.2 to define as pipe in gn
+				type_group.add(vertex_ids, 0.1, 'REPLACE')
+				
+			if profile_type == "standard_profile":
+				# set 0.3 to define as standard profile in gn
+				type_group.add(vertex_ids, 0.2, 'REPLACE')
+				
+			# pass height and width
+			height_group.add(vertex_ids, height * 0.01, 'REPLACE')
+			width_group.add(vertex_ids, width * 0.01, 'REPLACE')
+			
+			# claculate angle depending on the normal
+			if member["orientation"] == "normal":
+				vertex_0 = structure_obj_vertices[member["vertex_0_id"]]
+				vertex_1 = structure_obj_vertices[member["vertex_1_id"]]
+
+				# Kante
+				v_0 = structure_obj.matrix_world @ vertex_0.co
+				v_1 = structure_obj.matrix_world @ vertex_1.co
+
+				# Normale
+				n_0 = structure_obj.matrix_world.to_3x3() @ vertex_0.normal
+				n_1 = structure_obj.matrix_world.to_3x3() @ vertex_1.normal
+				avg_normal = (n_0 + n_1).normalized()
+
+				# Tangente entlang der Kante
+				tangent = (v_1 - v_0).normalized()
+
+				# Fallback-Achse für Aufbau lokalen Systems (globale Z)
+				fallback = Vector((0, 0, 1))
+
+				# Sicherstellen, dass Kreuzprodukt funktioniert (nicht parallel)
+				if abs(tangent.dot(fallback)) > 0.99:
+					fallback = Vector((0, 1, 0))
+
+				# Lokales Koordinatensystem (x, y, z): garantiert rechtshändig
+				z_axis = tangent
+				x_axis = fallback.cross(z_axis).normalized()
+				y_axis = z_axis.cross(x_axis).normalized()
+
+				# Matrix Welt → Lokales Profilkoordinatensystem
+				local_matrix = Matrix((x_axis, y_axis, z_axis)).transposed()
+
+				# Transformiere avg_normal in lokalen Raum
+				local_vec = local_matrix.inverted() @ avg_normal
+
+				# Jetzt kommt's: atan2(y, x) gibt den Winkel **im lokalen Koordinatensystem**
+				angle = degrees(atan2(-local_vec.y, local_vec.x)) % 360
+
+				# Optional angle offset
+				angle = angle + angle_value
+				angle = angle * 0.001
+				
+			else:
+				angle = angle_value * 0.001
+			
+			angle_group.add(vertex_ids, angle, 'REPLACE')			
 
 def create_quads(structure_obj, quads):
 	scene = bpy.context.scene
@@ -1113,147 +1119,165 @@ def update_geometry_pre():
 	quads = data["quads"]
 	structure_obj_vertices = data["structure"]
 	frame = bpy.context.scene.frame_current
+	calculation_type = phaenotyp.calculation_type
 
 	for id, member in members.items():
 		id = int(id)
 
 		# copy properties if not set by optimization
 		# or the user changed the frame during optimization
-		if str(frame) not in member["height"]:
-			member["height"][str(frame)] = member["height_first"]
-			member["width"][str(frame)] = member["width_first"]
-			member["wall_thickness"][str(frame)] = member["wall_thickness_first"]
-			member["profile"][str(frame)] = member["profile_first"]
-			member["angle"][str(frame)] = member["angle_first"]
-				
-		# update material (like updated when passed from gui in material.py)
-		profile_type = member["profile_type"]
-		
-		if profile_type == "round_hollow":
+		if calculation_type == "force_distribution":
+			if str(frame) not in member["height"]:
+				member["height"][str(frame)] = member["height_first"]
+				member["wall_thickness"][str(frame)] = member["wall_thickness_first"]
+
 			diameter = member["height"][str(frame)]
 			wall_thickness = member["wall_thickness"][str(frame)]
 			Di = diameter - wall_thickness*2
-			
-			# moment of inertia, 32.9376 cm⁴
+
 			member["Iy"][str(frame)] = pi * (diameter**4 - Di**4)/64
 			member["Iz"][str(frame)] = member["Iy"][str(frame)]
-			
-			# torsional constant, 65.875 cm⁴
 			member["J"][str(frame)] = pi * (diameter**4 - Di**4)/32
-			
-			# cross-sectional area, 8,64 cm²
 			member["A"][str(frame)] = ((pi * (diameter*0.5)**2) - (pi * (Di*0.5)**2))
-			
-			# weight of profile, 6.78 kg/m
 			member["weight_A"][str(frame)] =  member["A"][str(frame)] * member["rho"] * 0.1
 
-			member["ir_y"][str(frame)] = sqrt(member["Iy"][str(frame)] / member["A"][str(frame)])
-			member["ir_z"][str(frame)] = sqrt(member["Iz"][str(frame)] / member["A"][str(frame)])
-			
-		if profile_type == "round_solid":
-			diameter = member["height"][str(frame)]
-			wall_thickness = member["wall_thickness"][str(frame)]
-			
-			member["Iy"][str(frame)] = pi * (diameter**4)/64
-			member["Iz"][str(frame)] = member["Iy"][str(frame)]
-			member["J"][str(frame)] = pi * (diameter**4)/32
-			member["A"][str(frame)] = ((pi * (diameter*0.5)**2))
-			member["weight_A"][str(frame)] =  member["A"][str(frame)] * member["rho"] * 0.1
-			member["ir_y"][str(frame)] = sqrt(member["Iy"][str(frame)] / member["A"][str(frame)])
-			member["ir_z"][str(frame)] = sqrt(member["Iz"][str(frame)] / member["A"][str(frame)])
+			member["ir"][str(frame)] = sqrt(member["Iy"][str(frame)] / member["A"][str(frame)])
+		else:
+			if str(frame) not in member["height"]:
+				member["height"][str(frame)] = member["height_first"]
+				member["width"][str(frame)] = member["width_first"]
+				member["wall_thickness"][str(frame)] = member["wall_thickness_first"]
+				member["profile"][str(frame)] = member["profile_first"]
+				member["angle"][str(frame)] = member["angle_first"]
 					
-		if profile_type == "rect_hollow":
-			height = member["height"][str(frame)]
-			width = member["width"][str(frame)]
-			t = member["wall_thickness"][str(frame)]
+			# update material (like updated when passed from gui in material.py)
+			profile_type = member["profile_type"]
 			
-			# Innenmaße
-			height_i = height - 2 * t
-			width_i = width - 2 * t
-
-			# Flächenträgheitsmomente
-			member["Iy"][str(frame)] = (height * width**3 - height_i * width_i**3) / 12
-			member["Iz"][str(frame)] = (width * height**3 - width_i * height_i**3) / 12
-
-			# Näherung für Torsionskonstante eines rechteckigen Hohlprofils (nicht exakt!)
-			# Für t << b,h:
-			member["J"][str(frame)] = (2 * t) * (height * width - height_i * width_i) / 3
-
-			# Querschnittsfläche
-			member["A"][str(frame)] = height * width - height_i * width_i
-
-			# Gewicht
-			member["weight_A"][str(frame)] = member["A"][str(frame)] * member["rho"] * 0.1
-
-			# Radius of gyration
-			member["ir_y"][str(frame)] = sqrt(member["Iy"][str(frame)] / member["A"][str(frame)])
-			member["ir_z"][str(frame)] = sqrt(member["Iz"][str(frame)] / member["A"][str(frame)])
+			if profile_type == "round_hollow":
+				diameter = member["height"][str(frame)]
+				wall_thickness = member["wall_thickness"][str(frame)]
+				Di = diameter - wall_thickness*2
 				
-		if profile_type == "rect_solid":
-			height = member["height"][str(frame)]      # Breite (z-Richtung)
-			width = member["width"][str(frame)]        # Höhe (y-Richtung)
-			
-			# Flächenträgheitsmomente
-			member["Iy"][str(frame)] = (width * height**3) / 12  # um z-Achse
-			member["Iz"][str(frame)] = (height * width**3) / 12  # um y-Achse
-
-			# Torsionskonstante (Näherung für rechteckigen Querschnitt, Kasten)
-			member["J"][str(frame)] = (height * width**3) * (1/3) if height <= width else (width * height**3) * (1/3)
-
-			# Querschnittsfläche
-			member["A"][str(frame)] = height * width
-
-			# Gewicht
-			member["weight_A"][str(frame)] = member["A"][str(frame)] * member["rho"] * 0.1
-
-			# Radius of gyration
-			member["ir_y"][str(frame)] = sqrt(member["Iy"][str(frame)] / member["A"][str(frame)])
-			member["ir_z"][str(frame)] = sqrt(member["Iz"][str(frame)] / member["A"][str(frame)])
+				# moment of inertia, 32.9376 cm⁴
+				member["Iy"][str(frame)] = pi * (diameter**4 - Di**4)/64
+				member["Iz"][str(frame)] = member["Iy"][str(frame)]
 				
-		if profile_type == "standard_profile":
-			profile_id = member["profile"][str(frame)]
-			profile = None
-			for profile in material.profiles:
-				if profile[0] == profile_id:
-					current_profile = profile
+				# torsional constant, 65.875 cm⁴
+				member["J"][str(frame)] = pi * (diameter**4 - Di**4)/32
+				
+				# cross-sectional area, 8,64 cm²
+				member["A"][str(frame)] = ((pi * (diameter*0.5)**2) - (pi * (Di*0.5)**2))
+				
+				# weight of profile, 6.78 kg/m
+				member["weight_A"][str(frame)] =  member["A"][str(frame)] * member["rho"] * 0.1
 
-			member["height"][str(frame)] = current_profile[2] * 0.1 # scale correctly from library
-			member["width"][str(frame)] = current_profile[3] * 0.1 # scale correctly from library
+				member["ir_y"][str(frame)] = sqrt(member["Iy"][str(frame)] / member["A"][str(frame)])
+				member["ir_z"][str(frame)] = sqrt(member["Iz"][str(frame)] / member["A"][str(frame)])
+				
+			if profile_type == "round_solid":
+				diameter = member["height"][str(frame)]
+				wall_thickness = member["wall_thickness"][str(frame)]
+				
+				member["Iy"][str(frame)] = pi * (diameter**4)/64
+				member["Iz"][str(frame)] = member["Iy"][str(frame)]
+				member["J"][str(frame)] = pi * (diameter**4)/32
+				member["A"][str(frame)] = ((pi * (diameter*0.5)**2))
+				member["weight_A"][str(frame)] =  member["A"][str(frame)] * member["rho"] * 0.1
+				member["ir_y"][str(frame)] = sqrt(member["Iy"][str(frame)] / member["A"][str(frame)])
+				member["ir_z"][str(frame)] = sqrt(member["Iz"][str(frame)] / member["A"][str(frame)])
+						
+			if profile_type == "rect_hollow":
+				height = member["height"][str(frame)]
+				width = member["width"][str(frame)]
+				t = member["wall_thickness"][str(frame)]
+				
+				# Innenmaße
+				height_i = height - 2 * t
+				width_i = width - 2 * t
+
+				# Flächenträgheitsmomente
+				member["Iy"][str(frame)] = (height * width**3 - height_i * width_i**3) / 12
+				member["Iz"][str(frame)] = (width * height**3 - width_i * height_i**3) / 12
+
+				# Näherung für Torsionskonstante eines rechteckigen Hohlprofils (nicht exakt!)
+				# Für t << b,h:
+				member["J"][str(frame)] = (2 * t) * (height * width - height_i * width_i) / 3
+
+				# Querschnittsfläche
+				member["A"][str(frame)] = height * width - height_i * width_i
+
+				# Gewicht
+				member["weight_A"][str(frame)] = member["A"][str(frame)] * member["rho"] * 0.1
+
+				# Radius of gyration
+				member["ir_y"][str(frame)] = sqrt(member["Iy"][str(frame)] / member["A"][str(frame)])
+				member["ir_z"][str(frame)] = sqrt(member["Iz"][str(frame)] / member["A"][str(frame)])
 					
-			member["Iy"][str(frame)] = current_profile[8]
-			member["Iz"][str(frame)] = current_profile[9]
-			member["J"][str(frame)] = current_profile[10]
-			member["A"][str(frame)] = current_profile[6]
-			member["weight_A"][str(frame)] = member["A"][str(frame)] * member["rho"] * 0.1 # Gewicht vom Material
-			member["ir_y"][str(frame)] = sqrt(member["Iy"][str(frame)] / member["A"][str(frame)])
-			member["ir_z"][str(frame)] = sqrt(member["Iz"][str(frame)] / member["A"][str(frame)])
+			if profile_type == "rect_solid":
+				height = member["height"][str(frame)]      # Breite (z-Richtung)
+				width = member["width"][str(frame)]        # Höhe (y-Richtung)
+				
+				# Flächenträgheitsmomente
+				member["Iy"][str(frame)] = (width * height**3) / 12  # um z-Achse
+				member["Iz"][str(frame)] = (height * width**3) / 12  # um y-Achse
 
-		if profile_type == "large_steel_hollow":
-			height = member["height"][str(frame)]      # Höhe (z-Richtung)
-			width = member["width"][str(frame)]        # Breite (y-Richtung)
-			f = member["wall_thickness"][str(frame)]	# Flanschdicke,
-			ss = f*0.33	# Stegdicke, fix
+				# Torsionskonstante (Näherung für rechteckigen Querschnitt, Kasten)
+				member["J"][str(frame)] = (height * width**3) * (1/3) if height <= width else (width * height**3) * (1/3)
 
-			# Flächenträgheitsmomente
-			# Iy um horizontale y-Achse
+				# Querschnittsfläche
+				member["A"][str(frame)] = height * width
 
-			member["Iy"][str(frame)] = (2 * (width * f**3) / 12	+ (f * width) * 2 * ((height - f) / 2) ** 2	+ (height - 2 * f) ** 3 * (2 * ss) / 12)
+				# Gewicht
+				member["weight_A"][str(frame)] = member["A"][str(frame)] * member["rho"] * 0.1
 
-			# 1 Teil eigenträgheit des flansches, 2.Teil Steineranteil Flansch, 3.Teil. Eigen der beiden Stege
-			#Iz um vertikale z-Achse
-			member["Iz"][str(frame)] = 2 * ss**3 * (height - 2 * f) / 12 + 2 * ss * (height - 2 * f) * ((width - ss) / 2) ** 2 + 2 * width**3 * f * 2 / 12
-			# 1 Teil eigenträgheit des Steges, 2.Teil Steineranteil Steg, 3.Teil. Eigen der beiden Flansche
-			# Querschnittsfläche
-			member["A"][str(frame)] = 2 * width*f + 2*(height-2*f)*ss  #
-			# Näherung für Torsionskonstante eines rechteckigen Hohlprofils (nicht exakt!)
-			# Für t << b,h, mittlere Dicke, Dicke x A/3
-			member["J"][str(frame)] = (2 * f * 0.66) * (2 * width * f + 2 * (height - 2 * f) * ss) / 3
-			# Gewicht
-			member["weight_A"][str(frame)] = member["A"][str(frame)] * member["rho"] * 0.1
+				# Radius of gyration
+				member["ir_y"][str(frame)] = sqrt(member["Iy"][str(frame)] / member["A"][str(frame)])
+				member["ir_z"][str(frame)] = sqrt(member["Iz"][str(frame)] / member["A"][str(frame)])
+					
+			if profile_type == "standard_profile":
+				profile_id = member["profile"][str(frame)]
+				profile = None
+				for profile in material.profiles:
+					if profile[0] == profile_id:
+						current_profile = profile
 
-			# Radius of gyration
-			member["ir_y"][str(frame)] = sqrt(member["Iy"][str(frame)] / member["A"][str(frame)])
-			member["ir_z"][str(frame)] = sqrt(member["Iz"][str(frame)] / member["A"][str(frame)])
+				member["height"][str(frame)] = current_profile[2] * 0.1 # scale correctly from library
+				member["width"][str(frame)] = current_profile[3] * 0.1 # scale correctly from library
+						
+				member["Iy"][str(frame)] = current_profile[8]
+				member["Iz"][str(frame)] = current_profile[9]
+				member["J"][str(frame)] = current_profile[10]
+				member["A"][str(frame)] = current_profile[6]
+				member["weight_A"][str(frame)] = member["A"][str(frame)] * member["rho"] * 0.1 # Gewicht vom Material
+				member["ir_y"][str(frame)] = sqrt(member["Iy"][str(frame)] / member["A"][str(frame)])
+				member["ir_z"][str(frame)] = sqrt(member["Iz"][str(frame)] / member["A"][str(frame)])
+
+			if profile_type == "large_steel_hollow":
+				height = member["height"][str(frame)]      # Höhe (z-Richtung)
+				width = member["width"][str(frame)]        # Breite (y-Richtung)
+				f = member["wall_thickness"][str(frame)]	# Flanschdicke,
+				ss = f*0.33	# Stegdicke, fix
+
+				# Flächenträgheitsmomente
+				# Iy um horizontale y-Achse
+
+				member["Iy"][str(frame)] = (2 * (width * f**3) / 12	+ (f * width) * 2 * ((height - f) / 2) ** 2	+ (height - 2 * f) ** 3 * (2 * ss) / 12)
+
+				# 1 Teil eigenträgheit des flansches, 2.Teil Steineranteil Flansch, 3.Teil. Eigen der beiden Stege
+				#Iz um vertikale z-Achse
+				member["Iz"][str(frame)] = 2 * ss**3 * (height - 2 * f) / 12 + 2 * ss * (height - 2 * f) * ((width - ss) / 2) ** 2 + 2 * width**3 * f * 2 / 12
+				# 1 Teil eigenträgheit des Steges, 2.Teil Steineranteil Steg, 3.Teil. Eigen der beiden Flansche
+				# Querschnittsfläche
+				member["A"][str(frame)] = 2 * width*f + 2*(height-2*f)*ss  #
+				# Näherung für Torsionskonstante eines rechteckigen Hohlprofils (nicht exakt!)
+				# Für t << b,h, mittlere Dicke, Dicke x A/3
+				member["J"][str(frame)] = (2 * f * 0.66) * (2 * width * f + 2 * (height - 2 * f) * ss) / 3
+				# Gewicht
+				member["weight_A"][str(frame)] = member["A"][str(frame)] * member["rho"] * 0.1
+
+				# Radius of gyration
+				member["ir_y"][str(frame)] = sqrt(member["Iy"][str(frame)] / member["A"][str(frame)])
+				member["ir_z"][str(frame)] = sqrt(member["Iz"][str(frame)] / member["A"][str(frame)])
 			
 	for id, quad in quads.items():
 		id = int(id)
@@ -1384,8 +1408,12 @@ def update_geometry_post():
 			# update radius and others
 			vertex_ids = member["mesh_vertex_ids"]
 			height = member["height"][str(frame)]*0.01
-			width = member["width"][str(frame)]*0.01
-			angle = member["angle"][str(frame)]*0.01
+			if phaenotyp.calculation_type == "force_distribution":
+				width = height
+				angle = 0.0
+			else:
+				width = member["width"][str(frame)]*0.01
+				angle = member["angle"][str(frame)]*0.01
 			
 			# pass parameters to vertex groups
 			if height_group: height_group.add(vertex_ids, height, 'REPLACE')

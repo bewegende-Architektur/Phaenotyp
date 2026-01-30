@@ -2182,15 +2182,16 @@ def approximate_sectional():
 		# bei Biegestäben
 		faktor_d = (abs(ang))**(1/3)
 
-		Do_Di_ratio = member["Do"][str(frame)]/member["Di"][str(frame)]
-		member["Do"][str(frame)] = member["Do"][str(frame)] * faktor_d
-		member["Di"][str(frame)] = member["Di"][str(frame)] * faktor_d
+		height = member["height"][str(frame)]
+		wall_thickness = member["wall_thickness"][str(frame)]
 
-		# set miminum size of Do and Di to avoid division by zero
-		Do_Di_ratio = member["Do"][str(frame)]/member["Di"][str(frame)]
-		if member["Di"][str(frame)] < 0.1:
-			member["Di"][str(frame)] = 0.1
-			member["Do"][str(frame)] = member["Di"][str(frame)] * Do_Di_ratio
+		# keep thickness ratio while scaling
+		thickness_ratio = wall_thickness / height if height else 0
+		height = height * faktor_d
+		wall_thickness = height * thickness_ratio
+
+		member["height"][str(frame)] = height
+		member["wall_thickness"][str(frame)] = wall_thickness
 	
 def optimize_members_rotation():
 	'''

@@ -991,7 +991,8 @@ def set_member():
 				member["vertex_0_id"] = vertex_0_id # equals id of vertex
 				member["vertex_1_id"] = vertex_1_id # equals id of vertex
 
-				member["profile_type"] = phaenotyp.profile_type
+				member["profile_type"] = "round_hollow"
+				member["orientation"] = phaenotyp.member_orientation
 				member["member_type"] = phaenotyp.member_type
 				member["buckling_resolution"] = phaenotyp.buckling_resolution
 				member["orientation"] = phaenotyp.member_orientation
@@ -1112,11 +1113,21 @@ def set_member():
 				# the key "first" is used to store the user-input of each member
 				# this is importand, if a user is chaning the frame during the
 				# input for some reason
-				member["Do"] = {}
-				member["Di"] = {}
+				member["profile_type"] = phaenotyp.profile_type
 
-				member["Do_first"] = material.current["Do"] # from gui
-				member["Di_first"] = material.current["Di"] # from fui
+				member["height"] = {}
+				member["width"] = {}
+				member["wall_thickness"] = {}
+
+				member["height_first"] = material.current["height"] # from gui
+				member["width_first"] = material.current["height"] # width == height for pipes
+				member["wall_thickness_first"] = material.current["wall_thickness"] # from gui
+
+				member["profile"] = {}
+				member["profile_first"] = None
+
+				member["angle"] = {}
+				member["angle_first"] = phaenotyp.member_angle
 
 				member["Iy"] = {}
 				member["Iz"] = {}
@@ -2105,6 +2116,28 @@ def optimize_members():
 	# run jobs
 	bpy.ops.wm.phaenotyp_jobs()
 
+def optimize_approximate():
+	scene = bpy.context.scene
+	phaenotyp = scene.phaenotyp
+	frame = bpy.context.scene.frame_current
+
+	basics.print_data("sectional performance approximate")
+
+	# reset temp dictionaries
+	basics.models = {}
+	basics.feas = {}
+
+	# adjust sections and recalc current frame
+	basics.jobs.append([calculation.approximate_sectional])
+	calculation.calculate_frames(frame, frame+1)
+
+	# update visualization
+	basics.jobs.append([geometry.update_geometry_post])
+	basics.jobs.append([basics.view_vertex_colors])
+	basics.jobs.append([basics.print_data, "done"])
+
+	bpy.ops.wm.phaenotyp_jobs()
+
 def quads_approximate_sectional():
 	scene = bpy.context.scene
 	phaenotyp = scene.phaenotyp
@@ -2568,10 +2601,10 @@ def text():
 								# get frame
 								frame = bpy.context.scene.frame_current
 
-								# get Do and Di
-								text = "Do: " + str(round(member["Do"][str(frame)], 3)) + " cm"
+								# get height and wall thickness
+								text = "height: " + str(round(member["height"][str(frame)], 3)) + " cm"
 								data_temp.append(text)
-								text = "Di: " + str(round(member["Di"][str(frame)], 3)) + " cm"
+								text = "wall_thickness: " + str(round(member["wall_thickness"][str(frame)], 3)) + " cm"
 								data_temp.append(text)
 
 								# results
