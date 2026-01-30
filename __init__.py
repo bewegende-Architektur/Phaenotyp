@@ -798,18 +798,22 @@ class phaenotyp_properties(PropertyGroup):
 		)
 
 	if "mode":
+		items = [
+			("transformation", "Transformation", ""),
+			("single_frame", "Single frame", ""),
+			("animation", "Animation", ""),
+			("bruteforce", "Bruteforce", ""),
+			("gradient_descent", "Gradient descent", ""),
+			("genetic_algorithm", "Genetic algorithm", "")
+		]
+
+		if basics.lab_usage:
+			items.append(("bayesian_modeling", "Bayesian modeling", ""))
+	
 		mode: EnumProperty(
 			name = "mode",
 			description = "Select mode to start",
-			items = [
-						("transformation", "Transformation", ""),
-						("single_frame", "Single frame", ""),
-						("animation", "Animation", ""),
-						("bruteforce", "Bruteforce", ""),
-						("gradient_descent", "Gradient descent", ""),
-						("genetic_algorithm", "Genetic algorithm", ""),
-						("bayesian_modeling", "Bayesian modeling", "")
-				   ],
+			items = items,
 			default = "single_frame"
 			)
 	

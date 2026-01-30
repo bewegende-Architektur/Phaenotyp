@@ -2,6 +2,11 @@ import bpy
 from phaenotyp import basics, operators, geometry, calculation
 import numpy as np
 
+# this module is only available if lab_usage is true in basics.py
+# it allows to use bayesian optimization for shape key optimization
+# however, it requires external libaries to be installed via pip
+# this is suggested for experienced users only
+
 def add_sitepackages():
 	# Fügt sitepackages zu Python hinzu
 	import sys

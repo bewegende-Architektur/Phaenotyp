@@ -9,6 +9,10 @@ import uuid
 phaenotyp_version = (0,4,0)
 blender_version = (5,0,1)
 
+# if this variable is true, external libaries can be pip installed via the panel in bayesian modeling
+# this is suggested for experienced users only
+lab_usage = False
+
 phaenotyp_name = (
 	"Phänotyp " 
 	+ str(phaenotyp_version[0]) + "."
