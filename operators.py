@@ -991,7 +991,7 @@ def set_member():
 				member["vertex_0_id"] = vertex_0_id # equals id of vertex
 				member["vertex_1_id"] = vertex_1_id # equals id of vertex
 
-				member["profile_type"] = "round_hollow"
+				member["profile_type"] = phaenotyp.profile_type
 				member["orientation"] = phaenotyp.member_orientation
 				member["member_type"] = phaenotyp.member_type
 				member["buckling_resolution"] = phaenotyp.buckling_resolution
@@ -1113,7 +1113,7 @@ def set_member():
 				# the key "first" is used to store the user-input of each member
 				# this is importand, if a user is chaning the frame during the
 				# input for some reason
-				member["profile_type"] = phaenotyp.profile_type
+				member["profile_type"] = "round_hollow"
 
 				member["height"] = {}
 				member["width"] = {}

@@ -665,34 +665,39 @@ def create_members(structure_obj, members):
 		id = str(id)
 		vertex_ids = member["mesh_vertex_ids"]
 		
-		height_dict = member.get("height", {})
-		width_dict = member.get("width", {})
-		wall_dict = member.get("wall_thickness", {})
-		angle_dict = member.get("angle", {})
+		# avoid no height at frame without calculation
+		# if no height is available, no info is available
+		if str(frame) not in member["height"]:
+			member["height"][str(frame)] = member["height_first"]
+			member["width"][str(frame)] = member["width_first"]
+			member["wall_thickness"][str(frame)] = member["wall_thickness_first"]
+			member["profile"][str(frame)] = member["profile_first"]
+			member["angle"][str(frame)] = member["angle_first"]
 
-		height = height_dict.get(str(frame), member.get("height_first", 0.0))
-		width = width_dict.get(str(frame), member.get("width_first", height))
-		wall_thickness = wall_dict.get(str(frame), member.get("wall_thickness_first", 0.0))
-		angle_value = angle_dict.get(str(frame), member.get("angle_first", 0.0))
-		
+		height = member["height"][str(frame)]
+		width = member["width"][str(frame)]
+		angle_value = member["angle"][str(frame)]
+
+		# FD uses pipes only; no profile/orientation/angle data needed		
 		if phaenotyp.calculation_type == "force_distribution":
-			# FD uses pipes only; no profile/orientation/angle data needed
 			type_group.add(vertex_ids, 0.0, 'REPLACE')
 			height_group.add(vertex_ids, height * 0.01, 'REPLACE')
 			width_group.add(vertex_ids, height * 0.01, 'REPLACE')
 			angle_group.add(vertex_ids, 0.0, 'REPLACE')
+		
+		# for Pynite
 		else:
 			profile_type = member["profile_type"]		
 			if profile_type in ["round_hollow", "round_solid"]:
-				# set 0.1 to define as pipe in gn
+				# set 0.0 to define as pipe in gn
 				type_group.add(vertex_ids, 0.0, 'REPLACE')
 
 			if profile_type in ["rect_hollow", "rect_solid", "large_steel_hollow"]:
-				# set 0.2 to define as pipe in gn
+				# set 0.1 to define as pipe in gn
 				type_group.add(vertex_ids, 0.1, 'REPLACE')
 				
 			if profile_type == "standard_profile":
-				# set 0.3 to define as standard profile in gn
+				# set 0.32 to define as standard profile in gn
 				type_group.add(vertex_ids, 0.2, 'REPLACE')
 				
 			# pass height and width
