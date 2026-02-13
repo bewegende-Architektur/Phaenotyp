@@ -2,12 +2,12 @@
 by bewegende Architektur e.U.  
 with support from Karl Deix  
 
-![](https://phaenotyp.bewegende-architektur.com/lib/exe/fetch.php?w=800&tok=d00a53&media=phaenotyp_2024.png)
+![](https://phaenotyp.bewegende-architektur.com/lib/exe/fetch.php?w=800&tok=714af9&media=phaenotyp_4.png)
 
 Phänotyp is an Add-On for Blender 3D  
 https://www.blender.org/
 
-It allows to perform genetic mutation of architectural structures. Furthermore it can be used to analyze moving shapes. This is especially useful when working on kinematic architectural projects. The tool is focusing on early stages of the design process and can be used for free without any warranty.
+It allows to perform genetic mutation of architectural structures and gradient decent. Furthermore it can be used to analyze moving shapes. This is especially useful when working on kinematic architectural projects. The tool is focusing on early stages of the design process and can be used for free without any warranty.
 
 Analysis is done with PyNite by JWock82 (Craig):  
 https://github.com/JWock82/PyNite
@@ -45,7 +45,7 @@ https://youtu.be/F5ilsBDoIkY
 * follow steps from Installation
 
 ## Compatibility
-Please be aware that we focuse on the latest version of Blender 3D only. Right now this is version 4.5. Any version before geometry nodes is not supported. We are testing Phänotyp on linux and windows only. Anyway: We recevied possitive feedback, that it is running on mac os also. Just drop an issue via github, if you face any issues.
+Please be aware that we focuse on the latest version of Blender 3D only. Right now this is version 5.1. Any version before geometry nodes is not supported. We are testing Phänotyp on linux and windows only. Anyway: We recevied possitive feedback, that it is running on mac os also. Just drop an issue via github, if you face any issues.
 
 ## Wiki
 Finde further infos and examples:  
