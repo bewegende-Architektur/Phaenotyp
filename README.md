@@ -1,6 +1,6 @@
 # Phänotyp
 by bewegende Architektur e.U.  
-with support from Karl Deix  
+and Karl Deix  
 
 ![](https://phaenotyp.bewegende-architektur.com/lib/exe/fetch.php?w=800&tok=714af9&media=phaenotyp_4.png)
 
