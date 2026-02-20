@@ -1,4 +1,5 @@
 bl_info = {
+	"id": "phaenotyp",
 	"name": "Phänotyp",
 	"description": "Genetic algorithm for architectural structures",
 	"author": "bewegende Architektur e.U. and Karl Deix",
