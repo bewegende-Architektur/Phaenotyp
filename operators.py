@@ -2099,8 +2099,9 @@ def optimize_members():
 	if opt_type == "pipes": basics.jobs.append([calculation.utilization_members_pipes])
 	if opt_type == "rect": basics.jobs.append([calculation.utilization_members_rect])
 	if opt_type == "profiles": basics.jobs.append([calculation.utilization_members_profiles])
-	if opt_type == "auto": basics.jobs.append([calculation.utilization_members_auto])
-
+	if opt_type == "lsh": basics.jobs.append([calculation.utilization_members_large_steel_hollow])
+	if opt_type == "all": basics.jobs.append([calculation.utilization_members_all])
+		
 	# calculate frame
 	calculation.calculate_frames(frame, frame+1)
 

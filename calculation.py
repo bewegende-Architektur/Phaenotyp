@@ -2320,7 +2320,7 @@ def utilization_members_large_steel_hollow():
 			util = member["utilization"][frame]
 			height = member["height"][frame]
 			width = member["width"][frame]
-			flange_thickness = member["flange_thickness"][frame]
+			flange_thickness = member["wall_thickness"][frame]
 
 			# Skalierungsfaktor für Biegestäbe
 			scale_factor = util ** (1/3)
@@ -2328,17 +2328,19 @@ def utilization_members_large_steel_hollow():
 			# proportionale Skalierung in alle Richtungen
 			member["height"][frame] = height * scale_factor
 			member["width"][frame] = width * scale_factor
-			member["flange_thickness"][frame]= flange_thickness * scale_factor
-			member["web_thickness"][frame]=member["flange_thickness"][frame] * 0.66
+			member["wall_thickness"][frame] = flange_thickness * scale_factor
+			
+			# Dicke von 0.66 bei Abfrage
+			#member["web_thickness"][frame] = member["flange_thickness"][frame] * 0.66
 
 			# minimale Größe setzen, Einheiten in Meter? Diese sind um die Hälfte kleiner als sie einn Träger HL 920 x 1377 entspricht, um beim
 			# Optimieren nicht auf andere Profile springt- Ewtas größere (zb 75 % ) als  Minmialwerte bei der Eingabe seetzen
-			if member["height"][str(frame)] < 500:
-				member["height"][str(frame)] = 500
-			if member["width"][str(frame)] < 236:
-				member["width"][str(frame)] = 236
-			if member["flange_thickness"][str(frame)] < 57:
-				member["flange_thickness"][str(frame)] = 57
+			if member["height"][str(frame)] < 50:
+				member["height"][str(frame)] = 50
+			if member["width"][str(frame)] < 23.6:
+				member["width"][str(frame)] = 23.6
+			if member["wall_thickness"][str(frame)] < 0.57:
+				member["wall_thickness"][str(frame)] = 0.57
 	
 def utilization_members_profiles():
 	'''
@@ -2390,8 +2392,12 @@ def utilization_members_profiles():
 		text = [f"Critical members are:{critical_members}. Run again to optimize again / consider to adapt the shape or change the profile type."]
 		basics.popup(lines = text)
 
-def utilization_members_auto():
-	pass
+def utilization_members_all():
+	optimize_members_rotation()
+	utilization_members_pipes()
+	utilization_members_rect()
+	utilization_members_profiles()
+	utilization_members_large_steel_hollow()
 	
 def quads_approximate_sectional():
 	'''
@@ -2587,10 +2593,12 @@ def sectional_optimization(frame):
 	else:
 		# calculate new section
 		opt_type = phaenotyp.optimization_pn
+		if opt_type == "none": optimize_members_rotation()
 		if opt_type == "pipes": utilization_members_pipes()
 		if opt_type == "rect": utilization_members_rect()
 		if opt_type == "profiles": utilization_members_profiles()
 		if opt_type == "lsh": utilization_members_large_steel_hollow()
+		if opt_type == "all": utilization_members_all()
 		
 		if phaenotyp.optimization_quads == "approximate":
 			quads_approximate_sectional()

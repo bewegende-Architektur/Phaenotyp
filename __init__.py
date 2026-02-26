@@ -1202,7 +1202,8 @@ class phaenotyp_properties(PropertyGroup):
 						("pipes", "Members utilization pipes", ""),
 						("rect", "Members utilization rect", ""),
 						("profiles", "Members utilization profiles", ""),
-						("lsh", "Members utilization large steel hollow", "")
+						("lsh", "Members utilization large steel hollow", ""),
+						("all", "Optimize all types of members", "")
 					]
 			)
 
