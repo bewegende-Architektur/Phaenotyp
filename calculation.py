@@ -2549,6 +2549,8 @@ def copy_d_t_from_prev(frame):
 		member["utilization"][str(frame)] = member["utilization"][str(frame-1)]
 		member["max_long_stress"][str(frame)] = member["max_long_stress"][str(frame-1)]
 		member["acceptable_sigma_buckling"][str(frame)] = member["acceptable_sigma_buckling"][str(frame-1)]
+		
+		member["angle"][str(frame)] = member["angle"][str(frame-1)]
 
 	for id, quad in quads.items():
 		quad["thickness"][str(frame)] = quad["thickness"][str(frame-1)]
