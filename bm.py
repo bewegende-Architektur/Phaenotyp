@@ -23,8 +23,6 @@ def add_sitepackages():
 	except Exception:
 		basics.external_libs_loaded = False
 		basics.log_exception("bayesian libs import failed")
-	
-add_sitepackages()
 
 def install_bayes():
 	# like suggested from Harry McKenzie here:
