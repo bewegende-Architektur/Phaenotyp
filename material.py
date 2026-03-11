@@ -143,7 +143,6 @@ def update():
 		current["ir_y"] = sqrt(current["Iy"] / current["A"])
 		current["ir_z"] = sqrt(current["Iz"] / current["A"])
 
-			# depth auf width geändert
 	if profile_type == "rect_hollow":
 		height = current["height"]
 		width = current["width"]
@@ -166,6 +165,11 @@ def update():
 		# Radius of gyration
 		current["ir_y"] = sqrt(current["Iy"] / current["A"])
 		current["ir_z"] = sqrt(current["Iz"] / current["A"])
+		
+		# J
+		a = max(width, height)
+		b = min(width, height)
+		current["J"] = a * b**3 * (1/3 - 0.21 * (b/a) * (1 - (b**4 / (12 * a**4))))
 
 	if profile_type == "rect_solid":
 		height = current["height"]    # Breite (z-Richtung)
@@ -184,6 +188,12 @@ def update():
 		# Radius of gyration
 		current["ir_y"] = sqrt(current["Iy"] / current["A"])
 		current["ir_z"] = sqrt(current["Iz"] / current["A"])
+		
+		# J
+		h_m = height - t
+		b_m = width - t
+		A_m = h_m * b_m
+		current["J"] = 2 * t * A_m**2 / (h_m + b_m)
 
 	if profile_type == "large_steel_hollow":
 		height = current["height"]		# Höhe (z-Richtung)

@@ -15,14 +15,7 @@ def add_sitepackages():
 	if user_site not in sys.path:
 		sys.path.insert(0, user_site)
 	
-	try:
-		from bayes_opt import BayesianOptimization
-		import matplotlib.pyplot as plt
-		basics.external_libs_loaded = True
-		
-	except Exception:
-		basics.external_libs_loaded = False
-		basics.log_exception("bayesian libs import failed")
+	basics.check_external_libs()
 
 def install_bayes():
 	# like suggested from Harry McKenzie here:

@@ -12,8 +12,19 @@ blender_version = (5,0,1)
 
 # if this variable is true, external libaries can be pip installed via the panel in bayesian modeling
 # this is suggested for experienced users only
-lab_usage = False
+lab_usage = True
+external_libs_loaded = False
 
+def check_external_libs():
+	global external_libs_loaded
+	try:
+		from bayes_opt import BayesianOptimization
+		import matplotlib.pyplot as plt
+		external_libs_loaded = True
+		
+	except Exception:
+		external_libs_loaded = False
+		
 phaenotyp_name = (
 	"Phänotyp " 
 	+ str(phaenotyp_version[0]) + "."

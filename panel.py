@@ -1237,6 +1237,7 @@ def bayesian_modeling(layout):
 					# check generation_size and elitism
 					box_start = layout.box()
 					box_start.label(text="Bayesian modelling:")
+					basics.check_external_libs()
 					if basics.external_libs_loaded:
 						box_start.operator("wm.bm_start", text="Start")
 					else:
