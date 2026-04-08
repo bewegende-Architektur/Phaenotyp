@@ -375,6 +375,55 @@ def write_step_txt(optimizer):
 	with open(out_path, "w", encoding="utf-8") as file:
 		file.write("\n".join(lines) + "\n")
 
+def append_steps_csv(optimizer):
+	import csv
+	import os
+
+	scene = bpy.context.scene
+	data = scene["<Phaenotyp>"]
+	individuals = data["individuals"]
+	frame = scene.frame_current
+	frames_dir = get_bm_frames_dir()
+	out_path = os.path.join(frames_dir, "steps.csv")
+
+	individual = individuals.get(str(frame), {})
+	chromosome = individual.get("chromosome", [])
+	fitness = individual.get("fitness", {})
+	best = optimizer.max or {}
+	best_target = best.get("target")
+	best_params = best.get("params", {})
+
+	header = ["frame"]
+	for i in range(len(chromosome)):
+		header.append(f"shape_key_{i+1}")
+	header.extend([
+		"weighted_fitness",
+		"optimizer_target",
+		"best_optimizer_target",
+		"best_weighted_fitness",
+	])
+	for i in range(len(chromosome)):
+		header.append(f"best_shape_key_{i+1}")
+
+	row = [frame]
+	row.extend(chromosome)
+	weighted_fitness = fitness.get("weighted")
+	row.append(weighted_fitness)
+	row.append(None if weighted_fitness is None else -weighted_fitness)
+	row.append(best_target)
+	row.append(None if best_target is None else -best_target)
+	for i in range(len(chromosome)):
+		row.append(best_params.get(str(i)))
+
+	write_header = (frame == 1) or (not os.path.exists(out_path))
+	mode = "w" if write_header else "a"
+
+	with open(out_path, mode, newline="", encoding="utf-8") as file:
+		writer = csv.writer(file)
+		if write_header:
+			writer.writerow(header)
+		writer.writerow(row)
+
 def draw_line_png(optimizer):
 	import matplotlib.pyplot as plt
 	import os
@@ -617,6 +666,7 @@ def start():
 	basics.jobs.append([get_target_st, frame])
 	basics.jobs.append([register_target, optimizer])
 	basics.jobs.append([write_step_txt, optimizer])
+	basics.jobs.append([append_steps_csv, optimizer])
 
 	if len(shape_keys) == 2:
 		basics.jobs.append([draw_line_png, optimizer])
@@ -636,6 +686,7 @@ def start():
 		basics.jobs.append([get_target_st, frame])
 		basics.jobs.append([register_target, optimizer])
 		basics.jobs.append([write_step_txt, optimizer])
+		basics.jobs.append([append_steps_csv, optimizer])
 		
 		# Zeichnet Liniendiagramm, für einen Shapekey + Basis
 		if len(shape_keys) == 2:
