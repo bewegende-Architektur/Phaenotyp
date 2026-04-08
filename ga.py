@@ -48,12 +48,16 @@ def generate_basis():
 
 	environment = data["environment"]
 	individuals = data["individuals"]
-
-	# create chromosome all set to 0
+	
+	# starting point is the current set of values
+	# in this way users can choose where to start from
 	chromosome = []
-	for gnome_len in range(len(shape_keys)-1): # -1 to exlude basis
-		gene = 0
-		chromosome.append(gene)
+	slope = []
+	for id, key in enumerate(shape_keys):
+		if id > 0:
+			v = key.value
+			chromosome.append(v)
+			slope.append(0)
 
 	# update scene
 	bpy.context.scene.frame_current = 0
