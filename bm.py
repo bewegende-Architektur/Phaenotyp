@@ -234,17 +234,155 @@ def register_target(optimizer):
 		target=fitness,
 	)
 
+def get_bm_frames_dir():
+	import os
+
+	base_dir = bpy.path.abspath("//")
+	frames_dir = os.path.join(base_dir, "bm_frames")
+	os.makedirs(frames_dir, exist_ok=True)
+	return frames_dir
+
+def get_optimizer_samples(optimizer):
+	params = optimizer.space.params
+	first = params[0]
+
+	if isinstance(first, dict):
+		keys = list(getattr(optimizer.space, "keys", [])) or list(first.keys())
+		X = np.array([[p[k] for k in keys] for p in params], dtype=float)
+	else:
+		keys = [str(i) for i in range(len(first))]
+		X = np.array(params, dtype=float)
+
+	y = np.array(optimizer.space.target, dtype=float)
+	return keys, X, y
+
+def get_line_prediction(optimizer, n_px=400, dim_x=0, fixed_value=0.5):
+	keys, X, y = get_optimizer_samples(optimizer)
+
+	optimizer._gp.fit(X, y)
+	n_dims = optimizer._gp.n_features_in_
+
+	x_lin = np.linspace(0.0, 1.0, n_px)
+	Xq = np.full((n_px, n_dims), float(fixed_value), dtype=float)
+	Xq[:, dim_x] = x_lin
+
+	mu, sigma = optimizer._gp.predict(Xq, return_std=True)
+	opt_idx = int(np.argmax(mu))
+
+	return {
+		"keys": keys,
+		"X": X,
+		"y": y,
+		"x_lin": x_lin,
+		"mu": mu,
+		"sigma": sigma,
+		"opt_x": float(x_lin[opt_idx]),
+		"opt_mu": float(mu[opt_idx]),
+	}
+
+def get_field_prediction(optimizer, n_px=400, dim_x=0, dim_y=1, fixed_value=0.5):
+	keys, X, y = get_optimizer_samples(optimizer)
+
+	optimizer._gp.fit(X, y)
+	n_dims = optimizer._gp.n_features_in_
+
+	x_lin = np.linspace(0.0, 1.0, n_px)
+	y_lin = np.linspace(0.0, 1.0, n_px)
+	Xg, Yg = np.meshgrid(x_lin, y_lin, indexing="xy")
+
+	Xq = np.full((n_px * n_px, n_dims), float(fixed_value), dtype=float)
+	Xq[:, dim_x] = Xg.ravel()
+	Xq[:, dim_y] = Yg.ravel()
+
+	mu = optimizer._gp.predict(Xq, return_std=False)
+	mu = mu.reshape(n_px, n_px)
+	opt_idx = np.unravel_index(int(np.argmax(mu)), mu.shape)
+
+	return {
+		"keys": keys,
+		"X": X,
+		"y": y,
+		"x_lin": x_lin,
+		"y_lin": y_lin,
+		"mu": mu,
+		"opt_x": float(Xg[opt_idx]),
+		"opt_y": float(Yg[opt_idx]),
+		"opt_mu": float(mu[opt_idx]),
+	}
+
+def write_step_txt(optimizer):
+	import os
+
+	scene = bpy.context.scene
+	data = scene["<Phaenotyp>"]
+	individuals = data["individuals"]
+	frame_data = data["frames"]
+	frame = scene.frame_current
+	frame_str = f"{frame:03d}"
+	frames_dir = get_bm_frames_dir()
+	out_path = os.path.join(frames_dir, f"step_{frame_str}.txt")
+
+	individual = individuals.get(str(frame), {})
+	chromosome = individual.get("chromosome", [])
+	fitness = individual.get("fitness", {})
+	geometry_values = frame_data.get(str(frame), {})
+	best = optimizer.max or {}
+	best_target = best.get("target")
+	best_params = best.get("params", {})
+
+	lines = []
+	lines.append(f"frame: {frame}")
+	lines.append(f"chromosome: {chromosome}")
+
+	if "weighted" in fitness:
+		lines.append(f"current_weighted_fitness: {fitness['weighted']}")
+		lines.append(f"current_optimizer_target: {-fitness['weighted']}")
+
+	if best_target is not None:
+		lines.append(f"best_optimizer_target: {best_target}")
+		lines.append(f"best_weighted_fitness: {-best_target}")
+		lines.append(f"best_params: {best_params}")
+
+	if fitness:
+		lines.append("")
+		lines.append("fitness:")
+		for key, value in fitness.items():
+			lines.append(f"{key}: {value}")
+
+	if geometry_values:
+		lines.append("")
+		lines.append("frame_values:")
+		for key, value in geometry_values.items():
+			lines.append(f"{key}: {value}")
+
+	if len(chromosome) == 1 and len(optimizer.space.target) > 0:
+		line_prediction = get_line_prediction(optimizer)
+		lines.append("")
+		lines.append("predicted_optimum_on_plot:")
+		lines.append(f"shapekey_1: {line_prediction['opt_x']}")
+		lines.append(f"optimizer_target_mu: {line_prediction['opt_mu']}")
+		lines.append(f"weighted_fitness_mu: {-line_prediction['opt_mu']}")
+
+	if len(chromosome) >= 2 and len(optimizer.space.target) > 0:
+		field_prediction = get_field_prediction(optimizer)
+		lines.append("")
+		lines.append("predicted_optimum_on_plot:")
+		lines.append(f"shapekey_1: {field_prediction['opt_x']}")
+		lines.append(f"shapekey_2: {field_prediction['opt_y']}")
+		lines.append(f"optimizer_target_mu: {field_prediction['opt_mu']}")
+		lines.append(f"weighted_fitness_mu: {-field_prediction['opt_mu']}")
+
+	with open(out_path, "w", encoding="utf-8") as file:
+		file.write("\n".join(lines) + "\n")
+
 def draw_line_png(optimizer):
 	import matplotlib.pyplot as plt
 	import os
-	import numpy as np
 	import bpy
 
 	frame = bpy.context.scene.frame_current
 	frame_str = f"{frame:03d}"
-	base_dir = bpy.path.abspath("//")
-	frames_dir = os.path.join(base_dir, "bm_frames")
-	os.makedirs(frames_dir, exist_ok=True)
+	frames_dir = get_bm_frames_dir()
 	out_path = os.path.join(frames_dir, f"line_{frame_str}.png")
 
 	n_px = 400
@@ -254,31 +392,14 @@ def draw_line_png(optimizer):
 	# Unsicherheitsband, ca. 95% bei Normalverteilung
 	sigma_factor = 1.96
 
-	# params als Array holen
-	params = optimizer.space.params
-	first = params[0]
-
-	if isinstance(first, dict):
-		keys = list(getattr(optimizer.space, "keys", [])) or list(first.keys())
-		X = np.array([[p[k] for k in keys] for p in params], dtype=float)
-	else:
-		X = np.array(params, dtype=float)
-
-	y = np.array(optimizer.space.target, dtype=float)
-
-	# GP fitten
-	optimizer._gp.fit(X, y)
-	n_dims = optimizer._gp.n_features_in_
-
-	# 1D Grid aufbauen
-	x_lin = np.linspace(0.0, 1.0, n_px)
-
-	# Query-Matrix in richtiger Dimensionalität
-	Xq = np.full((n_px, n_dims), float(fixed_value), dtype=float)
-	Xq[:, dim_x] = x_lin
-
-	# Predict: mean + std
-	mu, sigma = optimizer._gp.predict(Xq, return_std=True)
+	prediction = get_line_prediction(optimizer, n_px=n_px, dim_x=dim_x, fixed_value=fixed_value)
+	X = prediction["X"]
+	y = prediction["y"]
+	x_lin = prediction["x_lin"]
+	mu = prediction["mu"]
+	sigma = prediction["sigma"]
+	opt_x = prediction["opt_x"]
+	opt_mu = prediction["opt_mu"]
 
 	# Plot
 	dpi = 100
@@ -325,6 +446,17 @@ def draw_line_png(optimizer):
 		label="aktueller Punkt"
 	)
 
+	ax.scatter(
+		opt_x,
+		opt_mu,
+		s=80,
+		c="red",
+		edgecolors="white",
+		linewidths=0.8,
+		zorder=11,
+		label="Optimum mu"
+	)
+
 	ax.set_xlim(0.0, 1.0)
 
 	ax.set_axis_on()
@@ -343,47 +475,18 @@ def draw_field_png(optimizer):
 
 	frame = bpy.context.scene.frame_current
 	frame_str = f"{frame:03d}"
-	base_dir = bpy.path.abspath("//")
-	frames_dir = os.path.join(base_dir, "bm_frames")
-	os.makedirs(frames_dir, exist_ok=True)
+	frames_dir = get_bm_frames_dir()
 	out_path = os.path.join(frames_dir, f"field_{frame_str}.png")
 	n_px = 400
 	dim_x = 0
 	dim_y = 1
 	fixed_value = 0.5
 
-	# params als Array holen
-	params = optimizer.space.params
-	first = params[0]
-
-	if isinstance(first, dict):
-		# falls dict: feste Reihenfolge über optimizer.space.keys (wenn vorhanden)
-		keys = list(getattr(optimizer.space, "keys", [])) or list(first.keys())
-		X = np.array([[p[k] for k in keys] for p in params], dtype=float)
-	else:
-		X = np.array(params, dtype=float)
-
-	y = np.array(optimizer.space.target, dtype=float)
-
-	# GP fitten
-	optimizer._gp.fit(X, y)
-
-	# Dimensionen wie vom GP erwartet
-	n_dims = optimizer._gp.n_features_in_
-
-	# Grid aufbauen
-	x_lin = np.linspace(0.0, 1.0, n_px)
-	y_lin = np.linspace(0.0, 1.0, n_px)
-	Xg, Yg = np.meshgrid(x_lin, y_lin, indexing="xy")
-
-	# Query-Matrix in richtiger Dimensionalität
-	Xq = np.full((n_px * n_px, n_dims), float(fixed_value), dtype=float)
-	Xq[:, dim_x] = Xg.ravel()
-	Xq[:, dim_y] = Yg.ravel()
-
-	# Predict: nur Erwartungswert
-	mu = optimizer._gp.predict(Xq, return_std=False)
-	mu = mu.reshape(n_px, n_px)
+	prediction = get_field_prediction(optimizer, n_px=n_px, dim_x=dim_x, dim_y=dim_y, fixed_value=fixed_value)
+	X = prediction["X"]
+	mu = prediction["mu"]
+	opt_x = prediction["opt_x"]
+	opt_y = prediction["opt_y"]
 
 	# Render exakt n_px x n_px
 	dpi = 100
@@ -401,9 +504,10 @@ def draw_field_png(optimizer):
 
 	# alle vorhandenen Punkte einzeichnen (2D-Projektion)
 	ax.scatter(X[:, dim_x], X[:, dim_y], s=30, 	c="black", edgecolors="black", linewidths=0.8)
-	
+
 	# aktueller (letzter) Punkt
 	ax.scatter(X[-1, dim_x], X[-1, dim_y], s=120, c="white", edgecolors="black", linewidths=2.0, zorder=10)
+	ax.scatter(opt_x, opt_y, s=80, c="red", edgecolors="white", linewidths=0.8, zorder=11)
 
 	ax.set_xlim(0.0, 1.0)
 	ax.set_ylim(0.0, 1.0)
@@ -512,6 +616,13 @@ def start():
 	calculate_step_st(frame)
 	basics.jobs.append([get_target_st, frame])
 	basics.jobs.append([register_target, optimizer])
+	basics.jobs.append([write_step_txt, optimizer])
+
+	if len(shape_keys) == 2:
+		basics.jobs.append([draw_line_png, optimizer])
+
+	if len(shape_keys) == 3:
+		basics.jobs.append([draw_field_png, optimizer])
 
 	# ist loop von jobs
 	for i in range(iterations):
@@ -524,6 +635,7 @@ def start():
 		calculate_step_st(frame)
 		basics.jobs.append([get_target_st, frame])
 		basics.jobs.append([register_target, optimizer])
+		basics.jobs.append([write_step_txt, optimizer])
 		
 		# Zeichnet Liniendiagramm, für einen Shapekey + Basis
 		if len(shape_keys) == 2:
