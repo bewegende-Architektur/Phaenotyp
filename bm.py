@@ -622,7 +622,7 @@ def start():
 	
 	if acq_type == "ConstantLiar":
 		acq = acquisition.ConstantLiar(
-			base_acquisition=acquisition.ExpectedImprovement(xi=xi),
+			base_acquisition=acquisition.ConstantLiar(xi=xi),
 			strategy="mean"
 		)
 	
