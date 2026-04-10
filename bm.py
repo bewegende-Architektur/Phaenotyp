@@ -34,7 +34,7 @@ def install_bayes():
 
 	# install required packages
 	subprocess.call([python_exe, "-m", "pip", "install", "bayesian-optimization"])
-	subprocess.call([python_exe, "-m", "pip", "install", "matplot"])
+	subprocess.call([python_exe, "-m", "pip", "install", "matplotlib"])
 	
 	add_sitepackages()
 
@@ -85,12 +85,13 @@ def generate_basis():
 	# starting point is the current set of values
 	# in this way users can choose where to start from
 	chromosome = []
+	params = {}
 	slope = []
-	for id, key in enumerate(shape_keys):
-		if id > 0:
-			v = key.value
-			chromosome.append(v)
-			slope.append(0)
+	for i, key in enumerate(shape_keys[1:]):
+		v = key.value
+		chromosome.append(v)
+		params[str(i)] = v
+		slope.append(0)
 
 	# create indiviual
 	create_indivdual(chromosome, 0)
@@ -102,6 +103,7 @@ def generate_basis():
 	# store in basics for later
 	basics.chromosome_current = chromosome
 	basics.slope = slope
+	return params
 
 def calculate_basis():
 	scene = bpy.context.scene
@@ -207,8 +209,18 @@ def create_from_current(frame):
 	create_indivdual(basics.chromosome_current, frame)
 
 def suggest_next(optimizer):
-	# Wird ersten Punkt random wählen
-	# Sollte das später calculate_basis sein?
+	if len(optimizer.space.target) == 0:
+		scene = bpy.context.scene
+		data = scene["<Phaenotyp>"]
+		individuals = data["individuals"]
+		basis = individuals["0"]
+		basis_params = {str(i): value for i, value in enumerate(basis["chromosome"])}
+		basis_fitness = basis["fitness"]["weighted"] * (-1)
+		optimizer.register(
+			params=basis_params,
+			target=basis_fitness,
+		)
+
 	next_point_to_probe = optimizer.suggest()
 	print("Next point to probe is:", next_point_to_probe)
 	
@@ -226,6 +238,21 @@ def register_target(optimizer):
 	target = basics.target
 	fitness = basics.fitness*(-1) # Invertieren, um zu optimieren
 	next_point_to_probe = basics.next_point_to_probe
+
+	if next_point_to_probe is None:
+		return
+
+	next_point_to_probe = {str(key): value for key, value in next_point_to_probe.items()}
+
+	keys = list(next_point_to_probe.keys())
+	for params in optimizer.space.params:
+		if isinstance(params, dict):
+			is_duplicate = all(np.isclose(params[key], next_point_to_probe[key]) for key in keys)
+		else:
+			is_duplicate = all(np.isclose(params[i], next_point_to_probe[str(i)]) for i in range(len(keys)))
+
+		if is_duplicate:
+			return
 
 	print("Found the target", target, "with fitness", fitness)
 
@@ -629,7 +656,7 @@ def start():
 	# pbouds erstellen
 	pbounds = {}
 	chromosome = []
-	for i in range(len(shape_keys)):
+	for i in range(len(shape_keys) - 1):
 		pbounds[str(i)] = (0,1)
 		chromosome.append(0)
 		
