@@ -794,7 +794,8 @@ def draw_field_png(optimizer):
 	# Render exakt n_px x n_px
 	dpi = 100
 	fig = plt.figure(figsize=(n_px / dpi, n_px / dpi), dpi=dpi)
-	ax = fig.add_axes([0.15, 0.15, 0.80, 0.80])
+	ax = fig.add_axes([0.15, 0.15, 0.68, 0.80])
+	cax = fig.add_axes([0.86, 0.15, 0.035, 0.80])
 
 	if prediction["ok"]:
 		image = ax.imshow(
@@ -804,7 +805,9 @@ def draw_field_png(optimizer):
 			cmap="coolwarm",
 			interpolation="nearest"
 		)
-		fig.colorbar(image, ax=ax, fraction=0.046, pad=0.04)
+		colorbar = fig.colorbar(image, cax=cax)
+		colorbar.ax.tick_params(labelsize=6)
+		colorbar.set_label("optimizer target mu", fontsize=6)
 
 		if sigma is not None:
 			ax.contour(
@@ -817,6 +820,7 @@ def draw_field_png(optimizer):
 				alpha=0.7,
 			)
 	else:
+		cax.set_axis_off()
 		ax.text(
 			0.5,
 			0.95,
@@ -855,7 +859,7 @@ def draw_field_png(optimizer):
 		title += " mu~const"
 	ax.set_title(title, fontsize=7)
 	
-	fig.savefig(out_path, dpi=dpi)
+	fig.savefig(out_path, dpi=dpi, bbox_inches="tight", pad_inches=0.05)
 	plt.close(fig)
 
 def print_result(optimizer):
