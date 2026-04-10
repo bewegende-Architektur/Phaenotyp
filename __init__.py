@@ -910,8 +910,7 @@ class phaenotyp_properties(PropertyGroup):
 			items = [
 					("UpperConfidenceBound", "Upper Confidence Bound", ""),
 					("ProbabilityOfImprovement", "Probability Of Improvement", ""),
-					("ExpectedImprovement", "Expected Improvement", ""),
-					("ConstantLiar", "Constant Liar", "")
+					("ExpectedImprovement", "Expected Improvement", "")
 				   ]
 			)
 
