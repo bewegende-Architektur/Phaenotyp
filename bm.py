@@ -776,6 +776,7 @@ def draw_field_png(optimizer):
 	frame_str = f"{frame:03d}"
 	frames_dir = get_bm_frames_dir()
 	out_path = os.path.join(frames_dir, f"field_{frame_str}.png")
+	out_path_3d = os.path.join(frames_dir, f"field_3d_{frame_str}.png")
 	n_px = 400
 	dim_x = 0
 	dim_y = 1
@@ -783,12 +784,14 @@ def draw_field_png(optimizer):
 
 	prediction = get_field_prediction(optimizer, n_px=n_px, dim_x=dim_x, dim_y=dim_y, fixed_value=fixed_value)
 	X = prediction["X_raw"]
+	y = prediction["y_raw"]
 	mu = prediction["mu"]
 	sigma = prediction["sigma"]
 	x_lin = prediction["x_lin"]
 	y_lin = prediction["y_lin"]
 	opt_x = prediction["opt_x"]
 	opt_y = prediction["opt_y"]
+	opt_mu = prediction["opt_mu"]
 	diagnostics = prediction["diagnostics"]
 
 	# Render exakt n_px x n_px
@@ -860,6 +863,90 @@ def draw_field_png(optimizer):
 	ax.set_title(title, fontsize=7)
 	
 	fig.savefig(out_path, dpi=dpi, bbox_inches="tight", pad_inches=0.05)
+	plt.close(fig)
+
+	fig = plt.figure(figsize=(n_px / dpi, n_px / dpi), dpi=dpi)
+	ax = fig.add_subplot(111, projection="3d")
+
+	if prediction["ok"]:
+		Xg, Yg = np.meshgrid(x_lin, y_lin, indexing="xy")
+		surface_step = max(1, n_px // 80)
+		Xs = Xg[::surface_step, ::surface_step]
+		Ys = Yg[::surface_step, ::surface_step]
+		mus = mu[::surface_step, ::surface_step]
+
+		surface = ax.plot_surface(
+			Xs,
+			Ys,
+			mus,
+			cmap="coolwarm",
+			linewidth=0,
+			antialiased=True,
+			alpha=0.9,
+		)
+		colorbar = fig.colorbar(surface, ax=ax, shrink=0.7, pad=0.08)
+		colorbar.ax.tick_params(labelsize=6)
+		colorbar.set_label("optimizer target mu", fontsize=6)
+
+		if len(X) > 0 and len(y) == len(X):
+			ax.scatter(
+				X[:, dim_x],
+				X[:, dim_y],
+				y,
+				s=18,
+				c="black",
+				depthshade=False,
+				label="Samples",
+			)
+
+			ax.scatter(
+				X[-1, dim_x],
+				X[-1, dim_y],
+				y[-1],
+				s=60,
+				c="white",
+				edgecolors="black",
+				linewidths=1.2,
+				depthshade=False,
+				label="aktueller Punkt",
+			)
+
+		ax.scatter(
+			opt_x,
+			opt_y,
+			opt_mu,
+			s=50,
+			c="red",
+			edgecolors="white",
+			linewidths=0.8,
+			depthshade=False,
+			label="Optimum mu",
+		)
+	else:
+		ax.text2D(
+			0.5,
+			0.95,
+			prediction["message"],
+			ha="center",
+			va="top",
+			transform=ax.transAxes,
+			fontsize=7,
+			bbox={"facecolor": "white", "alpha": 0.8, "edgecolor": "none"},
+		)
+
+	ax.set_xlim(0.0, 1.0)
+	ax.set_ylim(0.0, 1.0)
+	ax.set_xlabel("shapekey 1")
+	ax.set_ylabel("shapekey 2")
+	ax.set_zlabel("optimizer target", fontsize=6)
+	ax.tick_params(axis="both", labelsize=6)
+	ax.tick_params(axis="z", labelsize=6)
+	ax.view_init(elev=28, azim=-135)
+	ax.set_title(title, fontsize=7)
+	if prediction["ok"] and len(ax.get_legend_handles_labels()[0]) > 0:
+		ax.legend(loc="best", fontsize=6, framealpha=0.9)
+
+	fig.savefig(out_path_3d, dpi=dpi, bbox_inches="tight", pad_inches=0.05)
 	plt.close(fig)
 
 def print_result(optimizer):
