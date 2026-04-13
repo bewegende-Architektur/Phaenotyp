@@ -776,7 +776,7 @@ def draw_field_png(optimizer):
 	frame_str = f"{frame:03d}"
 	frames_dir = get_bm_frames_dir()
 	out_path = os.path.join(frames_dir, f"field_{frame_str}.png")
-	out_path_3d = os.path.join(frames_dir, f"field_3d_{frame_str}.png")
+	out_path_3d = os.path.join(frames_dir, f"3D_field_{frame_str}.png")
 	n_px = 400
 	dim_x = 0
 	dim_y = 1
@@ -865,8 +865,11 @@ def draw_field_png(optimizer):
 	fig.savefig(out_path, dpi=dpi, bbox_inches="tight", pad_inches=0.05)
 	plt.close(fig)
 
-	fig = plt.figure(figsize=(n_px / dpi, n_px / dpi), dpi=dpi)
-	ax = fig.add_subplot(111, projection="3d")
+	width_px = int(n_px * 1.25)
+	height_px = n_px
+	fig = plt.figure(figsize=(width_px / dpi, height_px / dpi), dpi=dpi)
+	ax = fig.add_axes([0.05, 0.10, 0.70, 0.82], projection="3d")
+	cax = fig.add_axes([0.82, 0.20, 0.03, 0.60])
 
 	if prediction["ok"]:
 		Xg, Yg = np.meshgrid(x_lin, y_lin, indexing="xy")
@@ -884,7 +887,7 @@ def draw_field_png(optimizer):
 			antialiased=True,
 			alpha=0.9,
 		)
-		colorbar = fig.colorbar(surface, ax=ax, shrink=0.7, pad=0.08)
+		colorbar = fig.colorbar(surface, cax=cax)
 		colorbar.ax.tick_params(labelsize=6)
 		colorbar.set_label("optimizer target mu", fontsize=6)
 
@@ -923,6 +926,7 @@ def draw_field_png(optimizer):
 			label="Optimum mu",
 		)
 	else:
+		cax.set_axis_off()
 		ax.text2D(
 			0.5,
 			0.95,
@@ -944,9 +948,9 @@ def draw_field_png(optimizer):
 	ax.view_init(elev=28, azim=-135)
 	ax.set_title(title, fontsize=7)
 	if prediction["ok"] and len(ax.get_legend_handles_labels()[0]) > 0:
-		ax.legend(loc="best", fontsize=6, framealpha=0.9)
+		ax.legend(loc="upper left", fontsize=6, framealpha=0.9)
 
-	fig.savefig(out_path_3d, dpi=dpi, bbox_inches="tight", pad_inches=0.05)
+	fig.savefig(out_path_3d, dpi=dpi)
 	plt.close(fig)
 
 def print_result(optimizer):
