@@ -833,7 +833,7 @@ class phaenotyp_properties(PropertyGroup):
 			name = "generation_size",
 			description="Size of generation for GA",
 			default = 20,
-			min = 10,
+			min = 6,
 			max = 1000
 			)
 
