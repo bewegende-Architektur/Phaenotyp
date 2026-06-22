@@ -24,17 +24,38 @@ def install_bayes():
 	import subprocess
 	import sys
 	import os
+	import tempfile
 
 	# path to python
 	python_exe = sys.executable
 
-	# upgrade pip
+	# install pip if needed
 	subprocess.call([python_exe, "-m", "ensurepip"])
-	subprocess.call([python_exe, "-m", "pip", "install", "--upgrade", "pip"])
 
-	# install required packages
-	subprocess.call([python_exe, "-m", "pip", "install", "bayesian-optimization"])
-	subprocess.call([python_exe, "-m", "pip", "install", "matplotlib"])
+	# Keep Blender's bundled NumPy fixed. Binary wheels avoid accidental source builds
+	# for SciPy/scikit-learn inside Blender's Python.
+	with tempfile.NamedTemporaryFile("w", suffix=".txt", delete=False) as constraints:
+		constraints.write("numpy==" + np.__version__ + "\n")
+		constraints_path = constraints.name
+
+	try:
+		pip_install = [
+			python_exe,
+			"-m",
+			"pip",
+			"install",
+			"--user",
+			"--only-binary=:all:",
+			"--constraint",
+			constraints_path,
+		]
+
+		subprocess.check_call(pip_install + [
+			"bayesian-optimization==2.0.4",
+			"matplotlib",
+		])
+	finally:
+		os.unlink(constraints_path)
 	
 	add_sitepackages()
 
