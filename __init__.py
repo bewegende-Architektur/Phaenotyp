@@ -369,7 +369,7 @@ class phaenotyp_properties(PropertyGroup):
 			name = "E",
 			description = "Elasticity modulus in kN/cm²",
 			default = 21000,
-			min = 15000,
+			min = 100,
 			max = 50000
 			)
 
@@ -377,7 +377,7 @@ class phaenotyp_properties(PropertyGroup):
 			name = "G",
 			description = "Shear modulus kN/cm²",
 			default = 8100,
-			min = 10000,
+			min = 100,
 			max = 30000
 			)
 
@@ -425,7 +425,7 @@ class phaenotyp_properties(PropertyGroup):
 			name = "acceptable_sigmav kN/cm²",
 			description = "Acceptable sigmav",
 			default = 10.5,
-			min = 23.5,
+			min = 0.01,
 			max = 30.0
 			)
 
