@@ -236,7 +236,7 @@ def _PDelta(model: FEModel3D, combo_name: str, P1: NDArray[float64], FER1: NDArr
                 if solution_step == 2:
 
                     # After the first iteration, the geometric stiffness matrix will be added to the linear elastic stiffness matrix.
-                    Kg11, Kg12, Kg21, Kg22 = _partition(model.Kg(combo_name, log, sparse, False), D1_indices, D2_indices)
+                    Kg11, Kg12, Kg21, Kg22 = _partition(model, model.Kg(combo_name, log, sparse, False), D1_indices, D2_indices)
 
                     K11 = K11 + Kg11
                     K12 = K12 + Kg12

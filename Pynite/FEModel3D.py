@@ -1673,7 +1673,7 @@ class FEModel3D():
             from scipy.sparse import lil_matrix
             Kg = lil_matrix((len(self.nodes)*6, len(self.nodes)*6))
         else:
-            Kg = zeros(len(self.nodes)*6, len(self.nodes)*6)
+            Kg = zeros((len(self.nodes)*6, len(self.nodes)*6))
 
         # Add stiffness terms for each physical member in the model
         if log:
