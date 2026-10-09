@@ -1152,8 +1152,16 @@ class phaenotyp_properties(PropertyGroup):
 			update = geometry.viz_update,
 			subtype = "PERCENTAGE",
 			default = 50,
-			min = 0.001,
+			min = 0.0,
 			max = 100
+			)
+
+		viz_deflection_scale: FloatProperty(
+			name = "viz_deflection_scale",
+			description = "Factor applied to calculated displacements (1.0 = true scale)",
+			update = geometry.viz_update,
+			default = 10.0,
+			min = 0.001
 			)
 
 		viz_stressline_scale: FloatProperty(

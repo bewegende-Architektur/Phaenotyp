@@ -84,7 +84,7 @@ def prepare_fea_pn(frame):
 		E = mat[2]
 		G = mat[3]
 		nu = None # replace later
-		rho = None # replace later
+		rho = mat[4]
 		model.add_material(name, E, G, nu, rho)
 
 	# apply chromosome if available
@@ -175,7 +175,7 @@ def prepare_fea_pn(frame):
 
 		node_0 = str(vertex_0_id)
 		node_1 = str(vertex_1_id)
-		material_name = member["material_name"]
+		material_name = material.ensure_pynite_member_material(model, member)
 
 		if member["member_type"] == "full":
 			tension_only = False
@@ -204,7 +204,7 @@ def prepare_fea_pn(frame):
 				 
 		model.add_member(
 			id,	node_0, node_1,
-			member["material_name"], id,
+			material_name, id,
 			angle,
 			tension_only=tension_only,
 			comp_only=comp_only
@@ -1688,7 +1688,8 @@ def interweave_results_pn(frame):
 		deflection = []
 
 		# --> taken from pyNite VisDeformedMember: https://github.com/JWock82/PyNite
-		scale_factor = 10.0
+		# Keep the historic 10x default, while allowing an explicit 1:1 view.
+		scale_factor = phaenotyp.viz_deflection_scale
 
 		cos_x = array([T[0,0:3]]) # Direction cosines of local x-axis
 		cos_y = array([T[1,0:3]]) # Direction cosines of local y-axis
@@ -1739,6 +1740,9 @@ def interweave_results_pn(frame):
 			deflection.append([x,y,z])
 
 		member["deflection"][frame] = deflection
+		if "deflection_scale" not in member:
+			member["deflection_scale"] = {}
+		member["deflection_scale"][frame] = scale_factor
 
 	nodes = model.nodes
 

@@ -1068,6 +1068,7 @@ def set_member():
 				member["max_lever_arm"] = {}
 				member["initial_positions"] = {}
 				member["deflection"] = {}
+				member["deflection_scale"] = {}
 				member["overstress"] = {}
 				member["utilization"] = {}
 

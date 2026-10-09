@@ -108,6 +108,37 @@ for material in library:
 # (because a property can not be set in gui)
 current = {}
 
+
+def _material_value(value):
+	"""Return a stable, readable representation for a PyNite material key."""
+	return format(float(value), ".12g")
+
+
+def ensure_pynite_member_material(model, member):
+	"""Ensure a member's custom material exists in ``model`` and return its key.
+
+	Library materials are registered when the model is created. Custom materials
+	need a key based on their actual properties; using the literal name ``custom``
+	would make every custom member share the library's steel defaults.
+	"""
+	material_name = member["material_name"]
+	if material_name != "custom":
+		return material_name
+
+	E = float(member["E"])
+	G = float(member["G"])
+	rho = float(member["rho"])
+	material_name = "custom_E{}_G{}_rho{}".format(
+		_material_value(E), _material_value(G), _material_value(rho))
+
+	if material_name not in model.materials:
+		# nu is not an independent member input, but can be derived for an
+		# isotropic material. E and G are the values used by beam stiffness.
+		nu = E / (2 * G) - 1
+		model.add_material(material_name, E, G, nu, rho)
+
+	return material_name
+
 def update():
 	profile_type = current["profile_type"]
 

@@ -1396,6 +1396,7 @@ def update_geometry_post():
 		attribute = mesh_for_viz.data.attributes.get("force")
 		
 		viz_deflection = phaenotyp.viz_deflection * 0.01
+		viz_deflection_scale = phaenotyp.viz_deflection_scale
 		
 		viz_boundaries_members = abs(phaenotyp.viz_boundaries_members)
 		viz_boundaries_quads = abs(phaenotyp.viz_boundaries_quads)
@@ -1431,9 +1432,19 @@ def update_geometry_post():
 
 				for i in range(11):
 					position = member["deflection"][str(frame)][i]
-					x = position[0]*(1-viz_deflection) + member["initial_positions"][str(frame)][10-i][0]*viz_deflection
-					y = position[1]*(1-viz_deflection) + member["initial_positions"][str(frame)][10-i][1]*viz_deflection
-					z = position[2]*(1-viz_deflection) + member["initial_positions"][str(frame)][10-i][2]*viz_deflection
+					initial = member["initial_positions"][str(frame)][10-i]
+					stored_scales = member.get("deflection_scale", {})
+					stored_scale = stored_scales.get(str(frame), 10.0)
+					if stored_scale == 0:
+						stored_scale = 1.0
+					scale = viz_deflection_scale / stored_scale
+					displayed = [
+						initial[axis] + (position[axis] - initial[axis]) * scale
+						for axis in range(3)
+					]
+					x = displayed[0]*(1-viz_deflection) + initial[0]*viz_deflection
+					y = displayed[1]*(1-viz_deflection) + initial[1]*viz_deflection
+					z = displayed[2]*(1-viz_deflection) + initial[2]*viz_deflection
 					vertices[mesh_vertex_ids[i]].co = (x,y,z)
 					
 					overstress = member["overstress"][str(frame)]
