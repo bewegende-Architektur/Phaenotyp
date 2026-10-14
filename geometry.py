@@ -1527,9 +1527,14 @@ def update_geometry_post():
 
 			for i in range(4):
 				position = quad["deflection"][str(frame)][i]
-				x = position[0]*(1-viz_deflection) + quad["initial_positions"][str(frame)][i][0]*viz_deflection
-				y = position[1]*(1-viz_deflection) + quad["initial_positions"][str(frame)][i][1]*viz_deflection
-				z = position[2]*(1-viz_deflection) + quad["initial_positions"][str(frame)][i][2]*viz_deflection
+				initial = quad["initial_positions"][str(frame)][i]
+				# Legacy quad results contain 10x displacement (cm * 0.1).
+				stored_scale = quad.get("deflection_scale", {}).get(str(frame), 10.0)
+				if stored_scale == 0:
+					stored_scale = 1.0
+				factor = viz_deflection_scale / stored_scale * (1 - viz_deflection)
+				x, y, z = [initial[axis] + (position[axis] - initial[axis]) * factor
+					for axis in range(3)]
 				
 				# get node of the corresponding vertex id of the viz mesh
 				node_id = quad["vertices_ids_viz"][i]

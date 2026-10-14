@@ -1148,7 +1148,7 @@ class phaenotyp_properties(PropertyGroup):
 		
 		viz_deflection: FloatProperty(
 			name = "viz_scale",
-			description = "deflected / original",
+			description = "Blend toward original geometry: 0% = fully deformed, 100% = original. True scale: deformation factor 1 and blend 0%",
 			update = geometry.viz_update,
 			subtype = "PERCENTAGE",
 			default = 50,

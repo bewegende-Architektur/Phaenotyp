@@ -1688,8 +1688,8 @@ def interweave_results_pn(frame):
 		deflection = []
 
 		# --> taken from pyNite VisDeformedMember: https://github.com/JWock82/PyNite
-		# Keep the historic 10x default, while allowing an explicit 1:1 view.
-		scale_factor = phaenotyp.viz_deflection_scale
+		# Store physical displacements; magnification belongs to visualization only.
+		scale_factor = 1.0
 
 		cos_x = array([T[0,0:3]]) # Direction cosines of local x-axis
 		cos_y = array([T[1,0:3]]) # Direction cosines of local y-axis
@@ -1739,6 +1739,28 @@ def interweave_results_pn(frame):
 
 			deflection.append([x,y,z])
 
+		# PyNite's recovered curve can disagree with nodal translations in
+		# P-Delta analysis. Correct the entire curve's chord, not just its ends:
+		# endpoint-only snapping creates a kink in the last mesh segment.
+		nodal_ends = []
+		for node in (model_member.i_node, model_member.j_node):
+			nodal_ends.append(array([
+				(node.X + node.DX["Combo 1"]) * 0.01,
+				(node.Z + node.DZ["Combo 1"]) * 0.01,
+				(node.Y + node.DY["Combo 1"]) * 0.01,
+			]))
+		correction_i = nodal_ends[0] - array(deflection[0])
+		correction_j = nodal_ends[1] - array(deflection[10])
+		for i in range(11):
+			ratio = i / 10
+			if not model_member.active["Combo 1"]:
+				# Inactive members have no active bending solution: draw the
+				# straight chord between their displaced connection points.
+				point = (1 - ratio) * nodal_ends[0] + ratio * nodal_ends[1]
+			else:
+				point = array(deflection[i]) + (1 - ratio) * correction_i + ratio * correction_j
+			deflection[i] = point.tolist()
+
 		member["deflection"][frame] = deflection
 		if "deflection_scale" not in member:
 			member["deflection_scale"] = {}
@@ -1776,9 +1798,9 @@ def interweave_results_pn(frame):
 		deflection = []
 		for i in range(4):
 			# deflection only
-			x = nodes[str(node_ids[i])].DX["Combo 1"]*0.1
-			y = nodes[str(node_ids[i])].DZ["Combo 1"]*0.1
-			z = nodes[str(node_ids[i])].DY["Combo 1"]*0.1
+			x = nodes[str(node_ids[i])].DX["Combo 1"]*0.01
+			y = nodes[str(node_ids[i])].DZ["Combo 1"]*0.01
+			z = nodes[str(node_ids[i])].DY["Combo 1"]*0.01
 
 			# add deflection to initial position
 			initial = quad["initial_positions"][frame][i]
@@ -2017,6 +2039,9 @@ def interweave_results_pn(frame):
 		quad["length_y"][frame] = length_y
 
 		quad["deflection"][frame] = deflection
+		if "deflection_scale" not in quad:
+			quad["deflection_scale"] = {}
+		quad["deflection_scale"][frame] = 1.0
 
 		quad["ir"][frame] = ir
 		quad["A"][frame] = A
