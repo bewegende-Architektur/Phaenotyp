@@ -50,6 +50,32 @@ masonry_old = [0.4, 0.38, 0.37, 0.36, 0.34, 0.33, 0.31, 0.29, 0.26, 0.23, 0.20, 
 masonry_new = [1.0, 0.96, 0.93, 0.90, 0.86, 0.82, 0.77, 0.72, 0.65, 0.58, 0.50, 0.42, 0.36, 0.31, 0.27, 0.24, 0.21, 0.19, 0.16, 0.15, 0.13, 0.12, 0.12, 0.10, 0.10]
 kncustom = [16.5,15.8,15.3,14.8,14.2,13.5,12.7,11.8,10.7,9.5,8.2,6.9,5.9,5.1,4.4,3.9,3.4,3.1,2.7,2.5,2.2,2,1.9,1.7,1.6]
 
+# Additional presets: units kN/cm² and g/cm³; provenance/assumptions in
+# MATERIAL_SOURCES.md. These are preliminary presets, not code design values.
+kn_acrylic = [5.0, 5.0, 3.4, 1.912, 1.224, 0.85, 0.624, 0.478, 0.378, 0.306, 0.253, 0.212, 0.181, 0.156, 0.136, 0.12, 0.106, 0.094, 0.085, 0.076, 0.069, 0.063, 0.058, 0.053, 0.049]
+
+
+def _estimated_buckling(E, acceptable_sigma):
+	"""Stress cap plus Euler stress, sampled on the existing slenderness grid."""
+	return [round(min(acceptable_sigma, pi**2 * E / lamda**2), 6)
+		for lamda in kn_lamda]
+
+
+# name, label, E, G, rho, sigma, shear, torsion, sigmav, buckling
+additional_materials = [
+	["acrylic_PMMA", "Acryl (PMMA, Testing)", 310, 115, 1.19, 5.0, 3.0, 3.0, 5.0, kn_acrylic],
+	["pla", "PLA (estimated)", 360, 360 / (2 * (1 + 0.35)), 1.24, 2.0, 1.0, 1.0, 2.0, _estimated_buckling(360, 2.0)],
+	["gfk", "GFK (longitudinal, estimated)", 1700, 300, 1.7, 7.0, 1.0, 1.0, 7.0, _estimated_buckling(1700, 7.0)],
+	["bamboo", "Bambus (longitudinal, estimated)", 1500, 100, 0.56, 1.5, 0.1, 0.1, 1.5, _estimated_buckling(1500, 1.5)],
+]
+
+material_descriptions = {
+	"acrylic_PMMA": "From Testing/Acrylstab.blend; preliminary short-term values. Sources: MATERIAL_SOURCES.md",
+	"pla": "Estimated solid PLA; printing direction/infill not modelled. Sources: MATERIAL_SOURCES.md",
+	"gfk": "Estimated pultruded GFK along fibres; quads use an isotropic approximation. Sources: MATERIAL_SOURCES.md",
+	"bamboo": "Estimated dry bamboo along fibres; quads use an isotropic approximation. Sources: MATERIAL_SOURCES.md",
+}
+
 library = [
 	# name, name in dropdown, E, G, d, acceptable_sigma, acceptable_shear, acceptable_torsion, acceptable_sigmav, knick_model
 	# diese gelten nach ÖNORM B 4600 für den Erhöhungsfall und entsprechen 100 % beim Knicken (lamda<20)
@@ -99,9 +125,11 @@ library = [
 	]
 
 
+library[-1:-1] = additional_materials
+
 dropdown = []
 for material in library:
-	dropdown_entry = (material[0], material[1], "")
+	dropdown_entry = (material[0], material[1], material_descriptions.get(material[0], ""))
 	dropdown.append(dropdown_entry)
 
 # current setting passed from gui
@@ -319,9 +347,18 @@ library_quads = [
 	]
 
 
+# Quads accept one E and nu only, so directional materials are approximations.
+# Keep G as the member shear modulus; nu is independent for GFK and bamboo.
+additional_poisson = {"acrylic_PMMA": 310 / (2 * 115) - 1,
+	"pla": 0.35, "gfk": 0.30, "bamboo": 0.30}
+library_quads[-1:-1] = [
+	[m[0], m[1], m[2], m[3], additional_poisson[m[0]], m[4],
+	 m[5], m[6], m[8], m[9]] for m in additional_materials
+]
+
 dropdown_quads = []
 for material in library_quads:
-	dropdown_entry = (material[0], material[1], "")
+	dropdown_entry = (material[0], material[1], material_descriptions.get(material[0], ""))
 	dropdown_quads.append(dropdown_entry)
 
 # current setting passed from gui
