@@ -6,7 +6,8 @@
 
 ![Build Status](https://github.com/JWock82/Pynite/actions/workflows/build-and-test.yml/badge.svg)
 [![codecov](https://codecov.io/gh/JWock82/Pynite/branch/main/graph/badge.svg?token=ZH18US3A7P)](https://codecov.io/gh/JWock82/Pynite)
-![PyPI - Downloads](https://img.shields.io/pypi/dm/PyNiteFEA?cacheSeconds=86400)
+![PyPI - Python Version](https://img.shields.io/pypi/pyversions/PyniteFEA)
+![PyPI - Downloads](https://img.shields.io/pypi/dm/PyNiteFEA?cacheSeconds=172800)
 <img alt="GitHub code size in bytes" src="https://img.shields.io/github/languages/code-size/JWock82/Pynite">
 ![GitHub last commit](https://img.shields.io/github/last-commit/JWock82/Pynite)
 ![GitHub](https://img.shields.io/github/license/JWock82/Pynite)
@@ -22,6 +23,8 @@ For a more detailed discussion on installation options and dependencies see http
 # Current Capabilities
 * 3D static analysis of elastic structures.
 * P-&Delta; analysis of frame type structures.
+* Modal analysis of frame type structures.
+* Nonlinear pushover analysis of steel frames.
 * Member point loads, linearly varying distributed loads, and nodal loads are supported.
 * Classify loads by load case and create load combinations from load cases.
 * Produces shear, moment, and deflection results and diagrams for each member.
@@ -34,7 +37,7 @@ For a more detailed discussion on installation options and dependencies see http
 * Basic meshing algorithms for some common shapes and for openings in rectangular meshes.
 * Reports support reactions.
 * Rendering of model geometry, supports, load cases, load combinations, and deformed shapes.
-* Advanced tools for modeling and analyzing complex shear walls.
+* Advanced tools for modeling and analyzing complex shear walls and mat foundations.
 * Generates PDF reports for models and model results.
 
 # Project Objectives
@@ -66,6 +69,92 @@ Here's a list of projects that use Pynite:
 * Phaenotyp (https://github.com/bewegende-Architektur/Phaenotyp) (https://youtu.be/shloSw9HjVI)
 
 # What's New?
+3.2.0
+* Added shear wall pier top results and coupling beam right hand side results to the pier/coupling beam force results output.
+* Adjusted shear wall pier and coupling beam internal force results sign convention to match the sign convention used for members.
+* Added targeted testing for shear wall pier and coupling beam sign convention and load magnitudes.
+* Added shear wall docstrings and a readthedocs documentation page.
+
+3.1.0
+* Improved detection of unstable structures.
+* Bug fix for shear walls. Shear walls were erroneously tracking other plates in the model for internal pier/coupling beam force summations, rather than just the plates related to the individual shear wall.
+
+3.0.0
+* Added pushover analysis! Currently, only steel sections are supported for pushover analysis. The assumed interaction equation used to estimate plastic behavior is currently calibrated toward I-shaped members.
+* Refactored all elastic stiffness matrix references from `K` and `k` to `Ke` and `ke`. Most users will not notice this change. Power users who were accessing the stiffness matrices directly will want to note this refactor.  This clarifies the code base by indicating which type of stiffness these matrices represent, and reduces ambiguity in preparation for addition of further geometric `Kg/kg` and plastic `Km/km` stiffness matrices.
+* User's can now control the size of member plots.
+* Improved `ShearWall.screenshots()` method. Added coupling beam plots. Added the ability to use the `VTK` renderer instead of the `pyvista` renderer for screenshots.
+* Removed individual load combo plots from member plots when an envelope plot is requested. They cluttered the plots without adding much value.
+
+2.4.1
+* Fixed a bug where enveloped results did not work if both tagged and untagged combos were in a model.
+
+2.4.0
+* Member `max` and `min` methods now return governing load combination along with the member max/min forces.
+* Bug fix: Quadrilateral element displacements had corners swapped during VTK visualization. This was a relic from the old MITC4 formulation that has been corrected.
+
+v2.3.0
+* Added enveloping to member diagrams. Set `combo_name` to a list of combo tags and the member diagram will show an envelope of all the combos that have any of those tags.
+* Bug fix: Added shear wall and mat foundation load cases to `FEModel3D.load_cases()`. The list of load cases was sometimes incomplete if these meshes had not yet been generated.
+* Added bending moment end releases to visualizations.
+* Bug fix for shear walls with flanges having an origin with their origin at Y != 0.
+* Rectangular meshes now filter out user defined control points that erroneously lie outside their boudaries.
+
+v2.2.1
+* Normalized member force diagrams across the entire model for visual clarity.
+* Made mesh auto-regeneration smarter and more efficient, targeting only meshes that have been altered since the last run.
+* Added `ShearWall` mesh auto-regeneration. Whenever a model is solved any old or outdated `ShearWall` meshes are automatically removed and replaced by a rebuild.
+* Optimized auto-calculated annotation sizing: The new automatic annotation size calculation feature now uses vectorized NumPy operations and caching for efficient rendering of large models with hundreds or thousands of elements.
+* Adjusted member diagram label offsets for clarity.
+
+v2.2.0
+* Added member diagrams feature for easy visualization of shear, moment, axial, and torsion diagrams along members.
+* Updated documentation for rendering.
+
+v2.1.0
+* Major speed boost and leaner memory usage: the global stiffness/mass assembly plus the nodal load and fixed-end reaction builders now use block-based vectorized writes instead of Python loops, which keeps data in contiguous NumPy buffers rather than thousands of temporary Python objects. The dense solver sees ~15-25% faster `Ke`/`M` builds in our targeted benchmarks, while sparse solver runs see ~30% faster stiffness assembly in our benchmarks.
+* Meshes can now be regenerated with the `FEModel3D.meshes[mesh_name].generate()` command. This command removes the old mesh and replaces it with an updated one. The mesh will not remove nodes needed by other elements outside the mesh. Note that any loads applied to the old mesh will be lost when its elements and nodes are deleted. This makes meshes truly parametric.
+* Added `FEModel3D.delete_mesh()` to help deleting old meshes properly.
+* Renderers now automatically set the annotation size as 5% of the minimum distance between nodes. You still have the option of overiding this by setting the annotation size manually.
+* Added load case/combo identification to VTK rendering.
+* Dropped support for Python version 3.10, which is not compatible with Numpy 2.4.
+* Removed unecessary checks for Scipy. Scipy has been a required dependency for some time now.
+* Cleaned up whitespace to conform to PEP8 style guide.
+
+v2.0.3
+* Numpy >= 2.4 is now a requirement. This ensures the VTK renderer will handle plate results arrays properly.
+* `pip` now installs dependencies during build testing. Pynite's testing suite now runs against the correct version of each dependency.
+
+v2.0.2
+* Added docstrings to the VTK `Renderer` class to help the user.
+* Enforced use of properties instead of attributes in the VTK `Renderer` and added docstrings to properties help the user make decisions.
+* Removed the VTK `Renderer`'s properties that began with "set_". These were redundant and caused confusion. The prefix "set_" is no longer used to access or set any of the `Renderer`'s properties.
+* Made the VTK `Renderer` compatible with the latest version of `numpy`.
+
+v2.0.1
+* Pynite no longer struggles rendering load cases and combinations when no loads are present. This is especially helpful for rendering modal load combinations, which don't have loads (only masses).
+* The pyvista plotter's "X" button now works just like pressing "q". This was an annoying pyvista-ism that led to error messages when closing the window with the "X" button.
+
+v2.0.0
+* Added modal analysis. You can now find the natural frequencies and mode shapes of frame-type structures (plates not yet supported). A special thanks to @boustrephon for heading up this feature.
+* Dropping support for python < 3.10.
+
+v1.6.2
+* Added helper method to `FEModel3D` for mat foundations.
+
+v1.6.1
+* Added mesh control for mat foundations.
+* Added soil pressure calculatiosn for mat foundations.
+* Added docstrings for mat foundations.
+* Mat foundations should still be considered a "beta" feature until further testing and development is complete.
+
+v1.6.0
+* Added mat foundations to `Pynite`. This is still a "beta" feature. Mat foundations are functional, but they are still fairly basic and are largely untested. They don't yet report soil pressures, or allow for you to set effective strip widths. They do support point loads applied to the mat, and they automatically assign soil springs when you supply a subgrade modulus of reaction. Use at your own risk.
+* Improved speed for descritizing models with many physical members.
+* Adjusted a few display colors for the VTK Renderer's 'print' theme in an effort to make more printer friendly visualizations.
+* Added more tests to expand code coverage of visualization.
+* Major improvements to documentation program wide.
+
 v1.5.0
 * Extended max/min enveloping to plate/quad meshes. Now you can quickly check the max/min mesh forces accross multiple load combinations in one simple command by passing a list of `combo_tags` to the functions.
 * Added max/min enveloping to torsion.
@@ -124,11 +213,3 @@ v1.0.0
 * Added a new `ShearWall` class that assists you in constructing and analyzing shear walls. This tool automatically detects piers and coupling beams, and finds the forces inside them and calculates their ascpect ratios, which can be handy for seismic design. It reports stiffness of multi-story shear walls at each story to help with rigid diaphragm analysis. It allows for modeling walls with openings, steps, and partial depth diaphragm loading.
 * `vtk` and `pyvista` are now optional dependencies. This change streamlines installation for users who don't rely on `Pynite's` built-in visualization tools. From now on, `Pynite` should be installed using `$ pip install PyNiteFEA[all]` for most users.
 * `Pynite` no longer uses auxiliary nodes to define member cross-section rotation. You can now directly specify the rotation (in degrees) when you define a member using the `rotation` argument.
-
-v0.0.98-100
-* Bug fix for `FEModel3D.add_section`. It was throwing exceptions and had not been updated to match the examples.
-* Improvements to spring rendering in `pyvista`. Up until this point spring elements were being rendered as lines. They now render as zigzag lines in `pyvista`. There is still more work for improvement on spring rendering, but this is a good start.
-
-v0.0.97
-* Fixed physical member load and deflection diagrams. Physical members are a newer feature. Member internal results were being reported correctly, but the diagrams for these members had not been revised to plot correctly. The old method for plain members was still being used. Physical members were not considering that a physical member was made from multiple submembers, and results for each span needed to be combined to get the whole plot.
-* Switched some commonly used python libraries to be installed by default with `Pynite`. Most `Pynite` users will want these libraries installed for full-featured use of `Pynite`. These libraries help with `Pynite` visualizations, plotting, the sparse solver, and `Jupyter Lab` functionality. This is just easier for new python users. I was getting a lot of questions about how to set up libraries, and this takes the guesswork away. This is part of `Pynite's` objective to stay easy to use.

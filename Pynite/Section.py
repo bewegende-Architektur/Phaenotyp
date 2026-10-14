@@ -36,11 +36,13 @@ class Section():
         self.Iz: float = Iz
         self.J: float = J
     
+    def __repr__(self) -> str:
+        return f"Section(name={self.name!r}, A={self.A}, Iy={self.Iy}, Iz={self.Iz}, J={self.J})"
+
     def Phi(self, fx: float = 0, my: float = 0, mz: float = 0):
         """
-        Method to be overridden by subclasses for determining whether the cross section is
-        elastic or plastic.
-        
+        Method to be overridden by subclasses for determining whether the cross section is elastic or plastic.
+
         :param fx: Axial force
         :type fx: float
         :param my: y-axis (weak) moment
@@ -117,16 +119,18 @@ class SteelSection(Section):
 
         self.material = model.materials[material_name]
 
+    def __repr__(self) -> str:
+        return f"SteelSection(name={self.name!r}, A={self.A}, Iy={self.Iy}, Iz={self.Iz}, J={self.J})"
+
     def Phi(self, fx: float = 0, my: float = 0, mz: float = 0) -> float:
         """
-        A method used to determine whether the cross section is elastic or plastic.
-        Values less than 1 indicate the section is elastic.
+        Determines the stress ratio for the cross section, and by implication, whether it is elastic or plastic. Values less than 1 indicate the section is elastic.
 
-        :param fx: Axial force divided by axial strength.
+        :param fx: Axial force.
         :type fx: float
-        :param my: Weak axis moment divided by weak axis strength.
+        :param my: Weak axis moment.
         :type my: float
-        :param mz: Strong axis moment divided by strong axis strength.
+        :param mz: Strong axis moment.
         :type mz: float
         :return: The total stress ratio for the cross section.
         :rtype: float
@@ -137,16 +141,17 @@ class SteelSection(Section):
         Mpy = self.material.fy*self.Zy
         Mpz = self.material.fy*self.Zz
 
-        # Values for p, my, and mz based on actual loads
-        p = fx/Py
-        m_y = my/Mpy
-        m_z = mz/Mpz
+        # Values for p, my, and mz based on actual loads. The interaction equation is always in the positive quadrant, so absolute values are used.
+        p = abs(fx/Py)
+        m_y = abs(my/Mpy)
+        m_z = abs(mz/Mpz)
 
         # "Matrix Structural Analysis, 2nd Edition", Equation 10.18
         return p**2 + m_z**2 + m_y**4 + 3.5*p**2*m_z**2 + 3*p**6*m_y**2 + 4.5*m_z**4*m_y**2
 
     def G(self, fx: float, my: float, mz: float) -> NDArray[float64]:
-        """Returns the gradient to the material's yield surface for the given load. Used to construct the plastic reduction matrix for nonlinear behavior.
+        """
+        Returns the gradient to the material's yield surface for the given load. Used to construct the plastic reduction matrix for nonlinear behavior.
 
         :param fx: Axial force at the cross-section.
         :type fx: float
@@ -158,7 +163,7 @@ class SteelSection(Section):
         :rtype: NDArray
         """
 
-        # Calculate `Phi` which is essentially a stress check indicating how close to yield we are
+        # Calculate `Phi` for the given loading
         Phi = self.Phi(fx, my, mz)
 
         # If Phi is less than 1.0 the member is still elastic and there is no gradient to the yield surface
@@ -180,10 +185,15 @@ class SteelSection(Section):
             Mpy = self.material.fy*self.Zy
             Mpz = self.material.fy*self.Zz
 
+            # The interaction equation is always in the positive quadrant, so absolute values are used
+            afx = abs(fx)
+            amy = abs(my)
+            amz = abs(mz)
+
             # Partial derivatives of Phi
-            dPhi_dfx = 18*fx**5*my**2/(Mpy**2*Py**6) + 2*fx/Py**2 + 7.0*fx*mz**2/(Mpz**2*Py**2)
-            dPhi_dmy = 6*fx**6*my/(Mpy**2*Py**6) + 2*my/Mpy**2 + 9.0*my*mz**4/(Mpy**2*Mpz**4)
-            dPhi_dmz = 7.0*fx**2*mz/(Mpz**2*Py**2) + 2*mz/Mpz**2 + 18.0*my**2*mz**3/(Mpy**2*Mpz**4)
+            dPhi_dfx = 18*afx**5*amy**2/(Mpy**2*Py**6) + 2*afx/Py**2 + 7.0*afx*amz**2/(Mpz**2*Py**2)
+            dPhi_dmy = 6*afx**6*amy/(Mpy**2*Py**6) + 4*amy**3/Mpy**4 + 9.0*amy*amz**4/(Mpy**2*Mpz**4)
+            dPhi_dmz = 7.0*afx**2*amz/(Mpz**2*Py**2) + 2*amz/Mpz**2 + 18.0*amy**2*amz**3/(Mpy**2*Mpz**4)
 
             # Return the gradient
             return np.array([[dPhi_dfx],

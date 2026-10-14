@@ -1780,16 +1780,16 @@ def interweave_results_pn(frame):
 		membrane = result.membrane()
 
 		# from PyNite
-		Qx = float(shear[0])
-		Qy = float(shear[1])
+		Qx = float(shear[0, 0])
+		Qy = float(shear[1, 0])
 
-		Mx = float(moment[0])
-		My = float(moment[1])
-		Mxy = float(moment[2])
+		Mx = float(moment[0, 0])
+		My = float(moment[1, 0])
+		Mxy = float(moment[2, 0])
 
-		Sx = float(membrane[0])
-		Sy = float(membrane[1])
-		Txy = float(membrane[2])
+		Sx = float(membrane[0, 0])
+		Sy = float(membrane[1, 0])
+		Txy = float(membrane[2, 0])
 
 		#print("Qx:", Qx, "Qy:", Qy, "Mx:", Mx, "My:", My, "Mxy:", Mxy, "Sx:", Sx, "Sy:", Sy, "Txy:", Txy)
 

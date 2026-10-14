@@ -43,6 +43,10 @@ class Spring3D():
         self.active: Dict[str, bool] = {} # Key = load combo name, Value = True or False
 
 #%%
+    def __repr__(self) -> str:
+        return f"Spring3D(name={self.name!r}, i_node={self.i_node.name!r}, j_node={self.j_node.name!r}, ks={self.ks})"
+
+#%%
     def L(self) -> float:
         '''
         Returns the length of the spring.
@@ -52,16 +56,16 @@ class Spring3D():
         return self.i_node.distance(self.j_node)
 
 #%%
-    def k(self) -> NDArray[float64]:
+    def ke(self) -> NDArray[float64]:
         '''
-        Returns the local stiffness matrix for the spring.
+        Returns the local elastic stiffness matrix for the spring.
         '''
 
         # Get the spring constant
         ks = self.ks
                
         # Calculate the local stiffness matrix
-        k = array([
+        ke = array([
             [ks,  0, 0, 0, 0, 0, -ks, 0, 0, 0, 0, 0],
             [0,   0, 0, 0, 0, 0, 0,   0, 0, 0, 0, 0],
             [0,   0, 0, 0, 0, 0, 0,   0, 0, 0, 0, 0],
@@ -76,7 +80,7 @@ class Spring3D():
             [0,   0, 0, 0, 0, 0, 0,   0, 0, 0, 0, 0]])
 
         # Return the local stiffness matrix
-        return k
+        return ke
 
 #%%   
     def f(self, combo_name: str = 'Combo 1') -> NDArray[float64]:
@@ -90,7 +94,7 @@ class Spring3D():
         '''
         
         # Calculate and return the spring's local end force vector
-        return matmul(self.k(), self.d(combo_name))
+        return matmul(self.ke(), self.d(combo_name))
 
 #%%
     def d(self, combo_name: str = 'Combo 1') -> NDArray[float64]:
@@ -184,13 +188,13 @@ class Spring3D():
         return transMatrix
 
 #%%
-    def K(self) -> NDArray[float64]:
+    def Ke(self) -> NDArray[float64]:
         '''
-        Spring global stiffness matrix
+        Returns the spring's global elastic stiffness matrix.
         '''
         
         # Calculate and return the stiffness matrix in global coordinates
-        return matmul(matmul(inv(self.T()), self.k()), self.T())
+        return matmul(matmul(inv(self.T()), self.ke()), self.T())
 
 #%%
     def F(self, combo_name: str = 'Combo 1') -> NDArray[float64]:

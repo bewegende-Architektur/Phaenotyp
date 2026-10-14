@@ -32,6 +32,9 @@ class VTKWriter:
         self._quads_written = False
         self.log = log
 
+    def __repr__(self) -> str:
+        return f"VTKWriter(model={self.model!r})"
+
     def write_to_vtk(self, path: str):
         """
         Writes model data into a VTK file using vtkUnstructuredGrid. The resulting file can
@@ -202,6 +205,34 @@ class VTKWriter:
         ugrid_members = vtk.vtkUnstructuredGrid()
         ugrid_members.SetPoints(points)
         ugrid_members.SetCells(vtk.VTK_LINE, lines)
+
+        #### MEMBER RELEASES DATA ####
+        # Add member end releases as cell data
+        member_releases = vtk.vtkIntArray()
+        member_releases.SetName("End Releases")
+        member_releases.SetNumberOfComponents(12)  # 12 DOFs (Rx, Ry, Rz, Mx, My, Mz for each end)
+        
+        for i, name in enumerate(["DXi", "DYi", "DZi", "RXi", "RYi", "RZi", "DXj", "DYj", "DZj", "RXj", "RYj", "RZj"]):
+            member_releases.SetComponentName(i, name)
+        
+        cell_id = 0
+        for member in self.model.members.values():
+            if len(member.sub_members) == 0:
+                # Single uninformed element
+                member_releases.InsertTuple(cell_id, tuple(int(r) for r in member.Releases))
+                cell_id += 1
+            else:
+                # Member releases are defined once on the full member (i/j ends).
+                # They are NOT applied per sub-member segment. We only duplicate the
+                # same 12 release flags onto every exported line cell so the metadata is
+                # available regardless of which segment is selected in post-processing.
+                for subm in member.sub_members.values():
+                    n = 11  # Number of segments
+                    for _ in range(n - 1):
+                        member_releases.InsertTuple(cell_id, tuple(int(r) for r in member.Releases))
+                        cell_id += 1
+        
+        ugrid_members.GetCellData().AddArray(member_releases)
 
         #### MEMBER Data ####
         for combo in self.model.load_combos.keys():

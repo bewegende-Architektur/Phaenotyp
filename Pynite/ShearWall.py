@@ -2,16 +2,15 @@ from __future__ import annotations # Allows more recent type hints features
 from math import isclose
 from numpy import average
 import io
+import os
 from typing import TYPE_CHECKING, Literal
 
-#from prettytable import PrettyTable
 
-#import matplotlib.pyplot as plt
-#from matplotlib.patches import Rectangle
 
 if TYPE_CHECKING:
     from typing import List, Dict, Tuple
     from Pynite.Quad3D import Quad3D
+    from Pynite.Plate3D import Plate3D
     import matplotlib.figure
 
 
@@ -36,11 +35,22 @@ class ShearWall():
         self._shears: List[List[str | float]] = []
         self._axials: List[List[str | float]] = []
         self._materials: List[List[str | float]] = []
+        self.elements: Dict[str, Quad3D | Plate3D] = {}
         self.piers: Dict[str, Pier] = {}
         self.coupling_beams: Dict[str, CouplingBeam] = {}
+        self.is_generated: bool = False
+        self.needs_update: bool = False
         self.asign_material(material_name, thickness)
 
+    def __repr__(self) -> str:
+        return f"ShearWall(name={self.name!r}, length={self.L}, height={self.H})"
+
     def asign_material(self, name: str, t: float, x_start: float | None = None, x_end: float | None = None, y_start: float | None = None, y_end: float | None = None) -> None:
+        """Assign a material and thickness to a rectangular wall region.
+
+        Omitted extents default to the full wall. Regenerate the wall, or solve
+        the model, after changing material assignments.
+        """
 
         # Data validation: ensure the extents of the material fall within the wall's envelope
         if x_start is None: x_start = 0
@@ -50,14 +60,33 @@ class ShearWall():
 
         # Store the material parameters
         self._materials.append([name, t, x_start, x_end, y_start, y_end])
+        
+        # Flag that regeneration is needed if already generated
+        if self.is_generated:
+            self.needs_update = True
 
     def add_opening(self, name: str, x_start: float, y_start: float, width: float, height: float, tie: float | None = None) -> None:
-        self._openings.append([name, x_start, y_start, width, height, None])
+        """Add a rectangular opening in the wall's local x-y coordinates.
+
+        ``tie`` is the optional axial rigidity, EA, of a tie spanning the top
+        of the opening. This is useful for modeling collectors between wall piers.
+        """
+        self._openings.append([name, x_start, y_start, width, height, tie])
+        if self.is_generated:
+            self.needs_update = True
 
     def add_flange(self, thickness: float, width: float, x: float, y_start: float, y_end: float, material: str, side: Literal['+z', '-z']) -> None:
+        """Add a wall return normal to the wall plane at local coordinate ``x``."""
         self._flanges.append([thickness, width, x, y_start, y_end, material, side])
+        if self.is_generated:
+            self.needs_update = True
 
     def add_support(self, elevation: float | None = None, x_start: float | None = None, x_end: float | None = None) -> None:
+        """Add fixed supports along a horizontal segment of the wall.
+
+        Coordinates are local. Omitted values define support across the wall's
+        full base.
+        """
 
         # Default support settings
         if elevation is None: elevation = 0
@@ -70,8 +99,15 @@ class ShearWall():
 
         # Add the supports to the wall
         self._supports.append([elevation, x_start, x_end])
+        if self.is_generated:
+            self.needs_update = True
 
     def add_story(self, story_name: str, elevation: float, x_start: float | None = None, x_end: float | None = None) -> None:
+        """Define a diaphragm level where wall shear and axial loads are applied.
+
+        The method also creates a 100-unit stiffness load combination for use
+        with :meth:`stiffness`.
+        """
 
         # Validate input
         if elevation is None: elevation = self.H
@@ -80,6 +116,8 @@ class ShearWall():
 
         # Add the story to the model
         self._stories.append([story_name, elevation, x_start, x_end])
+        if self.is_generated:
+            self.needs_update = True
 
         # Add a load combination to use when calculating the story's stiffness
         self.model.add_load_combo('Stiffness: ' + story_name, {story_name: 1.0}, 'stiffness')
@@ -88,12 +126,43 @@ class ShearWall():
         self.add_shear(story_name, 100, case=story_name)
 
     def add_shear(self, story_name: str, force: float, case: str = 'Case 1') -> None:
+        """Apply an in-plane shear force uniformly across a defined story."""
         self._shears.append([story_name, force, case])
+        if self.is_generated:
+            self.needs_update = True
 
     def add_axial(self, story_name: str, force: float, case: str = 'Case 1') -> None:
+        """Apply a downward axial force uniformly across a defined story."""
         self._axials.append([story_name, force, case])
+        if self.is_generated:
+            self.needs_update = True
+
+    def _remove_from_model(self) -> None:
+        """Removes the shear wall's meshes (main wall and flanges), elements, and nodes from the model 
+        in preparation for regeneration.
+        """
+        
+        # Remove the main wall mesh if it exists
+        if self.name in self.model.meshes:
+            self.model.meshes[self.name]._remove_from_model()
+            del self.model.meshes[self.name]
+        
+        # Remove each flange mesh if it exists
+        for i in range(len(self._flanges)):
+            flange_name = self.name + ' Flg ' + str(i + 1)
+            if flange_name in self.model.meshes:
+                self.model.meshes[flange_name]._remove_from_model()
+                del self.model.meshes[flange_name]
 
     def generate(self) -> None:
+        """Generate or regenerate the wall mesh, flanges, supports, and loads.
+
+        The generated wall automatically identifies piers and coupling beams.
+        """
+
+        # Remove shear wall elements and nodes from the model if regenerating
+        if self.is_generated:
+            self._remove_from_model()
 
         # Identify mesh control points
         x_control: List[float] = [0, self.L]
@@ -175,7 +244,7 @@ class ShearWall():
             # Identify the global origin for the flange mesh
             if self.plane == 'XY':
                 Xof = self.origin[0] + x
-                Yof = self.origin[0] + y_start
+                Yof = self.origin[1] + y_start
                 Zof = self.origin[2] + z
                 flg_plane = 'YZ'
             elif self.plane == 'XZ':
@@ -200,8 +269,15 @@ class ShearWall():
         # Merge the flange nodes with the rest of the wall
         self.model.merge_duplicate_nodes()
 
-        # Step through each plate in the model
-        for plate in self.model.quads.values():
+        # Store the elements belonging to this wall
+        self.elements = {
+            element.name: element
+            for mesh_name in [self.name] + [self.name + ' Flg ' + str(i + 1) for i in range(len(self._flanges))]
+            for element in self.model.meshes[mesh_name].elements.values()
+        }
+
+        # Step through each element in this wall's meshes
+        for plate in self.elements.values():
 
             # Step through each material in the wall
             for material in self._materials:
@@ -293,6 +369,9 @@ class ShearWall():
         self._identify_piers()
         self._identify_coupling_beams()
 
+        # Mark the wall as generated
+        self.is_generated = True
+        self.needs_update = False
 
     def _identify_piers(self) -> None:
 
@@ -439,7 +518,7 @@ class ShearWall():
             pier.name = key
 
         # Assign plates to each pier
-        for plate in self.model.quads.values():
+        for plate in self.elements.values():
 
             xi, yi, zi = _global2local(plate.i_node.X, plate.i_node.Y, plate.i_node.Z, self.origin, self.plane)
             xj, yj, zj = _global2local(plate.j_node.X, plate.j_node.Y, plate.j_node.Z, self.origin, self.plane)
@@ -612,7 +691,7 @@ class ShearWall():
             beam.name = key
 
         # Assign plates to each beam
-        for plate in self.model.quads.values():
+        for plate in self.elements.values():
 
             xi, yi, zi = _global2local(plate.i_node.X, plate.i_node.Y, plate.i_node.Z, self.origin, self.plane)
             xm, ym, zm = _global2local(plate.m_node.X, plate.m_node.Y, plate.m_node.Z, self.origin, self.plane)
@@ -630,7 +709,14 @@ class ShearWall():
                     beam.plates.append(plate)
 
     def draw_piers(self, show: bool = False) -> None | matplotlib.figure.Figure:
+        """Draw the automatically identified pier layout.
+
+        Set ``show=True`` to display the plot; otherwise the pyplot module is
+        returned for saving or further customization.
+        """
         
+        import matplotlib.pyplot as plt
+
         fig, ax = plt.subplots()
 
         ax.patch.set_facecolor((0.8, 0.8, 0.8))
@@ -649,7 +735,14 @@ class ShearWall():
         else: return plt
 
     def draw_coupling_beams(self, show: bool = False) -> None | matplotlib.figure.Figure:
+        """Draw the automatically identified coupling-beam layout.
+
+        Set ``show=True`` to display the plot; otherwise the pyplot module is
+        returned for saving or further customization.
+        """
         
+        import matplotlib.pyplot as plt
+
         fig, ax = plt.subplots()
 
         ax.patch.set_facecolor((0.8, 0.8, 0.8))
@@ -679,6 +772,8 @@ class ShearWall():
         """
 
         # create rectangle
+        from matplotlib.patches import Rectangle
+
         rect = Rectangle((x, y), w, h, linewidth=1, edgecolor='r', facecolor=color)
         ax.add_patch(rect)
 
@@ -706,6 +801,7 @@ class ShearWall():
                     self._openings[j], self._openings[j+1] = self._openings[j+1], self._openings[j]
 
     def stiffness(self, story_name: str) -> float:
+        """Return the in-plane stiffness at a story from its 100-unit test load."""
 
         # Validate that the specified story exists in the shear wall
         if not any(story[0] == story_name for story in self._stories):
@@ -746,13 +842,30 @@ class ShearWall():
         # Return the story's stiffness:
         return V/(d_max)
 
-    def screenshots(self, combo_name: str = 'Combo 1', dir_path: str = './') -> None:
+    def screenshots(self, combo_name: str = 'Combo 1', dir_path: str = './', renderer_backend: Literal['vtk', 'pyvista'] = 'vtk') -> None:
+        """Save shear contours and pier/coupling-beam layout images.
 
-        from Pynite.Rendering import Renderer
+        ``renderer_backend`` may be ``'vtk'`` or ``'pyvista'``. Files are
+        written to ``dir_path``.
+        """
+
+        renderer_backend = renderer_backend.lower()
+
+        if renderer_backend == 'pyvista':
+            from Pynite.Rendering import Renderer
+        elif renderer_backend == 'vtk':
+            from Pynite.Visualization import Renderer
+        else:
+            raise ValueError("renderer_backend must be either 'vtk' or 'pyvista'.")
 
         renderer = Renderer(self.model)
-        renderer.window_width = 750
-        renderer.window_height = 750
+
+        if renderer_backend == 'pyvista':
+            renderer.window_width = 750
+            renderer.window_height = 750
+        else:
+            renderer.window_size = (750, 750)
+
         renderer.annotation_size = self.mesh_size/6
         renderer.deformed_shape = True
         renderer.deformed_scale = 400
@@ -760,33 +873,41 @@ class ShearWall():
         renderer.scalar_bar = True
         renderer.combo_name = combo_name
         renderer.labels = False
-        
-        # Save the shear plot screenshot to this file's directory
-        renderer.color_map = 'Txy'
-        renderer.screenshot(dir_path + '/shear_wall_screenshot1.png', interact=True)
-        
-        # Save the shear plot screenshot to this file's directory
-        renderer.color_map = 'Sy'
-        renderer.screenshot(dir_path + '/shear_wall_screenshot2.png', interact=False, reset_camera=False)
 
-        # Save the pier screenshot to this file's directory
+        # Save the in-plane shear contour screenshot with interaction so users can set the camera.
+        renderer.color_map = 'Txy'
+        renderer.screenshot(os.path.join(dir_path, 'shear_wall_screenshot1.png'), interact=True, reset_camera=True)
+
+        # Save the membrane shear contour screenshot using the same camera position.
+        renderer.color_map = 'Sy'
+        renderer.screenshot(os.path.join(dir_path, 'shear_wall_screenshot2.png'), interact=False, reset_camera=False)
+
+        # Save the pier screenshot to this file's directory.
         pier_sketch = self.draw_piers(show=False)
-        pier_sketch.savefig(dir_path + '/shear_wall_piers.png', format='png')
+        pier_sketch.savefig(os.path.join(dir_path, 'shear_wall_piers.png'), format='png')
+
+        # Save the coupling beam screenshot to this file's directory.
+        beam_sketch = self.draw_coupling_beams(show=False)
+        beam_sketch.savefig(os.path.join(dir_path, 'shear_wall_coupling_beams.png'), format='png')
 
     def print_piers(self, combo_name: str = 'Combo 1') -> None:
-        """Tabulates and prints pier results for the shear wall
-        """
+        """Print pier forces at both the bottom and top for a load combination."""
+
+        # Optional reporting dependency; do not require it for frame analysis.
+        from prettytable import PrettyTable
 
         # Create a PrettyTable object
         table = PrettyTable()
 
         # Define the headers
-        table.field_names = ["ID", "Length", "Height", "M/(VL)", "V", "M", "P"]
+        table.field_names = ["ID", "Length", "Height", "Location", "M/(VL)", "V", "M", "P"]
 
-        # Add rows to the table
+        # Add rows to the table for both ends of each pier
         for pier_id, pier in self.piers.items():
-            P, M, V, M_VL = pier.sum_forces(combo_name)
-            table.add_row([pier.name, pier.width, pier.height, M_VL, V, M, P])
+            P_bot, M_bot, V_bot, M_VL_bot = pier.sum_forces(combo_name, 'bottom')
+            P_top, M_top, V_top, M_VL_top = pier.sum_forces(combo_name, 'top')
+            table.add_row([pier.name, pier.width, pier.height, 'Bottom', M_VL_bot, V_bot, M_bot, P_bot])
+            table.add_row([pier.name, pier.width, pier.height, 'Top', M_VL_top, V_top, M_top, P_top])
 
         # Print the table
         print('+-------------------+')
@@ -795,19 +916,23 @@ class ShearWall():
         print(table)
 
     def print_coupling_beams(self, combo_name: str = 'Combo 1') -> None:
-        """Tabulates and prints coupling beam results for the shear wall
-        """
+        """Print coupling-beam forces at both the left and right ends."""
+
+        # Optional reporting dependency; do not require it for frame analysis.
+        from prettytable import PrettyTable
 
         # Create a PrettyTable object
         table = PrettyTable()
 
         # Define the headers
-        table.field_names = ["ID", "Length", "Height", "M/(VH)", "V", "M", "P"]
+        table.field_names = ["ID", "Length", "Height", "Location", "M/(VH)", "V", "M", "P"]
 
-        # Add rows to the table
+        # Add rows to the table for both ends of each coupling beam
         for beam_id, beam in self.coupling_beams.items():
-            P, M, V, M_VL = beam.sum_forces(combo_name)
-            table.add_row([beam.name, beam.length, beam.height, M_VL, V, M, P])
+            P_left, M_left, V_left, M_VH_left = beam.sum_forces(combo_name, 'left')
+            P_right, M_right, V_right, M_VH_right = beam.sum_forces(combo_name, 'right')
+            table.add_row([beam.name, beam.length, beam.height, 'Left', M_VH_left, V_left, M_left, P_left])
+            table.add_row([beam.name, beam.length, beam.height, 'Right', M_VH_right, V_right, M_right, P_right])
 
         # Print the table
         print('+----------------------------+')
@@ -873,9 +998,17 @@ class Pier():
         self.origin = shear_wall.origin
 
         # This list will be used by the parent shear wall to store a list of only the plates in this pier
-        self.plates: List[Quad3D] = []
+        self.plates: List[Quad3D | Plate3D] = []
 
-    def sum_forces(self, combo_name: str = 'Combo 1') -> Tuple[float, float, float, float]:
+    def __repr__(self) -> str:
+        return f"Pier(name={self.name!r}, width={self.width}, height={self.height})"
+
+    def sum_forces(self, combo_name: str = 'Combo 1', location: Literal['bottom', 'top'] = 'bottom') -> Tuple[float, float, float, float]:
+        """Return ``(P, M, V, M_over_VL)`` at the pier bottom or top.
+
+        ``location`` defaults to ``'bottom'`` for backward compatibility.
+        The force signs match the internal-result convention used by members.
+        """
 
         # Initialize the forces in the plate
         P, M, V = 0, 0, 0
@@ -886,30 +1019,62 @@ class Pier():
             xi, yi, zi = _global2local(plate.i_node.X, plate.i_node.Y, plate.i_node.Z, self.origin, self.plane)
             xj, yj, zj = _global2local(plate.j_node.X, plate.j_node.Y, plate.j_node.Z, self.origin, self.plane)
 
-            # Determine if this plate is at the bottom of the pier
-            if isclose(yi, self.y):
+            if location == 'bottom':
 
-                # Find and sum the axial forces in this plate
-                Pi = plate.f(combo_name)[1][0]
-                Pj = plate.f(combo_name)[7][0]
-                P += -Pi - Pj
+                # Determine if this plate is at the bottom of the pier
+                if isclose(yi, self.y):
 
-                # Find and sum the moments about the pier's center in this plate
-                xi_p = xi - (self.x + self.width/2)
-                xj_p = xj - (self.x + self.width/2)
-                Mi = plate.f(combo_name)[1][0]*xi_p
-                Mj = plate.f(combo_name)[7][0]*xj_p
-                M += -Mi - Mj
+                    # Find and sum the axial forces in this plate
+                    Pi = plate.f(combo_name)[1][0]
+                    Pj = plate.f(combo_name)[7][0]
+                    P += Pi + Pj
 
-                # Find and sum the shear forces in this plate
-                # Check if this is a flange plate or a web plate
-                if isclose(xi, xj):
-                    Vi = -plate.f(combo_name)[2][0]
-                    Vj = -plate.f(combo_name)[8][0]
-                else:
-                    Vi = -plate.f(combo_name)[0][0]
-                    Vj = -plate.f(combo_name)[6][0]
-                V += -Vi - Vj
+                    # Find and sum the moments about the pier's center in this plate
+                    xi_p = xi - (self.x + self.width/2)
+                    xj_p = xj - (self.x + self.width/2)
+                    Mi = Pi*xi_p
+                    Mj = Pj*xj_p
+                    M += Mi + Mj
+
+                    # Find and sum the shear forces in this plate
+                    # Check if this is a flange plate or a web plate
+                    if isclose(xi, xj):
+                        Vi = -plate.f(combo_name)[2][0]
+                        Vj = -plate.f(combo_name)[8][0]
+                    else:
+                        Vi = -plate.f(combo_name)[0][0]
+                        Vj = -plate.f(combo_name)[6][0]
+                    V += Vi + Vj
+
+            else:
+
+                xm, ym, zm = _global2local(plate.m_node.X, plate.m_node.Y, plate.m_node.Z, self.origin, self.plane)
+                xn, yn, zn = _global2local(plate.n_node.X, plate.n_node.Y, plate.n_node.Z, self.origin, self.plane)
+
+                # Determine if this plate is at the top of the pier
+                if isclose(ym, self.y + self.height):
+
+                    # Find and sum the axial forces in this plate
+                    Pm = plate.f(combo_name)[13][0]
+                    Pn = plate.f(combo_name)[19][0]
+                    P += -Pm - Pn
+
+                    # Find and sum the moments about the pier's center in this plate
+                    xm_p = xm - (self.x + self.width/2)
+                    xn_p = xn - (self.x + self.width/2)
+                    Mm = Pm*xm_p
+                    Mn = Pn*xn_p
+                    M += -Mm - Mn
+
+                    # Find and sum the shear forces in this plate
+                    # Check if this is a flange plate or a web plate
+                    if isclose(xm, xn):
+                        Vm = -plate.f(combo_name)[14][0]
+                        Vn = -plate.f(combo_name)[20][0]
+                    else:
+                        Vm = -plate.f(combo_name)[12][0]
+                        Vn = -plate.f(combo_name)[18][0]
+                    V += -Vm - Vn
 
         # Calculate the shear span ratio
         M_VL = M/(V*self.width)
@@ -922,6 +1087,7 @@ class Pier():
 class CouplingBeam():
 
     def __init__(self, name: str, x: float, y: float, length: float, height: float, shear_wall: ShearWall) -> None:
+
         self.name: str = name
         self.x: float = x  # The location of the left side of the coupling beam
         self.y: float = y  # The height to the bottom of the coupling beam
@@ -933,9 +1099,18 @@ class CouplingBeam():
         self.plane = shear_wall.plane
         self.origin = shear_wall.origin
 
-        self.plates: List[Quad3D] = []
+        self.plates: List[Quad3D | Plate3D] = []
 
-    def sum_forces(self, combo_name: str = 'Combo 1') -> Tuple[float, float, float, float]:
+    def __repr__(self) -> str:
+
+        return f"CouplingBeam(name={self.name!r}, length={self.length}, height={self.height})"
+
+    def sum_forces(self, combo_name: str = 'Combo 1', location: Literal['left', 'right'] = 'left') -> Tuple[float, float, float, float]:
+        """Return ``(P, M, V, M_over_VH)`` at the beam left or right end.
+
+        ``location`` defaults to ``'left'`` for backward compatibility. The
+        force signs match the internal-result convention used by members.
+        """
 
         # Initialize plate forces to zero
         P, M, V = 0, 0, 0
@@ -947,34 +1122,69 @@ class CouplingBeam():
             xj, yj, zj = _global2local(plate.j_node.X, plate.j_node.Y, plate.j_node.Z, self.origin, self.plane)
             xn, yn, zn = _global2local(plate.n_node.X, plate.n_node.Y, plate.n_node.Z, self.origin, self.plane)
 
-            # Determine if this plate is at the left edge of the coupling beam
-            if isclose(xi, self.x):
+            if location == 'left':
 
-                # Check if this is a wall flange plate or a wall web plate
-                if isclose(xi, xj):
+                # Determine if this plate is at the left edge of the coupling beam
+                if isclose(xi, self.x):
 
-                    # Plates that form wall flanges should not affect coupling beams, so forces will not be summed
-                    pass
+                    # Check if this is a wall flange plate or a wall web plate
+                    if isclose(xi, xj):
 
-                else:
+                        # Plates that form wall flanges should not affect coupling beams, so forces will not be summed
+                        pass
 
-                    # Find and sum the axial forces in this plate
-                    Pi = plate.f(combo_name)[0][0]
-                    Pn = plate.f(combo_name)[18][0]
-                    P += -Pi - Pn
+                    else:
 
-                    # Find and sum the moments about the coupling beam's center in this plate
-                    xi_cb = yi - (self.y + self.height/2)
-                    xn_cb = yn - (self.y + self.height/2)
-                    Mi = plate.f(combo_name)[0][0]*xi_cb
-                    Mn = plate.f(combo_name)[18][0]*xn_cb
-                    M += -Mi - Mn
+                        # Find and sum the axial forces in this plate
+                        Pi = plate.f(combo_name)[0][0]
+                        Pn = plate.f(combo_name)[18][0]
+                        P += Pi + Pn
 
-                    # Find and sum the shear forces in this plate
-                    Vi = -plate.f(combo_name)[1][0]
-                    Vn = -plate.f(combo_name)[19][0]
+                        # Find and sum the moments about the coupling beam's center in this plate
+                        yi_cb = yi - (self.y + self.height/2)
+                        yn_cb = yn - (self.y + self.height/2)
+                        Mi = plate.f(combo_name)[0][0]*yi_cb
+                        Mn = plate.f(combo_name)[18][0]*yn_cb
+                        M += -Mi - Mn
 
-                    V += -Vi - Vn
+                        # Find and sum the shear forces in this plate
+                        Vi = -plate.f(combo_name)[1][0]
+                        Vn = -plate.f(combo_name)[19][0]
+
+                        V += -Vi - Vn
+
+            else:
+
+                xm, ym, zm = _global2local(plate.m_node.X, plate.m_node.Y, plate.m_node.Z, self.origin, self.plane)
+
+                # Determine if this plate is at the right edge of the coupling beam
+                if isclose(xj, self.x + self.length):
+
+                    # Check if this is a wall flange plate or a wall web plate
+                    if isclose(xi, xj):
+
+                        # Plates that form wall flanges should not affect coupling beams, so forces will not be summed
+                        pass
+
+                    else:
+
+                        # Find and sum the axial forces in this plate
+                        Pj = plate.f(combo_name)[6][0]
+                        Pm = plate.f(combo_name)[12][0]
+                        P += -Pj - Pm
+
+                        # Find and sum the moments about the coupling beam's center in this plate
+                        yj_cb = yj - (self.y + self.height/2)
+                        ym_cb = ym - (self.y + self.height/2)
+                        Mj = plate.f(combo_name)[6][0]*yj_cb
+                        Mm = plate.f(combo_name)[12][0]*ym_cb
+                        M += Mj + Mm
+
+                        # Find and sum the shear forces in this plate
+                        Vj = -plate.f(combo_name)[7][0]
+                        Vm = -plate.f(combo_name)[13][0]
+
+                        V += Vj + Vm
 
         # Calculate the shear span ratio
         M_VH = M/(V*self.height)
