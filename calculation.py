@@ -13,7 +13,7 @@ from numpy import array, empty, append, poly1d, polyfit, linalg, zeros, intersec
 from phaenotyp import basics, material, geometry
 from math import sqrt, tanh, pi, degrees, radians, atan2
 
-from subprocess import Popen, PIPE
+from subprocess import Popen, PIPE, DEVNULL
 import pickle
 import gc
 gc.disable()
@@ -697,12 +697,21 @@ def run_mp(models):
 	:return models: Returns the calculated models as dict with the frame as key.
 	'''
 	# get pathes
+	if not bpy.data.filepath:
+		basics.feas = {}
+		basics.jobs.clear()
+		basics.popup(lines=["Bitte die Blender-Datei vor der Berechnung speichern."])
+		return
 	path_addons = os.path.dirname(__file__) # path to the folder of addons
 	path_script = path_addons + "/mp.py"
 	path_python = sys.executable # path to bundled python
 	path_blend = bpy.data.filepath # path to stored blender file
 	directory_blend = os.path.dirname(path_blend) # directory of blender file
 	name_blend = bpy.path.basename(path_blend) # name of file
+	path_import = directory_blend + "/Phaenotyp-return_mp.p"
+	basics.feas = {}
+	if os.path.exists(path_import):
+		os.remove(path_import)
 
 	# pickle models to file
 	path_export = directory_blend + "/Phaenotyp-export_mp.p"
@@ -711,7 +720,7 @@ def run_mp(models):
 	export_models.close()
 
 	# scipy_available to pass forward
-	if bpy.context.scene["<Phaenotyp>"]["scipy_available"]:
+	if bpy.context.scene["<Phaenotyp>"]["scipy_available"] and bpy.context.scene.phaenotyp.use_scipy:
 		scipy_available = "True" # as string
 	else:
 		scipy_available = "False" # as string
@@ -722,20 +731,26 @@ def run_mp(models):
 	calculation_type = phaenotyp.calculation_type
 
 	task = [path_python, path_script, directory_blend, scipy_available, calculation_type]
-	# feedback from python like suggested from Markus Amalthea Magnuson and user3759376 here
-	# https://stackoverflow.com/questions/4417546/constantly-print-subprocess-output-while-process-is-running
-	p = Popen(task, stdout=PIPE, bufsize=1)
-	lines_iterator = iter(p.stdout.readline, b"")
-	while p.poll() is None:
-		for line in lines_iterator:
-			nline = line.rstrip()
-			#print(nline.decode("utf8"), end = "\r\n",flush =True) # yield line
+	p = Popen(task, stdout=DEVNULL, stderr=PIPE)
+	_, errors = p.communicate()
+	if p.returncode != 0 or errors or not os.path.exists(path_import):
+		basics.jobs.clear()
+		print("Phaenotyp | Multiprocessing calculation failed (exit code %s):" % p.returncode)
+		print(errors.decode("utf-8", errors="replace") if errors else "No result file was written.")
+		basics.popup(lines=["Berechnung fehlgeschlagen. Details stehen in der Konsole."])
+		return
 
 	# get models back from mp
-	path_import = directory_blend + "/Phaenotyp-return_mp.p"
-	file = open(path_import, 'rb')
-	imported_models = pickle.load(file)
-	file.close()
+	try:
+		with open(path_import, 'rb') as file:
+			imported_models = pickle.load(file)
+		if set(imported_models) != set(models):
+			raise ValueError("Incomplete multiprocessing results")
+	except Exception:
+		basics.jobs.clear()
+		basics.log_exception("Multiprocessing result could not be loaded")
+		basics.popup(lines=["Berechnung fehlgeschlagen. Details stehen in der Konsole."])
+		return
 
 	basics.feas = imported_models
 
@@ -2164,6 +2179,9 @@ def interweave_results_fd(frame):
 	data["done"][str(frame)] = True
 
 def calculate_frames(start, end):
+	if not bpy.data.filepath:
+		basics.popup(lines=["Bitte die Blender-Datei vor der Berechnung speichern."])
+		return
 	scene = bpy.context.scene
 	phaenotyp = scene.phaenotyp
 	calculation_type = phaenotyp.calculation_type

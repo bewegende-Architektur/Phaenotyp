@@ -163,19 +163,27 @@ def mp_pool():
 	'''
 
 	pool = Pool(processes=cores)
+	results = []
 
 	# for PyNite
 	if calculation_type != "force_distribution":
 		for frame, model in imported_models.items():
-			pool.apply_async(run_fea_pn, args=(scipy_available, calculation_type, feas, model, frame,))
+			results.append(pool.apply_async(run_fea_pn, args=(scipy_available, calculation_type, feas, model, frame,)))
 
 	# for force distribution
 	else:
 		for frame, model in imported_models.items():
-			pool.apply_async(run_fea_fd, args=(feas, model, frame,))
+			results.append(pool.apply_async(run_fea_fd, args=(feas, model, frame,)))
 
 	pool.close()
-	pool.join()
+	try:
+		for result in results:
+			result.get()
+	except Exception:
+		pool.terminate()
+		raise
+	finally:
+		pool.join()
 
 	return feas
 
