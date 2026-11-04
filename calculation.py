@@ -440,7 +440,7 @@ def prepare_fea_pn(frame):
 	basics.print_data(text)
 
 	# created a model object of PyNite and add to dict
-	basics.models[frame] = model
+	basics.models[str(frame)] = model
 
 def prepare_fea_fd(frame):
 	'''
@@ -1838,8 +1838,8 @@ def interweave_results_pn(frame):
 		y_1 = v_3 - v_0 # second edge y
 
 		# as descripted in quad example
-		length_x = (linalg.norm(x_0) + linalg.norm(x_1)) * 0.5 * 100 # to convert into cm
-		length_y = (linalg.norm(y_0) + linalg.norm(y_1)) * 0.5 * 100 # to convert into cm
+		length_x = float((linalg.norm(x_0) + linalg.norm(x_1)) * 0.5 * 100) # to convert into cm
+		length_y = float((linalg.norm(y_0) + linalg.norm(y_1)) * 0.5 * 100) # to convert into cm
 
 		# Schnittkräfte in unit-cm
 

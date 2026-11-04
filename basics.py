@@ -7,7 +7,7 @@ from datetime import timedelta
 import traceback
 import uuid
 
-phaenotyp_version = (0,4,0)
+phaenotyp_version = (0,4,2)
 blender_version = (5,0,1)
 
 # if this variable is true, external libaries can be pip installed via the panel in bayesian modeling

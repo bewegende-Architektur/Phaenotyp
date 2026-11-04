@@ -1,10 +1,24 @@
 # Releasenotes
 
+## 04.11.2026 – Phaenotyp 0.4.2
+
+- Add-on-Version in Metadaten, Manifest und interner Anzeige auf 0.4.2 gesetzt.
+- Quad-Berechnung in Blender 5.2 korrigiert: Kantenlängen werden vor dem Speichern
+  als Blender-Eigenschaften in Python-Zahlen umgewandelt. Die Frame-IDs der
+  PyNite-Modelle sind beim Multiprocessing-Rücklauf nun einheitlich Textwerte.
+- Nach einem fehlgeschlagenen Berechnungsjob beendet sich der Timer ohne den
+  zusätzlichen Fehler `IndexError: pop from empty list`.
+- Mit `Testing/quads_error/check_quads.py` den vollständigen Berechnungsweg
+  für 64 Quads in Blender 5.2.3 geprüft.
+- Die früheren Acryl- und Verformungs-Testdateien, `MATERIAL_SOURCES.md` und
+  die damaligen Unit-Tests wurden aus dem Repository entfernt. Die zusätzlichen
+  Materialeinträge sind in `material.py` weiterhin vorhanden.
+
 ## 14.10.2026 – aktueller Arbeitsstand (Phaenotyp 0.4.0)
 
 ### PyNite aktualisiert
 
-- Den eingebundenen Ordner `Pynite` durch die aktuelle stabile Version
+- Den eingebundenen Ordner `Pynite` durch Version
   **PyNiteFEA 3.2.0** aus dem offiziellen PyPI-Wheel ersetzt, inklusive MIT-Lizenz.
 - Herkunft, Prüfsumme, Abhängigkeiten und die drei lokalen
   Integrationsanpassungen in [Pynite/VENDORED.md](Pynite/VENDORED.md) dokumentiert.
@@ -22,17 +36,6 @@
   Update nicht automatisch als Phaenotyp-Bedienelemente verfügbar.
 - Quellen: [PyPI-Release 3.2.0](https://pypi.org/project/PyNiteFEA/3.2.0/),
   [Upstream](https://github.com/JWock82/Pynite).
-
-### Materialdatenbank
-
-- Acryl/PMMA, PLA, GFK und Bambus in die Materialauswahl für Stäbe und Flächen aufgenommen.
-- Acrylwerte einschließlich Knickkurve aus `Testing/Acrylstab.blend` übernommen;
-  fehlende Vergleichsspannungsgrenze ergänzt.
-- PLA-, GFK- und Bambuswerte als vorläufige Schätzungen gekennzeichnet;
-  Knickkurven mit Spannungsobergrenze und Euler-Ansatz ergänzt.
-- Quellen, Einheiten, Annahmen, Faserrichtung und Grenzen isotroper
-  Flächenersatzmodelle in [MATERIAL_SOURCES.md](MATERIAL_SOURCES.md) dokumentiert.
-- Hinweis: Acryl bildet die höheren Kurzzeit-Testgrenzen ab, keine Dauerlastbemessung.
 
 ### Verformung: Speicherung und Skalierung
 
@@ -60,21 +63,14 @@
 - Eine Abweichung zwischen Stabkurve und Knotenverschiebung bei Theorie II. Ordnung
   wurde mit einem räumlichen Testmodell auch nach dem Bibliotheksupdate reproduziert.
   Ihre Ursache und die physikalische Genauigkeit der angepassten Kurve sind weiterhin offen.
-- Bedienung und Einschränkungen: [Testing/DEFORMATION.md](Testing/DEFORMATION.md).
+- Die damals ergänzte Datei `Testing/DEFORMATION.md` ist nicht mehr im Repository.
 
-### Validierung und Anwendung
+### Validierung
 
-- Neun automatisierte Prüfungen mit aktuellen NumPy-/SciPy-Abhängigkeiten bestanden:
-  Verformungsskalierung, verbundene Endpunkte, inaktive Stäbe, verteilte
-  Kurvenkorrektur, alte/neue Flächendaten, analytischer Kragarm,
-  Flächendruckgleichgewicht, Ergebnis-API, Pickle-Rundlauf und Solververgleich.
-- Ohne SciPy: acht Prüfungen bestanden, ein Sparse-Solver-Test übersprungen.
-- In Blender 5.2: Add-on registriert/abgemeldet sowie lineare und P-Delta-Berechnung geprüft.
-  Blender nutzt NumPy 2.3.4 und liegt unter der offiziellen Upstream-Anforderung
-  NumPy >= 2.4; die vollständige PyNite-Funktionalität wurde damit nicht geprüft.
-- Nach dem Update Blender neu starten und Modelle neu berechnen;
-  versionsabhängige PyNite-Pickle-Dateien neu erzeugen.
-- Prüfaufruf: `python -m unittest discover -s tests`.
+- Der Quad-Test unter Blender 5.2.3 prüft Modellaufbau, Multiprocessing,
+  Ergebnisübernahme und Speicherung der Quad-Längen.
+- Die früher dokumentierten Unit-Tests wurden entfernt; ihre Ergebnisse
+  gelten nicht als aktueller Teststand.
 
 ## 09.10.2026 – Acryl und Verformungsskalierung (bereits committed)
 
@@ -83,7 +79,7 @@
 - Zwei lokale Fehler im damaligen PyNite-P-Delta-Rechenweg korrigiert:
   fehlendes Modellargument bei der Matrixpartitionierung und falsche Form
   für die dichte geometrische Steifigkeitsmatrix (`f6f2904`).
-- Acryl-Testdatei angelegt (`eb1a112`).
+- Acryl-Testdatei damals angelegt (`eb1a112`); inzwischen wieder entfernt.
 - Benutzerdefinierte Stabmaterialien anhand ihrer tatsächlichen E-, G- und
   Dichtewerte in PyNite registriert, statt die Stahlvorgabe für alle
   `custom`-Materialien zu verwenden; kann berechnete Verformungen verändern.

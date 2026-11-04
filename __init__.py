@@ -3,7 +3,7 @@ bl_info = {
 	"name": "Phänotyp",
 	"description": "Genetic algorithm for architectural structures",
 	"author": "bewegende Architektur e.U. and Karl Deix",
-	"version": (0,4,0),
+	"version": (0,4,2),
 	"blender": (5,0,1),
 	"location": "3D View > Tools",
 }
@@ -53,6 +53,12 @@ class phaenotyp_jobs(bpy.types.Operator):
 					job = entry[0]
 					job()
 				
+				# A failed job can clear the queue itself.
+				if not jobs or jobs[0] is not entry:
+					basics.is_running_jobs = False
+					self.cancel(context)
+					return {'CANCELLED'}
+
 				# delete job when done
 				jobs.pop(0)
 				
@@ -73,6 +79,7 @@ class phaenotyp_jobs(bpy.types.Operator):
 					basics.is_running_jobs = False
 				
 				geometry.update_geometry_post()
+				self.cancel(context)
 				
 				return {'CANCELLED'}
 
