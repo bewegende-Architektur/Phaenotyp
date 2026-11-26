@@ -4,7 +4,7 @@ bl_info = {
 	"description": "Genetic algorithm for architectural structures",
 	"author": "bewegende Architektur e.U. and Karl Deix",
 	"version": (0,4,2),
-	"blender": (5,0,1),
+	"blender": (5,3,0),
 	"location": "3D View > Tools",
 }
 

@@ -1204,9 +1204,11 @@ def update_geometry_pre():
 				member["Iy"][str(frame)] = (height * width**3 - height_i * width_i**3) / 12
 				member["Iz"][str(frame)] = (width * height**3 - width_i * height_i**3) / 12
 
-				# Näherung für Torsionskonstante eines rechteckigen Hohlprofils (nicht exakt!)
-				# Für t << b,h:
-				member["J"][str(frame)] = (2 * t) * (height * width - height_i * width_i) / 3
+				# Dünnwandige Näherung mit Mittellinienmaßen, wie in material.update().
+				h_m = height - t
+				b_m = width - t
+				A_m = h_m * b_m
+				member["J"][str(frame)] = 2 * t * A_m**2 / (h_m + b_m)
 
 				# Querschnittsfläche
 				member["A"][str(frame)] = height * width - height_i * width_i
@@ -1226,8 +1228,10 @@ def update_geometry_pre():
 				member["Iy"][str(frame)] = (width * height**3) / 12  # um z-Achse
 				member["Iz"][str(frame)] = (height * width**3) / 12  # um y-Achse
 
-				# Torsionskonstante (Näherung für rechteckigen Querschnitt, Kasten)
-				member["J"][str(frame)] = (height * width**3) * (1/3) if height <= width else (width * height**3) * (1/3)
+				# Vollrechteck-Näherung, wie in material.update().
+				a = max(width, height)
+				b = min(width, height)
+				member["J"][str(frame)] = a * b**3 * (1/3 - 0.21 * (b/a) * (1 - b**4 / (12 * a**4)))
 
 				# Querschnittsfläche
 				member["A"][str(frame)] = height * width

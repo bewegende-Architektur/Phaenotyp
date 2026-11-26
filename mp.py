@@ -38,6 +38,19 @@ calculation_type = sys.argv[3]
 # start timer
 start_time = time()
 
+def worker_scipy_available(requested):
+	"""Check the interpreter that actually solves the model, including spawned workers."""
+	if requested != "True":
+		return "False"
+	try:
+		from scipy.sparse.linalg import spsolve
+	except ImportError as exc:
+		print("Phaenotyp | SciPy unavailable in worker; using dense NumPy solver: %s" % exc,
+			file=sys.stderr, flush=True)
+		return "False"
+	return "True"
+
+
 def import_models():
 	# get models stored as dict with frame as key
 	file = open(path_import, 'rb')
@@ -58,6 +71,7 @@ def run_fea_pn(scipy_available, calculation_type, feas, model, frame):
 	# start time
 	start_time = time()
 	
+	scipy_available = worker_scipy_available(scipy_available)
 	if scipy_available == "True":
 		if calculation_type == "first_order":
 			model.analyze(check_statics=False, sparse=True)

@@ -700,7 +700,7 @@ def run_mp(models):
 	if not bpy.data.filepath:
 		basics.feas = {}
 		basics.jobs.clear()
-		basics.popup(lines=["Bitte die Blender-Datei vor der Berechnung speichern."])
+		basics.popup(lines=["Please save the Blender file before running a calculation."])
 		return
 	path_addons = os.path.dirname(__file__) # path to the folder of addons
 	path_script = path_addons + "/mp.py"
@@ -710,34 +710,49 @@ def run_mp(models):
 	name_blend = bpy.path.basename(path_blend) # name of file
 	path_import = directory_blend + "/Phaenotyp-return_mp.p"
 	basics.feas = {}
-	if os.path.exists(path_import):
-		os.remove(path_import)
+	try:
+		if os.path.exists(path_import):
+			os.remove(path_import)
 
-	# pickle models to file
-	path_export = directory_blend + "/Phaenotyp-export_mp.p"
-	export_models = open(path_export, 'wb')
-	pickle.dump(models, export_models)
-	export_models.close()
+		# pickle models to file
+		path_export = directory_blend + "/Phaenotyp-export_mp.p"
+		with open(path_export, 'wb') as export_models:
+			pickle.dump(models, export_models)
 
-	# scipy_available to pass forward
-	if bpy.context.scene["<Phaenotyp>"]["scipy_available"] and bpy.context.scene.phaenotyp.use_scipy:
-		scipy_available = "True" # as string
-	else:
-		scipy_available = "False" # as string
+		# scipy_available to pass forward
+		if bpy.context.scene["<Phaenotyp>"]["scipy_available"] and bpy.context.scene.phaenotyp.use_scipy:
+			scipy_available = "True" # as string
+		else:
+			scipy_available = "False" # as string
 
-	# calculation_type
-	scene = bpy.context.scene
-	phaenotyp = scene.phaenotyp
-	calculation_type = phaenotyp.calculation_type
+		# calculation_type
+		scene = bpy.context.scene
+		phaenotyp = scene.phaenotyp
+		calculation_type = phaenotyp.calculation_type
 
-	task = [path_python, path_script, directory_blend, scipy_available, calculation_type]
-	p = Popen(task, stdout=DEVNULL, stderr=PIPE)
-	_, errors = p.communicate()
-	if p.returncode != 0 or errors or not os.path.exists(path_import):
+		task = [path_python, path_script, directory_blend, scipy_available, calculation_type]
+		p = Popen(task, stdout=DEVNULL, stderr=PIPE)
+		_, errors = p.communicate()
+	except Exception:
+		basics.jobs.clear()
+		basics.log_exception("Multiprocessing calculation could not be started")
+		basics.popup(lines=["Calculation failed. See the console for details."])
+		return
+
+	if errors:
+		print(errors.decode("utf-8", errors="replace"))
+	if p.returncode != 0 or not os.path.exists(path_import):
 		basics.jobs.clear()
 		print("Phaenotyp | Multiprocessing calculation failed (exit code %s):" % p.returncode)
-		print(errors.decode("utf-8", errors="replace") if errors else "No result file was written.")
-		basics.popup(lines=["Berechnung fehlgeschlagen. Details stehen in der Konsole."])
+		if not os.path.exists(path_import):
+			print("No result file was written.")
+		if errors and b"stiffness matrix is singular" in errors.lower():
+			basics.popup(lines=[
+				"Calculation failed: the solver reports an unstable structure.",
+				"Check supports, member connections and moment releases.",
+				"See the console for details."])
+		else:
+			basics.popup(lines=["Calculation failed. See the console for details."])
 		return
 
 	# get models back from mp
@@ -749,7 +764,7 @@ def run_mp(models):
 	except Exception:
 		basics.jobs.clear()
 		basics.log_exception("Multiprocessing result could not be loaded")
-		basics.popup(lines=["Berechnung fehlgeschlagen. Details stehen in der Konsole."])
+		basics.popup(lines=["Calculation failed. See the console for details."])
 		return
 
 	basics.feas = imported_models
@@ -2180,7 +2195,7 @@ def interweave_results_fd(frame):
 
 def calculate_frames(start, end):
 	if not bpy.data.filepath:
-		basics.popup(lines=["Bitte die Blender-Datei vor der Berechnung speichern."])
+		basics.popup(lines=["Please save the Blender file before running a calculation."])
 		return
 	scene = bpy.context.scene
 	phaenotyp = scene.phaenotyp

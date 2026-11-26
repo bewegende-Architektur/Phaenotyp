@@ -961,6 +961,7 @@ def set_support():
 def set_member():
 	scene = bpy.context.scene
 	phaenotyp = scene.phaenotyp
+	material.initialize_member(phaenotyp)
 	data = scene["<Phaenotyp>"]
 	scene_id = data["scene_id"]
 	obj = data["structure"]

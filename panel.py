@@ -323,6 +323,7 @@ def members(layout):
 
 	if data:
 		if data["panel_state"]["supports"]:
+			material.initialize_member(phaenotyp)
 			# define material and geometry
 			box_members = layout.box()
 			box_members.label(text="Members:")
@@ -331,65 +332,31 @@ def members(layout):
 				# choose type of profile
 				box_members.prop(phaenotyp, "profile_type", text="Shape:")
 				profile_type = phaenotyp.profile_type
-				
-				# pass to current
-				material.current["profile_type"] = phaenotyp.profile_type
-				
+
 				if profile_type == "round_hollow":
-					# current setting passed from gui
-					# (because a property can not be set in gui)
 					box_members.prop(phaenotyp, "height", text="Diameter")
 					box_members.prop(phaenotyp, "wall_thickness", text="Wallthickness")
-					
-					material.current["height"] = phaenotyp.height
-					material.current["width"] = phaenotyp.height # width == height
-					material.current["wall_thickness"] = phaenotyp.wall_thickness
-					material.current["profile"] = None
-					
+
 				if profile_type == "round_solid":
 					box_members.prop(phaenotyp, "height", text="Diameter")
-					
-					material.current["height"] = phaenotyp.height
-					material.current["width"] = phaenotyp.height # width == height
-					material.current["wall_thickness"] = None
-					material.current["profile"] = None
-					
+
 				if profile_type == "rect_hollow":
 					box_members.prop(phaenotyp, "height", text="Height")
 					box_members.prop(phaenotyp, "width", text="Width")
 					box_members.prop(phaenotyp, "wall_thickness", text="Wallthickness")
-					
-					material.current["height"] = phaenotyp.height
-					material.current["width"] = phaenotyp.width
-					material.current["wall_thickness"] = phaenotyp.wall_thickness
-					material.current["profile"] = None
-				
+
 				if profile_type == "rect_solid":
 					box_members.prop(phaenotyp, "height", text="Height")
 					box_members.prop(phaenotyp, "width", text="Width")
-					
-					material.current["height"] = phaenotyp.height
-					material.current["width"] = phaenotyp.width
-					material.current["wall_thickness"] = None
-					material.current["profile"] = None
-					
+
 				if profile_type == "standard_profile":
 					box_members.prop(phaenotyp, "profiles", text="Profile")
-					#material.current["height"] = phaenotyp.height
-					#material.current["width"] = phaenotyp.width
-					material.current["wall_thickness"] = None
-					material.current["profile"] = phaenotyp.profiles
 
 				if profile_type == "large_steel_hollow":
 					box_members.prop(phaenotyp, "height", text="Height")
 					box_members.prop(phaenotyp, "width", text="Width")
 					box_members.prop(phaenotyp, "wall_thickness", text="Wallthickness")
-					
-					material.current["height"] = phaenotyp.height
-					material.current["width"] = phaenotyp.width
-					material.current["wall_thickness"] = phaenotyp.wall_thickness
-					material.current["profile"] = None
-					
+
 				# Zug, Druck, Beides, Knicken
 				box_members.prop(phaenotyp, "member_type", text="Type")
 				box_members.prop(phaenotyp, "buckling_resolution", text="Buckling resolution")
@@ -397,19 +364,11 @@ def members(layout):
 				# Ausrichtung und Winkel
 				box_members.prop(phaenotyp, "member_orientation", text="Orientation")
 				box_members.prop(phaenotyp, "member_angle", text="Angle")
-				material.current["angle"] = phaenotyp.member_angle
 			else:
 				# pipe input for force distribution
 				box_members.prop(phaenotyp, "height", text="Diameter")
 				box_members.prop(phaenotyp, "wall_thickness", text="Wallthickness")
 
-				# force distribution uses pipe geometry (height + wall_thickness)
-				material.current["profile_type"] = "round_hollow"
-				material.current["height"] = phaenotyp.height
-				material.current["width"] = phaenotyp.height
-				material.current["wall_thickness"] = phaenotyp.wall_thickness
-				material.current["profile"] = None
-								
 			box_members.prop(phaenotyp, "material", text="Material")
 			if phaenotyp.material == "custom":
 				box_members.prop(phaenotyp, "E", text="Modulus of elasticity kN/cm²")
@@ -422,44 +381,7 @@ def members(layout):
 				box_members.prop(phaenotyp, "acceptable_sigmav", text="Acceptable sigmav kN/cm²")
 				box_members.prop(phaenotyp, "kn_custom", text="kn")
 				
-				material.current["material_name"] = "custom"
-				material.current["E"] = phaenotyp.E
-				material.current["G"] = phaenotyp.G
-				material.current["rho"] = phaenotyp.rho
-
-				material.current["acceptable_sigma"] = phaenotyp.acceptable_sigma
-				material.current["acceptable_shear"] = phaenotyp.acceptable_shear
-				material.current["acceptable_torsion"] = phaenotyp.acceptable_torsion
-				material.current["acceptable_sigmav"] = phaenotyp.acceptable_sigmav
-					
-				# convert custom kn from string to int
-				kn_custom = []
-				kn = phaenotyp.kn_custom
-				kn = kn.split(",")
-				
-				for entry in kn:
-					kn_custom.append(float(entry))
-				
-				material.current["knick_model"] = kn_custom
-
 			else:
-				# pass input form library to data
-				for mat in material.library:
-					if phaenotyp.material == mat[0]: # select correct material
-						# current setting passed from gui
-						# (because a property can not be set in gui)
-						
-						material.current["material_name"] = mat[0]					
-						material.current["E"] = mat[2]
-						material.current["G"] = mat[3]
-						material.current["rho"] = mat[4]
-
-						material.current["acceptable_sigma"] = mat[5]
-						material.current["acceptable_shear"] = mat[6]
-						material.current["acceptable_torsion"] = mat[7]
-						material.current["acceptable_sigmav"] = mat[8]
-						material.current["knick_model"] = mat[9]
-
 				if calculation_type != "geometrical":
 					box_members.label(text="E = " + str(material.current["E"]) + " kN/cm²")
 
@@ -476,7 +398,6 @@ def members(layout):
 					box_members.label(text="Acceptable torsion = " + str(material.current["acceptable_torsion"]) + " kN/cm²")
 					box_members.label(text="Acceptable sigmav = " + str(material.current["acceptable_sigmav"]) + " kN/cm²")
 
-			material.update() # calculate Iy, Iz, J, A, weight
 			if calculation_type != "geometrical":
 				box_members.label(text="Iy = " + str(round(material.current["Iy"], 4)) + " cm⁴")
 				box_members.label(text="Iz = " + str(round(material.current["Iz"], 4)) + " cm⁴")
@@ -581,7 +502,7 @@ def quads(layout):
 							box_quads.label(text="acceptable_sigma = " + str(acceptable_sigma) + " kN/cm³")
 							box_quads.label(text="acceptable_shear = " + str(acceptable_shear) + " kN/cm³")
 							box_quads.label(text="acceptable_sigmav = " + str(acceptable_sigmav) + " kN/cm³")
-							box_quads.label(text="knick_model = " + str(knick_model))
+							box_quads.label(text="Buckling curve = " + str(knick_model))
 					
 					box_quads.label(text="Weight = " + str(round(rho*phaenotyp.thickness*10, 4)) + " kg/m²")
 				
