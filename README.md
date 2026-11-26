@@ -22,6 +22,9 @@ https://www.maschinenbau-wissen.de/skript3/mechanik/festigkeitslehre/134-knicken
 Sorttable by Stuart Langridge is used to organize the results:  
 https://www.kryogenix.org/code/browser/sorttable/
 
+Lab-Version with Bayes Opimization is done with:
+Fernando Nogueira (2014–). Bayesian Optimization: Open source constrained global optimization tool for Python. https://github.com/bayesian-optimization/BayesianOptimization
+
 ## Getting started
 You can find three quick tutorials on Youtube:  
 https://youtu.be/shloSw9HjVI  
